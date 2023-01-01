@@ -4,34 +4,40 @@
   "version": "0.1.0",
   "scripts": {
     "build": "next build",
+    "checker": "npm run eslint && npm run tsc && npm run format && npm run depcheck",
+    "depcheck": "depcheck --ignore-dirs .next,.rush,bundled --ignores=@types/*,prettier-plugin-*",
     "deploy": "gh-pages -t -d dist",
+    "eslint": "eslint --fix pages --max-warnings=0 --ext .ts,.tsx",
     "preexport": "rimraf dist && NEXT_PUBLIC_BASE_PATH=/jeed yarn build",
     "export": "NEXT_PUBLIC_BASE_PATH=/jeed next export -o dist && touch dist/.nojekyll",
+    "format": "prettier -w --plugin=prettier-plugin-organize-imports . && prettier-package-json --write",
     "lint": "next lint",
     "serve": "next start",
     "start": "next dev",
-    "prettier": "prettier -w --plugin=prettier-plugin-organize-imports . && prettier-package-json --write"
+    "tsc": "tsc --noEmit"
   },
   "dependencies": {
-    "@cs124/jeed-output": "2022.10.0",
-    "@cs124/jeed-react": "2022.10.0",
+    "@cs124/jeed-output": "2023.1.0",
+    "@cs124/jeed-react": "2023.1.0",
+    "@cs124/jeed-types": "2023.1.0",
     "@cs124/react-google-login": "2022.10.0",
-    "next": "12.3.1",
+    "next": "13.1.1",
     "react": "18.2.0",
     "react-ace": "10.1.0",
     "react-dom": "18.2.0",
     "runtypes": "6.6.0"
   },
   "devDependencies": {
-    "@types/react": "17.0.39",
-    "eslint": "8.26.0",
-    "eslint-config-next": "12.3.1",
+    "@types/react": "18.0.26",
+    "depcheck": "1.4.3",
+    "eslint": "8.31.0",
+    "eslint-config-next": "13.1.1",
     "gh-pages": "4.0.0",
-    "prettier": "2.7.1",
-    "prettier-package-json": "2.7.0",
-    "prettier-plugin-organize-imports": "3.1.1",
+    "prettier": "2.8.1",
+    "prettier-package-json": "2.8.0",
+    "prettier-plugin-organize-imports": "3.2.1",
     "prop-types": "15.8.1",
-    "sass": "1.55.0",
-    "typescript": "4.8.4"
+    "sass": "1.57.1",
+    "typescript": "4.9.4"
   }
 }

@@ -230,6 +230,7 @@ const JeedDemo: React.FC = () => {
         onChange={setValue}
         commands={commands}
         setOptions={{ tabSize: 2 }}
+        editorProps={{}}
       />
       <div style={{ marginTop: 8 }}>
         <button
@@ -320,6 +321,8 @@ const JeedDemo: React.FC = () => {
             width="100%"
             showPrintMargin={false}
             value={JSON.stringify(response.response, null, 2)}
+            setOptions={{}}
+            editorProps={{}}
           />
         </div>
       )}

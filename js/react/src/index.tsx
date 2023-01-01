@@ -11,6 +11,7 @@ export interface JeedContext {
 interface JeedProviderProps {
   server: string
   googleToken?: string | undefined
+  children: React.ReactNode
 }
 
 export const JeedProvider: React.FC<JeedProviderProps> = ({ googleToken, server, children }) => {

@@ -58,7 +58,7 @@ const getStatus = async (retries = 0) => {
 router.get("/", async (ctx: Context) => {
   ctx.body = await getStatus()
 })
-router.post("/", async (ctx) => {
+router.post("/", async (ctx: Context) => {
   const start = new Date()
   const collection = await _collection
   const request = Request.check(ctx.request.body)
