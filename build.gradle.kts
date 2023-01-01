@@ -17,7 +17,7 @@ allprojects {
     }
 }
 subprojects {
-    group = "com.github.cs125-illinois.jeed"
+    group = "com.github.cs124-illinois.jeed"
     version = "2023.1.0"
     tasks.withType<Test> {
         useJUnitPlatform()
