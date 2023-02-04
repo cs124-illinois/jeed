@@ -386,7 +386,7 @@ export const Feature = Union(
   Literal("FOR_LOOP_RANGE"),
   Literal("SECONDARY_CONSTRUCTOR"),
   Literal("JAVA_EQUALITY"),
-  Literal("COMPANION_OBJECTS")
+  Literal("COMPANION_OBJECT")
 )
 export type Feature = Static<typeof Feature>
 
