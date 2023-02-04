@@ -132,6 +132,7 @@ export const KtLintArguments = Partial({
   failOnError: Boolean,
   indent: Number,
   maxLineLength: Number,
+  script: Boolean,
 })
 export type KtLintArguments = Static<typeof KtLintArguments>
 
@@ -345,6 +346,8 @@ export const Feature = Union(
   Literal("NEW_KEYWORD"),
   Literal("THIS"),
   Literal("REFERENCE_EQUALITY"),
+  Literal("CLASS_FIELD"),
+  Literal("EQUALITY"),
   //
   Literal("VISIBILITY_MODIFIERS"),
   Literal("STATIC_METHOD"),
@@ -364,7 +367,7 @@ export const Feature = Union(
   Literal("SWITCH"),
   Literal("STREAM"),
   Literal("ENUM"),
-  Literal("RECURSION"),
+  // Literal("RECURSION"),
   Literal("COMPARABLE"),
   Literal("RECORD"),
   Literal("BOXING_CLASSES"),
@@ -376,7 +379,14 @@ export const Feature = Union(
   Literal("DOTTED_VARIABLE_ACCESS"),
   //
   Literal("NESTED_METHOD"),
-  Literal("JAVA_PRINT_STATEMENTS")
+  Literal("JAVA_PRINT_STATEMENTS"),
+  Literal("REQUIRE_OR_CHECK"),
+  Literal("FOR_LOOP_STEP"),
+  Literal("ELVIS_OPERATOR"),
+  Literal("FOR_LOOP_RANGE"),
+  Literal("SECONDARY_CONSTRUCTOR"),
+  Literal("JAVA_EQUALITY"),
+  Literal("COMPANION_OBJECTS")
 )
 export type Feature = Static<typeof Feature>
 
