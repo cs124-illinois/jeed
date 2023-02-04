@@ -105,7 +105,8 @@ enum class FeatureName(val description: String) {
     SWITCH("switch statements"),
     STREAM("streams"),
     ENUM("enums"),
-    RECURSION("recursion"),
+
+    // RECURSION("recursion"),
     COMPARABLE("Comparable interface"),
     RECORD("records"),
     BOXING_CLASSES("boxing classes"),

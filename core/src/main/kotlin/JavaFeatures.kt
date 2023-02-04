@@ -147,9 +147,12 @@ class JavaFeatureListener(val source: Source, entry: Map.Entry<String, String>) 
             Location(ctx.start.line, ctx.start.charPositionInLine),
             Location(ctx.stop.line, ctx.stop.charPositionInLine)
         )
-        count(FeatureName.CLASS_FIELD, ctx.classBody().classBodyDeclaration().filter { declaration ->
-            declaration.memberDeclaration()?.fieldDeclaration() != null
-        }.size)
+        count(
+            FeatureName.CLASS_FIELD,
+            ctx.classBody().classBodyDeclaration().filter { declaration ->
+                declaration.memberDeclaration()?.fieldDeclaration() != null
+            }.size
+        )
         count(
             FeatureName.STATIC_METHOD,
             ctx.classBody().classBodyDeclaration().filter { declaration ->
@@ -690,6 +693,7 @@ class JavaFeatureListener(val source: Source, entry: Map.Entry<String, String>) 
         ctx.lambdaExpression()?.also {
             count(FeatureName.LAMBDA_EXPRESSIONS)
         }
+        /*
         if (ctx.bop?.text != ".") {
             ctx.methodCall()?.also {
                 val methodName = ctx.methodCall().identifier()
@@ -702,6 +706,7 @@ class JavaFeatureListener(val source: Source, entry: Map.Entry<String, String>) 
                 }
             }
         }
+         */
     }
 
     override fun enterTypeType(ctx: JavaParser.TypeTypeContext) {
