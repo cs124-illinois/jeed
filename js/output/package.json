@@ -1,13 +1,13 @@
 {
   "name": "@cs124/jeed-output",
-  "version": "2023.1.0",
+  "version": "2023.2.0",
   "license": "MIT",
   "main": "dist/index.js",
   "scripts": {
     "build": "rimraf dist && tsc",
     "checker": "yarn depcheck && yarn prettier && yarn eslint && yarn tsc",
     "clean": "rimraf dist",
-    "depcheck": "depcheck --ignores=prettier-plugin-*",
+    "depcheck": "depcheck --ignores=prettier-plugin-*,rimraf",
     "eslint": "eslint src/**",
     "ncu": "ncu",
     "prettier": "prettier -w --plugin=prettier-plugin-organize-imports . && prettier-package-json --write",
@@ -18,20 +18,20 @@
   },
   "types": "dist/index.d.ts",
   "dependencies": {
-    "@cs124/jeed-types": "2023.1.0"
+    "@cs124/jeed-types": "2023.2.0"
   },
   "devDependencies": {
-    "@typescript-eslint/eslint-plugin": "5.47.1",
-    "@typescript-eslint/parser": "5.47.1",
+    "@typescript-eslint/eslint-plugin": "5.50.0",
+    "@typescript-eslint/parser": "5.50.0",
     "depcheck": "1.4.3",
-    "eslint": "8.31.0",
-    "eslint-config-prettier": "8.5.0",
-    "npm-check-updates": "16.6.2",
-    "prettier": "2.8.1",
+    "eslint": "8.33.0",
+    "eslint-config-prettier": "8.6.0",
+    "npm-check-updates": "16.6.3",
+    "prettier": "2.8.3",
     "prettier-package-json": "2.8.0",
-    "prettier-plugin-organize-imports": "3.2.1",
-    "rimraf": "3.0.2",
+    "prettier-plugin-organize-imports": "3.2.2",
+    "rimraf": "4.1.2",
     "runtypes": "6.6.0",
-    "typescript": "4.9.4"
+    "typescript": "4.9.5"
   }
 }
