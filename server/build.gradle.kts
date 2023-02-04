@@ -14,6 +14,7 @@ plugins {
 }
 dependencies {
     ksp("com.squareup.moshi:moshi-kotlin-codegen:1.14.0")
+
     testJavaagent("com.beyondgrader.resource-agent:agent:2022.9.3")
 
     implementation(project(":core"))

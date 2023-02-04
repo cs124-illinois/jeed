@@ -242,6 +242,19 @@ System.err.print("Whoa")
             featureMap[FeatureName.JAVA_PRINT_STATEMENTS] shouldBe 1
         }
     }
+    "should count assert require and check statements" {
+        Source.fromKotlinSnippet(
+            """
+assert(false)
+assert(it == true) { "Test me" }
+require(false)
+check(true) { "Here" }
+            """.trimIndent()
+        ).features().check {
+            featureMap[FeatureName.ASSERT] shouldBe 2
+            featureMap[FeatureName.REQUIRE_OR_CHECK] shouldBe 2
+        }
+    }
     "should count conditional expressions and complex conditionals in snippets" {
         Source.fromKotlinSnippet(
             """
@@ -363,6 +376,38 @@ class Test {
 }
 """.trim()
         ).features()
+    }
+    "should detect for loop step" {
+        Source.fromKotlinSnippet(
+            """
+for (i in 0 until array.size step 2) {
+  println(i)
+}
+""".trim()
+        ).features().check {
+            featureMap[FeatureName.FOR_LOOP_STEP] shouldBe 1
+        }
+    }
+    "should detect for loop range" {
+        Source.fromKotlinSnippet(
+            """
+for (i in 0..2) {
+  println(i)
+}
+val t = 0..4
+""".trim()
+        ).features().check {
+            featureMap[FeatureName.FOR_LOOP_RANGE] shouldBe 1
+        }
+    }
+    "should detect Elvis operator" {
+        Source.fromKotlinSnippet(
+            """
+val t = s ?: 0
+""".trim()
+        ).features().check {
+            featureMap[FeatureName.ELVIS_OPERATOR] shouldBe 1
+        }
     }
 })
 

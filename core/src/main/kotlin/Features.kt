@@ -117,7 +117,11 @@ enum class FeatureName(val description: String) {
 
     // Kotlin only
     NESTED_METHOD("nested method"),
-    JAVA_PRINT_STATEMENTS("java print statements")
+    JAVA_PRINT_STATEMENTS("java print statements"),
+    REQUIRE_OR_CHECK("require or check"),
+    FOR_LOOP_STEP("for loop step"),
+    ELVIS_OPERATOR("elvis operator"),
+    FOR_LOOP_RANGE("for loop range"),
 }
 
 @Suppress("unused")
@@ -150,7 +154,11 @@ val SUPPORTED_KOTLIN_FEATURES =
         FeatureName.IMPORT,
         FeatureName.INSTANCEOF,
         FeatureName.CASTING,
-        FeatureName.PRIMITIVE_CASTING
+        FeatureName.PRIMITIVE_CASTING,
+        FeatureName.REQUIRE_OR_CHECK,
+        FeatureName.FOR_LOOP_STEP,
+        FeatureName.ELVIS_OPERATOR,
+        FeatureName.FOR_LOOP_RANGE
     )
 val ALL_FEATURES = FeatureName.values().associate { it.name to it.description }
 

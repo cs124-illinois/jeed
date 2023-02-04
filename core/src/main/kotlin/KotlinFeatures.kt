@@ -17,8 +17,8 @@ import org.antlr.v4.runtime.RuleContext
 import org.antlr.v4.runtime.tree.ParseTreeWalker
 import org.jetbrains.kotlin.backend.common.pop
 
-private val BASIC_TYPES = setOf("Byte", "Short", "Int", "Long", "Float", "Double", "Char", "Boolean")
-private val TYPE_CASTS = (BASIC_TYPES - setOf("Boolean")).map { "to$it" }.toSet()
+private val basicTypes = setOf("Byte", "Short", "Int", "Long", "Float", "Double", "Char", "Boolean")
+private val typeCasts = (basicTypes - setOf("Boolean")).map { "to$it" }.toSet()
 
 @Suppress("TooManyFunctions", "LargeClass", "MagicNumber", "LongMethod", "ComplexMethod")
 class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>) : KotlinParserBaseListener() {
@@ -362,12 +362,25 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
         check(loopDepth >= 0)
     }
 
+    private var inForStatement = false
+    override fun enterForStatement(ctx: KotlinParser.ForStatementContext?) {
+        inForStatement = true
+    }
+
+    override fun exitForStatement(ctx: KotlinParser.ForStatementContext?) {
+        inForStatement = false
+    }
+
     override fun enterSimpleIdentifier(ctx: KotlinParser.SimpleIdentifierContext) {
-        if (ctx.Identifier()?.text == "arrayOf" ||
-            ctx.Identifier()?.text == "Array" ||
-            ctx.Identifier()?.text?.endsWith("ArrayOf") == true
+        val identifier = ctx.Identifier()?.text
+        if (identifier == "arrayOf" ||
+            identifier == "Array" ||
+            identifier?.endsWith("ArrayOf") == true
         ) {
             count(FeatureName.ARRAYS)
+        }
+        if (inForStatement && identifier == "step") {
+            count(FeatureName.FOR_LOOP_STEP)
         }
     }
 
@@ -413,6 +426,8 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
     private val javaPrintStatements =
         setOf("System.out.println", "System.err.println", "System.out.print", "System.err.print")
     private val unnecessaryJavaPrintStatements = setOf("System.out.println", "System.out.print")
+    private val assertStatements = setOf("assert")
+    private val requireOrCheckStatements = setOf("require", "check")
     override fun enterPostfixUnaryExpression(ctx: KotlinParser.PostfixUnaryExpressionContext) {
         for (i in 0 until ctx.postfixUnarySuffix().size) {
             val current = ctx.postfixUnarySuffix(i)
@@ -432,45 +447,12 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
                     val identifier = current.navigationSuffix().simpleIdentifier().text
                     count(FeatureName.DOTTED_METHOD_CALL)
                     currentFeatures.features.dottedMethodList += identifier
-                    if (identifier in TYPE_CASTS) {
+                    if (identifier in typeCasts) {
                         count(FeatureName.PRIMITIVE_CASTING)
                     }
                 } else {
                     count(FeatureName.DOTTED_VARIABLE_ACCESS)
                 }
-            }
-        }
-        if (printStatements.contains(ctx.primaryExpression()?.simpleIdentifier()?.text) &&
-            ctx.postfixUnarySuffix().size == 1 &&
-            ctx.postfixUnarySuffix(0).callSuffix() != null
-        ) {
-            count(FeatureName.PRINT_STATEMENTS)
-        }
-        if (ctx.primaryExpression().simpleIdentifier() != null &&
-            ctx.postfixUnarySuffix().isNotEmpty() &&
-            ctx.postfixUnarySuffix().last().callSuffix() != null &&
-            ctx.postfixUnarySuffix().dropLast(1).all { it.navigationSuffix() != null }
-        ) {
-            val fullMethodCall = ctx.primaryExpression().simpleIdentifier().text +
-                ctx.postfixUnarySuffix()
-                    .dropLast(1)
-                    .joinToString(".") {
-                        it.navigationSuffix().simpleIdentifier().text
-                    }.let {
-                        if (it.isNotBlank()) {
-                            ".$it"
-                        } else {
-                            ""
-                        }
-                    }
-            if (javaPrintStatements.contains(fullMethodCall)) {
-                count(FeatureName.PRINT_STATEMENTS)
-                if (unnecessaryJavaPrintStatements.contains(fullMethodCall)) {
-                    count(FeatureName.JAVA_PRINT_STATEMENTS)
-                }
-                count(FeatureName.DOTTED_VARIABLE_ACCESS, -1)
-                count(FeatureName.DOTTED_METHOD_CALL, -1)
-                count(FeatureName.DOT_NOTATION, -2)
             }
         }
     }
@@ -491,11 +473,19 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
         }
         ctx.asOperator()?.also {
             ctx.type().also {
-                if (it.text in BASIC_TYPES) {
+                if (it.text in basicTypes) {
                     count(FeatureName.PRIMITIVE_CASTING)
                 } else {
                     count(FeatureName.CASTING)
                 }
+            }
+        }
+        ctx.elvis()?.also {
+            count(FeatureName.ELVIS_OPERATOR)
+        }
+        ctx.RANGE()?.also {
+            if (inForStatement) {
+                count(FeatureName.FOR_LOOP_RANGE)
             }
         }
         if (ctx.postfixUnarySuffix().isNotEmpty()) {
@@ -517,19 +507,13 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
                         val identifier = current.navigationSuffix().simpleIdentifier().text
                         count(FeatureName.DOTTED_METHOD_CALL)
                         currentFeatures.features.dottedMethodList += identifier
-                        if (identifier in TYPE_CASTS) {
+                        if (identifier in typeCasts) {
                             count(FeatureName.PRIMITIVE_CASTING)
                         }
                     } else {
                         count(FeatureName.DOTTED_VARIABLE_ACCESS)
                     }
                 }
-            }
-            if (printStatements.contains(ctx.expression().getOrNull(0)?.primaryExpression()?.simpleIdentifier()?.text) &&
-                ctx.postfixUnarySuffix().size == 1 &&
-                ctx.postfixUnarySuffix(0).callSuffix() != null
-            ) {
-                count(FeatureName.PRINT_STATEMENTS)
             }
             if (ctx.expression().getOrNull(0)?.primaryExpression()?.simpleIdentifier() != null &&
                 ctx.postfixUnarySuffix().isNotEmpty() &&
@@ -548,7 +532,9 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
                                 ""
                             }
                         }
-                if (javaPrintStatements.contains(fullMethodCall)) {
+                if (printStatements.contains(fullMethodCall)) {
+                    count(FeatureName.PRINT_STATEMENTS)
+                } else if (javaPrintStatements.contains(fullMethodCall)) {
                     count(FeatureName.PRINT_STATEMENTS)
                     if (unnecessaryJavaPrintStatements.contains(fullMethodCall)) {
                         count(FeatureName.JAVA_PRINT_STATEMENTS)
@@ -556,6 +542,10 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
                     count(FeatureName.DOTTED_VARIABLE_ACCESS, -1)
                     count(FeatureName.DOTTED_METHOD_CALL, -1)
                     count(FeatureName.DOT_NOTATION, -2)
+                } else if (assertStatements.contains(fullMethodCall)) {
+                    count(FeatureName.ASSERT)
+                } else if (requireOrCheckStatements.contains(fullMethodCall)) {
+                    count(FeatureName.REQUIRE_OR_CHECK)
                 }
             }
         }
