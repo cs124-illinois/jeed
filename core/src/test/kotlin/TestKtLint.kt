@@ -96,9 +96,9 @@ class TestKtLint : StringSpec({
             results.errors.isEmpty() shouldBe true
         }
     }
-    "f: it should reformat kotlin scripts" {
+    "it should reformat kotlin scripts" {
         repeat(8) {
-            val results = Source.fromKotlin(
+            Source.fromKotlin(
                 """if (true) {
                 |println("Hello, world!");
                 |}
