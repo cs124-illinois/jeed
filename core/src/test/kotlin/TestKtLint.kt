@@ -88,4 +88,27 @@ class TestKtLint : StringSpec({
             """.trimMargin()
         }
     }
+    "it should check kotlin scripts" {
+        repeat(8) {
+            val results = Source.fromKotlin(
+                """println("Hello, world!")"""
+            ).ktLint(KtLintArguments(script = true))
+            results.errors.isEmpty() shouldBe true
+        }
+    }
+    "f: it should reformat kotlin scripts" {
+        repeat(8) {
+            val results = Source.fromKotlin(
+                """if (true) {
+                |println("Hello, world!");
+                |}
+                """.trimMargin()
+            ).ktFormat(KtLintArguments(script = true)).also {
+                it.contents shouldBe """if (true) {
+                |    println("Hello, world!")
+                |}
+                """.trimMargin()
+            }
+        }
+    }
 })

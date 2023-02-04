@@ -35,7 +35,8 @@ data class KtLintArguments(
     val sources: Set<String>? = null,
     val failOnError: Boolean = false,
     val indent: Int = SnippetArguments.DEFAULT_SNIPPET_INDENT,
-    val maxLineLength: Int = DEFAULT_MAX_LINE_LENGTH
+    val maxLineLength: Int = DEFAULT_MAX_LINE_LENGTH,
+    val script: Boolean = false
 ) {
     companion object {
         const val DEFAULT_MAX_LINE_LENGTH = 100
@@ -118,6 +119,7 @@ suspend fun Source.ktFormat(ktLintArguments: KtLintArguments = KtLintArguments()
                     contents,
                     // ruleSets = listOf(jeedRuleSet),
                     ruleProviders = jeedRuleProviders,
+                    script = ktLintArguments.script,
                     cb = { e, corrected ->
                         if (!corrected && ktLintArguments.failOnError) {
                             throw KtLintFailed(
@@ -170,6 +172,7 @@ suspend fun Source.ktLint(ktLintArguments: KtLintArguments = KtLintArguments()):
                             contents,
                             // ruleSets = listOf(jeedRuleSet),
                             ruleProviders = jeedRuleProviders,
+                            script = ktLintArguments.script,
                             cb = { e, _ ->
                                 @Suppress("EmptyCatchBlock")
                                 try {
