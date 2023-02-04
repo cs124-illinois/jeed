@@ -7,7 +7,7 @@
     "build": "tsc",
     "checker": "yarn depcheck && yarn prettier && yarn eslint && yarn tsc",
     "clean": "rimraf dist",
-    "depcheck": "depcheck --ignores=prettier-plugin-*",
+    "depcheck": "depcheck --ignores=prettier-plugin-*,rimraf",
     "eslint": "eslint src/**",
     "ncu": "ncu --dep dev,prod",
     "prettier": "prettier -w --plugin=prettier-plugin-organize-imports . && prettier-package-json --write",
