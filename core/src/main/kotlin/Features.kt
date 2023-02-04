@@ -81,6 +81,8 @@ enum class FeatureName(val description: String) {
     NEW_KEYWORD("new keyword"),
     THIS("this"),
     REFERENCE_EQUALITY("referential equality"),
+    CLASS_FIELD("class field"),
+    EQUALITY("equals"),
 
     // Modifiers
     VISIBILITY_MODIFIERS("visibility modifiers"),
@@ -122,6 +124,9 @@ enum class FeatureName(val description: String) {
     FOR_LOOP_STEP("for loop step"),
     ELVIS_OPERATOR("elvis operator"),
     FOR_LOOP_RANGE("for loop range"),
+    SECONDARY_CONSTRUCTOR("secondary constructor"),
+    JAVA_EQUALITY("java equals"),
+    COMPANION_OBJECT("companion object")
 }
 
 @Suppress("unused")
@@ -158,7 +163,11 @@ val SUPPORTED_KOTLIN_FEATURES =
         FeatureName.REQUIRE_OR_CHECK,
         FeatureName.FOR_LOOP_STEP,
         FeatureName.ELVIS_OPERATOR,
-        FeatureName.FOR_LOOP_RANGE
+        FeatureName.FOR_LOOP_RANGE,
+        FeatureName.CLASS_FIELD,
+        FeatureName.CONSTRUCTOR,
+        FeatureName.SECONDARY_CONSTRUCTOR,
+        FeatureName.COMPANION_OBJECT
     )
 val ALL_FEATURES = FeatureName.values().associate { it.name to it.description }
 

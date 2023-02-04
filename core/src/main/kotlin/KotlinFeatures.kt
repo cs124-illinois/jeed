@@ -235,6 +235,9 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
 
     private var constructorCounter = 0
     override fun enterSecondaryConstructor(ctx: SecondaryConstructorContext) {
+        count(FeatureName.CONSTRUCTOR)
+        count(FeatureName.SECONDARY_CONSTRUCTOR)
+
         ifDepths += 0
         functionBlockDepths += 0
         loopDepths += 0
@@ -428,6 +431,8 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
     private val unnecessaryJavaPrintStatements = setOf("System.out.println", "System.out.print")
     private val assertStatements = setOf("assert")
     private val requireOrCheckStatements = setOf("require", "check")
+    private val javaEqualsStatements = setOf("equals")
+
     override fun enterPostfixUnaryExpression(ctx: KotlinParser.PostfixUnaryExpressionContext) {
         for (i in 0 until ctx.postfixUnarySuffix().size) {
             val current = ctx.postfixUnarySuffix(i)
@@ -532,6 +537,7 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
                                 ""
                             }
                         }
+                val lastChunk = fullMethodCall.split(".").last()
                 if (printStatements.contains(fullMethodCall)) {
                     count(FeatureName.PRINT_STATEMENTS)
                 } else if (javaPrintStatements.contains(fullMethodCall)) {
@@ -546,6 +552,9 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
                     count(FeatureName.ASSERT)
                 } else if (requireOrCheckStatements.contains(fullMethodCall)) {
                     count(FeatureName.REQUIRE_OR_CHECK)
+                } else if (javaEqualsStatements.contains(lastChunk)) {
+                    count(FeatureName.EQUALITY)
+                    count(FeatureName.JAVA_EQUALITY)
                 }
             }
         }
@@ -576,6 +585,28 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
 
     override fun enterTypeTest(ctx: KotlinParser.TypeTestContext) {
         count(FeatureName.INSTANCEOF)
+    }
+
+    override fun enterPropertyDeclaration(ctx: KotlinParser.PropertyDeclarationContext) {
+        if (ctx.parentType() == ParentType.CLASS) {
+            count(FeatureName.CLASS_FIELD)
+        }
+    }
+
+    override fun enterPrimaryConstructor(ctx: KotlinParser.PrimaryConstructorContext) {
+        count(FeatureName.CONSTRUCTOR)
+    }
+
+    override fun enterEqualityOperator(ctx: KotlinParser.EqualityOperatorContext) {
+        if (ctx.EQEQEQ() != null || ctx.EXCL_EQEQ() != null) {
+            count(FeatureName.REFERENCE_EQUALITY)
+        } else {
+            count(FeatureName.EQUALITY)
+        }
+    }
+
+    override fun enterCompanionObject(ctx: KotlinParser.CompanionObjectContext?) {
+        count(FeatureName.COMPANION_OBJECT)
     }
 
     init {

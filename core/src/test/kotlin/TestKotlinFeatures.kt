@@ -409,6 +409,74 @@ val t = s ?: 0
             featureMap[FeatureName.ELVIS_OPERATOR] shouldBe 1
         }
     }
+    "should count class fields" {
+        Source.fromKotlinSnippet(
+            """
+class Test {
+  var first = 0
+  var second: String = "another"
+}
+""".trim()
+        ).features().check("Test") {
+            featureMap[FeatureName.CLASS_FIELD] shouldBe 2
+        }
+    }
+    "should count constructors" {
+        Source.fromKotlinSnippet(
+            """
+class Test(val first: Int) {
+  var second: String = "another"
+}
+""".trim()
+        ).features().check("Test") {
+            featureMap[FeatureName.CONSTRUCTOR] shouldBe 1
+        }
+    }
+    "should count secondary constructors" {
+        Source.fromKotlinSnippet(
+            """
+class Test(val first: Int) {
+  constructor() : this(0)
+  
+  var second: String = "another"
+}
+""".trim()
+        ).features().check("Test") {
+            featureMap[FeatureName.CONSTRUCTOR] shouldBe 2
+            featureMap[FeatureName.SECONDARY_CONSTRUCTOR] shouldBe 1
+        }
+    }
+    "should count equals and Java equals" {
+        Source.fromKotlinSnippet(
+            """
+val first = "test"
+val second = "another"
+println(first == second)
+println(first === second)
+println(second != first)
+println(second !== first)
+println(second.equals(first))
+println(!first.equals(second))
+""".trim()
+        ).features().check {
+            featureMap[FeatureName.EQUALITY] shouldBe 4
+            featureMap[FeatureName.REFERENCE_EQUALITY] shouldBe 2
+            featureMap[FeatureName.JAVA_EQUALITY] shouldBe 2
+        }
+    }
+    "should count companion objects" {
+        Source.fromKotlinSnippet(
+            """
+class Test {
+  companion object {
+    fun one() = 1
+  }
+}
+""".trim()
+        ).features().check("Test") {
+            featureMap[FeatureName.COMPANION_OBJECT] shouldBe 1
+        }
+    }
 })
 
 fun FeaturesResults.check(path: String = ".", filename: String = "", block: Features.() -> Any): FeaturesResults {

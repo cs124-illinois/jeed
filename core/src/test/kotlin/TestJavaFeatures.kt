@@ -754,9 +754,10 @@ public class Test {
 }
                 """.trim()
             )
-        ).features().also {
-            it.lookup("Test", "Test.java").features.featureMap[FeatureName.STATIC_FIELD] shouldBe 1
-            it.lookup("Test", "Test.java").features.featureMap[FeatureName.FINAL_FIELD] shouldBe 1
+        ).features().check("Test", "Test.java") {
+            featureMap[FeatureName.STATIC_FIELD] shouldBe 1
+            featureMap[FeatureName.FINAL_FIELD] shouldBe 1
+            featureMap[FeatureName.CLASS_FIELD] shouldBe 2
         }
     }
     "should correctly count boxing classes and type parameters" {
@@ -997,6 +998,16 @@ public class Modifier {
 """.trim()
         ).features().check("") {
             featureMap[FeatureName.LAMBDA_EXPRESSIONS] shouldBe 1
+        }
+    }
+    "should count calls to equals" {
+        Source.fromJavaSnippet(
+            """
+String t = "test";
+System.out.println(t.equals("another"));
+""".trim()
+        ).features().check("") {
+            featureMap[FeatureName.EQUALITY] shouldBe 1
         }
     }
 })

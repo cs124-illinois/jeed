@@ -147,6 +147,9 @@ class JavaFeatureListener(val source: Source, entry: Map.Entry<String, String>) 
             Location(ctx.start.line, ctx.start.charPositionInLine),
             Location(ctx.stop.line, ctx.stop.charPositionInLine)
         )
+        count(FeatureName.CLASS_FIELD, ctx.classBody().classBodyDeclaration().filter { declaration ->
+            declaration.memberDeclaration()?.fieldDeclaration() != null
+        }.size)
         count(
             FeatureName.STATIC_METHOD,
             ctx.classBody().classBodyDeclaration().filter { declaration ->
@@ -620,8 +623,12 @@ class JavaFeatureListener(val source: Source, entry: Map.Entry<String, String>) 
                 }
                 if (ctx.methodCall() != null) {
                     count(FeatureName.DOTTED_METHOD_CALL)
-                    if (ctx.methodCall().identifier() != null) {
-                        currentFeatures.features.dottedMethodList += ctx.methodCall().identifier().text
+                    val identifier = ctx.methodCall().identifier()?.text
+                    if (identifier != null) {
+                        currentFeatures.features.dottedMethodList += identifier
+                        if (identifier == "equals") {
+                            count(FeatureName.EQUALITY)
+                        }
                     }
                 }
             }
