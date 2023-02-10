@@ -41,9 +41,9 @@ dependencies {
     implementation("com.beyondgrader.resource-agent:agent:2022.9.3")
 
     api("org.jacoco:org.jacoco.core:0.8.8")
-    api("com.github.ben-manes.caffeine:caffeine:3.1.2")
+    api("com.github.ben-manes.caffeine:caffeine:3.1.3")
 
-    testImplementation("io.kotest:kotest-runner-junit5:5.5.4")
+    testImplementation("io.kotest:kotest-runner-junit5:5.5.5")
 }
 tasks.test {
     useJUnitPlatform()

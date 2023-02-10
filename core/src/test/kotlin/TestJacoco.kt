@@ -6,6 +6,7 @@ import io.kotest.matchers.collections.shouldHaveAtLeastSize
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
+import org.jacoco.core.analysis.IClassCoverage
 import org.junit.jupiter.api.assertThrows
 import java.io.IOException
 import java.lang.IllegalStateException
@@ -30,11 +31,7 @@ public class Main {
     System.out.println("Yay");
   }
 }""".trim()
-        ).compile().execute(SourceExecutionArguments().addPlugin(Jacoco)).also { taskResults ->
-            taskResults.completed shouldBe true
-            taskResults.permissionDenied shouldNotBe true
-
-            val testCoverage = taskResults.pluginResult(Jacoco).classes.find { it.name == "Test" }!!
+        ).checkCoverage().also { testCoverage ->
             testCoverage.lineCounter.missedCount shouldBe 0
             testCoverage.lineCounter.coveredCount shouldBe 6
         }
@@ -57,11 +54,7 @@ public class Main {
     System.out.println("Hmm");
   }
 }""".trim()
-        ).compile().execute(SourceExecutionArguments().addPlugin(Jacoco)).also { taskResults ->
-            taskResults.completed shouldBe true
-            taskResults.permissionDenied shouldNotBe true
-
-            val testCoverage = taskResults.pluginResult(Jacoco).classes.find { it.name == "Test" }!!
+        ).checkCoverage().also { testCoverage ->
             testCoverage.lineCounter.missedCount shouldNotBe 0
             testCoverage.lineCounter.coveredCount shouldBe 3
         }
@@ -172,4 +165,28 @@ fun main() {
             compiledSource.execute(SourceExecutionArguments().addPlugin(LineTrace).addPlugin(Jacoco))
         }
     }
+    "f: should miss assert" {
+        Source.fromJava("""
+public class Test {
+  public void test() {
+    assert System.currentTimeMillis() != 0L;
+  }
+}
+public class Main {
+  public static void main() {
+    Test test = new Test();
+    test.test();
+  }
+}""".trim()
+        ).checkCoverage().also { testCoverage ->
+            testCoverage.printLines()
+        }
+    }
 })
+
+private suspend fun Source.checkCoverage(klass: String = "Test"): IClassCoverage {
+    return compile().execute(SourceExecutionArguments().addPlugin(Jacoco)).also { taskResults ->
+        taskResults.completed shouldBe true
+        taskResults.permissionDenied shouldBe false
+    }.let { taskResult -> taskResult.pluginResult(Jacoco).classes.find { it.name == klass }!! }
+}

@@ -4,6 +4,7 @@ import org.jacoco.core.analysis.Analyzer
 import org.jacoco.core.analysis.CoverageBuilder
 import org.jacoco.core.analysis.IClassCoverage
 import org.jacoco.core.analysis.ICounter
+import org.jacoco.core.analysis.ILine
 import org.jacoco.core.data.ExecutionDataStore
 import org.jacoco.core.data.SessionInfoStore
 import org.jacoco.core.instr.Instrumenter
@@ -103,4 +104,16 @@ object IsolatedJacocoRuntime : IRuntime {
 
 fun IClassCoverage.allMissedLines() = (firstLine..lastLine).toList().filter {
     getLine(it).status == ICounter.NOT_COVERED || getLine(it).status == ICounter.PARTLY_COVERED
+}
+
+fun IClassCoverage.printLines() = (firstLine..lastLine).toList().forEach {
+    println("$it: ${getLine(it).print()}")
+}
+
+private fun ILine.print() = when (status) {
+    ICounter.EMPTY -> "empty"
+    ICounter.NOT_COVERED -> "uncovered"
+    ICounter.PARTLY_COVERED -> "partial"
+    ICounter.FULLY_COVERED -> "fully"
+    else -> error("Invalid line status: $status")
 }
