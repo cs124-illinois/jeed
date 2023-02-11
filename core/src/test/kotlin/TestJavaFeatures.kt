@@ -888,7 +888,7 @@ List<String> list = new ArrayList<>();
             featureList should haveFeatureAt(FeatureName.TYPE_PARAMETERS, listOf(6))
         }
     }
-    "f: should correctly count print statements and dot notation" {
+    "should correctly count print statements and dot notation" {
         Source.fromSnippet(
             """
 System.out.println("Hello, world!");
@@ -904,7 +904,10 @@ System.err.print("Hello, world!");
             featureList should haveFeatureAt(FeatureName.DOT_NOTATION, listOf())
 
             featureMap[FeatureName.DOTTED_METHOD_CALL] shouldBe 0
+            featureList should haveFeatureAt(FeatureName.DOTTED_METHOD_CALL, listOf())
+
             featureMap[FeatureName.DOTTED_VARIABLE_ACCESS] shouldBe 0
+            featureList should haveFeatureAt(FeatureName.DOTTED_VARIABLE_ACCESS, listOf())
         }
     }
     "should not choke on initializer blocks" {
@@ -954,8 +957,9 @@ public class Catcher {
     "should not find static in snippets" {
         Source.fromSnippet(
             "int i = 0;"
-        ).features().also {
-            it.lookup(".").features.featureMap[FeatureName.STATIC_METHOD] shouldBe 0
+        ).features().check {
+            featureMap[FeatureName.STATIC_METHOD] shouldBe 0
+            featureList should haveFeatureAt(FeatureName.STATIC_METHOD, listOf())
         }
     }
     "should not count array.length as dotted variable access" {
@@ -963,9 +967,12 @@ public class Catcher {
             """int[] array = new int[8];
               |int l = array.length;
             """.trimMargin()
-        ).features().also {
-            it.lookup(".").features.featureMap[FeatureName.DOTTED_VARIABLE_ACCESS] shouldBe 0
-            it.lookup(".").features.featureMap[FeatureName.DOT_NOTATION] shouldBe 0
+        ).features().check {
+            featureMap[FeatureName.DOTTED_VARIABLE_ACCESS] shouldBe 0
+            featureList should haveFeatureAt(FeatureName.DOTTED_VARIABLE_ACCESS, listOf())
+
+            featureMap[FeatureName.DOT_NOTATION] shouldBe 0
+            featureList should haveFeatureAt(FeatureName.DOT_NOTATION, listOf())
         }
     }
     "should not count new with Strings and arrays" {
@@ -974,11 +981,12 @@ public class Catcher {
                 |int[] test1 = new int[8];
                 |int[] test2 = new int[] {1, 2, 4};
             """.trimMargin()
-        ).features().also {
-            it.lookup(".").features.featureMap[FeatureName.NEW_KEYWORD] shouldBe 0
+        ).features().check {
+            featureMap[FeatureName.NEW_KEYWORD] shouldBe 0
+            featureList should haveFeatureAt(FeatureName.NEW_KEYWORD, listOf())
         }
     }
-    "should not count new with arrays" {
+    "f: should not count new with arrays" {
         Source.fromSnippet(
             """int[] midThree(int[] values) {
                 |  return new int[] {
@@ -986,8 +994,9 @@ public class Catcher {
                 |  };
                 |}
             """.trimMargin()
-        ).features().also {
-            it.lookup("").features.featureMap[FeatureName.NEW_KEYWORD] shouldBe 0
+        ).features().check {
+            featureMap[FeatureName.NEW_KEYWORD] shouldBe 0
+            featureList should haveFeatureAt(FeatureName.NEW_KEYWORD, listOf())
         }
     }
     "should not die on empty constructor" {
@@ -1008,8 +1017,7 @@ public class Simple {
   public double squared() {
     return val * val;
   }
-}
-                """.trimMargin()
+}""".trim()
             )
         ).features()
     }
@@ -1023,11 +1031,28 @@ int[] sorted = array.sorted();
             """.trimIndent()
         ).features().check {
             featureMap[FeatureName.DOTTED_METHOD_CALL] shouldBe 2
+            featureList should haveFeatureAt(FeatureName.DOTTED_METHOD_CALL, listOf(3, 4))
+
             featureMap[FeatureName.DOTTED_VARIABLE_ACCESS] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.DOTTED_VARIABLE_ACCESS, listOf(2))
+
             dottedMethodList shouldContainExactly setOf("sort", "sorted", "println")
         }
     }
-    "should not fail on repeated nested anonmyous classes" {
+    "should record dot in print" {
+        Source.fromJavaSnippet(
+            """
+System.out.println(array.something);
+            """.trimIndent()
+        ).features().check {
+            featureMap[FeatureName.DOTTED_METHOD_CALL] shouldBe 0
+            featureList should haveFeatureAt(FeatureName.DOTTED_METHOD_CALL, listOf())
+
+            featureMap[FeatureName.DOTTED_VARIABLE_ACCESS] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.DOTTED_VARIABLE_ACCESS, listOf(1))
+        }
+    }
+    "should not fail on repeated nested anonymous classes" {
         Source.fromJavaSnippet(
             """
 public static IWhichHemisphere create(Position p) {
@@ -1064,6 +1089,7 @@ public static IWhichHemisphere create(Position p) {
 }""".trim()
         ).features().check("") {
             featureMap[FeatureName.ANONYMOUS_CLASSES] shouldBe 3
+            featureList should haveFeatureAt(FeatureName.ANONYMOUS_CLASSES, listOf(4, 14, 23))
         }
     }
     "should allow top-level lambda methods" {
@@ -1078,16 +1104,25 @@ public class Modifier {
 """.trim()
         ).features().check("") {
             featureMap[FeatureName.LAMBDA_EXPRESSIONS] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.LAMBDA_EXPRESSIONS, listOf(5))
         }
     }
-    "should count calls to equals" {
+    "should count calls to equals and reference equality" {
         Source.fromJavaSnippet(
             """
 String t = "test";
 System.out.println(t.equals("another"));
+t == "another";
+"string" == "another";
+t == 1;
+2 == 3;
 """.trim()
         ).features().check("") {
             featureMap[FeatureName.EQUALITY] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.EQUALITY, listOf(2))
+
+            featureMap[FeatureName.REFERENCE_EQUALITY] shouldBe 2
+            featureList should haveFeatureAt(FeatureName.REFERENCE_EQUALITY, listOf(3, 4))
         }
     }
 })
