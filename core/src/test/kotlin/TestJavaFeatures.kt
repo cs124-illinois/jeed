@@ -1,7 +1,10 @@
 package edu.illinois.cs.cs125.jeed.core
 
 import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.Matcher
+import io.kotest.matchers.MatcherResult
 import io.kotest.matchers.collections.shouldContainExactly
+import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 
 @Suppress("LargeClass")
@@ -16,14 +19,18 @@ i += 1;
 i++;
 --j;
 """.trim()
-        ).features().also {
-            it.lookup(".").features.featureMap[FeatureName.LOCAL_VARIABLE_DECLARATIONS] shouldBe 2
-            it.lookup(".").features.featureMap[FeatureName.VARIABLE_ASSIGNMENTS] shouldBe 1
-            it.lookup(".").features.featureMap[FeatureName.VARIABLE_REASSIGNMENTS] shouldBe 4
-            it.lookup("").features.featureMap[FeatureName.METHOD] shouldBe 0
-            it.lookup("").features.featureMap[FeatureName.VISIBILITY_MODIFIERS] shouldBe 0
-            it.lookup("").features.featureMap[FeatureName.THROWS] shouldBe 0
-            it.lookup("").features.featureMap[FeatureName.STATIC_METHOD] shouldBe 0
+        ).features().check {
+            featureMap[FeatureName.LOCAL_VARIABLE_DECLARATIONS] shouldBe 2
+            featureList should haveFeatureAt(FeatureName.LOCAL_VARIABLE_DECLARATIONS, listOf(1, 2))
+            featureMap[FeatureName.VARIABLE_ASSIGNMENTS] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.VARIABLE_ASSIGNMENTS, listOf(1))
+            featureMap[FeatureName.VARIABLE_REASSIGNMENTS] shouldBe 4
+            featureList should haveFeatureAt(FeatureName.VARIABLE_REASSIGNMENTS, (3..6).toList())
+        }.check("") {
+            featureMap[FeatureName.METHOD] shouldBe 0
+            featureMap[FeatureName.VISIBILITY_MODIFIERS] shouldBe 0
+            featureMap[FeatureName.THROWS] shouldBe 0
+            featureMap[FeatureName.STATIC_METHOD] shouldBe 0
         }
     }
     "should count for loops in snippets" {
@@ -37,14 +44,26 @@ for (int num : arr) {
     num++;
 }
 """.trim()
-        ).features().also {
-            it.lookup(".").features.featureMap[FeatureName.FOR_LOOPS] shouldBe 2
-            it.lookup(".").features.featureMap[FeatureName.ARRAYS] shouldBe 1
-            it.lookup(".").features.featureMap[FeatureName.NEW_KEYWORD] shouldBe 0
-            it.lookup(".").features.featureMap[FeatureName.VARIABLE_ASSIGNMENTS] shouldBe 2
-            it.lookup(".").features.featureMap[FeatureName.VARIABLE_REASSIGNMENTS] shouldBe 2
-            it.lookup(".").features.featureMap[FeatureName.LOCAL_VARIABLE_DECLARATIONS] shouldBe 3
-            it.lookup(".").features.featureMap[FeatureName.ENHANCED_FOR] shouldBe 1
+        ).features().check {
+            featureMap[FeatureName.FOR_LOOPS] shouldBe 2
+            featureList should haveFeatureAt(FeatureName.FOR_LOOPS, listOf(1, 5))
+
+            featureMap[FeatureName.ARRAYS] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.ARRAYS, listOf(4))
+
+            featureMap[FeatureName.NEW_KEYWORD] shouldBe 0
+
+            featureMap[FeatureName.VARIABLE_ASSIGNMENTS] shouldBe 2
+            featureList should haveFeatureAt(FeatureName.VARIABLE_ASSIGNMENTS, listOf(1, 4))
+
+            featureMap[FeatureName.VARIABLE_REASSIGNMENTS] shouldBe 2
+            featureList should haveFeatureAt(FeatureName.VARIABLE_REASSIGNMENTS, listOf(1, 6))
+
+            featureMap[FeatureName.LOCAL_VARIABLE_DECLARATIONS] shouldBe 3
+            featureList should haveFeatureAt(FeatureName.LOCAL_VARIABLE_DECLARATIONS, listOf(1, 4, 5))
+
+            featureMap[FeatureName.ENHANCED_FOR] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.ENHANCED_FOR, listOf(5))
         }
     }
     "should count nested for loops in snippets" {
@@ -875,45 +894,6 @@ public class Catcher {
             it.lookup("").features.featureMap[FeatureName.NEW_KEYWORD] shouldBe 0
         }
     }
-    /*
-    "should not misidentify recursion" {
-        Source(
-            mapOf(
-                "Dog.java" to """public class Dog extends Canine {
-  private final double age;
-
-  public Dog(double setAge) {
-    super("dog");
-    assert setAge >= 0.0;
-    age = setAge;
-  }
-}
-                """.trimMargin()
-            )
-        ).features().also {
-            it.lookup("Dog", "Dog.java").features.featureMap[FeatureName.RECURSION] shouldBe 0
-        }
-    }
-    "should not misidentify recursion in equals" {
-        Source(
-            mapOf(
-                "Dog.java" to """public class Dog extends Canine {
-  private final double age;
-
-  public boolean equals(Object other) {
-    if (other.age.equals(age)) {
-      return true;
-    }
-    return false;
-  }
-}
-                """.trimMargin()
-            )
-        ).features().also {
-            it.lookup("Dog", "Dog.java").features.featureMap[FeatureName.RECURSION] shouldBe 0
-        }
-    }
-     */
     "should not die on empty constructor" {
         Source(
             mapOf(
@@ -1015,3 +995,16 @@ System.out.println(t.equals("another"));
         }
     }
 })
+
+fun haveFeatureAt(feature: FeatureName, lines: List<Int>) = object : Matcher<List<LocatedFeature>> {
+    override fun test(value: List<LocatedFeature>): MatcherResult {
+        val expectedLocations = lines.sorted()
+        val actualLocations = value.filter { it.feature == feature }.map { it.location.line }.sorted()
+
+        return MatcherResult(
+            expectedLocations == actualLocations,
+            { "Expected feature at $expectedLocations but found it at $actualLocations" },
+            { "Expected feature at $expectedLocations but found it at $actualLocations" }
+        )
+    }
+}

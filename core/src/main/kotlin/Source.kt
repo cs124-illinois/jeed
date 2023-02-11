@@ -193,10 +193,13 @@ data class SourceLocation(
             "($line:$column)"
         }
     }
+    fun asLocation(): Location = Location(line, column)
 }
 
 @JsonClass(generateAdapter = true)
-data class Location(val line: Int, val column: Int)
+data class Location(val line: Int, val column: Int) {
+    fun asSourceLocation(source: String) = SourceLocation(source, line, column)
+}
 
 @JsonClass(generateAdapter = true)
 data class SourceRange(

@@ -6,7 +6,9 @@ package edu.illinois.cs.cs125.jeed.core
 import edu.illinois.cs.cs125.jeed.core.antlr.JavaParser
 import edu.illinois.cs.cs125.jeed.core.antlr.JavaParser.CreatorContext
 import edu.illinois.cs.cs125.jeed.core.antlr.JavaParserBaseListener
+import org.antlr.v4.runtime.ParserRuleContext
 import org.antlr.v4.runtime.tree.ParseTreeWalker
+import org.antlr.v4.runtime.tree.TerminalNode
 
 @Suppress("TooManyFunctions", "LargeClass", "MagicNumber", "LongMethod", "ComplexMethod")
 class JavaFeatureListener(val source: Source, entry: Map.Entry<String, String>) : JavaParserBaseListener() {
@@ -65,7 +67,7 @@ class JavaFeatureListener(val source: Source, entry: Map.Entry<String, String>) 
 
     private fun exitClassOrInterface() {
         assert(featureStack.isNotEmpty())
-        val lastFeatures = featureStack.removeAt(0)
+        val lastFeatures = featureStack.removeAt(0).finalize()
         assert(lastFeatures is ClassFeatures)
         if (featureStack.isNotEmpty()) {
             currentFeatures.features += lastFeatures.features
@@ -74,7 +76,7 @@ class JavaFeatureListener(val source: Source, entry: Map.Entry<String, String>) 
 
     private fun exitMethodOrConstructor() {
         assert(featureStack.isNotEmpty())
-        val lastFeatures = featureStack.removeAt(0)
+        val lastFeatures = featureStack.removeAt(0).finalize()
         assert(lastFeatures is MethodFeatures)
         assert(featureStack.isNotEmpty())
         currentFeatures.features += lastFeatures.features
@@ -91,41 +93,30 @@ class JavaFeatureListener(val source: Source, entry: Map.Entry<String, String>) 
         )
         assert(featureStack.isEmpty())
         featureStack.add(0, unitFeatures)
-        count(
-            FeatureName.IMPORT,
-            ctx.importDeclaration().filter {
-                it.IMPORT() != null
-            }.size
-        )
-        count(
-            FeatureName.FINAL_CLASS,
-            ctx.typeDeclaration().filter { declaration ->
-                declaration.classOrInterfaceModifier().any {
-                    it.FINAL() != null
-                }
-            }.size
-        )
-        count(
-            FeatureName.ABSTRACT_CLASS,
-            ctx.typeDeclaration().filter { declaration ->
-                declaration.classOrInterfaceModifier().any {
-                    it.ABSTRACT() != null
-                }
-            }.size
-        )
-        count(
-            FeatureName.VISIBILITY_MODIFIERS,
-            ctx.typeDeclaration().filter { declaration ->
-                declaration.classDeclaration()?.isSnippetClass() != true
-            }.filter { declaration ->
+        ctx.importDeclaration().filter { it.IMPORT() != null }.forEach {
+            count(FeatureName.IMPORT, it.toLocation())
+        }
+        ctx.typeDeclaration()
+            .filter { declaration -> declaration.classOrInterfaceModifier().any { it.FINAL() != null } }.forEach {
+                count(FeatureName.FINAL_CLASS, it.toLocation())
+            }
+        ctx.typeDeclaration()
+            .filter { declaration -> declaration.classOrInterfaceModifier().any { it.ABSTRACT() != null } }.forEach {
+                count(FeatureName.ABSTRACT_CLASS, it.toLocation())
+            }
+        ctx.typeDeclaration()
+            .filter { declaration -> declaration.classDeclaration()?.isSnippetClass() != true }
+            .filter { declaration ->
                 declaration.classOrInterfaceModifier().any {
                     when (it.text) {
                         "public", "private", "protected" -> true
                         else -> false
                     }
                 }
-            }.size
-        )
+            }
+            .forEach {
+                count(FeatureName.VISIBILITY_MODIFIERS, it.toLocation())
+            }
         for (import in ctx.importDeclaration()) {
             currentFeatures.features.importList.add(import.qualifiedName().text)
         }
@@ -133,138 +124,112 @@ class JavaFeatureListener(val source: Source, entry: Map.Entry<String, String>) 
 
     override fun exitCompilationUnit(ctx: JavaParser.CompilationUnitContext) {
         assert(featureStack.size == 1)
-        val topLevelFeatures = featureStack.removeAt(0) as UnitFeatures
+        val topLevelFeatures = featureStack.removeAt(0).finalize() as UnitFeatures
         assert(!results.keys.contains(topLevelFeatures.name))
         results[topLevelFeatures.name] = topLevelFeatures
     }
 
     override fun enterClassDeclaration(ctx: JavaParser.ClassDeclarationContext) {
         if (!ctx.isSnippetClass()) {
-            count(FeatureName.CLASS)
+            count(FeatureName.CLASS, ctx.toLocation())
         }
+
         enterClassOrInterface(
             ctx.identifier().text,
             Location(ctx.start.line, ctx.start.charPositionInLine),
             Location(ctx.stop.line, ctx.stop.charPositionInLine)
         )
-        count(
-            FeatureName.CLASS_FIELD,
-            ctx.classBody().classBodyDeclaration().filter { declaration ->
-                declaration.memberDeclaration()?.fieldDeclaration() != null
-            }.size
-        )
-        count(
-            FeatureName.STATIC_METHOD,
-            ctx.classBody().classBodyDeclaration().filter { declaration ->
-                declaration.memberDeclaration()?.methodDeclaration()?.isSnippetMethod() != true
+
+        ctx.classBody().classBodyDeclaration()
+            .filter { declaration -> declaration.memberDeclaration()?.fieldDeclaration() != null }
+            .forEach { count(FeatureName.CLASS_FIELD, it.toLocation()) }
+
+        ctx.classBody().classBodyDeclaration().filter { declaration ->
+            declaration.memberDeclaration()?.methodDeclaration()?.isSnippetMethod() != true
+        }.filter { declaration ->
+            declaration.modifier().any {
+                it.classOrInterfaceModifier().STATIC() != null &&
+                    declaration.memberDeclaration().methodDeclaration() != null
+            }
+        }.forEach { count(FeatureName.STATIC_METHOD, it.toLocation()) }
+
+        ctx.classBody().classBodyDeclaration().filter { declaration ->
+            declaration.modifier().any {
+                it.classOrInterfaceModifier().STATIC() != null &&
+                    declaration.memberDeclaration().fieldDeclaration() != null
+            }
+        }.forEach { count(FeatureName.STATIC_FIELD, it.toLocation()) }
+
+        ctx.classBody().classBodyDeclaration().filter { declaration ->
+            declaration.modifier().any {
+                it.classOrInterfaceModifier().FINAL() != null &&
+                    declaration.memberDeclaration().methodDeclaration() != null
+            }
+        }.forEach { count(FeatureName.FINAL_METHOD, it.toLocation()) }
+
+        ctx.classBody().classBodyDeclaration().filter { declaration ->
+            declaration.modifier().any {
+                it.classOrInterfaceModifier().FINAL() != null &&
+                    declaration.memberDeclaration().fieldDeclaration() != null
+            }
+        }.forEach { count(FeatureName.FINAL_FIELD, it.toLocation()) }
+
+        ctx.classBody().classBodyDeclaration().filter { declaration ->
+            declaration.modifier().any {
+                it.classOrInterfaceModifier().ABSTRACT() != null &&
+                    declaration.memberDeclaration().methodDeclaration() != null
+            }
+        }.forEach { count(FeatureName.ABSTRACT_METHOD, it.toLocation()) }
+
+        ctx.classBody().classBodyDeclaration().filter { declaration ->
+            declaration.modifier().any {
+                it.classOrInterfaceModifier().ABSTRACT() != null &&
+                    declaration.memberDeclaration().fieldDeclaration() != null
+            }
+        }.forEach { count(FeatureName.ABSTRACT_FIELD, it.toLocation()) }
+
+        ctx.classBody().classBodyDeclaration()
+            .filter { it.memberDeclaration() != null }
+            .filter { declaration ->
+                declaration.memberDeclaration().methodDeclaration()?.isSnippetMethod() != true
             }.filter { declaration ->
                 declaration.modifier().any {
-                    it.classOrInterfaceModifier().STATIC() != null &&
-                        declaration.memberDeclaration().methodDeclaration() != null
-                }
-            }.size
-        )
-        count(
-            FeatureName.STATIC_FIELD,
-            ctx.classBody().classBodyDeclaration().filter { declaration ->
-                declaration.modifier().any {
-                    it.classOrInterfaceModifier().STATIC() != null &&
-                        declaration.memberDeclaration().fieldDeclaration() != null
-                }
-            }.size
-        )
-        count(
-            FeatureName.FINAL_METHOD,
-            ctx.classBody().classBodyDeclaration().filter { declaration ->
-                declaration.modifier().any {
-                    it.classOrInterfaceModifier().FINAL() != null &&
-                        declaration.memberDeclaration().methodDeclaration() != null
-                }
-            }.size
-        )
-        count(
-            FeatureName.FINAL_FIELD,
-            ctx.classBody().classBodyDeclaration().filter { declaration ->
-                declaration.modifier().any {
-                    it.classOrInterfaceModifier().FINAL() != null &&
-                        declaration.memberDeclaration().fieldDeclaration() != null
-                }
-            }.size
-        )
-        count(
-            FeatureName.ABSTRACT_METHOD,
-            ctx.classBody().classBodyDeclaration().filter { declaration ->
-                declaration.modifier().any {
-                    it.classOrInterfaceModifier().ABSTRACT() != null &&
-                        declaration.memberDeclaration().methodDeclaration() != null
-                }
-            }.size
-        )
-        count(
-            FeatureName.ABSTRACT_FIELD,
-            ctx.classBody().classBodyDeclaration().filter { declaration ->
-                declaration.modifier().any {
-                    it.classOrInterfaceModifier().ABSTRACT() != null &&
-                        declaration.memberDeclaration().fieldDeclaration() != null
-                }
-            }.size
-        )
-        count(
-            FeatureName.VISIBILITY_MODIFIERS,
-            ctx.classBody().classBodyDeclaration()
-                .filter { it.memberDeclaration() != null }
-                .filter { declaration ->
-                    declaration.memberDeclaration().methodDeclaration()?.isSnippetMethod() != true
-                }.filter { declaration ->
-                    declaration.modifier().any {
-                        when (it.text) {
-                            "public", "private", "protected" -> true
-                            else -> false
-                        }
+                    when (it.text) {
+                        "public", "private", "protected" -> true
+                        else -> false
                     }
-                }.size
-        )
-        count(
-            FeatureName.OVERRIDE,
-            ctx.classBody().classBodyDeclaration().filter { declaration ->
-                declaration.modifier().any {
-                    it?.text == "@Override"
                 }
-            }.size
-        )
-        count(
-            FeatureName.NESTED_CLASS,
-            ctx.classBody().classBodyDeclaration().filter { declaration ->
-                declaration.memberDeclaration()?.classDeclaration() != null
-            }.size
-        )
-        count(
-            FeatureName.FINAL_CLASS,
-            ctx.classBody().classBodyDeclaration().filter { declaration ->
-                declaration.modifier().any {
-                    it.classOrInterfaceModifier().FINAL() != null &&
-                        declaration.memberDeclaration().classDeclaration() != null
-                }
-            }.size
-        )
-        count(
-            FeatureName.ABSTRACT_CLASS,
-            ctx.classBody().classBodyDeclaration().filter { declaration ->
-                declaration.modifier().any {
-                    it.classOrInterfaceModifier().ABSTRACT() != null &&
-                        declaration.memberDeclaration().classDeclaration() != null
-                }
-            }.size
-        )
-        ctx.EXTENDS()?.also {
-            count(FeatureName.EXTENDS)
-        }
-        ctx.IMPLEMENTS()?.also {
-            count(FeatureName.IMPLEMENTS)
-        }
-        ctx.typeParameters()?.also {
-            count(FeatureName.GENERIC_CLASS)
-        }
+            }.forEach { count(FeatureName.VISIBILITY_MODIFIERS, it.toLocation()) }
+
+        ctx.classBody().classBodyDeclaration().filter { declaration ->
+            declaration.modifier().any {
+                it?.text == "@Override"
+            }
+        }.forEach { count(FeatureName.OVERRIDE, it.toLocation()) }
+
+        ctx.classBody().classBodyDeclaration().filter { declaration ->
+            declaration.memberDeclaration()?.classDeclaration() != null
+        }.forEach { count(FeatureName.NESTED_CLASS, it.toLocation()) }
+
+        ctx.classBody().classBodyDeclaration().filter { declaration ->
+            declaration.modifier().any {
+                it.classOrInterfaceModifier().FINAL() != null &&
+                    declaration.memberDeclaration().classDeclaration() != null
+            }
+        }.forEach { count(FeatureName.FINAL_CLASS, it.toLocation()) }
+
+        ctx.classBody().classBodyDeclaration().filter { declaration ->
+            declaration.modifier().any {
+                it.classOrInterfaceModifier().ABSTRACT() != null &&
+                    declaration.memberDeclaration().classDeclaration() != null
+            }
+        }.forEach { count(FeatureName.ABSTRACT_CLASS, it.toLocation()) }
+
+        ctx.EXTENDS()?.also { count(FeatureName.EXTENDS, ctx.toLocation()) }
+
+        ctx.IMPLEMENTS()?.also { count(FeatureName.IMPLEMENTS, ctx.toLocation()) }
+
+        ctx.typeParameters()?.also { count(FeatureName.GENERIC_CLASS, ctx.toLocation()) }
     }
 
     override fun exitClassDeclaration(ctx: JavaParser.ClassDeclarationContext) {
@@ -277,45 +242,38 @@ class JavaFeatureListener(val source: Source, entry: Map.Entry<String, String>) 
             Location(ctx.start.line, ctx.start.charPositionInLine),
             Location(ctx.stop.line, ctx.stop.charPositionInLine)
         )
-        count(FeatureName.INTERFACE)
-        count(
-            FeatureName.STATIC_METHOD,
-            ctx.interfaceBody().interfaceBodyDeclaration().filter { declaration ->
-                declaration.modifier().any {
-                    it.classOrInterfaceModifier().STATIC() != null &&
-                        declaration.interfaceMemberDeclaration().interfaceMethodDeclaration() != null
+
+        count(FeatureName.INTERFACE, ctx.toLocation())
+
+        ctx.interfaceBody().interfaceBodyDeclaration().filter { declaration ->
+            declaration.modifier().any {
+                it.classOrInterfaceModifier().STATIC() != null &&
+                    declaration.interfaceMemberDeclaration().interfaceMethodDeclaration() != null
+            }
+        }.forEach { count(FeatureName.STATIC_METHOD, it.toLocation()) }
+
+        ctx.interfaceBody().interfaceBodyDeclaration().filter { declaration ->
+            declaration.modifier().any {
+                it.classOrInterfaceModifier().FINAL() != null &&
+                    declaration.interfaceMemberDeclaration().interfaceMethodDeclaration() != null
+            }
+        }.forEach { count(FeatureName.FINAL_METHOD, it.toLocation()) }
+
+        ctx.interfaceBody().interfaceBodyDeclaration().filter { declaration ->
+            declaration.modifier().any {
+                it.classOrInterfaceModifier().ABSTRACT() != null &&
+                    declaration.interfaceMemberDeclaration().interfaceMethodDeclaration() != null
+            }
+        }.forEach { count(FeatureName.ABSTRACT_METHOD, it.toLocation()) }
+
+        ctx.interfaceBody().interfaceBodyDeclaration().filter { declaration ->
+            declaration.modifier().any {
+                when (it.text) {
+                    "public", "private", "protected" -> true
+                    else -> false
                 }
-            }.size
-        )
-        count(
-            FeatureName.FINAL_METHOD,
-            ctx.interfaceBody().interfaceBodyDeclaration().filter { declaration ->
-                declaration.modifier().any {
-                    it.classOrInterfaceModifier().FINAL() != null &&
-                        declaration.interfaceMemberDeclaration().interfaceMethodDeclaration() != null
-                }
-            }.size
-        )
-        count(
-            FeatureName.ABSTRACT_METHOD,
-            ctx.interfaceBody().interfaceBodyDeclaration().filter { declaration ->
-                declaration.modifier().any {
-                    it.classOrInterfaceModifier().ABSTRACT() != null &&
-                        declaration.interfaceMemberDeclaration().interfaceMethodDeclaration() != null
-                }
-            }.size
-        )
-        count(
-            FeatureName.VISIBILITY_MODIFIERS,
-            ctx.interfaceBody().interfaceBodyDeclaration().filter { declaration ->
-                declaration.modifier().any {
-                    when (it.text) {
-                        "public", "private", "protected" -> true
-                        else -> false
-                    }
-                }
-            }.size
-        )
+            }
+        }.forEach { count(FeatureName.VISIBILITY_MODIFIERS, it.toLocation()) }
     }
 
     override fun exitInterfaceDeclaration(ctx: JavaParser.InterfaceDeclarationContext?) {
@@ -328,7 +286,7 @@ class JavaFeatureListener(val source: Source, entry: Map.Entry<String, String>) 
             Location(ctx.start.line, ctx.start.charPositionInLine),
             Location(ctx.stop.line, ctx.stop.charPositionInLine)
         )
-        count(FeatureName.ENUM)
+        count(FeatureName.ENUM, ctx.toLocation())
     }
 
     override fun exitEnumDeclaration(ctx: JavaParser.EnumDeclarationContext) {
@@ -341,7 +299,7 @@ class JavaFeatureListener(val source: Source, entry: Map.Entry<String, String>) 
             Location(ctx.start.line, ctx.start.charPositionInLine),
             Location(ctx.stop.line, ctx.stop.charPositionInLine)
         )
-        count(FeatureName.RECORD)
+        count(FeatureName.RECORD, ctx.toLocation())
     }
 
     override fun exitRecordDeclaration(ctx: JavaParser.RecordDeclarationContext?) {
@@ -364,33 +322,31 @@ class JavaFeatureListener(val source: Source, entry: Map.Entry<String, String>) 
 
     override fun enterMethodDeclaration(ctx: JavaParser.MethodDeclarationContext) {
         if (!ctx.isSnippetMethod()) {
-            count(FeatureName.METHOD)
+            count(FeatureName.METHOD, ctx.toLocation())
             if (ctx.identifier().text.startsWith("get")) {
-                count(FeatureName.GETTER)
+                count(FeatureName.GETTER, ctx.toLocation())
             }
             if (ctx.identifier().text.startsWith("set")) {
-                count(FeatureName.SETTER)
+                count(FeatureName.SETTER, ctx.toLocation())
             }
             ctx.THROWS()?.also {
-                count(FeatureName.THROWS)
+                count(FeatureName.THROWS, ctx.toLocation())
             }
         }
-        count(
-            FeatureName.FINAL_CLASS,
-            ctx.methodBody().block()?.blockStatement()?.filter { statement ->
-                statement.localTypeDeclaration()?.classOrInterfaceModifier()?.any {
-                    it.FINAL() != null && statement.localTypeDeclaration().classDeclaration() != null
-                } ?: false
-            }?.size ?: 0
-        )
-        count(
-            FeatureName.ABSTRACT_CLASS,
-            ctx.methodBody().block()?.blockStatement()?.filter { statement ->
-                statement.localTypeDeclaration()?.classOrInterfaceModifier()?.any {
-                    it.ABSTRACT() != null && statement.localTypeDeclaration().classDeclaration() != null
-                } ?: false
-            }?.size ?: 0
-        )
+        ctx.methodBody().block()?.blockStatement()?.filter { statement ->
+            statement.localTypeDeclaration()?.classOrInterfaceModifier()?.any {
+                it.FINAL() != null && statement.localTypeDeclaration().classDeclaration() != null
+            } ?: false
+        }?.forEach {
+            count(FeatureName.FINAL_CLASS, it.toLocation())
+        }
+
+        ctx.methodBody().block()?.blockStatement()?.filter { statement ->
+            statement.localTypeDeclaration()?.classOrInterfaceModifier()?.any {
+                it.ABSTRACT() != null && statement.localTypeDeclaration().classDeclaration() != null
+            } ?: false
+        }?.forEach { count(FeatureName.ABSTRACT_CLASS, it.toLocation()) }
+
         enterMethodOrConstructor(
             "${ctx.typeTypeOrVoid().text} ${ctx.fullName()}",
             Location(ctx.start.line, ctx.start.charPositionInLine),
@@ -411,7 +367,7 @@ class JavaFeatureListener(val source: Source, entry: Map.Entry<String, String>) 
             Location(ctx.start.line, ctx.start.charPositionInLine),
             Location(ctx.stop.line, ctx.stop.charPositionInLine)
         )
-        count(FeatureName.METHOD)
+        count(FeatureName.METHOD, ctx.toLocation())
     }
 
     override fun exitInterfaceMethodDeclaration(ctx: JavaParser.InterfaceMethodDeclarationContext) {
@@ -429,9 +385,11 @@ class JavaFeatureListener(val source: Source, entry: Map.Entry<String, String>) 
             Location(ctx.start.line, ctx.start.charPositionInLine),
             Location(ctx.stop.line, ctx.stop.charPositionInLine)
         )
-        count(FeatureName.CONSTRUCTOR)
+
+        count(FeatureName.CONSTRUCTOR, ctx.toLocation())
+
         ctx.THROWS()?.also {
-            count(FeatureName.THROWS)
+            count(FeatureName.THROWS, ctx.toLocation())
         }
     }
 
@@ -442,23 +400,29 @@ class JavaFeatureListener(val source: Source, entry: Map.Entry<String, String>) 
     private val seenObjectIdentifiers = mutableSetOf<String>()
 
     override fun enterLocalVariableDeclaration(ctx: JavaParser.LocalVariableDeclarationContext) {
-        count(FeatureName.LOCAL_VARIABLE_DECLARATIONS, ctx.variableDeclarators().variableDeclarator().size)
+        count(
+            FeatureName.LOCAL_VARIABLE_DECLARATIONS,
+            ctx.toLocation(),
+            ctx.variableDeclarators().variableDeclarator().size
+        )
         count(
             FeatureName.VARIABLE_ASSIGNMENTS,
+            ctx.toLocation(),
             ctx.variableDeclarators().variableDeclarator().filter {
                 it.variableInitializer() != null
             }.size
         )
         count(
             FeatureName.ARRAY_LITERAL,
+            ctx.toLocation(),
             ctx.variableDeclarators().variableDeclarator().filter {
                 it.variableInitializer()?.arrayInitializer() != null
             }.size
         )
         val numBrackets = ctx.typeType().text.filter { it == '[' || it == ']' }.length
         when {
-            numBrackets > 2 -> count(FeatureName.MULTIDIMENSIONAL_ARRAYS)
-            numBrackets > 0 -> count(FeatureName.ARRAYS)
+            numBrackets > 2 -> count(FeatureName.MULTIDIMENSIONAL_ARRAYS, ctx.toLocation())
+            numBrackets > 0 -> count(FeatureName.ARRAYS, ctx.toLocation())
         }
         for (declarator in ctx.variableDeclarators().variableDeclarator()) {
             currentFeatures.features.identifierList.add(declarator.variableDeclaratorId().identifier().text)
@@ -476,9 +440,19 @@ class JavaFeatureListener(val source: Source, entry: Map.Entry<String, String>) 
     private val currentFeatureMap: MutableMap<FeatureName, Int>
         get() = currentFeatures.features.featureMap
 
-    private fun count(feature: FeatureName, amount: Int = 1) {
+    private val currentFeatureList: MutableList<LocatedFeature>
+        get() = currentFeatures.features.featureList
+
+    private fun count(feature: FeatureName, location: Location, amount: Int = 1) {
         currentFeatureMap[feature] = (currentFeatureMap[feature] ?: 0) + amount
+        if (amount >= 1) {
+            currentFeatureList += LocatedFeature(feature, source.mapLocation(filename, location))
+        }
     }
+
+    private fun ParserRuleContext.toLocation() = Location(start.line, start.charPositionInLine)
+
+    private fun TerminalNode.toLocation() = Location(symbol.line, symbol.charPositionInLine)
 
     @Suppress("LongMethod", "ComplexMethod", "NestedBlockDepth")
     override fun enterStatement(ctx: JavaParser.StatementContext) {
@@ -489,28 +463,28 @@ class JavaFeatureListener(val source: Source, entry: Map.Entry<String, String>) 
                 it.text.startsWith("System.err.println(") ||
                 it.text.startsWith("System.err.print(")
             ) {
-                count(FeatureName.PRINT_STATEMENTS)
-                count(FeatureName.DOTTED_VARIABLE_ACCESS, -1)
-                count(FeatureName.DOTTED_METHOD_CALL, -1)
-                count(FeatureName.DOT_NOTATION, -2)
+                count(FeatureName.PRINT_STATEMENTS, ctx.toLocation())
+                count(FeatureName.DOTTED_VARIABLE_ACCESS, ctx.toLocation(), -1)
+                count(FeatureName.DOTTED_METHOD_CALL, ctx.toLocation(), -1)
+                count(FeatureName.DOT_NOTATION, ctx.toLocation(), -2)
             }
             if (it.bop?.text == "=") {
-                count(FeatureName.VARIABLE_REASSIGNMENTS)
+                count(FeatureName.VARIABLE_REASSIGNMENTS, ctx.toLocation())
             }
         }
         ctx.FOR()?.also {
-            count(FeatureName.FOR_LOOPS)
+            count(FeatureName.FOR_LOOPS, ctx.toLocation())
             if (ctx.forControl().enhancedForControl() != null) {
-                count(FeatureName.ENHANCED_FOR)
-                count(FeatureName.LOCAL_VARIABLE_DECLARATIONS)
+                count(FeatureName.ENHANCED_FOR, ctx.toLocation())
+                count(FeatureName.LOCAL_VARIABLE_DECLARATIONS, ctx.toLocation())
             }
         }
         ctx.WHILE()?.also {
             // Only increment whileLoopCount if it's not a do-while loop
             if (ctx.DO() != null) {
-                count(FeatureName.DO_WHILE_LOOPS)
+                count(FeatureName.DO_WHILE_LOOPS, ctx.toLocation())
             } else {
-                count(FeatureName.WHILE_LOOPS)
+                count(FeatureName.WHILE_LOOPS, ctx.toLocation())
             }
         }
         ctx.IF()?.also {
@@ -518,23 +492,23 @@ class JavaFeatureListener(val source: Source, entry: Map.Entry<String, String>) 
             val outerIfStart = ctx.start.startIndex
             if (outerIfStart !in seenIfStarts) {
                 // Count if block
-                count(FeatureName.IF_STATEMENTS)
+                count(FeatureName.IF_STATEMENTS, ctx.toLocation())
                 seenIfStarts += outerIfStart
                 check(ctx.statement().isNotEmpty())
 
                 if (ctx.statement().size == 2 && ctx.statement(1).block() != null) {
                     // Count else block
                     check(ctx.ELSE() != null)
-                    count(FeatureName.ELSE_STATEMENTS)
+                    count(FeatureName.ELSE_STATEMENTS, ctx.ELSE().toLocation())
                 } else if (ctx.statement().size >= 2) {
                     var statement = ctx.statement(1)
                     while (statement != null) {
                         if (statement.IF() != null) {
                             // If statement contains an IF, it is part of a chain
                             seenIfStarts += statement.start.startIndex
-                            count(FeatureName.ELSE_IF)
+                            count(FeatureName.ELSE_IF, statement.toLocation())
                         } else {
-                            count(FeatureName.ELSE_STATEMENTS)
+                            count(FeatureName.ELSE_STATEMENTS, statement.toLocation())
                         }
                         statement = statement.statement(1)
                     }
@@ -542,28 +516,28 @@ class JavaFeatureListener(val source: Source, entry: Map.Entry<String, String>) 
             }
         }
         ctx.TRY()?.also {
-            count(FeatureName.TRY_BLOCK)
+            count(FeatureName.TRY_BLOCK, ctx.toLocation())
             ctx.finallyBlock()?.also {
-                count(FeatureName.FINALLY)
+                count(FeatureName.FINALLY, ctx.toLocation())
             }
         }
         ctx.ASSERT()?.also {
-            count(FeatureName.ASSERT)
+            count(FeatureName.ASSERT, ctx.toLocation())
         }
         ctx.SWITCH()?.also {
-            count(FeatureName.SWITCH)
+            count(FeatureName.SWITCH, ctx.toLocation())
         }
         ctx.THROW()?.also {
-            count(FeatureName.THROW)
+            count(FeatureName.THROW, ctx.toLocation())
         }
         ctx.BREAK()?.also {
-            count(FeatureName.BREAK)
+            count(FeatureName.BREAK, ctx.toLocation())
         }
         ctx.CONTINUE()?.also {
-            count(FeatureName.CONTINUE)
+            count(FeatureName.CONTINUE, ctx.toLocation())
         }
         ctx.RETURN()?.also {
-            count(FeatureName.RETURN)
+            count(FeatureName.RETURN, ctx.toLocation())
         }
         // Count nested loops
         if (ctx.WHILE() != null || ctx.FOR() != null) {
@@ -573,15 +547,15 @@ class JavaFeatureListener(val source: Source, entry: Map.Entry<String, String>) 
                     for (block in statement) {
                         val blockStatement = block.statement()
                         blockStatement?.FOR()?.also {
-                            count(FeatureName.NESTED_FOR)
-                            count(FeatureName.NESTED_LOOP)
+                            count(FeatureName.NESTED_FOR, blockStatement.toLocation())
+                            count(FeatureName.NESTED_LOOP, blockStatement.toLocation())
                         }
                         blockStatement?.WHILE()?.also {
-                            count(FeatureName.NESTED_LOOP)
+                            count(FeatureName.NESTED_LOOP, blockStatement.toLocation())
                             if (block.statement().DO() != null) {
-                                count(FeatureName.NESTED_DO_WHILE)
+                                count(FeatureName.NESTED_DO_WHILE, blockStatement.toLocation())
                             } else {
-                                count(FeatureName.NESTED_WHILE)
+                                count(FeatureName.NESTED_WHILE, blockStatement.toLocation())
                             }
                         }
                     }
@@ -595,7 +569,7 @@ class JavaFeatureListener(val source: Source, entry: Map.Entry<String, String>) 
                     for (block in statement) {
                         val blockStatement = block.statement()
                         blockStatement?.IF()?.also {
-                            count(FeatureName.NESTED_IF)
+                            count(FeatureName.NESTED_IF, blockStatement.toLocation())
                         }
                     }
                 }
@@ -604,33 +578,35 @@ class JavaFeatureListener(val source: Source, entry: Map.Entry<String, String>) 
     }
 
     override fun enterExpression(ctx: JavaParser.ExpressionContext) {
+        @Suppress("SpellCheckingInspection")
         when (ctx.bop?.text) {
-            "<", ">", "<=", ">=", "==", "!=" -> count(FeatureName.COMPARISON_OPERATORS)
-            "&&", "||" -> count(FeatureName.LOGICAL_OPERATORS)
-            "+", "-", "*", "/", "%" -> count(FeatureName.ARITHMETIC_OPERATORS)
-            "&", "|", "^" -> count(FeatureName.BITWISE_OPERATORS)
+            "<", ">", "<=", ">=", "==", "!=" -> count(FeatureName.COMPARISON_OPERATORS, ctx.toLocation())
+            "&&", "||" -> count(FeatureName.LOGICAL_OPERATORS, ctx.toLocation())
+            "+", "-", "*", "/", "%" -> count(FeatureName.ARITHMETIC_OPERATORS, ctx.toLocation())
+            "&", "|", "^" -> count(FeatureName.BITWISE_OPERATORS, ctx.toLocation())
             "+=", "-=", "*=", "/=", "%=" -> {
-                count(FeatureName.ASSIGNMENT_OPERATORS)
-                count(FeatureName.VARIABLE_REASSIGNMENTS)
+                count(FeatureName.ASSIGNMENT_OPERATORS, ctx.toLocation())
+                count(FeatureName.VARIABLE_REASSIGNMENTS, ctx.toLocation())
             }
-            "?" -> count(FeatureName.TERNARY_OPERATOR)
-            "instanceof" -> count(FeatureName.INSTANCEOF)
+
+            "?" -> count(FeatureName.TERNARY_OPERATOR, ctx.toLocation())
+            "instanceof" -> count(FeatureName.INSTANCEOF, ctx.toLocation())
             "." -> {
-                count(FeatureName.DOT_NOTATION)
+                count(FeatureName.DOT_NOTATION, ctx.toLocation())
                 if (ctx.identifier() != null) {
                     if (ctx.identifier().text != "length") {
-                        count(FeatureName.DOTTED_VARIABLE_ACCESS)
+                        count(FeatureName.DOTTED_VARIABLE_ACCESS, ctx.toLocation())
                     } else {
-                        count(FeatureName.DOT_NOTATION, -1)
+                        count(FeatureName.DOT_NOTATION, ctx.toLocation(), -1)
                     }
                 }
                 if (ctx.methodCall() != null) {
-                    count(FeatureName.DOTTED_METHOD_CALL)
+                    count(FeatureName.DOTTED_METHOD_CALL, ctx.toLocation())
                     val identifier = ctx.methodCall().identifier()?.text
                     if (identifier != null) {
                         currentFeatures.features.dottedMethodList += identifier
                         if (identifier == "equals") {
-                            count(FeatureName.EQUALITY)
+                            count(FeatureName.EQUALITY, ctx.toLocation())
                         }
                     }
                 }
@@ -638,34 +614,35 @@ class JavaFeatureListener(val source: Source, entry: Map.Entry<String, String>) 
         }
         when (ctx.prefix?.text) {
             "++", "--" -> {
-                count(FeatureName.UNARY_OPERATORS)
-                count(FeatureName.VARIABLE_REASSIGNMENTS)
+                count(FeatureName.UNARY_OPERATORS, ctx.toLocation())
+                count(FeatureName.VARIABLE_REASSIGNMENTS, ctx.toLocation())
             }
-            "~" -> count(FeatureName.BITWISE_OPERATORS)
-            "!" -> count(FeatureName.LOGICAL_OPERATORS)
+
+            "~" -> count(FeatureName.BITWISE_OPERATORS, ctx.toLocation())
+            "!" -> count(FeatureName.LOGICAL_OPERATORS, ctx.toLocation())
         }
         when (ctx.postfix?.text) {
             "++", "--" -> {
-                count(FeatureName.UNARY_OPERATORS)
-                count(FeatureName.VARIABLE_REASSIGNMENTS)
+                count(FeatureName.UNARY_OPERATORS, ctx.toLocation())
+                count(FeatureName.VARIABLE_REASSIGNMENTS, ctx.toLocation())
             }
         }
         if (ctx.text == "null") {
-            count(FeatureName.NULL)
+            count(FeatureName.NULL, ctx.toLocation())
         }
         if (ctx.bop == null) {
             if (ctx.text.contains("<<") || ctx.text.contains(">>")) {
-                count(FeatureName.BITWISE_OPERATORS)
+                count(FeatureName.BITWISE_OPERATORS, ctx.toLocation())
             }
             if (ctx.expression().size != 0 && (ctx.text.contains("[") || ctx.text.contains("]"))) {
-                count(FeatureName.ARRAY_ACCESS)
+                count(FeatureName.ARRAY_ACCESS, ctx.toLocation())
             }
         }
         if (ctx.text.startsWith("(" + ctx.typeType()?.text + ")")) {
             if (ctx.typeType()?.primitiveType() != null) {
-                count(FeatureName.PRIMITIVE_CASTING)
+                count(FeatureName.PRIMITIVE_CASTING, ctx.toLocation())
             } else {
-                count(FeatureName.CASTING)
+                count(FeatureName.CASTING, ctx.toLocation())
             }
         }
         if (ctx.bop?.text == "==" || ctx.bop?.text == "!=") {
@@ -673,40 +650,26 @@ class JavaFeatureListener(val source: Source, entry: Map.Entry<String, String>) 
             if (seenObjectIdentifiers.contains(ctx.expression(0).text) &&
                 seenObjectIdentifiers.contains(ctx.expression(1).text)
             ) {
-                count(FeatureName.REFERENCE_EQUALITY)
+                count(FeatureName.REFERENCE_EQUALITY, ctx.toLocation())
             }
         }
         ctx.NEW()?.also {
             if (ctx.creator()?.arrayCreatorRest() == null && ctx.creator()?.createdName()?.text != "String") {
-                count(FeatureName.NEW_KEYWORD)
+                count(FeatureName.NEW_KEYWORD, ctx.toLocation())
             }
         }
         ctx.primary()?.THIS()?.also {
-            count(FeatureName.THIS)
+            count(FeatureName.THIS, ctx.toLocation())
         }
         ctx.methodCall()?.SUPER()?.also {
-            count(FeatureName.SUPER)
+            count(FeatureName.SUPER, ctx.toLocation())
         }
         ctx.creator()?.classCreatorRest()?.classBody()?.also {
-            count(FeatureName.ANONYMOUS_CLASSES)
+            count(FeatureName.ANONYMOUS_CLASSES, ctx.toLocation())
         }
         ctx.lambdaExpression()?.also {
-            count(FeatureName.LAMBDA_EXPRESSIONS)
+            count(FeatureName.LAMBDA_EXPRESSIONS, ctx.toLocation())
         }
-        /*
-        if (ctx.bop?.text != ".") {
-            ctx.methodCall()?.also {
-                val methodName = ctx.methodCall().identifier()
-                if (methodName != null && featureStack[0].name.contains(methodName.text)) {
-                    if (ctx.methodCall().expressionList()?.text?.filter { it == ',' }?.length
-                        == featureStack[0].name.filter { it == ',' }.length
-                    ) {
-                        count(FeatureName.RECURSION)
-                    }
-                }
-            }
-        }
-         */
     }
 
     override fun enterTypeType(ctx: JavaParser.TypeTypeContext) {
@@ -718,24 +681,28 @@ class JavaFeatureListener(val source: Source, entry: Map.Entry<String, String>) 
         }
         count(
             FeatureName.STRING,
+            ctx.toLocation(),
             ctx.classOrInterfaceType()?.identifier()?.filter {
                 it.text == "String"
             }?.size ?: 0
         )
         count(
             FeatureName.STREAM,
+            ctx.toLocation(),
             ctx.classOrInterfaceType()?.identifier()?.filter {
                 it.text == "Stream"
             }?.size ?: 0
         )
         count(
             FeatureName.COMPARABLE,
+            ctx.toLocation(),
             ctx.classOrInterfaceType()?.identifier()?.filter {
                 it.text == "Comparable"
             }?.size ?: 0
         )
         count(
             FeatureName.BOXING_CLASSES,
+            ctx.toLocation(),
             ctx.classOrInterfaceType()?.identifier()?.filter {
                 when (it.text) {
                     "Boolean", "Byte", "Character", "Float", "Integer", "Long", "Short", "Double" -> true
@@ -745,10 +712,11 @@ class JavaFeatureListener(val source: Source, entry: Map.Entry<String, String>) 
         )
         count(
             FeatureName.TYPE_PARAMETERS,
+            ctx.toLocation(),
             ctx.classOrInterfaceType()?.typeArguments()?.size ?: 0
         )
         if (ctx.text == "var" || ctx.text == "val") {
-            count(FeatureName.TYPE_INFERENCE)
+            count(FeatureName.TYPE_INFERENCE, ctx.toLocation())
         }
     }
 

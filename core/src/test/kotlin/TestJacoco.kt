@@ -166,7 +166,8 @@ fun main() {
         }
     }
     "f: should miss assert" {
-        Source.fromJava("""
+        Source.fromJava(
+            """
 public class Test {
   public void test() {
     assert System.currentTimeMillis() != 0L;

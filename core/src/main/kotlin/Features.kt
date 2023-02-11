@@ -106,7 +106,6 @@ enum class FeatureName(val description: String) {
     STREAM("streams"),
     ENUM("enums"),
 
-    // RECURSION("recursion"),
     COMPARABLE("Comparable interface"),
     RECORD("records"),
     BOXING_CLASSES("boxing classes"),
@@ -186,12 +185,22 @@ class FeatureMap(val map: MutableMap<FeatureName, Int> = mutableMapOf()) : Mutab
 }
 
 @JsonClass(generateAdapter = true)
+data class LocatedFeature(val feature: FeatureName, val location: Location)
+
+fun List<LocatedFeature>.hasFeatureAtLine(feature: FeatureName, line: Int) =
+    find { it.feature == feature && it.location.line == line } != null
+
+fun List<LocatedFeature>.allFeatureAtLines(feature: FeatureName, lines: List<Int>) =
+    filter { it.feature == feature }.map { it.location.line }.sorted() == lines.sorted()
+
+@JsonClass(generateAdapter = true)
 data class Features(
-    var featureMap: FeatureMap = FeatureMap(),
-    var importList: MutableSet<String> = mutableSetOf(),
-    var typeList: MutableSet<String> = mutableSetOf(),
-    var identifierList: MutableSet<String> = mutableSetOf(),
-    var dottedMethodList: MutableSet<String> = mutableSetOf()
+    val featureMap: FeatureMap = FeatureMap(),
+    val featureList: MutableList<LocatedFeature> = mutableListOf(),
+    val importList: MutableSet<String> = mutableSetOf(),
+    val typeList: MutableSet<String> = mutableSetOf(),
+    val identifierList: MutableSet<String> = mutableSetOf(),
+    val dottedMethodList: MutableSet<String> = mutableSetOf()
 ) {
     operator fun plus(other: Features): Features {
         val map = FeatureMap()
@@ -200,6 +209,7 @@ data class Features(
         }
         return Features(
             map,
+            (featureList + other.featureList).toMutableList(),
             (importList + other.importList).toMutableSet(),
             (typeList + other.typeList).toMutableSet(),
             (identifierList + other.identifierList).toMutableSet(),
@@ -222,6 +232,11 @@ sealed class FeatureValue(
         } else {
             methods[name] ?: error("method $name not found ${methods.keys}")
         } as FeatureValue
+    }
+
+    fun finalize(): FeatureValue {
+        features.featureList.sortWith(compareBy({ it.location.line }, { it.location.column }))
+        return this
     }
 }
 
