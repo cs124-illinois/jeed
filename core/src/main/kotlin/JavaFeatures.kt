@@ -666,10 +666,11 @@ class JavaFeatureListener(val source: Source, entry: Map.Entry<String, String>) 
             // Check if both expressions are objects, i.e. references are being compared
             if (seenObjectIdentifiers.containsAll(identifiers)) {
                 count(FeatureName.REFERENCE_EQUALITY, ctx.toLocation())
-            }
-            val unseenIdentifiers = identifiers - seenObjectIdentifiers
-            if (unseenIdentifiers.all { it.startsWith("\"") && it.endsWith("\"") }) {
-                count(FeatureName.REFERENCE_EQUALITY, ctx.toLocation())
+            } else {
+                val unseenIdentifiers = identifiers - seenObjectIdentifiers
+                if (unseenIdentifiers.all { it.startsWith("\"") && it.endsWith("\"") }) {
+                    count(FeatureName.REFERENCE_EQUALITY, ctx.toLocation())
+                }
             }
         }
         ctx.NEW()?.also {

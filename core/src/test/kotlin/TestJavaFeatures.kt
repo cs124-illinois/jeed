@@ -986,7 +986,7 @@ public class Catcher {
             featureList should haveFeatureAt(FeatureName.NEW_KEYWORD, listOf())
         }
     }
-    "f: should not count new with arrays" {
+    "should not count new with arrays" {
         Source.fromSnippet(
             """int[] midThree(int[] values) {
                 |  return new int[] {
