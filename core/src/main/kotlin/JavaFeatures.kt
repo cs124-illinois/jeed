@@ -518,7 +518,7 @@ class JavaFeatureListener(val source: Source, entry: Map.Entry<String, String>) 
         ctx.TRY()?.also {
             count(FeatureName.TRY_BLOCK, ctx.toLocation())
             ctx.finallyBlock()?.also {
-                count(FeatureName.FINALLY, ctx.toLocation())
+                count(FeatureName.FINALLY, it.toLocation())
             }
         }
         ctx.ASSERT()?.also {

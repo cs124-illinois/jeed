@@ -22,15 +22,24 @@ i++;
         ).features().check {
             featureMap[FeatureName.LOCAL_VARIABLE_DECLARATIONS] shouldBe 2
             featureList should haveFeatureAt(FeatureName.LOCAL_VARIABLE_DECLARATIONS, listOf(1, 2))
+
             featureMap[FeatureName.VARIABLE_ASSIGNMENTS] shouldBe 1
             featureList should haveFeatureAt(FeatureName.VARIABLE_ASSIGNMENTS, listOf(1))
+
             featureMap[FeatureName.VARIABLE_REASSIGNMENTS] shouldBe 4
             featureList should haveFeatureAt(FeatureName.VARIABLE_REASSIGNMENTS, (3..6).toList())
         }.check("") {
             featureMap[FeatureName.METHOD] shouldBe 0
+            featureList should haveFeatureAt(FeatureName.METHOD, listOf())
+
             featureMap[FeatureName.VISIBILITY_MODIFIERS] shouldBe 0
+            featureList should haveFeatureAt(FeatureName.VISIBILITY_MODIFIERS, listOf())
+
             featureMap[FeatureName.THROWS] shouldBe 0
+            featureList should haveFeatureAt(FeatureName.THROWS, listOf())
+
             featureMap[FeatureName.STATIC_METHOD] shouldBe 0
+            featureList should haveFeatureAt(FeatureName.STATIC_METHOD, listOf())
         }
     }
     "should count for loops in snippets" {
@@ -52,6 +61,7 @@ for (int num : arr) {
             featureList should haveFeatureAt(FeatureName.ARRAYS, listOf(4))
 
             featureMap[FeatureName.NEW_KEYWORD] shouldBe 0
+            featureList should haveFeatureAt(FeatureName.NEW_KEYWORD, listOf())
 
             featureMap[FeatureName.VARIABLE_ASSIGNMENTS] shouldBe 2
             featureList should haveFeatureAt(FeatureName.VARIABLE_ASSIGNMENTS, listOf(1, 4))
@@ -75,10 +85,15 @@ for (int i = 0; i < 10; i++) {
     }
 }
 """.trim()
-        ).features().also {
-            it.lookup(".").features.featureMap[FeatureName.FOR_LOOPS] shouldBe 2
-            it.lookup(".").features.featureMap[FeatureName.NESTED_FOR] shouldBe 1
-            it.lookup(".").features.featureMap[FeatureName.NESTED_LOOP] shouldBe 1
+        ).features().check {
+            featureMap[FeatureName.FOR_LOOPS] shouldBe 2
+            featureList should haveFeatureAt(FeatureName.FOR_LOOPS, listOf(1, 2))
+
+            featureMap[FeatureName.NESTED_FOR] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.NESTED_FOR, listOf(2))
+
+            featureMap[FeatureName.NESTED_LOOP] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.NESTED_LOOP, listOf(2))
         }
     }
     "should count while loops in snippets" {
@@ -92,13 +107,18 @@ while (i < 10) {
     i++;
 }
 """.trim()
-        ).features().also {
-            it.lookup(".").features.featureMap[FeatureName.WHILE_LOOPS] shouldBe 2
-            it.lookup(".").features.featureMap[FeatureName.NESTED_WHILE] shouldBe 1
-            it.lookup(".").features.featureMap[FeatureName.DO_WHILE_LOOPS] shouldBe 0
+        ).features().check {
+            featureMap[FeatureName.WHILE_LOOPS] shouldBe 2
+            featureList should haveFeatureAt(FeatureName.WHILE_LOOPS, listOf(2, 3))
+
+            featureMap[FeatureName.NESTED_WHILE] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.NESTED_WHILE, listOf(3))
+
+            featureMap[FeatureName.DO_WHILE_LOOPS] shouldBe 0
+            featureList should haveFeatureAt(FeatureName.DO_WHILE_LOOPS, listOf())
         }
     }
-    "should not count while loops under if " {
+    "should not count while loops under if" {
         Source.fromSnippet(
             """
 int i = 0;
@@ -109,9 +129,12 @@ if (i < 10) {
     i++;
 }
 """.trim()
-        ).features().also {
-            it.lookup(".").features.featureMap[FeatureName.WHILE_LOOPS] shouldBe 1
-            it.lookup(".").features.featureMap[FeatureName.NESTED_WHILE] shouldBe 0
+        ).features().check {
+            featureMap[FeatureName.WHILE_LOOPS] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.WHILE_LOOPS, listOf(3))
+
+            featureMap[FeatureName.NESTED_WHILE] shouldBe 0
+            featureList should haveFeatureAt(FeatureName.NESTED_WHILE, listOf())
         }
     }
     "should count do-while loops in snippets" {
@@ -128,10 +151,15 @@ do {
     } while (j < 10);
 } while (i < 10);
 """.trim()
-        ).features().also {
-            it.lookup(".").features.featureMap[FeatureName.DO_WHILE_LOOPS] shouldBe 2
-            it.lookup(".").features.featureMap[FeatureName.NESTED_DO_WHILE] shouldBe 1
-            it.lookup(".").features.featureMap[FeatureName.WHILE_LOOPS] shouldBe 0
+        ).features().check {
+            featureMap[FeatureName.DO_WHILE_LOOPS] shouldBe 2
+            featureList should haveFeatureAt(FeatureName.DO_WHILE_LOOPS, listOf(2, 7))
+
+            featureMap[FeatureName.NESTED_DO_WHILE] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.NESTED_DO_WHILE, listOf(7))
+
+            featureMap[FeatureName.WHILE_LOOPS] shouldBe 0
+            featureList should haveFeatureAt(FeatureName.WHILE_LOOPS, listOf())
         }
     }
     "should count simple if-else statements in snippets" {
@@ -144,9 +172,12 @@ if (i < 5) {
     i--;
 }
 """.trim()
-        ).features().also {
-            it.lookup(".").features.featureMap[FeatureName.IF_STATEMENTS] shouldBe 1
-            it.lookup(".").features.featureMap[FeatureName.ELSE_STATEMENTS] shouldBe 1
+        ).features().check {
+            featureMap[FeatureName.IF_STATEMENTS] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.IF_STATEMENTS, listOf(2))
+
+            featureMap[FeatureName.ELSE_STATEMENTS] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.ELSE_STATEMENTS, listOf(4))
         }
     }
     "should count a chain of if-else statements in snippets" {
@@ -163,10 +194,15 @@ if (i < 5) {
     i--;
 }
 """.trim()
-        ).features().also {
-            it.lookup(".").features.featureMap[FeatureName.IF_STATEMENTS] shouldBe 1
-            it.lookup(".").features.featureMap[FeatureName.ELSE_STATEMENTS] shouldBe 1
-            it.lookup(".").features.featureMap[FeatureName.ELSE_IF] shouldBe 2
+        ).features().check {
+            featureMap[FeatureName.IF_STATEMENTS] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.IF_STATEMENTS, listOf(2))
+
+            featureMap[FeatureName.ELSE_STATEMENTS] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.ELSE_STATEMENTS, listOf(8))
+
+            featureMap[FeatureName.ELSE_IF] shouldBe 2
+            featureList should haveFeatureAt(FeatureName.ELSE_IF, listOf(4, 6))
         }
     }
     "should count nested if statements in snippets" {
@@ -186,9 +222,12 @@ if (i < 15) {
     }
 }
 """.trim()
-        ).features().also {
-            it.lookup(".").features.featureMap[FeatureName.IF_STATEMENTS] shouldBe 4
-            it.lookup(".").features.featureMap[FeatureName.NESTED_IF] shouldBe 3
+        ).features().check {
+            featureMap[FeatureName.IF_STATEMENTS] shouldBe 4
+            featureList should haveFeatureAt(FeatureName.IF_STATEMENTS, listOf(2, 3, 5, 9))
+
+            featureMap[FeatureName.NESTED_IF] shouldBe 3
+            featureList should haveFeatureAt(FeatureName.NESTED_IF, listOf(3, 5, 9))
         }
     }
     "should count conditional expressions and complex conditionals in snippets" {
@@ -205,9 +244,12 @@ if (i < 5 || i > 15) {
     i--;
 }
 """.trim()
-        ).features().also {
-            it.lookup(".").features.featureMap[FeatureName.COMPARISON_OPERATORS] shouldBe 5
-            it.lookup(".").features.featureMap[FeatureName.LOGICAL_OPERATORS] shouldBe 2
+        ).features().check {
+            featureMap[FeatureName.COMPARISON_OPERATORS] shouldBe 5
+            featureList should haveFeatureAt(FeatureName.COMPARISON_OPERATORS, listOf(2, 2, 3, 6, 6))
+
+            featureMap[FeatureName.LOGICAL_OPERATORS] shouldBe 2
+            featureList should haveFeatureAt(FeatureName.LOGICAL_OPERATORS, listOf(2, 6))
         }
     }
     "should count try blocks, switch statements, finally blocks, and assertions in snippets" {
@@ -229,13 +271,19 @@ try {
 } catch (Exception e) {
     System.out.println("Oops");
 } finally { }
-        
 """.trim()
-        ).features().also {
-            it.lookup(".").features.featureMap[FeatureName.TRY_BLOCK] shouldBe 1
-            it.lookup(".").features.featureMap[FeatureName.ASSERT] shouldBe 1
-            it.lookup(".").features.featureMap[FeatureName.SWITCH] shouldBe 1
-            it.lookup(".").features.featureMap[FeatureName.FINALLY] shouldBe 1
+        ).features().check {
+            featureMap[FeatureName.TRY_BLOCK] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.TRY_BLOCK, listOf(2))
+
+            featureMap[FeatureName.ASSERT] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.ASSERT, listOf(3))
+
+            featureMap[FeatureName.SWITCH] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.SWITCH, listOf(4))
+
+            featureMap[FeatureName.FINALLY] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.FINALLY, listOf(16))
         }
     }
     "should count operators in snippets" {
@@ -258,12 +306,21 @@ if (i < 5) {
 }
 j = j << 2;
 """.trim()
-        ).features().also {
-            it.lookup(".").features.featureMap[FeatureName.UNARY_OPERATORS] shouldBe 2
-            it.lookup(".").features.featureMap[FeatureName.ARITHMETIC_OPERATORS] shouldBe 2
-            it.lookup(".").features.featureMap[FeatureName.BITWISE_OPERATORS] shouldBe 2
-            it.lookup(".").features.featureMap[FeatureName.ASSIGNMENT_OPERATORS] shouldBe 2
-            it.lookup(".").features.featureMap[FeatureName.TERNARY_OPERATOR] shouldBe 1
+        ).features().check {
+            featureMap[FeatureName.UNARY_OPERATORS] shouldBe 2
+            featureList should haveFeatureAt(FeatureName.UNARY_OPERATORS, listOf(7, 10))
+
+            featureMap[FeatureName.ARITHMETIC_OPERATORS] shouldBe 2
+            featureList should haveFeatureAt(FeatureName.ARITHMETIC_OPERATORS, listOf(5, 11))
+
+            featureMap[FeatureName.BITWISE_OPERATORS] shouldBe 2
+            featureList should haveFeatureAt(FeatureName.BITWISE_OPERATORS, listOf(8, 16))
+
+            featureMap[FeatureName.ASSIGNMENT_OPERATORS] shouldBe 2
+            featureList should haveFeatureAt(FeatureName.ASSIGNMENT_OPERATORS, listOf(4, 13))
+
+            featureMap[FeatureName.TERNARY_OPERATOR] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.TERNARY_OPERATOR, listOf(14))
         }
     }
     "should count the new keyword and array accesses in snippets" {
@@ -276,11 +333,18 @@ arr[1] = 10;
 arr[2] = arr[0] + arr[1];
 int[] nums = {1, 2, 4};
 """.trim()
-        ).features().also {
-            it.lookup(".").features.featureMap[FeatureName.ARRAYS] shouldBe 2
-            it.lookup(".").features.featureMap[FeatureName.NEW_KEYWORD] shouldBe 0
-            it.lookup(".").features.featureMap[FeatureName.ARRAY_ACCESS] shouldBe 5
-            it.lookup(".").features.featureMap[FeatureName.ARRAY_LITERAL] shouldBe 1
+        ).features().check {
+            featureMap[FeatureName.ARRAYS] shouldBe 2
+            featureList should haveFeatureAt(FeatureName.ARRAYS, listOf(1, 5))
+
+            featureMap[FeatureName.NEW_KEYWORD] shouldBe 0
+            featureList should haveFeatureAt(FeatureName.NEW_KEYWORD, listOf())
+
+            featureMap[FeatureName.ARRAY_ACCESS] shouldBe 5
+            featureList should haveFeatureAt(FeatureName.ARRAY_ACCESS, listOf(2, 3, 4, 4, 4))
+
+            featureMap[FeatureName.ARRAY_LITERAL] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.ARRAY_LITERAL, listOf(5))
         }
     }
     "should count strings, streams, and null in snippets" {
@@ -292,10 +356,18 @@ String first = "Hello, world!";
 String second = null;
 Stream<String> stream;
 """.trim()
-        ).features().also {
-            it.lookup(".").features.featureMap[FeatureName.STRING] shouldBe 3
-            it.lookup(".").features.featureMap[FeatureName.NULL] shouldBe 1
-            it.lookup(".").features.featureMap[FeatureName.STREAM] shouldBe 1
+        ).features().check {
+            featureMap[FeatureName.STRING] shouldBe 3
+            featureList should haveFeatureAt(FeatureName.STRING, listOf(3, 4, 5))
+
+            featureMap[FeatureName.NULL] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.NULL, listOf(4))
+
+            featureMap[FeatureName.STREAM] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.STREAM, listOf(5))
+        }.check("") {
+            featureMap[FeatureName.IMPORT] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.IMPORT, listOf(1))
         }
     }
     "should count multidimensional arrays in snippets" {
@@ -304,8 +376,9 @@ Stream<String> stream;
 int[][] array = new int[5][5];
 char[][] array1 = new char[10][10];
 """.trim()
-        ).features().also {
-            it.lookup(".").features.featureMap[FeatureName.MULTIDIMENSIONAL_ARRAYS] shouldBe 2
+        ).features().check {
+            featureMap[FeatureName.MULTIDIMENSIONAL_ARRAYS] shouldBe 2
+            featureList should haveFeatureAt(FeatureName.MULTIDIMENSIONAL_ARRAYS, listOf(1, 2))
         }
     }
     "should count use of type inference in snippets" {
@@ -314,8 +387,9 @@ char[][] array1 = new char[10][10];
 var first = 0;
 val second = "Hello, world!";
 """.trim()
-        ).features().also {
-            it.lookup(".").features.featureMap[FeatureName.TYPE_INFERENCE] shouldBe 2
+        ).features().check {
+            featureMap[FeatureName.TYPE_INFERENCE] shouldBe 2
+            featureList should haveFeatureAt(FeatureName.TYPE_INFERENCE, listOf(1, 2))
         }
     }
     "should count methods and classes" {
@@ -327,9 +401,12 @@ int test() {
 public class Test { }
 System.out.println("Hello, world!");
 """.trim()
-        ).features().also {
-            it.lookup("").features.featureMap[FeatureName.METHOD] shouldBe 1
-            it.lookup("").features.featureMap[FeatureName.CLASS] shouldBe 1
+        ).features().check("") {
+            featureMap[FeatureName.METHOD] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.METHOD, listOf(1))
+
+            featureMap[FeatureName.CLASS] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.CLASS, listOf(4))
         }
     }
     "should count constructors, methods, getters, setters, visibility modifiers, and static methods in classes" {
@@ -357,19 +434,36 @@ public class Test {
     }
     
     class InnerClass { }
-    
 }
 """.trim()
             )
-        ).features().also {
-            it.lookup("", "Test.java").features.featureMap[FeatureName.CLASS] shouldBe 2
-            it.lookup("Test", "Test.java").features.featureMap[FeatureName.CONSTRUCTOR] shouldBe 1
-            it.lookup("Test", "Test.java").features.featureMap[FeatureName.METHOD] shouldBe 3
-            it.lookup("Test", "Test.java").features.featureMap[FeatureName.GETTER] shouldBe 1
-            it.lookup("Test", "Test.java").features.featureMap[FeatureName.SETTER] shouldBe 1
-            it.lookup("Test", "Test.java").features.featureMap[FeatureName.STATIC_METHOD] shouldBe 1
-            it.lookup("Test", "Test.java").features.featureMap[FeatureName.VISIBILITY_MODIFIERS] shouldBe 2
-            it.lookup("Test", "Test.java").features.featureMap[FeatureName.NESTED_CLASS] shouldBe 1
+        ).features().check("", "Test.java") {
+            featureMap[FeatureName.CLASS] shouldBe 2
+            featureList should haveFeatureAt(FeatureName.CLASS, listOf(1, 21))
+
+            featureMap[FeatureName.VISIBILITY_MODIFIERS] shouldBe 3
+            featureList should haveFeatureAt(FeatureName.VISIBILITY_MODIFIERS, listOf(1, 2, 4))
+        }.check("Test", "Test.java") {
+            featureMap[FeatureName.CONSTRUCTOR] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.CONSTRUCTOR, listOf(4))
+
+            featureMap[FeatureName.METHOD] shouldBe 3
+            featureList should haveFeatureAt(FeatureName.METHOD, listOf(8, 12, 16))
+
+            featureMap[FeatureName.GETTER] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.GETTER, listOf(12))
+
+            featureMap[FeatureName.SETTER] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.SETTER, listOf(8))
+
+            featureMap[FeatureName.STATIC_METHOD] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.STATIC_METHOD, listOf(16))
+
+            featureMap[FeatureName.VISIBILITY_MODIFIERS] shouldBe 2
+            featureList should haveFeatureAt(FeatureName.VISIBILITY_MODIFIERS, listOf(2, 4))
+
+            featureMap[FeatureName.NESTED_CLASS] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.NESTED_CLASS, listOf(21))
         }
     }
     "should count the extends keyword, the super constructor, and the 'this' keyword in classes" {
@@ -389,10 +483,15 @@ public class Student extends Person {
     }
 }
 """.trim()
-        ).features().also {
-            it.lookup("Student").features.featureMap[FeatureName.EXTENDS] shouldBe 1
-            it.lookup("Student").features.featureMap[FeatureName.SUPER] shouldBe 1
-            it.lookup("Student").features.featureMap[FeatureName.THIS] shouldBe 1
+        ).features().check("Student") {
+            featureMap[FeatureName.EXTENDS] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.EXTENDS, listOf(7))
+
+            featureMap[FeatureName.SUPER] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.SUPER, listOf(10))
+
+            featureMap[FeatureName.THIS] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.THIS, listOf(11))
         }
     }
     "should count instanceof and casting" {
@@ -405,10 +504,15 @@ if (name instanceof String) {
     String test = (String) "test";
 }
 """.trim()
-        ).features().also {
-            it.lookup(".").features.featureMap[FeatureName.INSTANCEOF] shouldBe 1
-            it.lookup(".").features.featureMap[FeatureName.CASTING] shouldBe 1
-            it.lookup(".").features.featureMap[FeatureName.PRIMITIVE_CASTING] shouldBe 1
+        ).features().check {
+            featureMap[FeatureName.INSTANCEOF] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.INSTANCEOF, listOf(3))
+
+            featureMap[FeatureName.CASTING] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.CASTING, listOf(5))
+
+            featureMap[FeatureName.PRIMITIVE_CASTING] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.PRIMITIVE_CASTING, listOf(4))
         }
     }
     "should count override annotation and import statements" {
@@ -431,9 +535,12 @@ public class Test {
 }
 """.trim()
             )
-        ).features().also {
-            it.lookup("Test", "Test.java").features.featureMap[FeatureName.OVERRIDE] shouldBe 1
-            it.lookup("", "Test.java").features.featureMap[FeatureName.IMPORT] shouldBe 1
+        ).features().check("Test", "Test.java") {
+            featureMap[FeatureName.OVERRIDE] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.OVERRIDE, listOf(10))
+        }.check("", "Test.java") {
+            featureMap[FeatureName.IMPORT] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.IMPORT, listOf(1))
         }
     }
     "should count reference equality" {
@@ -443,8 +550,9 @@ String first = "Hello";
 String second = "World";
 boolean third = first == second;
 """.trim()
-        ).features().also {
-            it.lookup(".").features.featureMap[FeatureName.REFERENCE_EQUALITY] shouldBe 1
+        ).features().check {
+            featureMap[FeatureName.REFERENCE_EQUALITY] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.REFERENCE_EQUALITY, listOf(3))
         }
     }
     "should count interfaces and classes that implement interfaces" {
@@ -454,7 +562,6 @@ public interface Test {
     int add(int x, int y);
     int subtract(int x, int y);
 }
-
 public class Calculator implements Test {
     int add(int x, int y) {
         return x + y;
@@ -465,10 +572,15 @@ public class Calculator implements Test {
     }
 }
 """.trim()
-        ).features().also {
-            it.lookup("Test").features.featureMap[FeatureName.INTERFACE] shouldBe 1
-            it.lookup("Test").features.featureMap[FeatureName.METHOD] shouldBe 2
-            it.lookup("Calculator").features.featureMap[FeatureName.IMPLEMENTS] shouldBe 1
+        ).features().check("Test") {
+            featureMap[FeatureName.INTERFACE] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.INTERFACE, listOf(1))
+
+            featureMap[FeatureName.METHOD] shouldBe 2
+            featureList should haveFeatureAt(FeatureName.METHOD, listOf(2, 3))
+        }.check("Calculator") {
+            featureMap[FeatureName.IMPLEMENTS] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.IMPLEMENTS, listOf(5))
         }
     }
     "should count final and abstract methods" {
@@ -490,9 +602,12 @@ public class Calculator implements Test {
     }
 }
 """.trim()
-        ).features().also {
-            it.lookup("Test").features.featureMap[FeatureName.ABSTRACT_METHOD] shouldBe 2
-            it.lookup("Calculator").features.featureMap[FeatureName.FINAL_METHOD] shouldBe 1
+        ).features().check("Test") {
+            featureMap[FeatureName.ABSTRACT_METHOD] shouldBe 2
+            featureList should haveFeatureAt(FeatureName.ABSTRACT_METHOD, listOf(2, 3))
+        }.check("Calculator") {
+            featureMap[FeatureName.FINAL_METHOD] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.FINAL_METHOD, listOf(8))
         }
     }
     "should count anonymous classes" {
@@ -510,8 +625,9 @@ Person student = new Person() {
   }
 };
 """.trim()
-        ).features().also {
-            it.lookup(".").features.featureMap[FeatureName.ANONYMOUS_CLASSES] shouldBe 1
+        ).features().check {
+            featureMap[FeatureName.ANONYMOUS_CLASSES] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.ANONYMOUS_CLASSES, listOf(6))
         }
     }
     "should count lambda expressions" {
@@ -520,12 +636,12 @@ Person student = new Person() {
 interface Modify {
   int modify(int value);
 }
-
 Modify first = (value) -> value + 1;
 Modify second = (value) -> value - 10;
 """.trim()
-        ).features().also {
-            it.lookup(".").features.featureMap[FeatureName.LAMBDA_EXPRESSIONS] shouldBe 2
+        ).features().check {
+            featureMap[FeatureName.LAMBDA_EXPRESSIONS] shouldBe 2
+            featureList should haveFeatureAt(FeatureName.LAMBDA_EXPRESSIONS, listOf(4, 5))
         }
     }
     "should count throwing exceptions" {
@@ -538,9 +654,12 @@ void container(int setSize) throws IllegalArgumentException {
     values = new int[setSize];
 }
 """.trim()
-        ).features().also {
-            it.lookup("").features.featureMap[FeatureName.THROW] shouldBe 1
-            it.lookup("").features.featureMap[FeatureName.THROWS] shouldBe 1
+        ).features().check("") {
+            featureMap[FeatureName.THROW] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.THROW, listOf(3))
+
+            featureMap[FeatureName.THROWS] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.THROWS, listOf(1))
         }
     }
     "should count generic classes" {
@@ -568,8 +687,9 @@ public class Counter<T> {
 }
 """.trim()
             )
-        ).features().also {
-            it.lookup("Counter", "Counter.java").features.featureMap[FeatureName.GENERIC_CLASS] shouldBe 1
+        ).features().check("Counter", "Counter.java") {
+            featureMap[FeatureName.GENERIC_CLASS] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.GENERIC_CLASS, listOf(1))
         }
     }
     "should count classes declared inside methods" {
@@ -589,8 +709,9 @@ public class Test {
 }
 """.trim()
             )
-        ).features().also {
-            it.lookup("", "Test.java").features.featureMap[FeatureName.CLASS] shouldBe 2
+        ).features().check("", "Test.java") {
+            featureMap[FeatureName.CLASS] shouldBe 2
+            featureList should haveFeatureAt(FeatureName.CLASS, listOf(1, 9))
         }
     }
     "should count final classes" {
@@ -614,9 +735,12 @@ public final class Test {
 }
 """.trim()
             )
-        ).features().also {
-            it.lookup("", "Test.java").features.featureMap[FeatureName.FINAL_CLASS] shouldBe 3
-            it.lookup("", "Test.java").features.featureMap[FeatureName.ABSTRACT_CLASS] shouldBe 2
+        ).features().check("", "Test.java") {
+            featureMap[FeatureName.FINAL_CLASS] shouldBe 3
+            featureList should haveFeatureAt(FeatureName.FINAL_CLASS, listOf(1, 8, 12))
+
+            featureMap[FeatureName.ABSTRACT_CLASS] shouldBe 2
+            featureList should haveFeatureAt(FeatureName.ABSTRACT_CLASS, listOf(9, 13))
         }
     }
     "should count interface methods" {
@@ -629,12 +753,21 @@ public interface Test {
 }
                 """.trim()
             )
-        ).features().also {
-            it.lookup("", "Test.java").features.featureMap[FeatureName.INTERFACE] shouldBe 1
-            it.lookup("", "Test.java").features.featureMap[FeatureName.METHOD] shouldBe 2
-            it.lookup("", "Test.java").features.featureMap[FeatureName.STATIC_METHOD] shouldBe 1
-            it.lookup("", "Test.java").features.featureMap[FeatureName.FINAL_METHOD] shouldBe 1
-            it.lookup("", "Test.java").features.featureMap[FeatureName.VISIBILITY_MODIFIERS] shouldBe 3
+        ).features().check("", "Test.java") {
+            featureMap[FeatureName.INTERFACE] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.INTERFACE, listOf(1))
+
+            featureMap[FeatureName.METHOD] shouldBe 2
+            featureList should haveFeatureAt(FeatureName.METHOD, listOf(2, 3))
+
+            featureMap[FeatureName.STATIC_METHOD] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.STATIC_METHOD, listOf(3))
+
+            featureMap[FeatureName.FINAL_METHOD] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.FINAL_METHOD, listOf(2))
+
+            featureMap[FeatureName.VISIBILITY_MODIFIERS] shouldBe 3
+            featureList should haveFeatureAt(FeatureName.VISIBILITY_MODIFIERS, (1..3).toList())
         }
     }
     "should count enum classes" {
@@ -648,8 +781,9 @@ public enum Test {
 }
                 """.trim()
             )
-        ).features().also {
-            it.lookup("", "Test.java").features.featureMap[FeatureName.ENUM] shouldBe 1
+        ).features().check("", "Test.java") {
+            featureMap[FeatureName.ENUM] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.ENUM, listOf(1))
         }
     }
     "should correctly create a list of types and identifiers in snippets" {
@@ -661,9 +795,9 @@ boolean foo = true;
 String string = "Hello, world!";
 
 """.trim()
-        ).features().also {
-            it.lookup(".").features.typeList shouldBe arrayListOf("int", "double", "boolean", "String")
-            it.lookup(".").features.identifierList shouldBe arrayListOf("i", "j", "foo", "string")
+        ).features().check {
+            typeList shouldBe arrayListOf("int", "double", "boolean", "String")
+            identifierList shouldBe arrayListOf("i", "j", "foo", "string")
         }
     }
     "should correctly create a list of import statements" {
@@ -676,27 +810,10 @@ import java.util.ArrayList;
 public class Test { }
                 """.trim()
             )
-        ).features().also {
-            it.lookup("", "Test.java").features.importList shouldBe arrayListOf("java.util.List", "java.util.ArrayList")
+        ).features().check("", "Test.java") {
+            importList shouldBe arrayListOf("java.util.List", "java.util.ArrayList")
         }
     }
-    /*
-    "should count recursive calls" {
-        Source.fromSnippet(
-            """
-int countArray(int index, int[] array) {
-    if (index >= array.length) {
-           return 0;
-    }
-    return array[index] + countArray(index + 1, array);
-}
-""".trim()
-        ).features().also {
-            // Why does path = "." not work???
-            it.lookup("").features.featureMap[FeatureName.RECURSION] shouldBe 1
-        }
-    }
-    */
     "should correctly count Comparable" {
         Source(
             mapOf(
@@ -708,47 +825,11 @@ public class Test implements Comparable {
 }
                 """.trim()
             )
-        ).features().also {
-            it.lookup("", "Test.java").features.featureMap[FeatureName.COMPARABLE] shouldBe 1
+        ).features().check("", "Test.java") {
+            featureMap[FeatureName.COMPARABLE] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.COMPARABLE, listOf(1))
         }
     }
-    /*
-    "should correctly create a code skeleton for snippets" {
-        Source.fromSnippet(
-            """
-int i = 0;
-if (i < 15) {
-    for (int j = 0; j < 10; j++) {
-        i--;
-        do {
-            if (i < 5) {
-                i++;
-            } else {
-                i--;
-            }
-        } while (i < 10);
-    }
-    while (i > 10) {
-        i--;
-    }
-} else {
-    System.out.println("Hello, world!");
-    do {
-        i--;
-    } while (i > 10);
-    if (true) {
-        System.out.println("True");
-    } else {
-        i++;
-    }
-}
-""".trim()
-        ).features().also {
-            it.lookup("").features.skeleton.trim() shouldBe
-                "if { for { do { if else } while } while } else { do while if else }"
-        }
-    }
-     */
     "should correctly count break and continue in snippets" {
         Source.fromSnippet(
             """
@@ -760,9 +841,12 @@ for (int i = 0; i < 10; i++) {
     }
 }
 """.trim()
-        ).features().also {
-            it.lookup(".").features.featureMap[FeatureName.BREAK] shouldBe 1
-            it.lookup(".").features.featureMap[FeatureName.CONTINUE] shouldBe 1
+        ).features().check {
+            featureMap[FeatureName.BREAK] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.BREAK, listOf(5))
+
+            featureMap[FeatureName.CONTINUE] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.CONTINUE, listOf(3))
         }
     }
     "should correctly count modifiers on fields" {
@@ -777,8 +861,13 @@ public class Test {
             )
         ).features().check("Test", "Test.java") {
             featureMap[FeatureName.STATIC_FIELD] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.STATIC_FIELD, listOf(2))
+
             featureMap[FeatureName.FINAL_FIELD] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.FINAL_FIELD, listOf(3))
+
             featureMap[FeatureName.CLASS_FIELD] shouldBe 2
+            featureList should haveFeatureAt(FeatureName.CLASS_FIELD, listOf(2, 3))
         }
     }
     "should correctly count boxing classes and type parameters" {
@@ -791,12 +880,15 @@ Integer first = new Integer("1");
 Boolean second = true;
 List<String> list = new ArrayList<>();
 """.trim()
-        ).features().also {
-            it.lookup(".").features.featureMap[FeatureName.BOXING_CLASSES] shouldBe 2
-            it.lookup(".").features.featureMap[FeatureName.TYPE_PARAMETERS] shouldBe 1
+        ).features().check {
+            featureMap[FeatureName.BOXING_CLASSES] shouldBe 2
+            featureList should haveFeatureAt(FeatureName.BOXING_CLASSES, listOf(4, 5))
+
+            featureMap[FeatureName.TYPE_PARAMETERS] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.TYPE_PARAMETERS, listOf(6))
         }
     }
-    "should correctly count print statements and dot notation" {
+    "f: should correctly count print statements and dot notation" {
         Source.fromSnippet(
             """
 System.out.println("Hello, world!");
@@ -804,11 +896,15 @@ System.out.print("Hello, world!");
 System.err.println("Hello, world!");
 System.err.print("Hello, world!");
 """.trim()
-        ).features().also {
-            it.lookup(".").features.featureMap[FeatureName.PRINT_STATEMENTS] shouldBe 4
-            it.lookup(".").features.featureMap[FeatureName.DOT_NOTATION] shouldBe 0
-            it.lookup(".").features.featureMap[FeatureName.DOTTED_METHOD_CALL] shouldBe 0
-            it.lookup(".").features.featureMap[FeatureName.DOTTED_VARIABLE_ACCESS] shouldBe 0
+        ).features().check {
+            featureMap[FeatureName.PRINT_STATEMENTS] shouldBe 4
+            featureList should haveFeatureAt(FeatureName.PRINT_STATEMENTS, (1..4).toList())
+
+            featureMap[FeatureName.DOT_NOTATION] shouldBe 0
+            featureList should haveFeatureAt(FeatureName.DOT_NOTATION, listOf())
+
+            featureMap[FeatureName.DOTTED_METHOD_CALL] shouldBe 0
+            featureMap[FeatureName.DOTTED_VARIABLE_ACCESS] shouldBe 0
         }
     }
     "should not choke on initializer blocks" {
