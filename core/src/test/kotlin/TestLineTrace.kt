@@ -2,6 +2,7 @@ package edu.illinois.cs.cs125.jeed.core
 
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.beEmpty
+import io.kotest.matchers.collections.shouldBeIn
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldHaveAtLeastSize
 import io.kotest.matchers.collections.shouldHaveAtMostSize
@@ -582,7 +583,8 @@ try {
         )
         val result = source.compile().execute(SourceExecutionArguments(maxExtraThreads = 1).addPlugin(LineTrace))
         result should haveCompleted()
-        result should haveOutput("Started\nEnded")
+        // Threads can run in either order
+        result.output shouldBeIn listOf("Started\nEnded", "Ended\nStarted")
         val rawTrace = result.pluginResult(LineTrace)
         rawTrace.linesRun shouldBe rawTrace.steps.size
         val trace = rawTrace.remap(source)

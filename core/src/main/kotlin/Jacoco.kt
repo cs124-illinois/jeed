@@ -1,5 +1,6 @@
 package edu.illinois.cs.cs125.jeed.core
 
+import com.squareup.moshi.JsonClass
 import org.jacoco.core.analysis.Analyzer
 import org.jacoco.core.analysis.CoverageBuilder
 import org.jacoco.core.analysis.IClassCoverage
@@ -100,6 +101,66 @@ object IsolatedJacocoRuntime : IRuntime {
             return workingData.runtimeData
         }
     }
+}
+
+enum class LineCoverage(val description: String) {
+    EMPTY("empty"),
+    NOT_COVERED("not covered"),
+    PARTLY_COVERED("partly covered"),
+    COVERED("fully covered")
+}
+
+private fun ILine.toLineCoverage() = when (status) {
+    ICounter.EMPTY -> LineCoverage.EMPTY
+    ICounter.NOT_COVERED -> LineCoverage.NOT_COVERED
+    ICounter.PARTLY_COVERED -> LineCoverage.PARTLY_COVERED
+    ICounter.FULLY_COVERED -> LineCoverage.COVERED
+    else -> error("Invalid iLine status: $status")
+}
+
+@JsonClass(generateAdapter = true)
+data class CoverageResult(
+    val byFile: Map<String, Map<Int, LineCoverage>>,
+    val byClass: Map<String, Map<Int, LineCoverage>>
+)
+
+fun Source.processCoverage(
+    coverage: CoverageBuilder
+): CoverageResult {
+    val byFile = coverage.sourceFiles.associate { fileCoverage ->
+        fileCoverage.name!! to (fileCoverage.firstLine..fileCoverage.lastLine).toList().map { lineNumber ->
+            lineNumber to fileCoverage.getLine(lineNumber).toLineCoverage()
+        }.mapNotNull { (lineNumber, coverage) ->
+            try {
+                Pair(mapLocation(fileCoverage.name!!, Location(lineNumber, 0)).line, coverage)
+            } catch (_: Exception) {
+                null
+            }
+        }.toMap()
+    }
+    val byClass = coverage.classes.associate { classCoverage ->
+        classCoverage.name!! to (classCoverage.firstLine..classCoverage.lastLine).toList().map { lineNumber ->
+            lineNumber to classCoverage.getLine(lineNumber).toLineCoverage()
+        }.mapNotNull { (lineNumber, coverage) ->
+            if (this is Snippet || this is TemplatedSource) {
+                val filename = if (this is Snippet) {
+                    SNIPPET_SOURCE
+                } else {
+                    this.sources.keys.also {
+                        check(it.size == 1) { "No support for multi-source templates yet" }
+                    }.first()
+                }
+                try {
+                    Pair(mapLocation(filename, Location(lineNumber, 0)).line, coverage)
+                } catch (_: Exception) {
+                    null
+                }
+            } else {
+                Pair(lineNumber, coverage)
+            }
+        }.toMap()
+    }
+    return CoverageResult(byFile, byClass)
 }
 
 fun IClassCoverage.allMissedLines() = (firstLine..lastLine).toList().filter {
