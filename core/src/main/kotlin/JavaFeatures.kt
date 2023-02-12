@@ -400,8 +400,6 @@ class JavaFeatureListener(val source: Source, entry: Map.Entry<String, String>) 
         exitMethodOrConstructor()
     }
 
-    private val seenObjectIdentifiers = mutableSetOf<String>()
-
     override fun enterLocalVariableDeclaration(ctx: JavaParser.LocalVariableDeclarationContext) {
         ctx.variableDeclarators().variableDeclarator().forEach {
             count(FeatureName.LOCAL_VARIABLE_DECLARATIONS, it.toLocation())
@@ -423,12 +421,6 @@ class JavaFeatureListener(val source: Source, entry: Map.Entry<String, String>) 
         }
         for (declarator in ctx.variableDeclarators().variableDeclarator()) {
             currentFeatures.features.identifierList.add(declarator.variableDeclaratorId().identifier().text)
-        }
-        // Check if variable is an object
-        ctx.typeType().classOrInterfaceType()?.also {
-            for (declarator in ctx.variableDeclarators().variableDeclarator()) {
-                seenObjectIdentifiers += declarator.variableDeclaratorId().identifier().text
-            }
         }
     }
 
@@ -662,16 +654,7 @@ class JavaFeatureListener(val source: Source, entry: Map.Entry<String, String>) 
             }
         }
         if (ctx.bop?.text == "==" || ctx.bop?.text == "!=") {
-            val identifiers = setOf(ctx.expression(0).text, ctx.expression(1).text).filterNotNull().toSet()
-            // Check if both expressions are objects, i.e. references are being compared
-            if (seenObjectIdentifiers.containsAll(identifiers)) {
-                count(FeatureName.REFERENCE_EQUALITY, ctx.toLocation())
-            } else {
-                val unseenIdentifiers = identifiers - seenObjectIdentifiers
-                if (unseenIdentifiers.all { it.startsWith("\"") && it.endsWith("\"") }) {
-                    count(FeatureName.REFERENCE_EQUALITY, ctx.toLocation())
-                }
-            }
+            count(FeatureName.REFERENCE_EQUALITY, ctx.toLocation())
         }
         ctx.NEW()?.also {
             if (ctx.creator()?.arrayCreatorRest() == null && ctx.creator()?.createdName()?.text != "String") {

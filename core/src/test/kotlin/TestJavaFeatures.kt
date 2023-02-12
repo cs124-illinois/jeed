@@ -1121,8 +1121,8 @@ t == 1;
             featureMap[FeatureName.EQUALITY] shouldBe 1
             featureList should haveFeatureAt(FeatureName.EQUALITY, listOf(2))
 
-            featureMap[FeatureName.REFERENCE_EQUALITY] shouldBe 2
-            featureList should haveFeatureAt(FeatureName.REFERENCE_EQUALITY, listOf(3, 4))
+            featureMap[FeatureName.REFERENCE_EQUALITY] shouldBe 4
+            featureList should haveFeatureAt(FeatureName.REFERENCE_EQUALITY, (3..6).toList())
         }
     }
 })

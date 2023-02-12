@@ -187,11 +187,14 @@ class FeatureMap(val map: MutableMap<FeatureName, Int> = mutableMapOf()) : Mutab
 @JsonClass(generateAdapter = true)
 data class LocatedFeature(val feature: FeatureName, val location: Location)
 
-fun List<LocatedFeature>.hasFeatureAtLine(feature: FeatureName, line: Int) =
-    find { it.feature == feature && it.location.line == line } != null
-
-fun List<LocatedFeature>.allFeatureAtLines(feature: FeatureName, lines: List<Int>) =
-    filter { it.feature == feature }.map { it.location.line }.sorted() == lines.sorted()
+fun List<LocatedFeature>.toLineMap(): Map<Int, List<LocatedFeature>> {
+    val lines = map { it.location.line }.distinct()
+    val map = mutableMapOf<Int, List<LocatedFeature>>()
+    for (line in lines) {
+        map[line] = filter { it.location.line == line }.sortedBy { it.location.column }
+    }
+    return map
+}
 
 @JsonClass(generateAdapter = true)
 data class Features(
