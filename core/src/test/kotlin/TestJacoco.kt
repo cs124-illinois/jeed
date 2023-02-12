@@ -1,11 +1,13 @@
 package edu.illinois.cs.cs125.jeed.core
 
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.Matcher
+import io.kotest.matchers.MatcherResult
 import io.kotest.matchers.collections.beEmpty
 import io.kotest.matchers.collections.shouldHaveAtLeastSize
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
-import io.kotest.matchers.shouldNotBe
 import org.jacoco.core.analysis.IClassCoverage
 import org.junit.jupiter.api.assertThrows
 import java.io.IOException
@@ -31,9 +33,10 @@ public class Main {
     System.out.println("Yay");
   }
 }""".trim()
-        ).checkCoverage().also { testCoverage ->
-            testCoverage.lineCounter.missedCount shouldBe 0
-            testCoverage.lineCounter.coveredCount shouldBe 6
+        ).coverage().also { coverageMap ->
+            coverageMap should haveFileMissedCount(1)
+            coverageMap should haveClassMissedCount(0, klass = "Test")
+            coverageMap should haveClassCoveredCount(6, klass = "Test")
         }
     }
     "it should detect uncovered code" {
@@ -54,9 +57,10 @@ public class Main {
     System.out.println("Hmm");
   }
 }""".trim()
-        ).checkCoverage().also { testCoverage ->
-            testCoverage.lineCounter.missedCount shouldNotBe 0
-            testCoverage.lineCounter.coveredCount shouldBe 3
+        ).coverage().also { coverageMap ->
+            coverageMap should haveFileMissedCount(4)
+            coverageMap should haveClassMissedCount(3, klass = "Test")
+            coverageMap should haveClassCoveredCount(3, klass = "Test")
         }
     }
     "it should allow class enumeration in the sandbox" {
@@ -165,7 +169,7 @@ fun main() {
             compiledSource.execute(SourceExecutionArguments().addPlugin(LineTrace).addPlugin(Jacoco))
         }
     }
-    "f: should miss assert" {
+    "should miss assert" {
         Source.fromJava(
             """
 public class Test {
@@ -183,7 +187,76 @@ public class Main {
             testCoverage.printLines()
         }
     }
+    "checking file arguments" {
+        val source = Source.fromJava(
+            """
+public class Test {
+  public void test() {
+    assert System.currentTimeMillis() != 0L;
+  }
+}
+public class Main {
+  public static void main() {
+    Test test = new Test();
+    test.test();
+  }
+}""".trim()
+        )
+        source.coverage().also { coverageResult ->
+            coverageResult should haveFileCoverageAt(3, LineCoverage.PARTLY_COVERED)
+        }
+    }
+    "remap snippet lines correctly" {
+        Source.fromSnippet("""assert System.currentTimeMillis() != 0L;""").coverage().also { coverageResult ->
+            coverageResult should haveFileCoverageAt(1, LineCoverage.PARTLY_COVERED)
+        }
+    }
+    "should remap template lines correctly with a single source" {
+        Source.fromTemplates(
+            mapOf(
+                "Main.java" to """
+public static void main() {
+  System.out.println("Here");
+}""".trim()
+            ),
+            mapOf(
+                "Main.java.hbs" to "public class Main { {{{ contents }}} }"
+            )
+        ).coverage().also { coverageResult ->
+            coverageResult should haveFileCoverageAt(2, LineCoverage.COVERED)
+        }
+    }
+    "should fail template remapping with multiple sources" {
+        val source = Source.fromTemplates(
+            mapOf(
+                "Main.java" to """
+public static void main() {
+  System.out.println("Here");
+}""".trim(),
+                "Test.java" to """
+public class Test {}
+                """.trimIndent()
+            ),
+            mapOf(
+                "Main.java.hbs" to "public class Main { {{{ contents }}} }"
+            )
+        )
+        source.compile().execute(SourceExecutionArguments().addPlugin(Jacoco)).also { taskResults ->
+            taskResults.completed shouldBe true
+            taskResults.permissionDenied shouldBe false
+        }.let { taskResult ->
+            shouldThrow<IllegalStateException> {
+                source.processCoverage(taskResult.pluginResult(Jacoco))
+            }
+        }
+    }
 })
+
+private suspend fun Source.coverage(): CoverageResult =
+    compile().execute(SourceExecutionArguments().addPlugin(Jacoco)).also { taskResults ->
+        taskResults.completed shouldBe true
+        taskResults.permissionDenied shouldBe false
+    }.let { taskResult -> processCoverage(taskResult.pluginResult(Jacoco)) }
 
 private suspend fun Source.checkCoverage(klass: String = "Test"): IClassCoverage {
     return compile().execute(SourceExecutionArguments().addPlugin(Jacoco)).also { taskResults ->
@@ -191,3 +264,85 @@ private suspend fun Source.checkCoverage(klass: String = "Test"): IClassCoverage
         taskResults.permissionDenied shouldBe false
     }.let { taskResult -> taskResult.pluginResult(Jacoco).classes.find { it.name == klass }!! }
 }
+
+fun haveFileCoverageAt(line: Int, expectedCoverage: LineCoverage, filename: String? = null) =
+    object : Matcher<CoverageResult> {
+        override fun test(value: CoverageResult): MatcherResult {
+            val toRetrieve = filename ?: value.byFile.keys.let {
+                check(it.size == 1) { "Must specify a key to retrieve multi-file coverage result" }
+                it.first()
+            }
+            val actualCoverage = value.byFile[toRetrieve]!![line]!!
+
+            return MatcherResult(
+                expectedCoverage == actualCoverage,
+                { "Expected coverage $expectedCoverage at line $line but found $actualCoverage" },
+                { "Expected coverage $expectedCoverage at line $line but found $actualCoverage" }
+            )
+        }
+    }
+
+fun haveFileMissedCount(expectedCount: Int, filename: String? = null) = object : Matcher<CoverageResult> {
+    override fun test(value: CoverageResult): MatcherResult {
+        val toRetrieve = filename ?: value.byFile.keys.let {
+            check(it.size == 1) { "Must specify a key to retrieve multi-file coverage result" }
+            it.first()
+        }
+        val actualCount = value.byFile[toRetrieve]!!.values.count { it == LineCoverage.PARTLY_COVERED || it == LineCoverage.NOT_COVERED }
+
+        return MatcherResult(
+            expectedCount == actualCount,
+            { "Expected $expectedCount missed lines but found $actualCount" },
+            { "Expected $expectedCount missed lines but found $actualCount" }
+        )
+    }
+}
+
+fun haveFileCoveredCount(expectedCount: Int, filename: String? = null) = object : Matcher<CoverageResult> {
+    override fun test(value: CoverageResult): MatcherResult {
+        val toRetrieve = filename ?: value.byFile.keys.let {
+            check(it.size == 1) { "Must specify a key to retrieve multi-file coverage result" }
+            it.first()
+        }
+        val actualCount = value.byFile[toRetrieve]!!.values.count { it == LineCoverage.COVERED }
+
+        return MatcherResult(
+            expectedCount == actualCount,
+            { "Expected $expectedCount missed lines but found $actualCount" },
+            { "Expected $expectedCount missed lines but found $actualCount" }
+        )
+    }
+}
+
+fun haveClassMissedCount(expectedCount: Int, klass: String? = null) = object : Matcher<CoverageResult> {
+    override fun test(value: CoverageResult): MatcherResult {
+        val toRetrieve = klass ?: value.byClass.keys.let {
+            check(it.size == 1) { "Must specify a key to retrieve multi-file coverage result" }
+            it.first()
+        }
+        val actualCount = value.byClass[toRetrieve]!!.values.count { it == LineCoverage.PARTLY_COVERED || it == LineCoverage.NOT_COVERED }
+
+        return MatcherResult(
+            expectedCount == actualCount,
+            { "Expected $expectedCount missed lines but found $actualCount" },
+            { "Expected $expectedCount missed lines but found $actualCount" }
+        )
+    }
+}
+
+fun haveClassCoveredCount(expectedCount: Int, klass: String? = null) = object : Matcher<CoverageResult> {
+    override fun test(value: CoverageResult): MatcherResult {
+        val toRetrieve = klass ?: value.byClass.keys.let {
+            check(it.size == 1) { "Must specify a key to retrieve multi-file coverage result" }
+            it.first()
+        }
+        val actualCount = value.byClass[toRetrieve]!!.values.count { it == LineCoverage.COVERED }
+
+        return MatcherResult(
+            expectedCount == actualCount,
+            { "Expected $expectedCount missed lines but found $actualCount" },
+            { "Expected $expectedCount missed lines but found $actualCount" }
+        )
+    }
+}
+
