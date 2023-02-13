@@ -241,7 +241,7 @@ class Request(
                         arguments.snippet.fileType
                     }
                 }
-                Source.fromSnippet(snippet ?: error("should have a snippet"), arguments.snippet).also {
+                Source.fromSnippet(snippet ?: error("should have a snippet"), arguments.snippet, false).also {
                     response.completedTasks.add(Task.snippet)
                     response.completed.snippet = it
                 }

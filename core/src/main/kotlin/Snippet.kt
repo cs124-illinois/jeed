@@ -169,29 +169,47 @@ data class SnippetArguments(
 @Throws(SnippetTransformationFailed::class)
 fun Source.Companion.fromSnippet(
     originalSource: String,
-    snippetArguments: SnippetArguments = SnippetArguments()
+    snippetArguments: SnippetArguments = SnippetArguments(),
+    trim: Boolean = true
 ): Snippet {
-    require(originalSource.isNotEmpty()) { "Snippet cannot be a blank string" }
+    val actualSource = if (trim) {
+        originalSource.trimStart()
+    } else {
+        originalSource
+    }
+    require(actualSource.isNotEmpty()) { "Snippet cannot be a blank string" }
     return when (snippetArguments.fileType) {
-        Source.FileType.JAVA -> sourceFromJavaSnippet(originalSource, snippetArguments)
-        Source.FileType.KOTLIN -> sourceFromKotlinSnippet(originalSource, snippetArguments)
+        Source.FileType.JAVA -> sourceFromJavaSnippet(actualSource, snippetArguments)
+        Source.FileType.KOTLIN -> sourceFromKotlinSnippet(actualSource, snippetArguments)
     }
 }
 
-fun Source.Companion.fromJavaSnippet(
+internal fun Source.Companion.fromJavaSnippet(
     originalSource: String,
-    snippetArguments: SnippetArguments = SnippetArguments()
+    snippetArguments: SnippetArguments = SnippetArguments(),
+    trim: Boolean = true
 ): Snippet {
-    require(originalSource.isNotEmpty()) { "Snippet cannot be a blank string" }
-    return sourceFromJavaSnippet(originalSource.trimStart(), snippetArguments.copy(fileType = Source.FileType.JAVA))
+    val actualSource = if (trim) {
+        originalSource.trimStart()
+    } else {
+        originalSource
+    }
+    require(actualSource.isNotEmpty()) { "Snippet cannot be a blank string" }
+    return sourceFromJavaSnippet(actualSource, snippetArguments.copy(fileType = Source.FileType.JAVA))
 }
 
-fun Source.Companion.fromKotlinSnippet(
+internal fun Source.Companion.fromKotlinSnippet(
     originalSource: String,
-    snippetArguments: SnippetArguments = SnippetArguments()
+    snippetArguments: SnippetArguments = SnippetArguments(),
+    trim: Boolean = true
 ): Snippet {
-    require(originalSource.isNotEmpty()) { "Snippet cannot be a blank string" }
-    return sourceFromKotlinSnippet(originalSource.trimStart(), snippetArguments.copy(fileType = Source.FileType.KOTLIN))
+    val actualSource = if (trim) {
+        originalSource.trimStart()
+    } else {
+        originalSource
+    }
+    require(actualSource.isNotEmpty()) { "Snippet cannot be a blank string" }
+    return sourceFromKotlinSnippet(actualSource, snippetArguments.copy(fileType = Source.FileType.KOTLIN))
 }
 
 @Suppress("LongMethod", "ComplexMethod", "ThrowsCount")

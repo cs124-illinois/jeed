@@ -131,7 +131,8 @@ public int add(int a, int b) {
             """ public int add(int a, int b) {
    return a + b;
  }
-""".trimEnd()
+""",
+            trim = false
         ).checkstyle()
         checkstyleErrors should haveCheckstyleErrors()
         checkstyleErrors.errors shouldHaveSize 3

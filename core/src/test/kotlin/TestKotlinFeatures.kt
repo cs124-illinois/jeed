@@ -12,23 +12,30 @@ class TestKotlinFeatures : StringSpec({
             """
 var i = 0
 var j: Int? = null
+val k: Int = 0
 i = 1
 i += 1
 i++
 --j
 """.trim()
         ).features().check {
-            featureMap[FeatureName.LOCAL_VARIABLE_DECLARATIONS] shouldBe 2
-            featureList should haveFeatureAt(FeatureName.LOCAL_VARIABLE_DECLARATIONS, listOf(1, 2))
+            featureMap[FeatureName.LOCAL_VARIABLE_DECLARATIONS] shouldBe 3
+            featureList should haveFeatureAt(FeatureName.LOCAL_VARIABLE_DECLARATIONS, listOf(1, 2, 3))
 
-            featureMap[FeatureName.VARIABLE_ASSIGNMENTS] shouldBe 2
-            featureList should haveFeatureAt(FeatureName.VARIABLE_ASSIGNMENTS, listOf(1, 2))
+            featureMap[FeatureName.VARIABLE_ASSIGNMENTS] shouldBe 3
+            featureList should haveFeatureAt(FeatureName.VARIABLE_ASSIGNMENTS, listOf(1, 2, 3))
 
             featureMap[FeatureName.VARIABLE_REASSIGNMENTS] shouldBe 4
-            featureList should haveFeatureAt(FeatureName.VARIABLE_REASSIGNMENTS, (3..6).toList())
+            featureList should haveFeatureAt(FeatureName.VARIABLE_REASSIGNMENTS, (4..7).toList())
 
             featureMap[FeatureName.UNARY_OPERATORS] shouldBe 2
-            featureList should haveFeatureAt(FeatureName.UNARY_OPERATORS, listOf(5, 6))
+            featureList should haveFeatureAt(FeatureName.UNARY_OPERATORS, listOf(6, 7))
+
+            featureMap[FeatureName.TYPE_INFERENCE] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.TYPE_INFERENCE, listOf(1))
+
+            featureMap[FeatureName.EXPLICIT_TYPE] shouldBe 2
+            featureList should haveFeatureAt(FeatureName.EXPLICIT_TYPE, listOf(2, 3))
         }.check("") {
             featureMap[FeatureName.CLASS] shouldBe 0
             featureList should haveFeatureAt(FeatureName.CLASS, listOf())
@@ -262,7 +269,8 @@ if (i < 5) {
     i -= 5
 }
 j = j shl 2
-""").features().check {
+"""
+        ).features().check {
             featureMap[FeatureName.UNARY_OPERATORS] shouldBe 2
             featureList should haveFeatureAt(FeatureName.UNARY_OPERATORS, listOf(7, 10))
 
@@ -376,9 +384,10 @@ println("test" is Int)
 if (1 is Int) {
   println("Here")
 }
-""".trim()
+"""
         ).features().check {
             featureMap[FeatureName.INSTANCEOF] shouldBe 3
+            featureList should haveFeatureAt(FeatureName.INSTANCEOF, listOf(1, 2, 3))
         }
     }
     "should count if in init" {
@@ -527,9 +536,114 @@ class Test {
     fun one() = 1
   }
 }
-""".trim()
+"""
         ).features().check("Test") {
             featureMap[FeatureName.COMPANION_OBJECT] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.COMPANION_OBJECT, listOf(2))
+        }
+    }
+    "should correctly count break and continue in snippets" {
+        Source.fromKotlinSnippet(
+            """
+for (i in 0 until 10) {
+    if (i < 7) {
+        continue
+    } else {
+        break@for
+    }
+}
+"""
+        ).features().check {
+            featureMap[FeatureName.BREAK] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.BREAK, listOf(5))
+
+            featureMap[FeatureName.CONTINUE] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.CONTINUE, listOf(3))
+        }
+    }
+    "should count methods and classes" {
+        Source.fromKotlinSnippet(
+            """
+fun test(): Int {
+  return 0
+}
+class Test
+println("Hello, world!")
+"""
+        ).features().check("") {
+            featureMap[FeatureName.METHOD] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.METHOD, listOf(1))
+
+            featureMap[FeatureName.RETURN] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.RETURN, listOf(2))
+
+            featureMap[FeatureName.CLASS] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.CLASS, listOf(4))
+        }
+    }
+    "should count strings, streams, and null in snippets" {
+        Source.fromKotlinSnippet(
+            """
+var first = "Hello, world!"
+var second: String? = null
+var third = String("test")
+var another = String()
+"""
+        ).features().check {
+            featureMap[FeatureName.STRING] shouldBe 5
+            featureList should haveFeatureAt(FeatureName.STRING, listOf(1, 2, 3, 3, 4))
+
+            featureMap[FeatureName.NULL] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.NULL, listOf(2))
+
+            featureMap[FeatureName.NULLABLE_TYPE] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.NULLABLE_TYPE, listOf(2))
+        }
+    }
+    "should count when" {
+        Source.fromKotlinSnippet(
+            """
+when (thing) {
+  10 -> true
+  else -> false
+}
+when {
+  true -> "0"
+  false -> "1"
+}
+"""
+        ).features().check {
+            featureMap[FeatureName.WHEN] shouldBe 2
+            featureList should haveFeatureAt(FeatureName.WHEN, listOf(1, 5))
+
+            featureMap[FeatureName.ELSE_STATEMENTS] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.ELSE_STATEMENTS, listOf(3))
+        }
+    }
+    "should count enum classes" {
+        Source(
+            mapOf(
+                "Test.kt" to """
+enum class Test {
+    FIRST,
+    SECOND,
+    THIRD
+}
+                """.trim()
+            )
+        ).features().check("", "Test.kt") {
+            featureMap[FeatureName.ENUM] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.ENUM, listOf(1))
+        }
+    }
+    "should count data classes" {
+        Source.fromKotlinSnippet(
+            """
+data class Test(val first: Int)
+"""
+        ).features().check("") {
+            featureMap[FeatureName.DATA_CLASS] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.DATA_CLASS, listOf(1))
         }
     }
 })

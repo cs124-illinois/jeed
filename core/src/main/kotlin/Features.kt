@@ -126,7 +126,11 @@ enum class FeatureName(val description: String) {
     FOR_LOOP_RANGE("for loop range"),
     SECONDARY_CONSTRUCTOR("secondary constructor"),
     JAVA_EQUALITY("java equals"),
-    COMPANION_OBJECT("companion object")
+    COMPANION_OBJECT("companion object"),
+    NULLABLE_TYPE("nullable type"),
+    WHEN("when statement"),
+    EXPLICIT_TYPE("explicit type"),
+    DATA_CLASS("data class")
 }
 
 @Suppress("unused")
@@ -139,25 +143,14 @@ val MISSING_KOTLIN_FEATURES = setOf(
     FeatureName.MULTIDIMENSIONAL_ARRAYS,
 
     // Loops
-    FeatureName.ENHANCED_FOR,
-    FeatureName.BREAK,
-    FeatureName.CONTINUE,
+    // FeatureName.ENHANCED_FOR (no equivalent)
 
     // Nesting
     FeatureName.NESTED_CLASS,
 
     // Methods
-    FeatureName.RETURN,
     FeatureName.GETTER,
     FeatureName.SETTER,
-
-    // Strings & null
-    FeatureName.STRING,
-    FeatureName.NULL,
-
-    // Type handling
-    FeatureName.TYPE_INFERENCE,
-    FeatureName.INSTANCEOF,
 
     // Class & Interface
     FeatureName.IMPLEMENTS,
@@ -197,14 +190,13 @@ val MISSING_KOTLIN_FEATURES = setOf(
     FeatureName.ANONYMOUS_CLASSES,
     FeatureName.LAMBDA_EXPRESSIONS,
     FeatureName.GENERIC_CLASS,
-    FeatureName.SWITCH,
+    // FeatureName.SWITCH (no equivalent)
     FeatureName.STREAM,
-    FeatureName.ENUM,
 
     FeatureName.COMPARABLE,
-    FeatureName.RECORD,
+    // FeatureName.RECORD (Kotlin FeatureName.DATA_CLASS)
     FeatureName.BOXING_CLASSES,
-    FeatureName.TYPE_PARAMETERS,
+    FeatureName.TYPE_PARAMETERS
 )
 
 val ALL_FEATURES = FeatureName.values().associate { it.name to it.description }

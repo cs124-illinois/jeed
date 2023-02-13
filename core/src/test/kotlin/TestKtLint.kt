@@ -11,9 +11,8 @@ import io.kotest.matchers.string.shouldContain
 class TestKtLint : StringSpec({
     "it should check simple kotlin sources" {
         repeat(8) {
-            val results = Source.fromSnippet(
-                """println("Hello, world!")""",
-                SnippetArguments(fileType = Source.FileType.KOTLIN)
+            val results = Source.fromKotlinSnippet(
+                """println("Hello, world!")"""
             ).ktLint()
             results.errors.isEmpty() shouldBe true
         }
@@ -21,9 +20,8 @@ class TestKtLint : StringSpec({
     "it should check kotlin sources with too long lines" {
         @Suppress("MaxLineLength")
         val ktLintFailed = shouldThrow<KtLintFailed> {
-            Source.fromSnippet(
-                """val test = "ttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt"""",
-                SnippetArguments(fileType = Source.FileType.KOTLIN)
+            Source.fromKotlinSnippet(
+                """val test = "ttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt""""
             ).ktLint(KtLintArguments(failOnError = true))
         }
 
@@ -31,9 +29,8 @@ class TestKtLint : StringSpec({
     }
     "!it should fail when everything is on one line" {
         shouldThrow<KtLintFailed> {
-            Source.fromSnippet(
-                """class Course(var number: String) { fun changeNumber(newNumber: String) { number = newNumber } }""",
-                SnippetArguments(fileType = Source.FileType.KOTLIN)
+            Source.fromKotlinSnippet(
+                """class Course(var number: String) { fun changeNumber(newNumber: String) { number = newNumber } }"""
             ).ktLint(KtLintArguments(failOnError = true))
         }
     }
@@ -65,9 +62,9 @@ class TestKtLint : StringSpec({
     }
     "it should check kotlin snippets and get the line numbers right" {
         val ktLintFailed = shouldThrow<KtLintFailed> {
-            Source.fromSnippet(
+            Source.fromKotlinSnippet(
                 """ println("Hello, world!")""",
-                SnippetArguments(fileType = Source.FileType.KOTLIN)
+                trim = false
             ).ktLint(KtLintArguments(failOnError = true))
         }
 

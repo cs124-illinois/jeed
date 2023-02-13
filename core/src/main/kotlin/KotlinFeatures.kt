@@ -140,6 +140,9 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
     override fun enterClassDeclaration(ctx: KotlinParser.ClassDeclarationContext) {
         if (!ctx.isSnippetClass()) {
             count(FeatureName.CLASS, ctx.toLocation())
+            if (ctx.modifiers()?.modifier(0)?.classModifier()?.DATA() != null) {
+                count(FeatureName.DATA_CLASS, ctx.toLocation())
+            }
         }
         enterClassOrInterface(
             ctx.simpleIdentifier().text,
@@ -325,6 +328,19 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
         if (ctx.parent is KotlinParser.PropertyDeclarationContext && ctx.parentType() == ParentType.FUNCTION) {
             count(FeatureName.LOCAL_VARIABLE_DECLARATIONS, ctx.toLocation())
             count(FeatureName.VARIABLE_ASSIGNMENTS, ctx.toLocation())
+        }
+        val type = ctx.type()?.text?.trim()
+        if (type != null) {
+            count(FeatureName.EXPLICIT_TYPE, ctx.type().toLocation())
+            val baseType = type.removeSuffix("?")
+            if (baseType == "String") {
+                count(FeatureName.STRING, ctx.type().toLocation())
+            }
+            if (baseType != type) {
+                count(FeatureName.NULLABLE_TYPE, ctx.type().toLocation())
+            }
+        } else {
+            count(FeatureName.TYPE_INFERENCE, ctx.toLocation())
         }
     }
 
@@ -557,6 +573,8 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
                 } else if (javaEqualsStatements.contains(lastChunk)) {
                     count(FeatureName.EQUALITY, location)
                     count(FeatureName.JAVA_EQUALITY, location)
+                } else if (fullMethodCall == "String") {
+                    count(FeatureName.STRING, location)
                 }
             }
             if (!skipDots) {
@@ -658,6 +676,40 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
 
     override fun enterMultiplicativeOperator(ctx: KotlinParser.MultiplicativeOperatorContext) {
         count(FeatureName.ARITHMETIC_OPERATORS, ctx.toLocation())
+    }
+
+    override fun enterJumpExpression(ctx: KotlinParser.JumpExpressionContext) {
+        if (ctx.BREAK() != null || ctx.BREAK_AT() != null) {
+            count(FeatureName.BREAK, (ctx.BREAK() ?: ctx.BREAK_AT()).toLocation())
+        } else if (ctx.CONTINUE() != null || ctx.CONTINUE_AT() != null) {
+            count(FeatureName.CONTINUE, (ctx.CONTINUE() ?: ctx.CONTINUE_AT()).toLocation())
+        } else if (ctx.RETURN() != null || ctx.RETURN_AT() != null) {
+            count(FeatureName.RETURN, (ctx.RETURN() ?: ctx.RETURN_AT()).toLocation())
+        }
+    }
+
+    override fun enterLiteralConstant(ctx: KotlinParser.LiteralConstantContext) {
+        if (ctx.NullLiteral() != null) {
+            count(FeatureName.NULL, ctx.NullLiteral().toLocation())
+        }
+    }
+
+    override fun enterStringLiteral(ctx: KotlinParser.StringLiteralContext) {
+        count(FeatureName.STRING, ctx.toLocation())
+    }
+
+    override fun enterWhenExpression(ctx: KotlinParser.WhenExpressionContext) {
+        count(FeatureName.WHEN, ctx.toLocation())
+    }
+
+    override fun enterWhenEntry(ctx: KotlinParser.WhenEntryContext) {
+        if (ctx.ELSE() != null) {
+            count(FeatureName.ELSE_STATEMENTS, ctx.ELSE().toLocation())
+        }
+    }
+
+    override fun enterEnumClassBody(ctx: KotlinParser.EnumClassBodyContext) {
+        count(FeatureName.ENUM, ctx.toLocation())
     }
 
     init {

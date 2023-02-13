@@ -9,8 +9,8 @@ import io.kotest.matchers.shouldBe
 
 @Suppress("LargeClass")
 class TestJavaFeatures : StringSpec({
-    "f: should count variable declarations in snippets" {
-        Source.fromSnippet(
+    "should count variable declarations in snippets" {
+        Source.fromJavaSnippet(
             """
 int i = 0;
 int j;
@@ -18,7 +18,7 @@ i = 4;
 i += 1;
 i++;
 --j;
-""".trim()
+"""
         ).features().check {
             featureMap[FeatureName.LOCAL_VARIABLE_DECLARATIONS] shouldBe 2
             featureList should haveFeatureAt(FeatureName.LOCAL_VARIABLE_DECLARATIONS, listOf(1, 2))
@@ -49,7 +49,7 @@ i++;
         }
     }
     "should count for loops in snippets" {
-        Source.fromSnippet(
+        Source.fromJavaSnippet(
             """
 for (int i = 0; i < 10; i++) {
     System.out.println(i);
@@ -58,7 +58,7 @@ int[] arr = new int[10];
 for (int num : arr) {
     num++;
 }
-""".trim()
+"""
         ).features().check {
             featureMap[FeatureName.FOR_LOOPS] shouldBe 2
             featureList should haveFeatureAt(FeatureName.FOR_LOOPS, listOf(1, 5))
@@ -83,14 +83,14 @@ for (int num : arr) {
         }
     }
     "should count nested for loops in snippets" {
-        Source.fromSnippet(
+        Source.fromJavaSnippet(
             """
 for (int i = 0; i < 10; i++) {
     for (int j = 0; j < 10; j++) {
         System.out.println(i + j);
     }
 }
-""".trim()
+"""
         ).features().check {
             featureMap[FeatureName.FOR_LOOPS] shouldBe 2
             featureList should haveFeatureAt(FeatureName.FOR_LOOPS, listOf(1, 2))
@@ -103,7 +103,7 @@ for (int i = 0; i < 10; i++) {
         }
     }
     "should count while loops in snippets" {
-        Source.fromSnippet(
+        Source.fromJavaSnippet(
             """
 int i = 0;
 while (i < 10) {
@@ -112,7 +112,7 @@ while (i < 10) {
     }
     i++;
 }
-""".trim()
+"""
         ).features().check {
             featureMap[FeatureName.WHILE_LOOPS] shouldBe 2
             featureList should haveFeatureAt(FeatureName.WHILE_LOOPS, listOf(2, 3))
@@ -125,7 +125,7 @@ while (i < 10) {
         }
     }
     "should not count while loops under if" {
-        Source.fromSnippet(
+        Source.fromJavaSnippet(
             """
 int i = 0;
 if (i < 10) {
@@ -134,7 +134,7 @@ if (i < 10) {
     }
     i++;
 }
-""".trim()
+"""
         ).features().check {
             featureMap[FeatureName.WHILE_LOOPS] shouldBe 1
             featureList should haveFeatureAt(FeatureName.WHILE_LOOPS, listOf(3))
@@ -144,7 +144,7 @@ if (i < 10) {
         }
     }
     "should count do-while loops in snippets" {
-        Source.fromSnippet(
+        Source.fromJavaSnippet(
             """
 int i = 0;
 do {
@@ -156,7 +156,7 @@ do {
         j++;
     } while (j < 10);
 } while (i < 10);
-""".trim()
+"""
         ).features().check {
             featureMap[FeatureName.DO_WHILE_LOOPS] shouldBe 2
             featureList should haveFeatureAt(FeatureName.DO_WHILE_LOOPS, listOf(2, 7))
@@ -169,7 +169,7 @@ do {
         }
     }
     "should count simple if-else statements in snippets" {
-        Source.fromSnippet(
+        Source.fromJavaSnippet(
             """
 int i = 0;
 if (i < 5) {
@@ -177,7 +177,7 @@ if (i < 5) {
 } else {
     i--;
 }
-""".trim()
+"""
         ).features().check {
             featureMap[FeatureName.IF_STATEMENTS] shouldBe 1
             featureList should haveFeatureAt(FeatureName.IF_STATEMENTS, listOf(2))
@@ -187,7 +187,7 @@ if (i < 5) {
         }
     }
     "should count a chain of if-else statements in snippets" {
-        Source.fromSnippet(
+        Source.fromJavaSnippet(
             """
 int i = 0;
 if (i < 5) {
@@ -199,7 +199,7 @@ if (i < 5) {
 } else {
     i--;
 }
-""".trim()
+"""
         ).features().check {
             featureMap[FeatureName.IF_STATEMENTS] shouldBe 1
             featureList should haveFeatureAt(FeatureName.IF_STATEMENTS, listOf(2))
@@ -212,7 +212,7 @@ if (i < 5) {
         }
     }
     "should count nested if statements in snippets" {
-        Source.fromSnippet(
+        Source.fromJavaSnippet(
             """
 int i = 0;
 if (i < 15) {
@@ -227,7 +227,7 @@ if (i < 15) {
         }
     }
 }
-""".trim()
+"""
         ).features().check {
             featureMap[FeatureName.IF_STATEMENTS] shouldBe 4
             featureList should haveFeatureAt(FeatureName.IF_STATEMENTS, listOf(2, 3, 5, 9))
@@ -237,7 +237,7 @@ if (i < 15) {
         }
     }
     "should count conditional expressions and complex conditionals in snippets" {
-        Source.fromSnippet(
+        Source.fromJavaSnippet(
             """
 int i = 0;
 if (i < 5 || i > 15) {
@@ -249,7 +249,7 @@ if (i < 5 || i > 15) {
 } else {
     i--;
 }
-""".trim()
+"""
         ).features().check {
             featureMap[FeatureName.COMPARISON_OPERATORS] shouldBe 5
             featureList should haveFeatureAt(FeatureName.COMPARISON_OPERATORS, listOf(2, 2, 3, 6, 6))
@@ -259,7 +259,7 @@ if (i < 5 || i > 15) {
         }
     }
     "should count try blocks, switch statements, finally blocks, and assertions in snippets" {
-        Source.fromSnippet(
+        Source.fromJavaSnippet(
             """
 int i = 0;
 try {
@@ -277,7 +277,7 @@ try {
 } catch (Exception e) {
     System.out.println("Oops");
 } finally { }
-""".trim()
+"""
         ).features().check {
             featureMap[FeatureName.TRY_BLOCK] shouldBe 1
             featureList should haveFeatureAt(FeatureName.TRY_BLOCK, listOf(2))
@@ -293,7 +293,7 @@ try {
         }
     }
     "should count operators in snippets" {
-        Source.fromSnippet(
+        Source.fromJavaSnippet(
             """
 int i = 0;
 int j = 0;
@@ -311,7 +311,8 @@ if (i < 5) {
     j = i < j ? i : j;
 }
 j = j << 2;
-""").features().check {
+"""
+        ).features().check {
             featureMap[FeatureName.UNARY_OPERATORS] shouldBe 2
             featureList should haveFeatureAt(FeatureName.UNARY_OPERATORS, listOf(7, 10))
 
@@ -329,15 +330,14 @@ j = j << 2;
         }
     }
     "should count the new keyword and array accesses in snippets" {
-        @Suppress("SpellCheckingInspection")
-        Source.fromSnippet(
+        Source.fromJavaSnippet(
             """
 int[] arr = new int[3];
 arr[0 + 0] = 5;
 arr[1] = 10;
 arr[2] = arr[0] + arr[1];
 int[] nums = {1, 2, 4};
-""".trim()
+"""
         ).features().check {
             featureMap[FeatureName.ARRAYS] shouldBe 2
             featureList should haveFeatureAt(FeatureName.ARRAYS, listOf(1, 5))
@@ -353,14 +353,14 @@ int[] nums = {1, 2, 4};
         }
     }
     "should count strings, streams, and null in snippets" {
-        Source.fromSnippet(
+        Source.fromJavaSnippet(
             """
 import java.util.stream.Stream;
 
 String first = "Hello, world!";
 String second = null;
 Stream<String> stream;
-""".trim()
+"""
         ).features().check {
             featureMap[FeatureName.STRING] shouldBe 3
             featureList should haveFeatureAt(FeatureName.STRING, listOf(3, 4, 5))
@@ -376,39 +376,42 @@ Stream<String> stream;
         }
     }
     "should count multidimensional arrays in snippets" {
-        Source.fromSnippet(
+        Source.fromJavaSnippet(
             """
 int[][] array = new int[5][5];
 char[][] array1 = new char[10][10];
-""".trim()
+"""
         ).features().check {
             featureMap[FeatureName.MULTIDIMENSIONAL_ARRAYS] shouldBe 2
             featureList should haveFeatureAt(FeatureName.MULTIDIMENSIONAL_ARRAYS, listOf(1, 2))
         }
     }
     "should count use of type inference in snippets" {
-        Source.fromSnippet(
+        Source.fromJavaSnippet(
             """
 var first = 0;
 val second = "Hello, world!";
-""".trim()
+"""
         ).features().check {
             featureMap[FeatureName.TYPE_INFERENCE] shouldBe 2
             featureList should haveFeatureAt(FeatureName.TYPE_INFERENCE, listOf(1, 2))
         }
     }
     "should count methods and classes" {
-        Source.fromSnippet(
+        Source.fromJavaSnippet(
             """
 int test() {
   return 0;
 }
 public class Test { }
 System.out.println("Hello, world!");
-""".trim()
+"""
         ).features().check("") {
             featureMap[FeatureName.METHOD] shouldBe 1
             featureList should haveFeatureAt(FeatureName.METHOD, listOf(1))
+
+            featureMap[FeatureName.RETURN] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.RETURN, listOf(2))
 
             featureMap[FeatureName.CLASS] shouldBe 1
             featureList should haveFeatureAt(FeatureName.CLASS, listOf(4))
@@ -472,7 +475,7 @@ public class Test {
         }
     }
     "should count the extends keyword, the super constructor, and the 'this' keyword in classes" {
-        Source.fromSnippet(
+        Source.fromJavaSnippet(
             """
 public class Person {
     private int age;
@@ -487,7 +490,7 @@ public class Student extends Person {
         this.school = setSchool;
     }
 }
-""".trim()
+"""
         ).features().check("Student") {
             featureMap[FeatureName.EXTENDS] shouldBe 1
             featureList should haveFeatureAt(FeatureName.EXTENDS, listOf(7))
@@ -500,7 +503,7 @@ public class Student extends Person {
         }
     }
     "should count instanceof and casting" {
-        Source.fromSnippet(
+        Source.fromJavaSnippet(
             """
 double temperature = 72.5;
 String name = "Geoff";
@@ -508,7 +511,7 @@ if (name instanceof String) {
     int rounded = (int) temperature;
     String test = (String) "test";
 }
-""".trim()
+"""
         ).features().check {
             featureMap[FeatureName.INSTANCEOF] shouldBe 1
             featureList should haveFeatureAt(FeatureName.INSTANCEOF, listOf(3))
@@ -549,19 +552,19 @@ public class Test {
         }
     }
     "should count reference equality" {
-        Source.fromSnippet(
+        Source.fromJavaSnippet(
             """
 String first = "Hello";
 String second = "World";
 boolean third = first == second;
-""".trim()
+"""
         ).features().check {
             featureMap[FeatureName.REFERENCE_EQUALITY] shouldBe 1
             featureList should haveFeatureAt(FeatureName.REFERENCE_EQUALITY, listOf(3))
         }
     }
     "should count interfaces and classes that implement interfaces" {
-        Source.fromSnippet(
+        Source.fromJavaSnippet(
             """
 public interface Test {
     int add(int x, int y);
@@ -576,7 +579,7 @@ public class Calculator implements Test {
         return x - y;
     }
 }
-""".trim()
+"""
         ).features().check("Test") {
             featureMap[FeatureName.INTERFACE] shouldBe 1
             featureList should haveFeatureAt(FeatureName.INTERFACE, listOf(1))
@@ -589,7 +592,7 @@ public class Calculator implements Test {
         }
     }
     "should count final and abstract methods" {
-        Source.fromSnippet(
+        Source.fromJavaSnippet(
             """
 public abstract class Test {
     abstract int add(int x, int y);
@@ -606,7 +609,7 @@ public class Calculator implements Test {
         return x - y;
     }
 }
-""".trim()
+"""
         ).features().check("Test") {
             featureMap[FeatureName.ABSTRACT_METHOD] shouldBe 2
             featureList should haveFeatureAt(FeatureName.ABSTRACT_METHOD, listOf(2, 3))
@@ -616,7 +619,7 @@ public class Calculator implements Test {
         }
     }
     "should count anonymous classes" {
-        Source.fromSnippet(
+        Source.fromJavaSnippet(
             """
 public class Person {
   public String getType() {
@@ -629,28 +632,28 @@ Person student = new Person() {
     return "Student";
   }
 };
-""".trim()
+"""
         ).features().check {
             featureMap[FeatureName.ANONYMOUS_CLASSES] shouldBe 1
             featureList should haveFeatureAt(FeatureName.ANONYMOUS_CLASSES, listOf(6))
         }
     }
     "should count lambda expressions" {
-        Source.fromSnippet(
+        Source.fromJavaSnippet(
             """
 interface Modify {
   int modify(int value);
 }
 Modify first = (value) -> value + 1;
 Modify second = (value) -> value - 10;
-""".trim()
+"""
         ).features().check {
             featureMap[FeatureName.LAMBDA_EXPRESSIONS] shouldBe 2
             featureList should haveFeatureAt(FeatureName.LAMBDA_EXPRESSIONS, listOf(4, 5))
         }
     }
     "should count throwing exceptions" {
-        Source.fromSnippet(
+        Source.fromJavaSnippet(
             """
 void container(int setSize) throws IllegalArgumentException {
     if (setSize <= 0) {
@@ -658,7 +661,7 @@ void container(int setSize) throws IllegalArgumentException {
     }
     values = new int[setSize];
 }
-""".trim()
+"""
         ).features().check("") {
             featureMap[FeatureName.THROW] shouldBe 1
             featureList should haveFeatureAt(FeatureName.THROW, listOf(3))
@@ -792,14 +795,14 @@ public enum Test {
         }
     }
     "should correctly create a list of types and identifiers in snippets" {
-        Source.fromSnippet(
+        Source.fromJavaSnippet(
             """
 int i = 0;
 double j = 5.0;
 boolean foo = true;
 String string = "Hello, world!";
 
-""".trim()
+"""
         ).features().check {
             typeList shouldBe arrayListOf("int", "double", "boolean", "String")
             identifierList shouldBe arrayListOf("i", "j", "foo", "string")
@@ -836,7 +839,7 @@ public class Test implements Comparable {
         }
     }
     "should correctly count break and continue in snippets" {
-        Source.fromSnippet(
+        Source.fromJavaSnippet(
             """
 for (int i = 0; i < 10; i++) {
     if (i < 7) {
@@ -845,7 +848,7 @@ for (int i = 0; i < 10; i++) {
         break;
     }
 }
-""".trim()
+"""
         ).features().check {
             featureMap[FeatureName.BREAK] shouldBe 1
             featureList should haveFeatureAt(FeatureName.BREAK, listOf(5))
@@ -876,7 +879,7 @@ public class Test {
         }
     }
     "should correctly count boxing classes and type parameters" {
-        Source.fromSnippet(
+        Source.fromJavaSnippet(
             """
 import java.util.List;
 import java.util.ArrayList;
@@ -884,7 +887,7 @@ import java.util.ArrayList;
 Integer first = new Integer("1");
 Boolean second = true;
 List<String> list = new ArrayList<>();
-""".trim()
+"""
         ).features().check {
             featureMap[FeatureName.BOXING_CLASSES] shouldBe 2
             featureList should haveFeatureAt(FeatureName.BOXING_CLASSES, listOf(4, 5))
@@ -894,13 +897,13 @@ List<String> list = new ArrayList<>();
         }
     }
     "should correctly count print statements and dot notation" {
-        Source.fromSnippet(
+        Source.fromJavaSnippet(
             """
 System.out.println("Hello, world!");
 System.out.print("Hello, world!");
 System.err.println("Hello, world!");
 System.err.print("Hello, world!");
-""".trim()
+"""
         ).features().check {
             featureMap[FeatureName.PRINT_STATEMENTS] shouldBe 4
             featureList should haveFeatureAt(FeatureName.PRINT_STATEMENTS, (1..4).toList())
@@ -942,7 +945,6 @@ public class Test {
         ).features()
     }
     "should not choke on pseudo-recursion" {
-        @Suppress("SpellCheckingInspection")
         Source(
             mapOf(
                 "Catcher.java" to """
@@ -960,7 +962,7 @@ public class Catcher {
         ).features()
     }
     "should not find static in snippets" {
-        Source.fromSnippet(
+        Source.fromJavaSnippet(
             "int i = 0;"
         ).features().check {
             featureMap[FeatureName.STATIC_METHOD] shouldBe 0
@@ -968,7 +970,7 @@ public class Catcher {
         }
     }
     "should not count array.length as dotted variable access" {
-        Source.fromSnippet(
+        Source.fromJavaSnippet(
             """int[] array = new int[8];
               |int l = array.length;
             """.trimMargin()
@@ -981,7 +983,7 @@ public class Catcher {
         }
     }
     "should not count new with Strings and arrays" {
-        Source.fromSnippet(
+        Source.fromJavaSnippet(
             """String test = new String("test");
                 |int[] test1 = new int[8];
                 |int[] test2 = new int[] {1, 2, 4};
@@ -992,7 +994,7 @@ public class Catcher {
         }
     }
     "should not count new with arrays" {
-        Source.fromSnippet(
+        Source.fromJavaSnippet(
             """int[] midThree(int[] values) {
                 |  return new int[] {
                 |    values[values.length / 2 - 1], values[values.length / 2], values[values.length / 2 + 1]
