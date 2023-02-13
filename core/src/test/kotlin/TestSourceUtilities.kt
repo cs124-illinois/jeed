@@ -115,7 +115,6 @@ class TestSourceUtilities : StringSpec({
             |  error("Bad")
             |  error ( "Whoops" )
             |}
-            |
             """.trimMargin()
         ).stripAssertionMessages().trimLines().contents shouldBe
             """fun main() {
@@ -125,7 +124,6 @@ class TestSourceUtilities : StringSpec({
             |  error("error")
             |  error ("error")
             |}
-            |
             """.trimMargin()
     }
     "should collect Java identifiers" {

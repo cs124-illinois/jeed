@@ -32,7 +32,7 @@ public class Main {
     Test test2 = new Test();
     System.out.println("Yay");
   }
-}""".trim()
+}"""
         ).coverage().also { coverageMap ->
             coverageMap should haveFileMissedCount(1)
             coverageMap should haveClassMissedCount(0, klass = "Test")
@@ -56,7 +56,7 @@ public class Main {
     Test test = new Test(10);
     System.out.println("Hmm");
   }
-}""".trim()
+}"""
         ).coverage().also { coverageMap ->
             coverageMap should haveFileMissedCount(4)
             coverageMap should haveClassMissedCount(3, klass = "Test")
@@ -71,7 +71,7 @@ public class Main {
     Main main = new Main();
     System.out.println(main.getClass().getDeclaredMethods().length);
   }
-}""".trim()
+}"""
         ).compile()
         source.execute().also {
             it should haveCompleted()
@@ -91,7 +91,7 @@ public class Main {
     // do something with the lookup?
   }
   public static void main() { }
-}""".trim()
+}"""
         ).compile()
         assertThrows<IOException> {
             // Jacoco refuses to re-instrument, which is good
@@ -107,7 +107,7 @@ public class Main {
     i += 1;
     System.out.println(i);
   }
-}""".trim()
+}"""
         ).compile().execute(SourceExecutionArguments().addPlugin(Jacoco).addPlugin(LineTrace))
         result should haveCompleted()
         result should haveOutput("5")
@@ -182,7 +182,7 @@ public class Main {
     Test test = new Test();
     test.test();
   }
-}""".trim()
+}"""
         ).checkCoverage().also { testCoverage ->
             testCoverage.printLines()
         }
@@ -200,7 +200,7 @@ public class Main {
     Test test = new Test();
     test.test();
   }
-}""".trim()
+}"""
         )
         source.coverage().also { coverageResult ->
             coverageResult should haveFileCoverageAt(3, LineCoverage.PARTLY_COVERED)
@@ -252,11 +252,14 @@ public class Test {}
     }
 })
 
-private suspend fun Source.coverage(): CoverageResult =
-    compile().execute(SourceExecutionArguments().addPlugin(Jacoco)).also { taskResults ->
-        taskResults.completed shouldBe true
-        taskResults.permissionDenied shouldBe false
-    }.let { taskResult -> processCoverage(taskResult.pluginResult(Jacoco)) }
+suspend fun Source.coverage(): CoverageResult = if (type == Source.FileType.JAVA) {
+    compile()
+} else {
+    kompile()
+}.execute(SourceExecutionArguments().addPlugin(Jacoco)).also { taskResults ->
+    taskResults.completed shouldBe true
+    taskResults.permissionDenied shouldBe false
+}.let { taskResult -> processCoverage(taskResult.pluginResult(Jacoco)) }
 
 private suspend fun Source.checkCoverage(klass: String = "Test"): IClassCoverage {
     return compile().execute(SourceExecutionArguments().addPlugin(Jacoco)).also { taskResults ->
@@ -288,7 +291,8 @@ fun haveFileMissedCount(expectedCount: Int, filename: String? = null) = object :
             check(it.size == 1) { "Must specify a key to retrieve multi-file coverage result" }
             it.first()
         }
-        val actualCount = value.byFile[toRetrieve]!!.values.count { it == LineCoverage.PARTLY_COVERED || it == LineCoverage.NOT_COVERED }
+        val actualCount =
+            value.byFile[toRetrieve]!!.values.count { it == LineCoverage.PARTLY_COVERED || it == LineCoverage.NOT_COVERED }
 
         return MatcherResult(
             expectedCount == actualCount,
@@ -320,7 +324,8 @@ fun haveClassMissedCount(expectedCount: Int, klass: String? = null) = object : M
             check(it.size == 1) { "Must specify a key to retrieve multi-file coverage result" }
             it.first()
         }
-        val actualCount = value.byClass[toRetrieve]!!.values.count { it == LineCoverage.PARTLY_COVERED || it == LineCoverage.NOT_COVERED }
+        val actualCount =
+            value.byClass[toRetrieve]!!.values.count { it == LineCoverage.PARTLY_COVERED || it == LineCoverage.NOT_COVERED }
 
         return MatcherResult(
             expectedCount == actualCount,

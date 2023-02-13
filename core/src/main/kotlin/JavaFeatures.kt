@@ -433,8 +433,13 @@ class JavaFeatureListener(val source: Source, entry: Map.Entry<String, String>) 
         get() = currentFeatures.features.featureList
 
     private fun count(feature: FeatureName, location: Location) {
+        val remappedLocation = try {
+            source.mapLocation(filename, location)
+        } catch (_: SourceMappingException) {
+            return
+        }
         currentFeatureMap[feature] = (currentFeatureMap[feature] ?: 0) + 1
-        currentFeatureList += LocatedFeature(feature, source.mapLocation(filename, location))
+        currentFeatureList += LocatedFeature(feature, remappedLocation)
     }
 
     private fun ParserRuleContext.toLocation() = Location(start.line, start.charPositionInLine)

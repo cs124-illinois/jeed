@@ -183,7 +183,7 @@ fun Source.Companion.fromJavaSnippet(
     snippetArguments: SnippetArguments = SnippetArguments()
 ): Snippet {
     require(originalSource.isNotEmpty()) { "Snippet cannot be a blank string" }
-    return sourceFromJavaSnippet(originalSource, snippetArguments.copy(fileType = Source.FileType.JAVA))
+    return sourceFromJavaSnippet(originalSource.trimStart(), snippetArguments.copy(fileType = Source.FileType.JAVA))
 }
 
 fun Source.Companion.fromKotlinSnippet(
@@ -191,7 +191,7 @@ fun Source.Companion.fromKotlinSnippet(
     snippetArguments: SnippetArguments = SnippetArguments()
 ): Snippet {
     require(originalSource.isNotEmpty()) { "Snippet cannot be a blank string" }
-    return sourceFromKotlinSnippet(originalSource, snippetArguments.copy(fileType = Source.FileType.KOTLIN))
+    return sourceFromKotlinSnippet(originalSource.trimStart(), snippetArguments.copy(fileType = Source.FileType.KOTLIN))
 }
 
 @Suppress("LongMethod", "ComplexMethod", "ThrowsCount")

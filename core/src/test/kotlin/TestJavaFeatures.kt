@@ -9,7 +9,7 @@ import io.kotest.matchers.shouldBe
 
 @Suppress("LargeClass")
 class TestJavaFeatures : StringSpec({
-    "should count variable declarations in snippets" {
+    "f: should count variable declarations in snippets" {
         Source.fromSnippet(
             """
 int i = 0;
@@ -28,7 +28,13 @@ i++;
 
             featureMap[FeatureName.VARIABLE_REASSIGNMENTS] shouldBe 4
             featureList should haveFeatureAt(FeatureName.VARIABLE_REASSIGNMENTS, (3..6).toList())
+
+            featureMap[FeatureName.UNARY_OPERATORS] shouldBe 2
+            featureList should haveFeatureAt(FeatureName.UNARY_OPERATORS, listOf(5, 6))
         }.check("") {
+            featureMap[FeatureName.CLASS] shouldBe 0
+            featureList should haveFeatureAt(FeatureName.CLASS, listOf())
+
             featureMap[FeatureName.METHOD] shouldBe 0
             featureList should haveFeatureAt(FeatureName.METHOD, listOf())
 
@@ -238,7 +244,7 @@ if (i < 5 || i > 15) {
     if (i < 0) {
         i--;
     }
-} else if (i > 5 && i < 15) {
+} else if (!(i > 5 && i < 15)) {
     i++;
 } else {
     i--;
@@ -248,8 +254,8 @@ if (i < 5 || i > 15) {
             featureMap[FeatureName.COMPARISON_OPERATORS] shouldBe 5
             featureList should haveFeatureAt(FeatureName.COMPARISON_OPERATORS, listOf(2, 2, 3, 6, 6))
 
-            featureMap[FeatureName.LOGICAL_OPERATORS] shouldBe 2
-            featureList should haveFeatureAt(FeatureName.LOGICAL_OPERATORS, listOf(2, 6))
+            featureMap[FeatureName.LOGICAL_OPERATORS] shouldBe 3
+            featureList should haveFeatureAt(FeatureName.LOGICAL_OPERATORS, listOf(2, 6, 6))
         }
     }
     "should count try blocks, switch statements, finally blocks, and assertions in snippets" {
@@ -305,8 +311,7 @@ if (i < 5) {
     j = i < j ? i : j;
 }
 j = j << 2;
-""".trim()
-        ).features().check {
+""").features().check {
             featureMap[FeatureName.UNARY_OPERATORS] shouldBe 2
             featureList should haveFeatureAt(FeatureName.UNARY_OPERATORS, listOf(7, 10))
 

@@ -107,7 +107,8 @@ enum class LineCoverage(val description: String) {
     EMPTY("empty"),
     NOT_COVERED("not covered"),
     PARTLY_COVERED("partly covered"),
-    COVERED("fully covered")
+    COVERED("fully covered"),
+    IGNORED("ignored"),
 }
 
 private fun ILine.toLineCoverage() = when (status) {

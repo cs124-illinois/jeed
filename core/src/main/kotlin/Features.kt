@@ -130,45 +130,83 @@ enum class FeatureName(val description: String) {
 }
 
 @Suppress("unused")
-val SUPPORTED_KOTLIN_FEATURES =
-    setOf(
-        FeatureName.LOCAL_VARIABLE_DECLARATIONS,
-        FeatureName.VARIABLE_ASSIGNMENTS,
-        FeatureName.VARIABLE_REASSIGNMENTS,
-        FeatureName.FOR_LOOPS,
-        FeatureName.WHILE_LOOPS,
-        FeatureName.DO_WHILE_LOOPS,
-        FeatureName.NESTED_FOR,
-        FeatureName.NESTED_WHILE,
-        FeatureName.NESTED_DO_WHILE,
-        FeatureName.ARRAYS,
-        FeatureName.IF_STATEMENTS,
-        FeatureName.ELSE_IF,
-        FeatureName.ELSE_STATEMENTS,
-        FeatureName.NESTED_IF,
-        FeatureName.NESTED_METHOD,
-        FeatureName.DOTTED_VARIABLE_ACCESS,
-        FeatureName.DOTTED_METHOD_CALL,
-        FeatureName.DOT_NOTATION,
-        FeatureName.PRINT_STATEMENTS,
-        FeatureName.JAVA_PRINT_STATEMENTS,
-        FeatureName.COMPARISON_OPERATORS,
-        FeatureName.LOGICAL_OPERATORS,
-        FeatureName.CLASS,
-        FeatureName.METHOD,
-        FeatureName.IMPORT,
-        FeatureName.INSTANCEOF,
-        FeatureName.CASTING,
-        FeatureName.PRIMITIVE_CASTING,
-        FeatureName.REQUIRE_OR_CHECK,
-        FeatureName.FOR_LOOP_STEP,
-        FeatureName.ELVIS_OPERATOR,
-        FeatureName.FOR_LOOP_RANGE,
-        FeatureName.CLASS_FIELD,
-        FeatureName.CONSTRUCTOR,
-        FeatureName.SECONDARY_CONSTRUCTOR,
-        FeatureName.COMPANION_OBJECT
-    )
+val MISSING_KOTLIN_FEATURES = setOf(
+    // FeatureName.TERNARY_OPERATOR (no equivalent)
+
+    // Arrays
+    FeatureName.ARRAY_ACCESS,
+    FeatureName.ARRAY_LITERAL,
+    FeatureName.MULTIDIMENSIONAL_ARRAYS,
+
+    // Loops
+    FeatureName.ENHANCED_FOR,
+    FeatureName.BREAK,
+    FeatureName.CONTINUE,
+
+    // Nesting
+    FeatureName.NESTED_CLASS,
+
+    // Methods
+    FeatureName.RETURN,
+    FeatureName.GETTER,
+    FeatureName.SETTER,
+
+    // Strings & null
+    FeatureName.STRING,
+    FeatureName.NULL,
+
+    // Type handling
+    FeatureName.TYPE_INFERENCE,
+    FeatureName.INSTANCEOF,
+
+    // Class & Interface
+    FeatureName.IMPLEMENTS,
+    FeatureName.INTERFACE,
+
+    // Polymorphism
+    FeatureName.EXTENDS,
+    FeatureName.SUPER,
+    FeatureName.OVERRIDE,
+
+    // Exceptions
+    FeatureName.TRY_BLOCK,
+    FeatureName.FINALLY,
+    FeatureName.THROW,
+    FeatureName.THROWS,
+
+    // Objects
+    FeatureName.NEW_KEYWORD,
+    FeatureName.THIS,
+    FeatureName.EQUALITY,
+
+    // Modifiers
+    FeatureName.VISIBILITY_MODIFIERS,
+    FeatureName.STATIC_METHOD,
+    FeatureName.FINAL_METHOD,
+    FeatureName.ABSTRACT_METHOD,
+    FeatureName.STATIC_FIELD,
+    FeatureName.FINAL_FIELD,
+    FeatureName.ABSTRACT_FIELD,
+    FeatureName.FINAL_CLASS,
+    FeatureName.ABSTRACT_CLASS,
+
+    // Import
+    FeatureName.IMPORT,
+
+    // Misc.
+    FeatureName.ANONYMOUS_CLASSES,
+    FeatureName.LAMBDA_EXPRESSIONS,
+    FeatureName.GENERIC_CLASS,
+    FeatureName.SWITCH,
+    FeatureName.STREAM,
+    FeatureName.ENUM,
+
+    FeatureName.COMPARABLE,
+    FeatureName.RECORD,
+    FeatureName.BOXING_CLASSES,
+    FeatureName.TYPE_PARAMETERS,
+)
+
 val ALL_FEATURES = FeatureName.values().associate { it.name to it.description }
 
 class FeatureMap(val map: MutableMap<FeatureName, Int> = mutableMapOf()) : MutableMap<FeatureName, Int> by map {

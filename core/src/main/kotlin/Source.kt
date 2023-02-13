@@ -173,10 +173,10 @@ open class Source(
             return fileTypes.first()
         }
 
-        fun fromJava(contents: String) = Source(mapOf("Main.java" to contents))
+        fun fromJava(contents: String) = Source(mapOf("Main.java" to contents.trimStart()))
 
         @Suppress("unused")
-        fun fromKotlin(contents: String) = Source(mapOf("Main.kt" to contents))
+        fun fromKotlin(contents: String) = Source(mapOf("Main.kt" to contents.trimStart()))
     }
 }
 

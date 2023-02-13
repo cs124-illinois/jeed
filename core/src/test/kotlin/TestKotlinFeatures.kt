@@ -2,6 +2,7 @@ package edu.illinois.cs.cs125.jeed.core
 
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldContainExactly
+import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 
 @Suppress("LargeClass")
@@ -18,8 +19,25 @@ i++
 """.trim()
         ).features().check {
             featureMap[FeatureName.LOCAL_VARIABLE_DECLARATIONS] shouldBe 2
+            featureList should haveFeatureAt(FeatureName.LOCAL_VARIABLE_DECLARATIONS, listOf(1, 2))
+
             featureMap[FeatureName.VARIABLE_ASSIGNMENTS] shouldBe 2
+            featureList should haveFeatureAt(FeatureName.VARIABLE_ASSIGNMENTS, listOf(1, 2))
+
             featureMap[FeatureName.VARIABLE_REASSIGNMENTS] shouldBe 4
+            featureList should haveFeatureAt(FeatureName.VARIABLE_REASSIGNMENTS, (3..6).toList())
+
+            featureMap[FeatureName.UNARY_OPERATORS] shouldBe 2
+            featureList should haveFeatureAt(FeatureName.UNARY_OPERATORS, listOf(5, 6))
+        }.check("") {
+            featureMap[FeatureName.CLASS] shouldBe 0
+            featureList should haveFeatureAt(FeatureName.CLASS, listOf())
+
+            featureMap[FeatureName.METHOD] shouldBe 0
+            featureList should haveFeatureAt(FeatureName.METHOD, listOf())
+
+            featureMap[FeatureName.COMPANION_OBJECT] shouldBe 0
+            featureList should haveFeatureAt(FeatureName.COMPANION_OBJECT, listOf())
         }
     }
     "should count for loops in snippets" {
@@ -226,20 +244,54 @@ array.test.me().whatever.think()
             dottedMethodList shouldContainExactly setOf("sort", "sorted", "me", "think")
         }
     }
+    "should count operators in snippets" {
+        Source.fromKotlinSnippet(
+            """
+var i = 0
+var j = 0
+if (i < 5) {
+    i += 5
+    j = i - 1
+} else if (i < 10) {
+    i++
+    j = j and i
+} else if (i < 15) {
+    i--
+    j = j % i
+} else {
+    i -= 5
+}
+j = j shl 2
+""").features().check {
+            featureMap[FeatureName.UNARY_OPERATORS] shouldBe 2
+            featureList should haveFeatureAt(FeatureName.UNARY_OPERATORS, listOf(7, 10))
+
+            featureMap[FeatureName.ARITHMETIC_OPERATORS] shouldBe 2
+            featureList should haveFeatureAt(FeatureName.ARITHMETIC_OPERATORS, listOf(5, 11))
+
+            featureMap[FeatureName.BITWISE_OPERATORS] shouldBe 2
+            featureList should haveFeatureAt(FeatureName.BITWISE_OPERATORS, listOf(8, 15))
+
+            featureMap[FeatureName.ASSIGNMENT_OPERATORS] shouldBe 2
+            featureList should haveFeatureAt(FeatureName.ASSIGNMENT_OPERATORS, listOf(4, 13))
+        }
+    }
     "should count print statements" {
         Source.fromKotlinSnippet(
             """
 println("Hello, world")
+println("test".length())
 print("Another")
 System.out.println("Hello, again")
+System.out.println("world".length)
 System.err.print("Whoa")
             """.trimIndent()
         ).features().check {
-            featureMap[FeatureName.DOTTED_METHOD_CALL] shouldBe 0
-            featureMap[FeatureName.DOTTED_VARIABLE_ACCESS] shouldBe 0
-            featureMap[FeatureName.DOT_NOTATION] shouldBe 0
-            featureMap[FeatureName.PRINT_STATEMENTS] shouldBe 4
-            featureMap[FeatureName.JAVA_PRINT_STATEMENTS] shouldBe 1
+            featureMap[FeatureName.DOTTED_METHOD_CALL] shouldBe 1
+            featureMap[FeatureName.DOTTED_VARIABLE_ACCESS] shouldBe 1
+            featureMap[FeatureName.DOT_NOTATION] shouldBe 2
+            featureMap[FeatureName.PRINT_STATEMENTS] shouldBe 6
+            featureMap[FeatureName.JAVA_PRINT_STATEMENTS] shouldBe 2
         }
     }
     "should count assert require and check statements" {
@@ -263,7 +315,7 @@ if (i < 5 || i > 15) {
     if (i < 0) {
         i--
     }
-} else if (i > 5 && i < 15) {
+} else if (!(i > 5 && i < 15)) {
     i++
 } else {
     i--
@@ -271,7 +323,10 @@ if (i < 5 || i > 15) {
 """.trim()
         ).features().check {
             featureMap[FeatureName.COMPARISON_OPERATORS] shouldBe 5
-            featureMap[FeatureName.LOGICAL_OPERATORS] shouldBe 2
+            featureList should haveFeatureAt(FeatureName.COMPARISON_OPERATORS, listOf(2, 2, 3, 6, 6))
+
+            featureMap[FeatureName.LOGICAL_OPERATORS] shouldBe 3
+            featureList should haveFeatureAt(FeatureName.LOGICAL_OPERATORS, listOf(2, 6, 6))
         }
     }
     "should count and enumerate import statements" {

@@ -15,6 +15,7 @@ import edu.illinois.cs.cs125.jeed.core.antlr.KotlinParserBaseListener
 import org.antlr.v4.runtime.ParserRuleContext
 import org.antlr.v4.runtime.RuleContext
 import org.antlr.v4.runtime.tree.ParseTreeWalker
+import org.antlr.v4.runtime.tree.TerminalNode
 import org.jetbrains.kotlin.backend.common.pop
 
 private val basicTypes = setOf("Byte", "Short", "Int", "Long", "Float", "Double", "Char", "Boolean")
@@ -37,9 +38,22 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
     private val currentFeatureMap: MutableMap<FeatureName, Int>
         get() = currentFeatures.features.featureMap
 
-    private fun count(feature: FeatureName, amount: Int = 1) {
-        currentFeatureMap[feature] = (currentFeatureMap[feature] ?: 0) + amount
+    private val currentFeatureList: MutableList<LocatedFeature>
+        get() = currentFeatures.features.featureList
+
+    private fun count(feature: FeatureName, location: Location) {
+        val remappedLocation = try {
+            source.mapLocation(filename, location)
+        } catch (_: SourceMappingException) {
+            return
+        }
+        currentFeatureMap[feature] = (currentFeatureMap[feature] ?: 0) + 1
+        currentFeatureList += LocatedFeature(feature, remappedLocation)
     }
+
+    private fun ParserRuleContext.toLocation() = Location(start.line, start.charPositionInLine)
+
+    private fun TerminalNode.toLocation() = Location(symbol.line, symbol.charPositionInLine)
 
     override fun enterKotlinFile(ctx: KotlinParser.KotlinFileContext) {
         val unitFeatures = UnitFeatures(
@@ -56,7 +70,7 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
 
     override fun exitKotlinFile(ctx: KotlinParser.KotlinFileContext?) {
         assert(featureStack.size == 1)
-        val topLevelFeatures = featureStack.removeAt(0) as UnitFeatures
+        val topLevelFeatures = featureStack.removeAt(0).finalize() as UnitFeatures
         assert(!results.keys.contains(topLevelFeatures.name))
         results[topLevelFeatures.name] = topLevelFeatures
     }
@@ -80,7 +94,7 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
 
     private fun exitClassOrInterface(name: String, start: Location, end: Location) {
         assert(featureStack.isNotEmpty())
-        val lastFeatures = featureStack.removeAt(0)
+        val lastFeatures = featureStack.removeAt(0).finalize()
         assert(lastFeatures is ClassFeatures)
         lastFeatures.methods["init0"]?.also {
             require(!currentFeatures.methods.containsKey("init"))
@@ -125,7 +139,7 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
 
     override fun enterClassDeclaration(ctx: KotlinParser.ClassDeclarationContext) {
         if (!ctx.isSnippetClass()) {
-            count(FeatureName.CLASS)
+            count(FeatureName.CLASS, ctx.toLocation())
         }
         enterClassOrInterface(
             ctx.simpleIdentifier().text,
@@ -163,7 +177,7 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
 
     private fun exitMethodOrConstructor() {
         require(featureStack.isNotEmpty())
-        val lastFeatures = featureStack.removeAt(0)
+        val lastFeatures = featureStack.removeAt(0).finalize()
         require(lastFeatures is MethodFeatures)
         assert(featureStack.isNotEmpty())
         currentFeatures.features += lastFeatures.features
@@ -185,7 +199,7 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
 
     override fun enterFunctionDeclaration(ctx: FunctionDeclarationContext) {
         if (!ctx.isSnippetMethod()) {
-            count(FeatureName.METHOD)
+            count(FeatureName.METHOD, ctx.toLocation())
         }
         enterMethodOrConstructor(
             ctx.fullName(),
@@ -197,7 +211,7 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
         loopDepths += 0
 
         if (ctx.parentType() == ParentType.FUNCTION) {
-            count(FeatureName.NESTED_METHOD)
+            count(FeatureName.NESTED_METHOD, ctx.toLocation())
         }
     }
 
@@ -235,8 +249,8 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
 
     private var constructorCounter = 0
     override fun enterSecondaryConstructor(ctx: SecondaryConstructorContext) {
-        count(FeatureName.CONSTRUCTOR)
-        count(FeatureName.SECONDARY_CONSTRUCTOR)
+        count(FeatureName.CONSTRUCTOR, ctx.toLocation())
+        count(FeatureName.SECONDARY_CONSTRUCTOR, ctx.toLocation())
 
         ifDepths += 0
         functionBlockDepths += 0
@@ -309,26 +323,34 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
 
     override fun enterVariableDeclaration(ctx: KotlinParser.VariableDeclarationContext) {
         if (ctx.parent is KotlinParser.PropertyDeclarationContext && ctx.parentType() == ParentType.FUNCTION) {
-            count(FeatureName.LOCAL_VARIABLE_DECLARATIONS)
-            count(FeatureName.VARIABLE_ASSIGNMENTS)
+            count(FeatureName.LOCAL_VARIABLE_DECLARATIONS, ctx.toLocation())
+            count(FeatureName.VARIABLE_ASSIGNMENTS, ctx.toLocation())
         }
     }
 
     override fun enterAssignment(ctx: KotlinParser.AssignmentContext) {
         if (ctx.parentType() == ParentType.FUNCTION) {
-            count(FeatureName.VARIABLE_REASSIGNMENTS)
+            count(FeatureName.VARIABLE_REASSIGNMENTS, ctx.toLocation())
         }
     }
 
     override fun enterPrefixUnaryOperator(ctx: KotlinParser.PrefixUnaryOperatorContext) {
-        if (ctx.parentType() == ParentType.FUNCTION && (ctx.INCR() != null || ctx.DECR() != null)) {
-            count(FeatureName.VARIABLE_REASSIGNMENTS)
+        if (ctx.parentType() == ParentType.FUNCTION) {
+            if (ctx.INCR() != null || ctx.DECR() != null) {
+                count(FeatureName.VARIABLE_REASSIGNMENTS, (ctx.INCR() ?: ctx.DECR()).toLocation())
+                count(FeatureName.UNARY_OPERATORS, (ctx.INCR() ?: ctx.DECR()).toLocation())
+            } else if (ctx.excl() != null) {
+                count(FeatureName.LOGICAL_OPERATORS, ctx.excl().toLocation())
+            }
         }
     }
 
     override fun enterPostfixUnaryOperator(ctx: KotlinParser.PostfixUnaryOperatorContext) {
-        if (ctx.parentType() == ParentType.FUNCTION && (ctx.INCR() != null || ctx.DECR() != null)) {
-            count(FeatureName.VARIABLE_REASSIGNMENTS)
+        if (ctx.parentType() == ParentType.FUNCTION) {
+            if (ctx.INCR() != null || ctx.DECR() != null) {
+                count(FeatureName.VARIABLE_REASSIGNMENTS, (ctx.INCR() ?: ctx.DECR())!!.toLocation())
+                count(FeatureName.UNARY_OPERATORS, (ctx.INCR() ?: ctx.DECR())!!.toLocation())
+            }
         }
     }
 
@@ -337,24 +359,24 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
             return
         }
         ctx.forStatement()?.also {
-            count(FeatureName.FOR_LOOPS)
+            count(FeatureName.FOR_LOOPS, ctx.forStatement().toLocation())
             if (loopDepth > 0) {
-                count(FeatureName.NESTED_FOR)
-                count(FeatureName.NESTED_LOOP)
+                count(FeatureName.NESTED_FOR, ctx.forStatement().toLocation())
+                count(FeatureName.NESTED_LOOP, ctx.forStatement().toLocation())
             }
         }
         ctx.whileStatement()?.also {
-            count(FeatureName.WHILE_LOOPS)
+            count(FeatureName.WHILE_LOOPS, ctx.whileStatement().toLocation())
             if (loopDepth > 0) {
-                count(FeatureName.NESTED_WHILE)
-                count(FeatureName.NESTED_LOOP)
+                count(FeatureName.NESTED_WHILE, ctx.whileStatement().toLocation())
+                count(FeatureName.NESTED_LOOP, ctx.whileStatement().toLocation())
             }
         }
         ctx.doWhileStatement()?.also {
-            count(FeatureName.DO_WHILE_LOOPS)
+            count(FeatureName.DO_WHILE_LOOPS, ctx.doWhileStatement().toLocation())
             if (loopDepth > 0) {
-                count(FeatureName.NESTED_DO_WHILE)
-                count(FeatureName.NESTED_LOOP)
+                count(FeatureName.NESTED_DO_WHILE, ctx.doWhileStatement().toLocation())
+                count(FeatureName.NESTED_LOOP, ctx.doWhileStatement().toLocation())
             }
         }
         loopDepths[loopDepths.size - 1]++
@@ -374,16 +396,19 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
         inForStatement = false
     }
 
+    private val bitwiseOperators = listOf("and", "or", "shl", "shr")
+
     override fun enterSimpleIdentifier(ctx: KotlinParser.SimpleIdentifierContext) {
         val identifier = ctx.Identifier()?.text
         if (identifier == "arrayOf" ||
             identifier == "Array" ||
             identifier?.endsWith("ArrayOf") == true
         ) {
-            count(FeatureName.ARRAYS)
-        }
-        if (inForStatement && identifier == "step") {
-            count(FeatureName.FOR_LOOP_STEP)
+            count(FeatureName.ARRAYS, ctx.toLocation())
+        } else if (inForStatement && identifier == "step") {
+            count(FeatureName.FOR_LOOP_STEP, ctx.toLocation())
+        } else if (bitwiseOperators.contains(identifier)) {
+            count(FeatureName.BITWISE_OPERATORS, ctx.toLocation())
         }
     }
 
@@ -399,22 +424,22 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
         val parentStatement = ctx.searchUp<StatementContext>() ?: return // FIXME: Top-level if expressions
         val ifStart = ctx.start.startIndex
         if (parentStatement.assignment() == null && ifStart !in seenIfStarts) {
-            count(FeatureName.IF_STATEMENTS)
+            count(FeatureName.IF_STATEMENTS, ctx.toLocation())
             seenIfStarts += ifStart
             topIfs += ifStart
             if (ifDepth > 0) {
-                count(FeatureName.NESTED_IF)
+                count(FeatureName.NESTED_IF, ctx.toLocation())
             }
             ifDepths[ifDepths.size - 1]++
         }
         ctx.controlStructureBody().forEach {
             if (it.isIf()) {
-                count(FeatureName.ELSE_IF)
+                count(FeatureName.ELSE_IF, it.toLocation())
                 seenIfStarts += it.start.startIndex
             }
         }
         if (ctx.ELSE() != null && ctx.controlStructureBody()!!.last().block() != null) {
-            count(FeatureName.ELSE_STATEMENTS)
+            count(FeatureName.ELSE_STATEMENTS, ctx.ELSE().toLocation())
         }
     }
 
@@ -447,79 +472,57 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
             if (current.navigationSuffix().memberAccessOperator()?.DOT() != null &&
                 current.navigationSuffix().simpleIdentifier() != null
             ) {
-                count(FeatureName.DOT_NOTATION)
+                count(FeatureName.DOT_NOTATION, current.navigationSuffix().memberAccessOperator().DOT().toLocation())
                 if (next?.callSuffix() != null) {
                     val identifier = current.navigationSuffix().simpleIdentifier().text
-                    count(FeatureName.DOTTED_METHOD_CALL)
+                    count(FeatureName.DOTTED_METHOD_CALL, next.callSuffix().toLocation())
                     currentFeatures.features.dottedMethodList += identifier
                     if (identifier in typeCasts) {
-                        count(FeatureName.PRIMITIVE_CASTING)
+                        count(FeatureName.PRIMITIVE_CASTING, current.navigationSuffix().simpleIdentifier().toLocation())
                     }
                 } else {
-                    count(FeatureName.DOTTED_VARIABLE_ACCESS)
+                    count(
+                        FeatureName.DOTTED_VARIABLE_ACCESS,
+                        current.navigationSuffix().memberAccessOperator().DOT().toLocation()
+                    )
                 }
             }
         }
     }
 
     override fun enterComparisonOperator(ctx: KotlinParser.ComparisonOperatorContext) {
-        count(FeatureName.COMPARISON_OPERATORS)
+        count(FeatureName.COMPARISON_OPERATORS, ctx.toLocation())
     }
 
     override fun enterExpression(ctx: KotlinParser.ExpressionContext) {
         ctx.DISJ()?.also {
-            count(FeatureName.LOGICAL_OPERATORS)
+            count(FeatureName.LOGICAL_OPERATORS, ctx.DISJ().toLocation())
         }
         ctx.CONJ()?.also {
-            count(FeatureName.LOGICAL_OPERATORS)
+            count(FeatureName.LOGICAL_OPERATORS, ctx.CONJ().toLocation())
         }
         ctx.isOperator?.also {
-            count(FeatureName.INSTANCEOF)
+            count(FeatureName.INSTANCEOF, ctx.isOperator.toLocation())
         }
         ctx.asOperator()?.also {
             ctx.type().also {
                 if (it.text in basicTypes) {
-                    count(FeatureName.PRIMITIVE_CASTING)
+                    count(FeatureName.PRIMITIVE_CASTING, ctx.asOperator().toLocation())
                 } else {
-                    count(FeatureName.CASTING)
+                    count(FeatureName.CASTING, ctx.asOperator().toLocation())
                 }
             }
         }
         ctx.elvis()?.also {
-            count(FeatureName.ELVIS_OPERATOR)
+            count(FeatureName.ELVIS_OPERATOR, ctx.elvis().toLocation())
         }
         ctx.RANGE()?.also {
             if (inForStatement) {
-                count(FeatureName.FOR_LOOP_RANGE)
+                count(FeatureName.FOR_LOOP_RANGE, ctx.RANGE().toLocation())
             }
         }
         if (ctx.postfixUnarySuffix().isNotEmpty()) {
-            for (i in 0 until ctx.postfixUnarySuffix().size) {
-                val current = ctx.postfixUnarySuffix(i)
-                if (current.navigationSuffix() == null) {
-                    continue
-                }
-                val next = if (i == ctx.postfixUnarySuffix().size - 1) {
-                    null
-                } else {
-                    ctx.postfixUnarySuffix(i + 1)
-                }
-                if (current.navigationSuffix().memberAccessOperator()?.DOT() != null &&
-                    current.navigationSuffix().simpleIdentifier() != null
-                ) {
-                    count(FeatureName.DOT_NOTATION)
-                    if (next?.callSuffix() != null) {
-                        val identifier = current.navigationSuffix().simpleIdentifier().text
-                        count(FeatureName.DOTTED_METHOD_CALL)
-                        currentFeatures.features.dottedMethodList += identifier
-                        if (identifier in typeCasts) {
-                            count(FeatureName.PRIMITIVE_CASTING)
-                        }
-                    } else {
-                        count(FeatureName.DOTTED_VARIABLE_ACCESS)
-                    }
-                }
-            }
+            var skipDots = false
             if (ctx.expression().getOrNull(0)?.primaryExpression()?.simpleIdentifier() != null &&
                 ctx.postfixUnarySuffix().isNotEmpty() &&
                 ctx.postfixUnarySuffix().last().callSuffix() != null &&
@@ -537,24 +540,60 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
                                 ""
                             }
                         }
+                val location = ctx.expression()[0].primaryExpression().simpleIdentifier().toLocation()
                 val lastChunk = fullMethodCall.split(".").last()
                 if (printStatements.contains(fullMethodCall)) {
-                    count(FeatureName.PRINT_STATEMENTS)
+                    count(FeatureName.PRINT_STATEMENTS, location)
                 } else if (javaPrintStatements.contains(fullMethodCall)) {
-                    count(FeatureName.PRINT_STATEMENTS)
+                    count(FeatureName.PRINT_STATEMENTS, location)
                     if (unnecessaryJavaPrintStatements.contains(fullMethodCall)) {
-                        count(FeatureName.JAVA_PRINT_STATEMENTS)
+                        count(FeatureName.JAVA_PRINT_STATEMENTS, location)
                     }
-                    count(FeatureName.DOTTED_VARIABLE_ACCESS, -1)
-                    count(FeatureName.DOTTED_METHOD_CALL, -1)
-                    count(FeatureName.DOT_NOTATION, -2)
+                    skipDots = true
                 } else if (assertStatements.contains(fullMethodCall)) {
-                    count(FeatureName.ASSERT)
+                    count(FeatureName.ASSERT, location)
                 } else if (requireOrCheckStatements.contains(fullMethodCall)) {
-                    count(FeatureName.REQUIRE_OR_CHECK)
+                    count(FeatureName.REQUIRE_OR_CHECK, location)
                 } else if (javaEqualsStatements.contains(lastChunk)) {
-                    count(FeatureName.EQUALITY)
-                    count(FeatureName.JAVA_EQUALITY)
+                    count(FeatureName.EQUALITY, location)
+                    count(FeatureName.JAVA_EQUALITY, location)
+                }
+            }
+            if (!skipDots) {
+                for (i in 0 until ctx.postfixUnarySuffix().size) {
+                    val current = ctx.postfixUnarySuffix(i)
+                    if (current.navigationSuffix() == null) {
+                        continue
+                    }
+                    val next = if (i == ctx.postfixUnarySuffix().size - 1) {
+                        null
+                    } else {
+                        ctx.postfixUnarySuffix(i + 1)
+                    }
+                    if (current.navigationSuffix().memberAccessOperator()?.DOT() != null &&
+                        current.navigationSuffix().simpleIdentifier() != null
+                    ) {
+                        count(
+                            FeatureName.DOT_NOTATION,
+                            current.navigationSuffix().memberAccessOperator().DOT().toLocation()
+                        )
+                        if (next?.callSuffix() != null) {
+                            val identifier = current.navigationSuffix().simpleIdentifier().text
+                            count(FeatureName.DOTTED_METHOD_CALL, next.callSuffix().toLocation())
+                            currentFeatures.features.dottedMethodList += identifier
+                            if (identifier in typeCasts) {
+                                count(
+                                    FeatureName.PRIMITIVE_CASTING,
+                                    current.navigationSuffix().simpleIdentifier().toLocation()
+                                )
+                            }
+                        } else {
+                            count(
+                                FeatureName.DOTTED_VARIABLE_ACCESS,
+                                current.navigationSuffix().memberAccessOperator().DOT().toLocation()
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -574,7 +613,7 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
     }
 
     override fun enterImportHeader(ctx: KotlinParser.ImportHeaderContext) {
-        count(FeatureName.IMPORT)
+        count(FeatureName.IMPORT, ctx.toLocation())
         val importName = ctx.identifier().text + if (ctx.DOT() != null) {
             ".*"
         } else {
@@ -584,29 +623,41 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
     }
 
     override fun enterTypeTest(ctx: KotlinParser.TypeTestContext) {
-        count(FeatureName.INSTANCEOF)
+        count(FeatureName.INSTANCEOF, ctx.toLocation())
     }
 
     override fun enterPropertyDeclaration(ctx: KotlinParser.PropertyDeclarationContext) {
         if (ctx.parentType() == ParentType.CLASS) {
-            count(FeatureName.CLASS_FIELD)
+            count(FeatureName.CLASS_FIELD, ctx.toLocation())
         }
     }
 
     override fun enterPrimaryConstructor(ctx: KotlinParser.PrimaryConstructorContext) {
-        count(FeatureName.CONSTRUCTOR)
+        count(FeatureName.CONSTRUCTOR, ctx.toLocation())
     }
 
     override fun enterEqualityOperator(ctx: KotlinParser.EqualityOperatorContext) {
         if (ctx.EQEQEQ() != null || ctx.EXCL_EQEQ() != null) {
-            count(FeatureName.REFERENCE_EQUALITY)
+            count(FeatureName.REFERENCE_EQUALITY, (ctx.EQEQEQ() ?: ctx.EXCL_EQEQ()).toLocation())
         } else {
-            count(FeatureName.EQUALITY)
+            count(FeatureName.EQUALITY, ctx.toLocation())
         }
     }
 
-    override fun enterCompanionObject(ctx: KotlinParser.CompanionObjectContext?) {
-        count(FeatureName.COMPANION_OBJECT)
+    override fun enterCompanionObject(ctx: KotlinParser.CompanionObjectContext) {
+        count(FeatureName.COMPANION_OBJECT, ctx.toLocation())
+    }
+
+    override fun enterAssignmentAndOperator(ctx: KotlinParser.AssignmentAndOperatorContext) {
+        count(FeatureName.ASSIGNMENT_OPERATORS, ctx.toLocation())
+    }
+
+    override fun enterAdditiveOperator(ctx: KotlinParser.AdditiveOperatorContext) {
+        count(FeatureName.ARITHMETIC_OPERATORS, ctx.toLocation())
+    }
+
+    override fun enterMultiplicativeOperator(ctx: KotlinParser.MultiplicativeOperatorContext) {
+        count(FeatureName.ARITHMETIC_OPERATORS, ctx.toLocation())
     }
 
     init {
