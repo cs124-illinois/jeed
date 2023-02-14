@@ -128,12 +128,17 @@ enum class FeatureName(val description: String) {
     SECONDARY_CONSTRUCTOR("secondary constructor"),
     JAVA_EQUALITY("java equals"),
     COMPANION_OBJECT("companion object"),
+    HAS_COMPANION_OBJECT("has companion object"),
     NULLABLE_TYPE("nullable type"),
     WHEN("when statement"),
     EXPLICIT_TYPE("explicit type"),
     DATA_CLASS("data class"),
     OPEN_CLASS("open class"),
-    OPEN_METHOD("open method")
+    OPEN_METHOD("open method"),
+    COLLECTION_INDEXING("collection indexing"),
+    SINGLETON("object singleton"),
+    FUNCTIONAL_INTERFACE("functional interface"),
+    ANONYMOUS_FUNCTION("anonymous function")
 }
 
 @Suppress("unused")
@@ -154,12 +159,10 @@ val MISSING_KOTLIN_FEATURES = setOf(
 
     // Modifiers
     // FeatureName.FINAL_METHOD (default, no equivalent),
-    FeatureName.FINAL_FIELD,
+    FeatureName.FINAL_FIELD
     // FeatureName.FINAL_CLASS (default, no equivalent)
 
     // Misc.
-    FeatureName.ANONYMOUS_CLASSES,
-    FeatureName.LAMBDA_EXPRESSIONS
     // FeatureName.SWITCH (no equivalent)
     // FeatureName.STREAM (no equivalent, can't detect due to inference)
 

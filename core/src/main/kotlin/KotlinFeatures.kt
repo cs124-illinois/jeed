@@ -182,6 +182,9 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
             ctx.modifiers()?.modifier(0)?.inheritanceModifier()?.ABSTRACT()?.also {
                 count(FeatureName.ABSTRACT_CLASS, ctx.toLocation())
             }
+            ctx.classBody()?.classMemberDeclarations()?.classMemberDeclaration()?.find { it.companionObject() != null }?.also {
+                count(FeatureName.HAS_COMPANION_OBJECT, ctx.toLocation())
+            }
         }
         enterClassOrInterface(
             ctx.simpleIdentifier().text,
@@ -216,6 +219,9 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
 
     override fun enterInterfaceDeclaration(ctx: KotlinParser.InterfaceDeclarationContext) {
         count(FeatureName.INTERFACE, ctx.toLocation())
+        ctx.FUN()?.also {
+            count(FeatureName.FUNCTIONAL_INTERFACE, ctx.toLocation())
+        }
         enterClassOrInterface(
             ctx.simpleIdentifier().text,
             Location(ctx.start.line, ctx.start.charPositionInLine),
@@ -730,6 +736,7 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
             anonymousClassDepth++
             objectLiteralCounter++
         }
+        count(FeatureName.ANONYMOUS_CLASSES, ctx.toLocation())
     }
 
     override fun exitObjectLiteral(ctx: KotlinParser.ObjectLiteralContext) {
@@ -876,6 +883,31 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
         ctx.finallyBlock()?.also {
             count(FeatureName.FINALLY, it.toLocation())
         }
+    }
+
+    override fun enterObjectDeclaration(ctx: KotlinParser.ObjectDeclarationContext) {
+        count(FeatureName.SINGLETON, ctx.toLocation())
+        enterClassOrInterface(
+            ctx.simpleIdentifier().text,
+            Location(ctx.start.line, ctx.start.charPositionInLine),
+            Location(ctx.stop.line, ctx.stop.charPositionInLine)
+        )
+    }
+
+    override fun exitObjectDeclaration(ctx: KotlinParser.ObjectDeclarationContext) {
+        exitClassOrInterface(
+            ctx.simpleIdentifier().text,
+            Location(ctx.start.line, ctx.start.charPositionInLine),
+            Location(ctx.stop.line, ctx.stop.charPositionInLine)
+        )
+    }
+
+    override fun enterLambdaLiteral(ctx: KotlinParser.LambdaLiteralContext) {
+        count(FeatureName.LAMBDA_EXPRESSIONS, ctx.toLocation())
+    }
+
+    override fun enterAnonymousFunction(ctx: KotlinParser.AnonymousFunctionContext) {
+        count(FeatureName.ANONYMOUS_FUNCTION, ctx.toLocation())
     }
 
     init {

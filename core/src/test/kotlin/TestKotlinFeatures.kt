@@ -645,6 +645,9 @@ class Test {
         ).features().check("Test") {
             featureMap[FeatureName.COMPANION_OBJECT] shouldBe 1
             featureList should haveFeatureAt(FeatureName.COMPANION_OBJECT, listOf(2))
+        }.check("") {
+            featureMap[FeatureName.HAS_COMPANION_OBJECT] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.HAS_COMPANION_OBJECT, listOf(1))
         }
     }
     "should correctly count break and continue in snippets" {
@@ -1002,4 +1005,54 @@ abstract class Test {
             featureList should haveFeatureAt(FeatureName.ABSTRACT_FIELD, listOf(2))
         }
     }
+    "should count anonymous objects and singletons" {
+        Source.fromKotlinSnippet(
+            """
+object DoIt {
+  fun it() = 8
+}
+interface Test {
+  fun test(): Int
+}
+val test = object : Test {
+  override fun test() = 2
+}
+"""
+        ).features().check("") {
+            featureMap[FeatureName.SINGLETON] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.SINGLETON, listOf(1))
+
+            featureMap[FeatureName.ANONYMOUS_CLASSES] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.ANONYMOUS_CLASSES, listOf(7))
+
+            featureMap[FeatureName.METHOD] shouldBe 3
+            featureList should haveFeatureAt(FeatureName.METHOD, listOf(2, 5, 8))
+        }.check("DoIt") {
+            featureMap[FeatureName.METHOD] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.METHOD, listOf(2))
+        }
+    }
+    "should count lambda expressions, anonymous methods, and functional interfaces" {
+        Source.fromKotlinSnippet(
+            """
+fun interface Test {
+  fun test(): Int
+}
+val test = Test { 0 }
+val another = fun (x: Int): Int = x
+"""
+        ).features().check {
+            featureMap[FeatureName.LAMBDA_EXPRESSIONS] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.LAMBDA_EXPRESSIONS, listOf(4))
+
+            featureMap[FeatureName.ANONYMOUS_FUNCTION] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.ANONYMOUS_FUNCTION, listOf(5))
+        }.check("") {
+            featureMap[FeatureName.FUNCTIONAL_INTERFACE] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.FUNCTIONAL_INTERFACE, listOf(1))
+        }
+    }
 })
+fun interface Test {
+    fun test(): Int
+}
