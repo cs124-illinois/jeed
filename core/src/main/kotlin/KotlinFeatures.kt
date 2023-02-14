@@ -524,6 +524,7 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
             identifier?.endsWith("ArrayOf") == true
         ) {
             count(FeatureName.ARRAYS, ctx.toLocation())
+            count(FeatureName.ARRAY_LITERAL, ctx.toLocation())
         } else if (inForStatement && identifier == "step") {
             count(FeatureName.FOR_LOOP_STEP, ctx.toLocation())
         } else if (bitwiseOperators.contains(identifier)) {

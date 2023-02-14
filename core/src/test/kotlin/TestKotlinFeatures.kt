@@ -7,7 +7,7 @@ import io.kotest.matchers.shouldBe
 
 @Suppress("LargeClass")
 class TestKotlinFeatures : StringSpec({
-    "should count variable declarations in snippets" {
+    "should count variable declarations" {
         Source.fromKotlinSnippet(
             """
 var i = 0
@@ -47,7 +47,7 @@ i++
             featureList should haveFeatureAt(FeatureName.COMPANION_OBJECT, listOf())
         }
     }
-    "should count for loops in snippets" {
+    "should count for loops" {
         Source.fromKotlinSnippet(
             """
 for (i in 0 until 10) {
@@ -60,14 +60,22 @@ val test = "arrayOf"
 for (value in first) {
   println(value)
 }
-""".trim()
+"""
         ).features().check {
             featureMap[FeatureName.FOR_LOOPS] shouldBe 2
+            featureList should haveFeatureAt(FeatureName.FOR_LOOPS, listOf(1, 8))
+
             featureMap[FeatureName.VARIABLE_ASSIGNMENTS] shouldBe 4
+            featureList should haveFeatureAt(FeatureName.VARIABLE_ASSIGNMENTS, (4..7).toList())
+
             featureMap[FeatureName.ARRAYS] shouldBe 3
+            featureList should haveFeatureAt(FeatureName.ARRAYS, (4..6).toList())
+
+            featureMap[FeatureName.ARRAY_LITERAL] shouldBe 3
+            featureList should haveFeatureAt(FeatureName.ARRAY_LITERAL, (4..6).toList())
         }
     }
-    "should count nested for loops in snippets" {
+    "should count nested for loops" {
         Source.fromKotlinSnippet(
             """
 for (i in 0 until 10) {
@@ -75,10 +83,13 @@ for (i in 0 until 10) {
         println(i + j)
     }
 }
-""".trim()
+"""
         ).features().check {
             featureMap[FeatureName.FOR_LOOPS] shouldBe 2
+            featureList should haveFeatureAt(FeatureName.FOR_LOOPS, listOf(1, 2))
+
             featureMap[FeatureName.NESTED_FOR] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.NESTED_FOR, listOf(2))
         }
     }
     "should not count nested for loops under if" {
@@ -89,10 +100,13 @@ if (true) {
         println(i + j)
     }
 }
-""".trim()
+"""
         ).features().check {
             featureMap[FeatureName.FOR_LOOPS] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.FOR_LOOPS, listOf(2))
+
             featureMap[FeatureName.NESTED_FOR] shouldBe 0
+            featureList should haveFeatureAt(FeatureName.NESTED_FOR, listOf())
         }
     }
     "should count nested for loops under if under loop" {
@@ -105,14 +119,19 @@ for (i in 0 until 10) {
         }
     }
 }
-""".trim()
+"""
         ).features().check {
             featureMap[FeatureName.FOR_LOOPS] shouldBe 2
+            featureList should haveFeatureAt(FeatureName.FOR_LOOPS, listOf(1, 3))
+
             featureMap[FeatureName.NESTED_FOR] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.NESTED_FOR, listOf(3))
+
             featureMap[FeatureName.NESTED_LOOP] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.NESTED_LOOP, listOf(3))
         }
     }
-    "should count while loops in snippets" {
+    "should count while loops" {
         Source.fromKotlinSnippet(
             """
 var i = 0
@@ -122,15 +141,22 @@ while (i < 32) {
   }
   i++
 }
-""".trim()
+"""
         ).features().check {
             featureMap[FeatureName.WHILE_LOOPS] shouldBe 2
+            featureList should haveFeatureAt(FeatureName.WHILE_LOOPS, listOf(2, 3))
+
             featureMap[FeatureName.NESTED_WHILE] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.NESTED_WHILE, listOf(3))
+
             featureMap[FeatureName.DO_WHILE_LOOPS] shouldBe 0
+            featureList should haveFeatureAt(FeatureName.DO_WHILE_LOOPS, listOf())
+
             featureMap[FeatureName.VARIABLE_REASSIGNMENTS] shouldBe 2
+            featureList should haveFeatureAt(FeatureName.VARIABLE_REASSIGNMENTS, listOf(4, 6))
         }
     }
-    "should count do-while loops in snippets" {
+    "should count do-while loops" {
         Source.fromKotlinSnippet(
             """
 var i = 0
@@ -142,16 +168,25 @@ do {
         j++
     } while (j < 10)
 } while (i < 10)
-""".trim()
+"""
         ).features().check {
             featureMap[FeatureName.DO_WHILE_LOOPS] shouldBe 2
+            featureList should haveFeatureAt(FeatureName.DO_WHILE_LOOPS, listOf(2, 6))
+
             featureMap[FeatureName.NESTED_DO_WHILE] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.NESTED_DO_WHILE, listOf(6))
+
             featureMap[FeatureName.WHILE_LOOPS] shouldBe 0
+            featureList should haveFeatureAt(FeatureName.WHILE_LOOPS, listOf())
+
             featureMap[FeatureName.LOCAL_VARIABLE_DECLARATIONS] shouldBe 2
+            featureList should haveFeatureAt(FeatureName.LOCAL_VARIABLE_DECLARATIONS, listOf(1, 5))
+
             featureMap[FeatureName.VARIABLE_REASSIGNMENTS] shouldBe 2
+            featureList should haveFeatureAt(FeatureName.VARIABLE_REASSIGNMENTS, listOf(4, 7))
         }
     }
-    "should count simple if-else statements in snippets" {
+    "should count simple if-else statements" {
         Source.fromKotlinSnippet(
             """
 var i = 0
@@ -160,13 +195,16 @@ if (i < 5) {
 } else {
     i--
 }
-""".trim()
+"""
         ).features().check {
             featureMap[FeatureName.IF_STATEMENTS] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.IF_STATEMENTS, listOf(2))
+
             featureMap[FeatureName.ELSE_STATEMENTS] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.ELSE_STATEMENTS, listOf(4))
         }
     }
-    "should count a chain of if-else statements in snippets" {
+    "should count a chain of if-else statements" {
         Source.fromKotlinSnippet(
             """
 var i = 0
@@ -179,11 +217,16 @@ if (i < 5) {
 } else {
     i--
 }
-""".trim()
+"""
         ).features().check {
             featureMap[FeatureName.IF_STATEMENTS] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.IF_STATEMENTS, listOf(2))
+
             featureMap[FeatureName.ELSE_STATEMENTS] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.ELSE_STATEMENTS, listOf(8))
+
             featureMap[FeatureName.ELSE_IF] shouldBe 2
+            featureList should haveFeatureAt(FeatureName.ELSE_IF, listOf(4, 6))
         }
     }
     "should count nested if statements in snippets" {
@@ -202,10 +245,13 @@ if (i < 15) {
         }
     }
 }
-""".trim()
+"""
         ).features().check {
             featureMap[FeatureName.IF_STATEMENTS] shouldBe 4
+            featureList should haveFeatureAt(FeatureName.IF_STATEMENTS, listOf(2, 3, 5, 9))
+
             featureMap[FeatureName.NESTED_IF] shouldBe 3
+            featureList should haveFeatureAt(FeatureName.NESTED_IF, listOf(3, 5, 9))
         }
     }
     "should not fail on nested methods" {
@@ -221,19 +267,28 @@ fun test() {
       }
     }
   }
-}
-            """.trim()
+}"""
         ).features().check("test()") {
             featureMap[FeatureName.NESTED_METHOD] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.NESTED_METHOD, listOf(4))
+
             featureMap[FeatureName.IF_STATEMENTS] shouldBe 2
+            featureList should haveFeatureAt(FeatureName.IF_STATEMENTS, listOf(3, 6))
+
             featureMap[FeatureName.LOCAL_VARIABLE_DECLARATIONS] shouldBe 2
+            featureList should haveFeatureAt(FeatureName.LOCAL_VARIABLE_DECLARATIONS, listOf(2, 5))
+
             featureMap[FeatureName.NESTED_IF] shouldBe 0
+            featureList should haveFeatureAt(FeatureName.NESTED_IF, listOf())
+
             featureMap[FeatureName.METHOD] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.METHOD, listOf(4))
         }.check("") {
             featureMap[FeatureName.METHOD] shouldBe 2
+            featureList should haveFeatureAt(FeatureName.METHOD, listOf(1, 4))
+
             featureMap[FeatureName.CLASS] shouldBe 0
-        }.check {
-            featureMap[FeatureName.METHOD] shouldBe 0
+            featureList should haveFeatureAt(FeatureName.CLASS, listOf())
         }
     }
     "should identify and record dotted method calls and property access" {
@@ -243,11 +298,14 @@ val array = arrayOf(1, 2, 4)
 println(array.size)
 array.sort()
 val sorted = array.sorted()
-array.test.me().whatever.think()
-            """.trimIndent()
+array.test.me().whatever.think()"""
         ).features().check {
             featureMap[FeatureName.DOTTED_METHOD_CALL] shouldBe 4
+            featureList should haveFeatureAt(FeatureName.DOTTED_METHOD_CALL, listOf(3, 4, 5, 5))
+
             featureMap[FeatureName.DOTTED_VARIABLE_ACCESS] shouldBe 3
+            featureList should haveFeatureAt(FeatureName.DOTTED_VARIABLE_ACCESS, listOf(2, 5, 5))
+
             dottedMethodList shouldContainExactly setOf("sort", "sorted", "me", "think")
         }
     }
@@ -292,14 +350,22 @@ println("test".length())
 print("Another")
 System.out.println("Hello, again")
 System.out.println("world".length)
-System.err.print("Whoa")
-            """.trimIndent()
+System.err.print("Whoa")"""
         ).features().check {
             featureMap[FeatureName.DOTTED_METHOD_CALL] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.DOTTED_METHOD_CALL, listOf(2))
+
             featureMap[FeatureName.DOTTED_VARIABLE_ACCESS] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.DOTTED_VARIABLE_ACCESS, listOf(5))
+
             featureMap[FeatureName.DOT_NOTATION] shouldBe 2
+            featureList should haveFeatureAt(FeatureName.DOT_NOTATION, listOf(2, 5))
+
             featureMap[FeatureName.PRINT_STATEMENTS] shouldBe 6
+            featureList should haveFeatureAt(FeatureName.PRINT_STATEMENTS, (1..6).toList())
+
             featureMap[FeatureName.JAVA_PRINT_STATEMENTS] shouldBe 2
+            featureList should haveFeatureAt(FeatureName.JAVA_PRINT_STATEMENTS, listOf(4, 5))
         }
     }
     "should count assert require and check statements" {

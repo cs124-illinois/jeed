@@ -141,7 +141,6 @@ val MISSING_KOTLIN_FEATURES = setOf(
 
     // Arrays
     FeatureName.ARRAY_ACCESS,
-    FeatureName.ARRAY_LITERAL,
     FeatureName.MULTIDIMENSIONAL_ARRAYS,
 
     // Loops
