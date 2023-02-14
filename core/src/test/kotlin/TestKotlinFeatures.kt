@@ -439,7 +439,13 @@ class Test {
   }
 }
 """.trim()
-        ).features()
+        ).features().check("Test") {
+            featureMap[FeatureName.SECONDARY_CONSTRUCTOR] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.SECONDARY_CONSTRUCTOR, listOf(3))
+
+            featureMap[FeatureName.VISIBILITY_MODIFIERS] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.VISIBILITY_MODIFIERS, listOf(2))
+        }
     }
     "should detect for loop step" {
         Source.fromKotlinSnippet(
@@ -672,22 +678,193 @@ class Calculator: Test {
         }
     }
     "should count override annotation and import statements" {
-        Source(
-            mapOf(
-                "Test.kt" to """
+        Source.fromKotlinSnippet(
+            """
 import java.util.Random
 
 class Test(var number: Int) {
     override fun toString(): String = "String"
 }
-""".trim()
-            )
-        ).features().check("Test", "Test.kt") {
+"""
+        ).features().check("Test") {
             featureMap[FeatureName.OVERRIDE] shouldBe 1
             featureList should haveFeatureAt(FeatureName.OVERRIDE, listOf(4))
-        }.check("", "Test.kt") {
+        }.check("") {
             featureMap[FeatureName.IMPORT] shouldBe 1
             featureList should haveFeatureAt(FeatureName.IMPORT, listOf(1))
+        }
+    }
+    "should count getters and setters" {
+        Source.fromKotlinSnippet(
+            """
+class Adder() {
+  var value: Int = 0
+    get() {
+      return field
+    }
+    private set
+  var another: Double = 0.0
+    set(value) {
+      field = value * 2.0
+    }
+}
+"""
+        ).features().check("Adder") {
+            featureMap[FeatureName.SETTER] shouldBe 2
+            featureList should haveFeatureAt(FeatureName.SETTER, listOf(6, 8))
+
+            featureMap[FeatureName.GETTER] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.GETTER, listOf(3))
+
+            featureMap[FeatureName.VISIBILITY_MODIFIERS] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.VISIBILITY_MODIFIERS, listOf(6))
+        }
+    }
+    "should count inheritance and open classes" {
+        Source.fromKotlinSnippet(
+            """
+open class Test {
+  open fun test() = 2
+}
+class Another : Test()
+"""
+        ).features().check("") {
+            featureMap[FeatureName.OPEN_CLASS] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.OPEN_CLASS, listOf(1))
+
+            featureMap[FeatureName.OPEN_METHOD] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.OPEN_METHOD, listOf(2))
+
+            featureMap[FeatureName.EXTENDS] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.EXTENDS, listOf(4))
+        }
+    }
+    "should count super and this" {
+        Source.fromKotlinSnippet(
+            """
+open class Test {
+  fun value() = 2
+}
+class Another : Test() {
+  val mine = 2
+  fun value() = super.value() + this.mine
+}
+"""
+        ).features().check("Another") {
+            featureMap[FeatureName.SUPER] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.SUPER, listOf(6))
+
+            featureMap[FeatureName.THIS] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.THIS, listOf(6))
+        }
+    }
+    "should count generic classes and type parameters" {
+        Source.fromKotlinSnippet(
+            """
+class Test<T>
+class Another<T,V>
+val mine = mutableListOf<String>()
+"""
+        ).features().check("") {
+            featureMap[FeatureName.GENERIC_CLASS] shouldBe 2
+            featureList should haveFeatureAt(FeatureName.GENERIC_CLASS, listOf(1, 2))
+
+            featureMap[FeatureName.TYPE_PARAMETERS] shouldBe 4
+            featureList should haveFeatureAt(FeatureName.TYPE_PARAMETERS, listOf(1, 2, 2, 3))
+        }
+    }
+    "should correctly count Comparable" {
+        Source.fromKotlinSnippet(
+            """
+class Test: Comparable<Test> {
+    override fun compareTo(other: Test): Int {
+        return 0
+    }
+}"""
+        ).features().check("Test") {
+            featureMap[FeatureName.COMPARABLE] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.COMPARABLE, listOf(1))
+
+            featureMap[FeatureName.OVERRIDE] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.OVERRIDE, listOf(2))
+        }
+    }
+    "should count constructors, methods, visibility modifiers, and nested classes" {
+        Source.fromKotlinSnippet(
+            """
+class Test(private var number: Int) {
+    internal fun addToNumber() {
+      number += 1
+    }
+    class InnerClass
+}
+"""
+        ).features().check("") {
+            featureMap[FeatureName.CLASS] shouldBe 2
+            featureList should haveFeatureAt(FeatureName.CLASS, listOf(1, 5))
+        }.check("Test") {
+            featureMap[FeatureName.CONSTRUCTOR] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.CONSTRUCTOR, listOf(1))
+
+            featureMap[FeatureName.METHOD] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.METHOD, listOf(2))
+
+            featureMap[FeatureName.VISIBILITY_MODIFIERS] shouldBe 2
+            featureList should haveFeatureAt(FeatureName.VISIBILITY_MODIFIERS, listOf(1, 2))
+
+            featureMap[FeatureName.NESTED_CLASS] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.CLASS, listOf(5))
+        }
+    }
+    "should count throwing exceptions" {
+        Source.fromKotlinSnippet(
+            """
+fun container(size: Int) {
+    if (setSize <= 0) {
+      throw IllegalArgumentException("Container size must be positive")
+    }
+    values = new int[setSize];
+}
+"""
+        ).features().check("") {
+            featureMap[FeatureName.THROW] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.THROW, listOf(3))
+        }
+    }
+    "should count try blocks and finally blocks" {
+        Source.fromKotlinSnippet(
+            """
+var i = 0
+try {
+    assert(i > -1)
+} catch (e: Exception) {
+    println("Oops")
+} finally { }
+"""
+        ).features().check {
+            featureMap[FeatureName.TRY_BLOCK] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.TRY_BLOCK, listOf(2))
+
+            featureMap[FeatureName.FINALLY] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.FINALLY, listOf(6))
+        }
+    }
+    "should count abstract classes and methods" {
+        Source.fromKotlinSnippet(
+            """
+abstract class Test {
+  abstract fun test(): Int
+}
+class Another : Test() {
+  fun test() = 2
+}
+"""
+        ).features().check("") {
+            featureMap[FeatureName.ABSTRACT_CLASS] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.ABSTRACT_CLASS, listOf(1))
+
+            featureMap[FeatureName.ABSTRACT_METHOD] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.ABSTRACT_METHOD, listOf(2))
         }
     }
 })

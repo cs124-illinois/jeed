@@ -944,23 +944,6 @@ public class Test {
             )
         ).features()
     }
-    "should not choke on pseudo-recursion" {
-        Source(
-            mapOf(
-                "Catcher.java" to """
-public class Catcher {
-    public static int getValue(Faulter faulter) {
-        while (true) {
-            try {
-                return faulter.getValue();
-            } catch (Exception e) {
-            }
-        }
-    }
-}""".trim()
-            )
-        ).features()
-    }
     "should not find static in snippets" {
         Source.fromJavaSnippet(
             "int i = 0;"

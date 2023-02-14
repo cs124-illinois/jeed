@@ -4,6 +4,7 @@
 package edu.illinois.cs.cs125.jeed.core
 
 import edu.illinois.cs.cs125.jeed.core.antlr.KotlinParser
+import edu.illinois.cs.cs125.jeed.core.antlr.KotlinParser.AbstractFunctionDeclarationContext
 import edu.illinois.cs.cs125.jeed.core.antlr.KotlinParser.AnonymousInitializerContext
 import edu.illinois.cs.cs125.jeed.core.antlr.KotlinParser.ClassBodyContext
 import edu.illinois.cs.cs125.jeed.core.antlr.KotlinParser.ControlStructureBodyContext
@@ -153,11 +154,32 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
         }
     }
 
+    private fun AbstractFunctionDeclarationContext.fullName(): String {
+        val name = simpleIdentifier().text
+        val parameters = functionValueParameters().functionValueParameter()?.joinToString(",") {
+            it.parameter().type().text
+        }
+        val returnType = type()?.text
+        return ("$name($parameters)${returnType?.let { ":$returnType" } ?: ""}").let {
+            if (anonymousClassDepth > 0) {
+                "${it}${"$"}$objectLiteralCounter"
+            } else {
+                it
+            }
+        }
+    }
+
     override fun enterClassDeclaration(ctx: KotlinParser.ClassDeclarationContext) {
         if (!ctx.isSnippetClass()) {
             count(FeatureName.CLASS, ctx.toLocation())
-            if (ctx.modifiers()?.modifier(0)?.classModifier()?.DATA() != null) {
+            ctx.modifiers()?.modifier(0)?.classModifier()?.DATA()?.also {
                 count(FeatureName.DATA_CLASS, ctx.toLocation())
+            }
+            ctx.modifiers()?.modifier(0)?.inheritanceModifier()?.OPEN()?.also {
+                count(FeatureName.OPEN_CLASS, ctx.toLocation())
+            }
+            ctx.modifiers()?.modifier(0)?.inheritanceModifier()?.ABSTRACT()?.also {
+                count(FeatureName.ABSTRACT_CLASS, ctx.toLocation())
             }
         }
         enterClassOrInterface(
@@ -172,6 +194,14 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
             } else {
                 count(FeatureName.IMPLEMENTS, delegationSpecifier.toLocation())
             }
+            delegationSpecifier.userType()?.simpleUserType()?.firstOrNull()?.simpleIdentifier()?.also {
+                if (it.text == "Comparable") {
+                    count(FeatureName.COMPARABLE, it.toLocation())
+                }
+            }
+        }
+        ctx.typeParameters()?.also {
+            count(FeatureName.GENERIC_CLASS, ctx.typeParameters().toLocation())
         }
     }
 
@@ -260,6 +290,9 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
         ctx.modifiers()?.modifier()?.find { it.memberModifier()?.OVERRIDE() != null }?.also { modifier ->
             count(FeatureName.OVERRIDE, modifier.toLocation())
         }
+        ctx.modifiers()?.modifier()?.find { it.inheritanceModifier()?.OPEN() != null }?.also { modifier ->
+            count(FeatureName.OPEN_METHOD, modifier.toLocation())
+        }
     }
 
     override fun enterEmptyFunctionDeclaration(ctx: EmptyFunctionDeclarationContext) {
@@ -272,6 +305,19 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
     }
 
     override fun exitEmptyFunctionDeclaration(ctx: EmptyFunctionDeclarationContext?) {
+        exitMethodOrConstructor()
+    }
+
+    override fun enterAbstractFunctionDeclaration(ctx: AbstractFunctionDeclarationContext) {
+        count(FeatureName.ABSTRACT_METHOD, ctx.toLocation())
+        enterMethodOrConstructor(
+            ctx.fullName(),
+            Location(ctx.start.line, ctx.start.charPositionInLine),
+            Location(ctx.stop.line, ctx.stop.charPositionInLine)
+        )
+    }
+
+    override fun exitAbstractFunctionDeclaration(ctx: AbstractFunctionDeclarationContext?) {
         exitMethodOrConstructor()
     }
 
@@ -742,6 +788,8 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
             count(FeatureName.CONTINUE, (ctx.CONTINUE() ?: ctx.CONTINUE_AT()).toLocation())
         } else if (ctx.RETURN() != null || ctx.RETURN_AT() != null) {
             count(FeatureName.RETURN, (ctx.RETURN() ?: ctx.RETURN_AT()).toLocation())
+        } else if (ctx.THROW() != null) {
+            count(FeatureName.THROW, ctx.THROW().toLocation())
         }
     }
 
@@ -767,6 +815,51 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
 
     override fun enterEnumClassBody(ctx: KotlinParser.EnumClassBodyContext) {
         count(FeatureName.ENUM, ctx.toLocation())
+    }
+
+    override fun enterSetter(ctx: KotlinParser.SetterContext) {
+        count(FeatureName.SETTER, ctx.toLocation())
+    }
+
+    override fun enterGetter(ctx: KotlinParser.GetterContext) {
+        count(FeatureName.GETTER, ctx.toLocation())
+    }
+
+    override fun enterThisExpression(ctx: KotlinParser.ThisExpressionContext) {
+        count(FeatureName.THIS, ctx.toLocation())
+    }
+
+    override fun enterSuperExpression(ctx: KotlinParser.SuperExpressionContext) {
+        count(FeatureName.SUPER, ctx.toLocation())
+    }
+
+    override fun enterTypeParameters(ctx: KotlinParser.TypeParametersContext) {
+        ctx.typeParameter().forEach { typeParameter ->
+            count(FeatureName.TYPE_PARAMETERS, typeParameter.toLocation())
+        }
+    }
+
+    override fun enterTypeArguments(ctx: KotlinParser.TypeArgumentsContext) {
+        ctx.typeProjection().forEach { typeProjection ->
+            count(FeatureName.TYPE_PARAMETERS, typeProjection.toLocation())
+        }
+    }
+
+    override fun enterVisibilityModifier(ctx: KotlinParser.VisibilityModifierContext) {
+        count(FeatureName.VISIBILITY_MODIFIERS, ctx.toLocation())
+    }
+
+    override fun enterClassMemberDeclaration(ctx: KotlinParser.ClassMemberDeclarationContext) {
+        ctx.declaration()?.classDeclaration()?.also {
+            count(FeatureName.NESTED_CLASS, it.toLocation())
+        }
+    }
+
+    override fun enterTryExpression(ctx: KotlinParser.TryExpressionContext) {
+        count(FeatureName.TRY_BLOCK, ctx.toLocation())
+        ctx.finallyBlock()?.also {
+            count(FeatureName.FINALLY, it.toLocation())
+        }
     }
 
     init {

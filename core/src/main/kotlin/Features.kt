@@ -130,7 +130,9 @@ enum class FeatureName(val description: String) {
     NULLABLE_TYPE("nullable type"),
     WHEN("when statement"),
     EXPLICIT_TYPE("explicit type"),
-    DATA_CLASS("data class")
+    DATA_CLASS("data class"),
+    OPEN_CLASS("open class"),
+    OPEN_METHOD("open method")
 }
 
 @Suppress("unused")
@@ -145,52 +147,27 @@ val MISSING_KOTLIN_FEATURES = setOf(
     // Loops
     // FeatureName.ENHANCED_FOR (no equivalent)
 
-    // Nesting
-    FeatureName.NESTED_CLASS,
-
-    // Methods
-    FeatureName.GETTER,
-    FeatureName.SETTER,
-
-    // Polymorphism
-    FeatureName.EXTENDS,
-    FeatureName.SUPER,
-
-    // Exceptions
-    FeatureName.TRY_BLOCK,
-    FeatureName.FINALLY,
-    FeatureName.THROW,
-    FeatureName.THROWS,
+    // FeatureName.THROWS (no equivalent)
 
     // Objects
-    FeatureName.NEW_KEYWORD,
-    FeatureName.THIS,
+    // FeatureName.NEW_KEYWORD (no equivalent)
 
     // Modifiers
-    FeatureName.VISIBILITY_MODIFIERS,
     FeatureName.STATIC_METHOD,
-    FeatureName.FINAL_METHOD,
-    FeatureName.ABSTRACT_METHOD,
+    // FeatureName.FINAL_METHOD (default, no equivalent),
     FeatureName.STATIC_FIELD,
     FeatureName.FINAL_FIELD,
     FeatureName.ABSTRACT_FIELD,
-    FeatureName.FINAL_CLASS,
-    FeatureName.ABSTRACT_CLASS,
-
-    // Import
-    FeatureName.IMPORT,
+    // FeatureName.FINAL_CLASS (default, no equivalent)
 
     // Misc.
     FeatureName.ANONYMOUS_CLASSES,
-    FeatureName.LAMBDA_EXPRESSIONS,
-    FeatureName.GENERIC_CLASS,
+    FeatureName.LAMBDA_EXPRESSIONS
     // FeatureName.SWITCH (no equivalent)
-    FeatureName.STREAM,
+    // FeatureName.STREAM (no equivalent, can't detect due to inference)
 
-    FeatureName.COMPARABLE,
     // FeatureName.RECORD (Kotlin FeatureName.DATA_CLASS)
-    FeatureName.BOXING_CLASSES,
-    FeatureName.TYPE_PARAMETERS
+    // FeatureName.BOXING_CLASSES (no equivalent)
 )
 
 val ALL_FEATURES = FeatureName.values().associate { it.name to it.description }
