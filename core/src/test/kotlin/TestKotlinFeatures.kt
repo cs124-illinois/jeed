@@ -646,6 +646,50 @@ data class Test(val first: Int)
             featureList should haveFeatureAt(FeatureName.DATA_CLASS, listOf(1))
         }
     }
+    "should count interfaces and classes that implement interfaces" {
+        Source.fromKotlinSnippet(
+            """
+interface Test {
+    fun add(x: Int, y: Int): Int
+    fun subtract(x: Int, y: Int): Int
+}
+class Calculator: Test {
+    fun add(x: Int, y: Int): Int {
+        return x + y
+    }
+    fun subtract(x: Int, y: Int): Int = x - y
+}
+"""
+        ).features().check("") {
+            featureMap[FeatureName.INTERFACE] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.INTERFACE, listOf(1))
+        }.check("Test") {
+            featureMap[FeatureName.METHOD] shouldBe 2
+            featureList should haveFeatureAt(FeatureName.METHOD, listOf(2, 3))
+        }.check("Calculator") {
+            featureMap[FeatureName.IMPLEMENTS] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.IMPLEMENTS, listOf(5))
+        }
+    }
+    "should count override annotation and import statements" {
+        Source(
+            mapOf(
+                "Test.kt" to """
+import java.util.Random
+
+class Test(var number: Int) {
+    override fun toString(): String = "String"
+}
+""".trim()
+            )
+        ).features().check("Test", "Test.kt") {
+            featureMap[FeatureName.OVERRIDE] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.OVERRIDE, listOf(4))
+        }.check("", "Test.kt") {
+            featureMap[FeatureName.IMPORT] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.IMPORT, listOf(1))
+        }
+    }
 })
 
 fun FeaturesResults.check(path: String = ".", filename: String = "", block: Features.() -> Any): FeaturesResults {

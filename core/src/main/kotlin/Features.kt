@@ -152,14 +152,9 @@ val MISSING_KOTLIN_FEATURES = setOf(
     FeatureName.GETTER,
     FeatureName.SETTER,
 
-    // Class & Interface
-    FeatureName.IMPLEMENTS,
-    FeatureName.INTERFACE,
-
     // Polymorphism
     FeatureName.EXTENDS,
     FeatureName.SUPER,
-    FeatureName.OVERRIDE,
 
     // Exceptions
     FeatureName.TRY_BLOCK,
@@ -170,7 +165,6 @@ val MISSING_KOTLIN_FEATURES = setOf(
     // Objects
     FeatureName.NEW_KEYWORD,
     FeatureName.THIS,
-    FeatureName.EQUALITY,
 
     // Modifiers
     FeatureName.VISIBILITY_MODIFIERS,

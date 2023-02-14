@@ -580,10 +580,10 @@ public class Calculator implements Test {
     }
 }
 """
-        ).features().check("Test") {
+        ).features().check("") {
             featureMap[FeatureName.INTERFACE] shouldBe 1
             featureList should haveFeatureAt(FeatureName.INTERFACE, listOf(1))
-
+        }.check("Test") {
             featureMap[FeatureName.METHOD] shouldBe 2
             featureList should haveFeatureAt(FeatureName.METHOD, listOf(2, 3))
         }.check("Calculator") {

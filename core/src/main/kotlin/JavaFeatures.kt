@@ -240,13 +240,13 @@ class JavaFeatureListener(val source: Source, entry: Map.Entry<String, String>) 
     }
 
     override fun enterInterfaceDeclaration(ctx: JavaParser.InterfaceDeclarationContext) {
+        count(FeatureName.INTERFACE, ctx.toLocation())
+
         enterClassOrInterface(
             ctx.identifier().text,
             Location(ctx.start.line, ctx.start.charPositionInLine),
             Location(ctx.stop.line, ctx.stop.charPositionInLine)
         )
-
-        count(FeatureName.INTERFACE, ctx.toLocation())
 
         ctx.interfaceBody().interfaceBodyDeclaration().filter { declaration ->
             declaration.modifier().any {

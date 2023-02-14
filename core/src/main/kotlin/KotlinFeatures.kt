@@ -7,6 +7,7 @@ import edu.illinois.cs.cs125.jeed.core.antlr.KotlinParser
 import edu.illinois.cs.cs125.jeed.core.antlr.KotlinParser.AnonymousInitializerContext
 import edu.illinois.cs.cs125.jeed.core.antlr.KotlinParser.ClassBodyContext
 import edu.illinois.cs.cs125.jeed.core.antlr.KotlinParser.ControlStructureBodyContext
+import edu.illinois.cs.cs125.jeed.core.antlr.KotlinParser.EmptyFunctionDeclarationContext
 import edu.illinois.cs.cs125.jeed.core.antlr.KotlinParser.FunctionBodyContext
 import edu.illinois.cs.cs125.jeed.core.antlr.KotlinParser.FunctionDeclarationContext
 import edu.illinois.cs.cs125.jeed.core.antlr.KotlinParser.SecondaryConstructorContext
@@ -137,6 +138,21 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
         }
     }
 
+    private fun EmptyFunctionDeclarationContext.fullName(): String {
+        val name = simpleIdentifier().text
+        val parameters = functionValueParameters().functionValueParameter()?.joinToString(",") {
+            it.parameter().type().text
+        }
+        val returnType = type()?.text
+        return ("$name($parameters)${returnType?.let { ":$returnType" } ?: ""}").let {
+            if (anonymousClassDepth > 0) {
+                "${it}${"$"}$objectLiteralCounter"
+            } else {
+                it
+            }
+        }
+    }
+
     override fun enterClassDeclaration(ctx: KotlinParser.ClassDeclarationContext) {
         if (!ctx.isSnippetClass()) {
             count(FeatureName.CLASS, ctx.toLocation())
@@ -149,9 +165,34 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
             Location(ctx.start.line, ctx.start.charPositionInLine),
             Location(ctx.stop.line, ctx.stop.charPositionInLine)
         )
+        ctx.delegationSpecifiers()?.annotatedDelegationSpecifier()?.map { it.delegationSpecifier() }?.forEach { delegationSpecifier ->
+            val specifier = delegationSpecifier.text.trim()
+            if (specifier.contains("(") && specifier.endsWith(")")) {
+                count(FeatureName.EXTENDS, delegationSpecifier.toLocation())
+            } else {
+                count(FeatureName.IMPLEMENTS, delegationSpecifier.toLocation())
+            }
+        }
     }
 
     override fun exitClassDeclaration(ctx: KotlinParser.ClassDeclarationContext) {
+        exitClassOrInterface(
+            ctx.simpleIdentifier().text,
+            Location(ctx.start.line, ctx.start.charPositionInLine),
+            Location(ctx.stop.line, ctx.stop.charPositionInLine)
+        )
+    }
+
+    override fun enterInterfaceDeclaration(ctx: KotlinParser.InterfaceDeclarationContext) {
+        count(FeatureName.INTERFACE, ctx.toLocation())
+        enterClassOrInterface(
+            ctx.simpleIdentifier().text,
+            Location(ctx.start.line, ctx.start.charPositionInLine),
+            Location(ctx.stop.line, ctx.stop.charPositionInLine)
+        )
+    }
+
+    override fun exitInterfaceDeclaration(ctx: KotlinParser.InterfaceDeclarationContext) {
         exitClassOrInterface(
             ctx.simpleIdentifier().text,
             Location(ctx.start.line, ctx.start.charPositionInLine),
@@ -216,6 +257,22 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
         if (ctx.parentType() == ParentType.FUNCTION) {
             count(FeatureName.NESTED_METHOD, ctx.toLocation())
         }
+        ctx.modifiers()?.modifier()?.find { it.memberModifier()?.OVERRIDE() != null }?.also { modifier ->
+            count(FeatureName.OVERRIDE, modifier.toLocation())
+        }
+    }
+
+    override fun enterEmptyFunctionDeclaration(ctx: EmptyFunctionDeclarationContext) {
+        count(FeatureName.METHOD, ctx.toLocation())
+        enterMethodOrConstructor(
+            ctx.fullName(),
+            Location(ctx.start.line, ctx.start.charPositionInLine),
+            Location(ctx.stop.line, ctx.stop.charPositionInLine)
+        )
+    }
+
+    override fun exitEmptyFunctionDeclaration(ctx: EmptyFunctionDeclarationContext?) {
+        exitMethodOrConstructor()
     }
 
     override fun exitFunctionDeclaration(ctx: FunctionDeclarationContext) {
