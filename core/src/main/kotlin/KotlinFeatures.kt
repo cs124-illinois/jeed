@@ -11,6 +11,7 @@ import edu.illinois.cs.cs125.jeed.core.antlr.KotlinParser.ControlStructureBodyCo
 import edu.illinois.cs.cs125.jeed.core.antlr.KotlinParser.EmptyFunctionDeclarationContext
 import edu.illinois.cs.cs125.jeed.core.antlr.KotlinParser.FunctionBodyContext
 import edu.illinois.cs.cs125.jeed.core.antlr.KotlinParser.FunctionDeclarationContext
+import edu.illinois.cs.cs125.jeed.core.antlr.KotlinParser.PropertyDeclarationContext
 import edu.illinois.cs.cs125.jeed.core.antlr.KotlinParser.SecondaryConstructorContext
 import edu.illinois.cs.cs125.jeed.core.antlr.KotlinParser.StatementContext
 import edu.illinois.cs.cs125.jeed.core.antlr.KotlinParserBaseListener
@@ -431,6 +432,9 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
         if (ctx.parent is KotlinParser.PropertyDeclarationContext && ctx.parentType() == ParentType.FUNCTION) {
             count(FeatureName.LOCAL_VARIABLE_DECLARATIONS, ctx.toLocation())
             count(FeatureName.VARIABLE_ASSIGNMENTS, ctx.toLocation())
+            (ctx.parent as PropertyDeclarationContext).VAL()?.also {
+                count(FeatureName.FINAL_VARIABLE, it.toLocation())
+            }
         }
         val type = ctx.type()?.text?.trim()
         if (type != null) {
@@ -751,6 +755,9 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
     override fun enterPropertyDeclaration(ctx: KotlinParser.PropertyDeclarationContext) {
         if (ctx.parentType() == ParentType.CLASS) {
             count(FeatureName.CLASS_FIELD, ctx.toLocation())
+            ctx.modifiers()?.modifier()?.find { it.inheritanceModifier()?.ABSTRACT() != null }?.also {
+                count(FeatureName.ABSTRACT_FIELD, it.toLocation())
+            }
         }
     }
 
@@ -768,6 +775,14 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
 
     override fun enterCompanionObject(ctx: KotlinParser.CompanionObjectContext) {
         count(FeatureName.COMPANION_OBJECT, ctx.toLocation())
+        ctx.classBody()?.classMemberDeclarations()?.classMemberDeclaration()?.forEach { memberDeclaration ->
+            memberDeclaration?.declaration()?.functionDeclaration()?.also {
+                count(FeatureName.STATIC_METHOD, it.toLocation())
+            }
+            memberDeclaration?.declaration()?.propertyDeclaration()?.also {
+                count(FeatureName.STATIC_FIELD, it.toLocation())
+            }
+        }
     }
 
     override fun enterAssignmentAndOperator(ctx: KotlinParser.AssignmentAndOperatorContext) {

@@ -401,8 +401,11 @@ class JavaFeatureListener(val source: Source, entry: Map.Entry<String, String>) 
     }
 
     override fun enterLocalVariableDeclaration(ctx: JavaParser.LocalVariableDeclarationContext) {
-        ctx.variableDeclarators().variableDeclarator().forEach {
-            count(FeatureName.LOCAL_VARIABLE_DECLARATIONS, it.toLocation())
+        ctx.variableDeclarators().variableDeclarator().forEach { variableContext ->
+            count(FeatureName.LOCAL_VARIABLE_DECLARATIONS, variableContext.toLocation())
+            ctx.variableModifier()?.find { it.FINAL() != null }?.also {
+                count(FeatureName.FINAL_VARIABLE, it.toLocation())
+            }
         }
         ctx.variableDeclarators().variableDeclarator().filter {
             it.variableInitializer() != null

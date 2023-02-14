@@ -18,19 +18,23 @@ i = 4;
 i += 1;
 i++;
 --j;
+final int k = 8;
 """
         ).features().check {
-            featureMap[FeatureName.LOCAL_VARIABLE_DECLARATIONS] shouldBe 2
-            featureList should haveFeatureAt(FeatureName.LOCAL_VARIABLE_DECLARATIONS, listOf(1, 2))
+            featureMap[FeatureName.LOCAL_VARIABLE_DECLARATIONS] shouldBe 3
+            featureList should haveFeatureAt(FeatureName.LOCAL_VARIABLE_DECLARATIONS, listOf(1, 2, 7))
 
-            featureMap[FeatureName.VARIABLE_ASSIGNMENTS] shouldBe 1
-            featureList should haveFeatureAt(FeatureName.VARIABLE_ASSIGNMENTS, listOf(1))
+            featureMap[FeatureName.VARIABLE_ASSIGNMENTS] shouldBe 2
+            featureList should haveFeatureAt(FeatureName.VARIABLE_ASSIGNMENTS, listOf(1, 7))
 
             featureMap[FeatureName.VARIABLE_REASSIGNMENTS] shouldBe 4
             featureList should haveFeatureAt(FeatureName.VARIABLE_REASSIGNMENTS, (3..6).toList())
 
             featureMap[FeatureName.UNARY_OPERATORS] shouldBe 2
             featureList should haveFeatureAt(FeatureName.UNARY_OPERATORS, listOf(5, 6))
+
+            featureMap[FeatureName.FINAL_VARIABLE] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.FINAL_VARIABLE, listOf(7))
         }.check("") {
             featureMap[FeatureName.CLASS] shouldBe 0
             featureList should haveFeatureAt(FeatureName.CLASS, listOf())
@@ -1128,4 +1132,9 @@ fun haveFeatureAt(feature: FeatureName, lines: List<Int>) = object : Matcher<Lis
             { "Expected feature at $expectedLocations but found it at $actualLocations" }
         )
     }
+}
+
+fun FeaturesResults.check(path: String = ".", filename: String = "", block: Features.() -> Any): FeaturesResults {
+    with(lookup(path, filename).features, block)
+    return this
 }

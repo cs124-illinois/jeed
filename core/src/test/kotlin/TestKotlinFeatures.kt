@@ -36,6 +36,9 @@ i++
 
             featureMap[FeatureName.EXPLICIT_TYPE] shouldBe 2
             featureList should haveFeatureAt(FeatureName.EXPLICIT_TYPE, listOf(2, 3))
+
+            featureMap[FeatureName.FINAL_VARIABLE] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.FINAL_VARIABLE, listOf(3))
         }.check("") {
             featureMap[FeatureName.CLASS] shouldBe 0
             featureList should haveFeatureAt(FeatureName.CLASS, listOf())
@@ -267,7 +270,8 @@ fun test() {
       }
     }
   }
-}"""
+}
+"""
         ).features().check("test()") {
             featureMap[FeatureName.NESTED_METHOD] shouldBe 1
             featureList should haveFeatureAt(FeatureName.NESTED_METHOD, listOf(4))
@@ -298,7 +302,8 @@ val array = arrayOf(1, 2, 4)
 println(array.size)
 array.sort()
 val sorted = array.sorted()
-array.test.me().whatever.think()"""
+array.test.me().whatever.think()
+"""
         ).features().check {
             featureMap[FeatureName.DOTTED_METHOD_CALL] shouldBe 4
             featureList should haveFeatureAt(FeatureName.DOTTED_METHOD_CALL, listOf(3, 4, 5, 5))
@@ -350,7 +355,8 @@ println("test".length())
 print("Another")
 System.out.println("Hello, again")
 System.out.println("world".length)
-System.err.print("Whoa")"""
+System.err.print("Whoa")
+"""
         ).features().check {
             featureMap[FeatureName.DOTTED_METHOD_CALL] shouldBe 1
             featureList should haveFeatureAt(FeatureName.DOTTED_METHOD_CALL, listOf(2))
@@ -375,13 +381,16 @@ assert(false)
 assert(it == true) { "Test me" }
 require(false)
 check(true) { "Here" }
-            """.trimIndent()
+"""
         ).features().check {
             featureMap[FeatureName.ASSERT] shouldBe 2
+            featureList should haveFeatureAt(FeatureName.ASSERT, listOf(1, 2))
+
             featureMap[FeatureName.REQUIRE_OR_CHECK] shouldBe 2
+            featureList should haveFeatureAt(FeatureName.REQUIRE_OR_CHECK, listOf(3, 4))
         }
     }
-    "should count conditional expressions and complex conditionals in snippets" {
+    "should count conditional expressions and complex conditionals" {
         Source.fromKotlinSnippet(
             """
 val i = 0
@@ -394,7 +403,7 @@ if (i < 5 || i > 15) {
 } else {
     i--
 }
-""".trim()
+"""
         ).features().check {
             featureMap[FeatureName.COMPARISON_OPERATORS] shouldBe 5
             featureList should haveFeatureAt(FeatureName.COMPARISON_OPERATORS, listOf(2, 2, 3, 6, 6))
@@ -404,7 +413,7 @@ if (i < 5 || i > 15) {
         }
     }
     "should count and enumerate import statements" {
-        Source.fromKotlin(
+        Source.fromKotlinSnippet(
             """
 import java.util.List
 import java.util.Map
@@ -412,9 +421,11 @@ import java.util.Map
 fun test() {
   println("Hello, world!")
 }
-""".trim()
-        ).features().check("", "Main.kt") {
+"""
+        ).features().check("") {
             featureMap[FeatureName.IMPORT] shouldBe 2
+            featureList should haveFeatureAt(FeatureName.IMPORT, listOf(1, 2))
+
             importList shouldContainExactly setOf("java.util.List", "java.util.Map")
         }
     }
@@ -425,9 +436,10 @@ fun test(): Int {
   val test = 0
   return test
 }
-""".trim()
+"""
         ).features().check("", "Main.kt") {
             featureMap[FeatureName.VARIABLE_ASSIGNMENTS] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.VARIABLE_ASSIGNMENTS, listOf(2))
         }
     }
     "should count primitive and non-primitive casts" {
@@ -436,10 +448,13 @@ fun test(): Int {
 val i = 0 as Int
 val j = 0.0.toDouble()
 val m = "test" as String
-""".trim()
+"""
         ).features().check {
             featureMap[FeatureName.PRIMITIVE_CASTING] shouldBe 2
+            featureList should haveFeatureAt(FeatureName.PRIMITIVE_CASTING, listOf(1, 2))
+
             featureMap[FeatureName.CASTING] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.CASTING, listOf(3))
         }
     }
     "should count type checks" {
@@ -466,11 +481,13 @@ class Test {
     }
   }
 }
-""".trim()
+"""
         ).features().check("") {
             featureMap[FeatureName.IF_STATEMENTS] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.IF_STATEMENTS, listOf(3))
         }.check("Test.init") {
             featureMap[FeatureName.IF_STATEMENTS] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.IF_STATEMENTS, listOf(3))
         }
     }
     "should handle multiple init blocks" {
@@ -486,10 +503,13 @@ class Test {
     val test = 20
   }
 }
-""".trim()
+"""
         ).features().check("Test.init") {
             featureMap[FeatureName.IF_STATEMENTS] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.IF_STATEMENTS, listOf(3))
+
             featureMap[FeatureName.LOCAL_VARIABLE_DECLARATIONS] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.LOCAL_VARIABLE_DECLARATIONS, listOf(8))
         }
     }
     "should handle secondary constructors" {
@@ -504,7 +524,7 @@ class Test {
     }
   }
 }
-""".trim()
+"""
         ).features().check("Test") {
             featureMap[FeatureName.SECONDARY_CONSTRUCTOR] shouldBe 1
             featureList should haveFeatureAt(FeatureName.SECONDARY_CONSTRUCTOR, listOf(3))
@@ -519,9 +539,10 @@ class Test {
 for (i in 0 until array.size step 2) {
   println(i)
 }
-""".trim()
+"""
         ).features().check {
             featureMap[FeatureName.FOR_LOOP_STEP] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.FOR_LOOP_STEP, listOf(1))
         }
     }
     "should detect for loop range" {
@@ -531,18 +552,20 @@ for (i in 0..2) {
   println(i)
 }
 val t = 0..4
-""".trim()
+"""
         ).features().check {
             featureMap[FeatureName.FOR_LOOP_RANGE] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.FOR_LOOP_RANGE, listOf(1))
         }
     }
     "should detect Elvis operator" {
         Source.fromKotlinSnippet(
             """
 val t = s ?: 0
-""".trim()
+"""
         ).features().check {
             featureMap[FeatureName.ELVIS_OPERATOR] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.ELVIS_OPERATOR, listOf(1))
         }
     }
     "should count class fields" {
@@ -552,9 +575,10 @@ class Test {
   var first = 0
   var second: String = "another"
 }
-""".trim()
+"""
         ).features().check("Test") {
             featureMap[FeatureName.CLASS_FIELD] shouldBe 2
+            featureList should haveFeatureAt(FeatureName.CLASS_FIELD, listOf(2, 3))
         }
     }
     "should count constructors" {
@@ -563,9 +587,10 @@ class Test {
 class Test(val first: Int) {
   var second: String = "another"
 }
-""".trim()
+"""
         ).features().check("Test") {
             featureMap[FeatureName.CONSTRUCTOR] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.CONSTRUCTOR, listOf(1))
         }
     }
     "should count secondary constructors" {
@@ -576,10 +601,13 @@ class Test(val first: Int) {
   
   var second: String = "another"
 }
-""".trim()
+"""
         ).features().check("Test") {
             featureMap[FeatureName.CONSTRUCTOR] shouldBe 2
+            featureList should haveFeatureAt(FeatureName.CONSTRUCTOR, listOf(1, 2))
+
             featureMap[FeatureName.SECONDARY_CONSTRUCTOR] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.SECONDARY_CONSTRUCTOR, listOf(2))
         }
     }
     "should count equals and Java equals" {
@@ -593,11 +621,16 @@ println(second != first)
 println(second !== first)
 println(second.equals(first))
 println(!first.equals(second))
-""".trim()
+"""
         ).features().check {
             featureMap[FeatureName.EQUALITY] shouldBe 4
+            featureList should haveFeatureAt(FeatureName.EQUALITY, listOf(3, 5, 7, 8))
+
             featureMap[FeatureName.REFERENCE_EQUALITY] shouldBe 2
+            featureList should haveFeatureAt(FeatureName.REFERENCE_EQUALITY, listOf(4, 6))
+
             featureMap[FeatureName.JAVA_EQUALITY] shouldBe 2
+            featureList should haveFeatureAt(FeatureName.JAVA_EQUALITY, listOf(7, 8))
         }
     }
     "should count companion objects" {
@@ -701,7 +734,7 @@ enum class Test {
     SECOND,
     THIRD
 }
-                """.trim()
+""".trimStart()
             )
         ).features().check("", "Test.kt") {
             featureMap[FeatureName.ENUM] shouldBe 1
@@ -933,9 +966,40 @@ class Another : Test() {
             featureList should haveFeatureAt(FeatureName.ABSTRACT_METHOD, listOf(2))
         }
     }
-})
-
-fun FeaturesResults.check(path: String = ".", filename: String = "", block: Features.() -> Any): FeaturesResults {
-    with(lookup(path, filename).features, block)
-    return this
+    "should count static methods and fields" {
+        Source.fromKotlinSnippet(
+            """
+class Test {
+  companion object {
+    fun test() = 2
+    val another = 4
+  }
 }
+"""
+        ).features().check("") {
+            featureMap[FeatureName.COMPANION_OBJECT] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.COMPANION_OBJECT, listOf(2))
+
+            featureMap[FeatureName.STATIC_METHOD] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.STATIC_METHOD, listOf(3))
+
+            featureMap[FeatureName.STATIC_FIELD] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.STATIC_FIELD, listOf(4))
+        }
+    }
+    "should count abstract classes and fields" {
+        Source.fromKotlinSnippet(
+            """
+abstract class Test {
+  abstract var test: Int
+}
+"""
+        ).features().check("") {
+            featureMap[FeatureName.ABSTRACT_CLASS] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.ABSTRACT_CLASS, listOf(1))
+
+            featureMap[FeatureName.ABSTRACT_FIELD] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.ABSTRACT_FIELD, listOf(2))
+        }
+    }
+})

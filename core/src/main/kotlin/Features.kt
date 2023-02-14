@@ -6,6 +6,7 @@ enum class FeatureName(val description: String) {
     LOCAL_VARIABLE_DECLARATIONS("local variable declarations"),
     VARIABLE_ASSIGNMENTS("variable assignments"),
     VARIABLE_REASSIGNMENTS("variable reassignments"),
+    FINAL_VARIABLE("final or val variable"),
 
     // Operators
     UNARY_OPERATORS("unary operators"),
@@ -152,11 +153,8 @@ val MISSING_KOTLIN_FEATURES = setOf(
     // FeatureName.NEW_KEYWORD (no equivalent)
 
     // Modifiers
-    FeatureName.STATIC_METHOD,
     // FeatureName.FINAL_METHOD (default, no equivalent),
-    FeatureName.STATIC_FIELD,
     FeatureName.FINAL_FIELD,
-    FeatureName.ABSTRACT_FIELD,
     // FeatureName.FINAL_CLASS (default, no equivalent)
 
     // Misc.
