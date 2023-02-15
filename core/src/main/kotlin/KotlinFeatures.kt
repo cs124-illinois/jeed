@@ -182,28 +182,30 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
             ctx.modifiers()?.modifier(0)?.inheritanceModifier()?.ABSTRACT()?.also {
                 count(FeatureName.ABSTRACT_CLASS, ctx.toLocation())
             }
-            ctx.classBody()?.classMemberDeclarations()?.classMemberDeclaration()?.find { it.companionObject() != null }?.also {
-                count(FeatureName.HAS_COMPANION_OBJECT, ctx.toLocation())
-            }
+            ctx.classBody()?.classMemberDeclarations()?.classMemberDeclaration()?.find { it.companionObject() != null }
+                ?.also {
+                    count(FeatureName.HAS_COMPANION_OBJECT, ctx.toLocation())
+                }
         }
         enterClassOrInterface(
             ctx.simpleIdentifier().text,
             Location(ctx.start.line, ctx.start.charPositionInLine),
             Location(ctx.stop.line, ctx.stop.charPositionInLine)
         )
-        ctx.delegationSpecifiers()?.annotatedDelegationSpecifier()?.map { it.delegationSpecifier() }?.forEach { delegationSpecifier ->
-            val specifier = delegationSpecifier.text.trim()
-            if (specifier.contains("(") && specifier.endsWith(")")) {
-                count(FeatureName.EXTENDS, delegationSpecifier.toLocation())
-            } else {
-                count(FeatureName.IMPLEMENTS, delegationSpecifier.toLocation())
-            }
-            delegationSpecifier.userType()?.simpleUserType()?.firstOrNull()?.simpleIdentifier()?.also {
-                if (it.text == "Comparable") {
-                    count(FeatureName.COMPARABLE, it.toLocation())
+        ctx.delegationSpecifiers()?.annotatedDelegationSpecifier()?.map { it.delegationSpecifier() }
+            ?.forEach { delegationSpecifier ->
+                val specifier = delegationSpecifier.text.trim()
+                if (specifier.contains("(") && specifier.endsWith(")")) {
+                    count(FeatureName.EXTENDS, delegationSpecifier.toLocation())
+                } else {
+                    count(FeatureName.IMPLEMENTS, delegationSpecifier.toLocation())
+                }
+                delegationSpecifier.userType()?.simpleUserType()?.firstOrNull()?.simpleIdentifier()?.also {
+                    if (it.text == "Comparable") {
+                        count(FeatureName.COMPARABLE, it.toLocation())
+                    }
                 }
             }
-        }
         ctx.typeParameters()?.also {
             count(FeatureName.GENERIC_CLASS, ctx.typeParameters().toLocation())
         }
@@ -435,7 +437,7 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
     }
 
     override fun enterVariableDeclaration(ctx: KotlinParser.VariableDeclarationContext) {
-        if (ctx.parent is KotlinParser.PropertyDeclarationContext && ctx.parentType() == ParentType.FUNCTION) {
+        if (ctx.parent is PropertyDeclarationContext && ctx.parentType() == ParentType.FUNCTION) {
             count(FeatureName.LOCAL_VARIABLE_DECLARATIONS, ctx.toLocation())
             count(FeatureName.VARIABLE_ASSIGNMENTS, ctx.toLocation())
             (ctx.parent as PropertyDeclarationContext).VAL()?.also {
@@ -729,6 +731,13 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
                 }
             }
         }
+        val indices = ctx.postfixUnarySuffix()?.filter { it.indexingSuffix() != null } ?: listOf()
+        if (indices.isNotEmpty()) {
+            count(FeatureName.COLLECTION_INDEXING, indices.first().toLocation())
+            if (indices.size > 1) {
+                count(FeatureName.MULTILEVEL_COLLECTION_INDEXING, indices.first().toLocation())
+            }
+        }
     }
 
     override fun enterObjectLiteral(ctx: KotlinParser.ObjectLiteralContext) {
@@ -759,11 +768,14 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
         count(FeatureName.INSTANCEOF, ctx.toLocation())
     }
 
-    override fun enterPropertyDeclaration(ctx: KotlinParser.PropertyDeclarationContext) {
+    override fun enterPropertyDeclaration(ctx: PropertyDeclarationContext) {
         if (ctx.parentType() == ParentType.CLASS) {
             count(FeatureName.CLASS_FIELD, ctx.toLocation())
             ctx.modifiers()?.modifier()?.find { it.inheritanceModifier()?.ABSTRACT() != null }?.also {
                 count(FeatureName.ABSTRACT_FIELD, it.toLocation())
+            }
+            ctx.VAL()?.also {
+                count(FeatureName.FINAL_FIELD, ctx.VAL().toLocation())
             }
         }
     }
@@ -912,7 +924,7 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
 
     init {
         val parsedSource = source.getParsed(filename)
-        // println(parsedSource.tree.format(parsedSource.parser))
+        println(parsedSource.tree.format(parsedSource.parser))
         ParseTreeWalker.DEFAULT.walk(this, parsedSource.tree)
     }
 }

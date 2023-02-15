@@ -573,12 +573,15 @@ val t = s ?: 0
             """
 class Test {
   var first = 0
-  var second: String = "another"
+  val second: String = "another"
 }
 """
         ).features().check("Test") {
             featureMap[FeatureName.CLASS_FIELD] shouldBe 2
             featureList should haveFeatureAt(FeatureName.CLASS_FIELD, listOf(2, 3))
+
+            featureMap[FeatureName.FINAL_FIELD] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.FINAL_FIELD, listOf(3))
         }
     }
     "should count constructors" {
@@ -1052,7 +1055,26 @@ val another = fun (x: Int): Int = x
             featureList should haveFeatureAt(FeatureName.FUNCTIONAL_INTERFACE, listOf(1))
         }
     }
+    "should count collection indexing and multi-level indexing" {
+        Source.fromKotlinSnippet(
+            """
+val first = listOf("test", "me")
+println(first[0])
+val second = mapOf("test" to 1, "me" to 2)
+println(second["test"])
+val third = mapOf("test" to mapOf("test" to "me"))
+println(third["test"]!!["test"])
+"""
+        ).features().check {
+            featureMap[FeatureName.COLLECTION_INDEXING] shouldBe 3
+            featureList should haveFeatureAt(FeatureName.COLLECTION_INDEXING, listOf(2, 4, 6))
+
+            featureMap[FeatureName.MULTILEVEL_COLLECTION_INDEXING] shouldBe 1
+            featureList should haveFeatureAt(FeatureName.MULTILEVEL_COLLECTION_INDEXING, listOf(6))
+        }
+    }
 })
+
 fun interface Test {
     fun test(): Int
 }

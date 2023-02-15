@@ -136,39 +136,33 @@ enum class FeatureName(val description: String) {
     OPEN_CLASS("open class"),
     OPEN_METHOD("open method"),
     COLLECTION_INDEXING("collection indexing"),
+    MULTILEVEL_COLLECTION_INDEXING("multilevel collection indexing"),
     SINGLETON("object singleton"),
     FUNCTIONAL_INTERFACE("functional interface"),
     ANONYMOUS_FUNCTION("anonymous function")
 }
 
-@Suppress("unused")
-val MISSING_KOTLIN_FEATURES = setOf(
-    // FeatureName.TERNARY_OPERATOR (no equivalent)
+// Java features without Kotlin equivalents
 
-    // Arrays
-    FeatureName.ARRAY_ACCESS,
-    FeatureName.MULTIDIMENSIONAL_ARRAYS,
+// FeatureName.TERNARY_OPERATOR (no equivalent)
 
-    // Loops
-    // FeatureName.ENHANCED_FOR (no equivalent)
+// FeatureName.ARRAY_ACCESS (COLLECTION_INDEXING is closest equivalent)
+// FeatureName.MULTIDIMENSIONAL_ARRAYS (MULTILEVEL_COLLECTION_INDEXING is closest equivalent)
 
-    // FeatureName.THROWS (no equivalent)
+// FeatureName.ENHANCED_FOR (no equivalent)
 
-    // Objects
-    // FeatureName.NEW_KEYWORD (no equivalent)
+// FeatureName.THROWS (no equivalent)
 
-    // Modifiers
-    // FeatureName.FINAL_METHOD (default, no equivalent),
-    FeatureName.FINAL_FIELD
-    // FeatureName.FINAL_CLASS (default, no equivalent)
+// FeatureName.NEW_KEYWORD (no equivalent)
 
-    // Misc.
-    // FeatureName.SWITCH (no equivalent)
-    // FeatureName.STREAM (no equivalent, can't detect due to inference)
+// FeatureName.FINAL_METHOD (default, no equivalent)
+// FeatureName.FINAL_CLASS (default, no equivalent)
 
-    // FeatureName.RECORD (Kotlin FeatureName.DATA_CLASS)
-    // FeatureName.BOXING_CLASSES (no equivalent)
-)
+// FeatureName.SWITCH (no equivalent)
+// FeatureName.STREAM (no equivalent, can't detect due to inference)
+
+// FeatureName.RECORD (Kotlin FeatureName.DATA_CLASS)
+// FeatureName.BOXING_CLASSES (no equivalent)
 
 val ALL_FEATURES = FeatureName.values().associate { it.name to it.description }
 
