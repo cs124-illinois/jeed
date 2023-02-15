@@ -6,6 +6,7 @@ import io.kotest.matchers.MatcherResult
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 
 @Suppress("LargeClass")
 class TestJavaFeatures : StringSpec({
@@ -958,9 +959,10 @@ public class Test {
     }
     "should not count array.length as dotted variable access" {
         Source.fromJavaSnippet(
-            """int[] array = new int[8];
-              |int l = array.length;
-            """.trimMargin()
+            """
+int[] array = new int[8];
+int l = array.length;
+"""
         ).features().check {
             featureMap[FeatureName.DOTTED_VARIABLE_ACCESS] shouldBe 0
             featureList should haveFeatureAt(FeatureName.DOTTED_VARIABLE_ACCESS, listOf())
@@ -971,10 +973,11 @@ public class Test {
     }
     "should not count new with Strings and arrays" {
         Source.fromJavaSnippet(
-            """String test = new String("test");
-                |int[] test1 = new int[8];
-                |int[] test2 = new int[] {1, 2, 4};
-            """.trimMargin()
+            """
+String test = new String("test");
+int[] test1 = new int[8];
+int[] test2 = new int[] {1, 2, 4};
+"""
         ).features().check {
             featureMap[FeatureName.NEW_KEYWORD] shouldBe 0
             featureList should haveFeatureAt(FeatureName.NEW_KEYWORD, listOf())
@@ -982,12 +985,13 @@ public class Test {
     }
     "should not count new with arrays" {
         Source.fromJavaSnippet(
-            """int[] midThree(int[] values) {
-                |  return new int[] {
-                |    values[values.length / 2 - 1], values[values.length / 2], values[values.length / 2 + 1]
-                |  };
-                |}
-            """.trimMargin()
+            """
+int[] midThree(int[] values) {
+  return new int[] {
+    values[values.length / 2 - 1], values[values.length / 2], values[values.length / 2 + 1]
+  };
+}
+"""
         ).features().check {
             featureMap[FeatureName.NEW_KEYWORD] shouldBe 0
             featureList should haveFeatureAt(FeatureName.NEW_KEYWORD, listOf())
@@ -1011,7 +1015,8 @@ public class Simple {
   public double squared() {
     return val * val;
   }
-}""".trim()
+}
+"""
             )
         ).features()
     }
@@ -1022,7 +1027,7 @@ int[] array = new int[] {1, 2, 4};
 System.out.println(array.something);
 array.sort();
 int[] sorted = array.sorted();
-            """.trimIndent()
+"""
         ).features().check {
             featureMap[FeatureName.DOTTED_METHOD_CALL] shouldBe 2
             featureList should haveFeatureAt(FeatureName.DOTTED_METHOD_CALL, listOf(3, 4))
@@ -1037,7 +1042,7 @@ int[] sorted = array.sorted();
         Source.fromJavaSnippet(
             """
 System.out.println(array.something);
-            """.trimIndent()
+"""
         ).features().check {
             featureMap[FeatureName.DOTTED_METHOD_CALL] shouldBe 0
             featureList should haveFeatureAt(FeatureName.DOTTED_METHOD_CALL, listOf())
@@ -1080,7 +1085,8 @@ public static IWhichHemisphere create(Position p) {
       }
     };
   }
-}""".trim()
+}
+"""
         ).features().check("") {
             featureMap[FeatureName.ANONYMOUS_CLASSES] shouldBe 3
             featureList should haveFeatureAt(FeatureName.ANONYMOUS_CLASSES, listOf(4, 14, 23))
@@ -1095,7 +1101,7 @@ public interface Modify {
 public class Modifier {
   Modify modify = value -> value + 1;
 }
-""".trim()
+"""
         ).features().check("") {
             featureMap[FeatureName.LAMBDA_EXPRESSIONS] shouldBe 1
             featureList should haveFeatureAt(FeatureName.LAMBDA_EXPRESSIONS, listOf(5))
@@ -1110,7 +1116,7 @@ t == "another";
 "string" == "another";
 t == 1;
 2 == 3;
-""".trim()
+"""
         ).features().check("") {
             featureMap[FeatureName.EQUALITY] shouldBe 1
             featureList should haveFeatureAt(FeatureName.EQUALITY, listOf(2))
@@ -1118,6 +1124,29 @@ t == 1;
             featureMap[FeatureName.REFERENCE_EQUALITY] shouldBe 4
             featureList should haveFeatureAt(FeatureName.REFERENCE_EQUALITY, (3..6).toList())
         }
+    }
+    "f: should separate statements and blocks" {
+        val first = Source.fromJavaSnippet(
+            """
+if (first) {
+  System.out.println("Here");
+  int i = 0;
+}
+"""
+        ).features().lookup(".").features
+
+        val second = Source.fromJavaSnippet(
+            """
+if (first) {
+  System.out.println("Here");
+}
+int i = 0;
+"""
+        ).features().lookup(".").features
+
+        first.featureMap shouldBe second.featureMap
+
+        first.featureList.map { it.feature } shouldNotBe second.featureList.map { it.feature }
     }
 })
 

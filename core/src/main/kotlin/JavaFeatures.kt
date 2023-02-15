@@ -10,6 +10,7 @@ import edu.illinois.cs.cs125.jeed.core.antlr.JavaParser.MethodCallContext
 import edu.illinois.cs.cs125.jeed.core.antlr.JavaParser.StatementContext
 import edu.illinois.cs.cs125.jeed.core.antlr.JavaParserBaseListener
 import org.antlr.v4.runtime.ParserRuleContext
+import org.antlr.v4.runtime.Token
 import org.antlr.v4.runtime.tree.ParseTreeWalker
 import org.antlr.v4.runtime.tree.TerminalNode
 
@@ -445,9 +446,20 @@ class JavaFeatureListener(val source: Source, entry: Map.Entry<String, String>) 
         currentFeatureList += LocatedFeature(feature, remappedLocation)
     }
 
+    private fun add(feature: FeatureName, location: Location) {
+        val remappedLocation = try {
+            source.mapLocation(filename, location)
+        } catch (_: SourceMappingException) {
+            return
+        }
+        currentFeatureList += LocatedFeature(feature, remappedLocation)
+    }
+
     private fun ParserRuleContext.toLocation() = Location(start.line, start.charPositionInLine)
 
     private fun TerminalNode.toLocation() = Location(symbol.line, symbol.charPositionInLine)
+
+    private fun Token.toLocation() = Location(line, charPositionInLine)
 
     private fun StatementContext.isPrintStatement() = statementExpression?.let {
         @Suppress("ComplexCondition")
@@ -462,6 +474,10 @@ class JavaFeatureListener(val source: Source, entry: Map.Entry<String, String>) 
         if (ctx.isPrintStatement()) {
             count(FeatureName.PRINT_STATEMENTS, ctx.toLocation())
         }
+
+        add(FeatureName.STATEMENT_START, ctx.start.toLocation())
+        add(FeatureName.STATEMENT_END, ctx.stop.toLocation())
+
         ctx.statementExpression?.also {
             if (it.bop?.text == "=") {
                 count(FeatureName.VARIABLE_REASSIGNMENTS, ctx.toLocation())
@@ -570,6 +586,11 @@ class JavaFeatureListener(val source: Source, entry: Map.Entry<String, String>) 
                 }
             }
         }
+    }
+
+    override fun enterBlock(ctx: JavaParser.BlockContext) {
+        add(FeatureName.BLOCK_START, ctx.start.toLocation())
+        add(FeatureName.BLOCK_END, ctx.stop.toLocation())
     }
 
     private fun ExpressionContext.inPrintStatement(): Boolean {

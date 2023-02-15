@@ -4,6 +4,7 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 
 @Suppress("LargeClass")
 class TestKotlinFeatures : StringSpec({
@@ -1072,6 +1073,29 @@ println(third["test"]!!["test"])
             featureMap[FeatureName.MULTILEVEL_COLLECTION_INDEXING] shouldBe 1
             featureList should haveFeatureAt(FeatureName.MULTILEVEL_COLLECTION_INDEXING, listOf(6))
         }
+    }
+    "should separate statements and blocks" {
+        val first = Source.fromKotlinSnippet(
+            """
+if (first) {
+  println("Here")
+  var i = 0
+}
+"""
+        ).features().lookup(".").features
+
+        val second = Source.fromKotlinSnippet(
+            """
+if (first) {
+  println("Here")
+}
+var i = 0
+"""
+        ).features().lookup(".").features
+
+        first.featureMap shouldBe second.featureMap
+
+        first.featureList.map { it.feature } shouldNotBe second.featureList.map { it.feature }
     }
 })
 

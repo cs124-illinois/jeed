@@ -118,6 +118,12 @@ enum class FeatureName(val description: String) {
     DOTTED_METHOD_CALL("dotted method call"),
     DOTTED_VARIABLE_ACCESS("dotted variable access"),
 
+    // Blocks and statements
+    BLOCK_START("block start"),
+    BLOCK_END("block end"),
+    STATEMENT_START("statement start"),
+    STATEMENT_END("statement end"),
+
     // Kotlin only
     NESTED_METHOD("nested method"),
     JAVA_PRINT_STATEMENTS("java print statements"),
