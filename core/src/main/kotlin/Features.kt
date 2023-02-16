@@ -3,6 +3,7 @@ package edu.illinois.cs.cs125.jeed.core
 import com.squareup.moshi.JsonClass
 
 enum class FeatureName(val description: String) {
+    EMPTY("empty placeholder feature"),
     LOCAL_VARIABLE_DECLARATIONS("local variable declarations"),
     VARIABLE_ASSIGNMENTS("variable assignments"),
     VARIABLE_REASSIGNMENTS("variable reassignments"),
@@ -92,7 +93,6 @@ enum class FeatureName(val description: String) {
     ABSTRACT_METHOD("abstract methods"),
     STATIC_FIELD("static fields"),
     FINAL_FIELD("final fields"),
-    ABSTRACT_FIELD("abstract fields"),
     FINAL_CLASS("final classes"),
     ABSTRACT_CLASS("abstract classes"),
 
@@ -145,32 +145,59 @@ enum class FeatureName(val description: String) {
     MULTILEVEL_COLLECTION_INDEXING("multilevel collection indexing"),
     SINGLETON("object singleton"),
     FUNCTIONAL_INTERFACE("functional interface"),
-    ANONYMOUS_FUNCTION("anonymous function")
+    ANONYMOUS_FUNCTION("anonymous function"),
+    ABSTRACT_FIELD("abstract fields")
 }
 
 // Java features without Kotlin equivalents
+val JAVA_ONLY_FEATURES = setOf(
+    FeatureName.TERNARY_OPERATOR,
+    FeatureName.ARRAY_ACCESS,
+    FeatureName.MULTIDIMENSIONAL_ARRAYS,
+    FeatureName.ENHANCED_FOR,
+    FeatureName.THROWS,
+    FeatureName.NEW_KEYWORD,
+    FeatureName.FINAL_METHOD,
+    FeatureName.FINAL_CLASS,
+    FeatureName.SWITCH,
+    FeatureName.STREAM,
+    FeatureName.RECORD,
+    FeatureName.BOXING_CLASSES
+)
 
-// FeatureName.TERNARY_OPERATOR (no equivalent)
+// Kotlin features without Java equivalents
+val KOTLIN_ONLY_FEATURES = setOf(
+    FeatureName.NESTED_METHOD,
+    FeatureName.JAVA_PRINT_STATEMENTS,
+    FeatureName.REQUIRE_OR_CHECK,
+    FeatureName.FOR_LOOP_STEP,
+    FeatureName.ELVIS_OPERATOR,
+    FeatureName.FOR_LOOP_RANGE,
+    FeatureName.SECONDARY_CONSTRUCTOR,
+    FeatureName.JAVA_EQUALITY,
+    FeatureName.COMPANION_OBJECT,
+    FeatureName.HAS_COMPANION_OBJECT,
+    FeatureName.NULLABLE_TYPE,
+    FeatureName.WHEN,
+    FeatureName.EXPLICIT_TYPE,
+    FeatureName.DATA_CLASS,
+    FeatureName.OPEN_CLASS,
+    FeatureName.OPEN_METHOD,
+    FeatureName.COLLECTION_INDEXING,
+    FeatureName.MULTILEVEL_COLLECTION_INDEXING,
+    FeatureName.SINGLETON,
+    FeatureName.FUNCTIONAL_INTERFACE,
+    FeatureName.ANONYMOUS_FUNCTION,
+    FeatureName.ABSTRACT_FIELD
+)
 
-// FeatureName.ARRAY_ACCESS (COLLECTION_INDEXING is closest equivalent)
-// FeatureName.MULTIDIMENSIONAL_ARRAYS (MULTILEVEL_COLLECTION_INDEXING is closest equivalent)
-
-// FeatureName.ENHANCED_FOR (no equivalent)
-
-// FeatureName.THROWS (no equivalent)
-
-// FeatureName.NEW_KEYWORD (no equivalent)
-
-// FeatureName.FINAL_METHOD (default, no equivalent)
-// FeatureName.FINAL_CLASS (default, no equivalent)
-
-// FeatureName.SWITCH (no equivalent)
-// FeatureName.STREAM (no equivalent, can't detect due to inference)
-
-// FeatureName.RECORD (Kotlin FeatureName.DATA_CLASS)
-// FeatureName.BOXING_CLASSES (no equivalent)
+val STRUCTURAL_FEATURES =
+    setOf(FeatureName.BLOCK_START, FeatureName.BLOCK_END, FeatureName.STATEMENT_START, FeatureName.STATEMENT_END)
 
 val ALL_FEATURES = FeatureName.values().associate { it.name to it.description }
+
+val JAVA_FEATURES = FeatureName.values().toSet() - KOTLIN_ONLY_FEATURES - STRUCTURAL_FEATURES - setOf(FeatureName.EMPTY)
+val KOTLIN_FEATURES = FeatureName.values().toSet() - JAVA_ONLY_FEATURES - STRUCTURAL_FEATURES - setOf(FeatureName.EMPTY)
 
 val ORDERED_FEATURES = listOf(
     FeatureName.LOCAL_VARIABLE_DECLARATIONS,

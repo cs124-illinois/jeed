@@ -2,7 +2,6 @@ import java.io.File
 import java.io.StringWriter
 import java.util.Properties
 import org.gradle.internal.os.OperatingSystem
-import org.jmailen.gradle.kotlinter.tasks.LintTask
 
 plugins {
     kotlin("jvm")
@@ -97,6 +96,12 @@ afterEvaluate {
     }
     tasks.named("lintKotlinGeneratedByKspKotlin") {
         enabled = false
+    }
+    tasks.named("formatKotlinTest") {
+        dependsOn(tasks.generateTestGrammarSource)
+    }
+    tasks.named("lintKotlinTest") {
+        dependsOn(tasks.generateTestGrammarSource)
     }
 }
 task("createProperties") {

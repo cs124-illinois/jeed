@@ -14,6 +14,9 @@ import org.antlr.v4.runtime.Token
 import org.antlr.v4.runtime.tree.ParseTreeWalker
 import org.antlr.v4.runtime.tree.TerminalNode
 
+internal val seenJavaFeatures = mutableSetOf<FeatureName>()
+internal var watchJavaFeatures = false
+
 @Suppress("TooManyFunctions", "LargeClass", "MagicNumber", "LongMethod", "ComplexMethod")
 class JavaFeatureListener(val source: Source, entry: Map.Entry<String, String>) : JavaParserBaseListener() {
     @Suppress("unused")
@@ -444,6 +447,9 @@ class JavaFeatureListener(val source: Source, entry: Map.Entry<String, String>) 
         }
         currentFeatureMap[feature] = (currentFeatureMap[feature] ?: 0) + 1
         currentFeatureList += LocatedFeature(feature, remappedLocation)
+        if (watchJavaFeatures) {
+            seenJavaFeatures += feature
+        }
     }
 
     private fun add(feature: FeatureName, location: Location) {

@@ -25,6 +25,9 @@ import org.jetbrains.kotlin.backend.common.pop
 private val basicTypes = setOf("Byte", "Short", "Int", "Long", "Float", "Double", "Char", "Boolean")
 private val typeCasts = (basicTypes - setOf("Boolean")).map { "to$it" }.toSet()
 
+internal val seenKotlinFeatures = mutableSetOf<FeatureName>()
+internal var watchKotlinFeatures = false
+
 @Suppress("TooManyFunctions", "LargeClass", "MagicNumber", "LongMethod", "ComplexMethod")
 class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>) : KotlinParserBaseListener() {
     @Suppress("unused")
@@ -53,6 +56,9 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
         }
         currentFeatureMap[feature] = (currentFeatureMap[feature] ?: 0) + 1
         currentFeatureList += LocatedFeature(feature, remappedLocation)
+        if (watchKotlinFeatures) {
+            seenKotlinFeatures += feature
+        }
     }
 
     private fun add(feature: FeatureName, location: Location) {
