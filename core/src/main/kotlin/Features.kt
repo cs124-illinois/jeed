@@ -136,7 +136,7 @@ enum class FeatureName(val description: String) {
     COMPANION_OBJECT("companion object"),
     HAS_COMPANION_OBJECT("has companion object"),
     NULLABLE_TYPE("nullable type"),
-    WHEN("when statement"),
+    WHEN_STATEMENT("when statement"),
     EXPLICIT_TYPE("explicit type"),
     DATA_CLASS("data class"),
     OPEN_CLASS("open class"),
@@ -146,7 +146,10 @@ enum class FeatureName(val description: String) {
     SINGLETON("object singleton"),
     FUNCTIONAL_INTERFACE("functional interface"),
     ANONYMOUS_FUNCTION("anonymous function"),
-    ABSTRACT_FIELD("abstract fields")
+    ABSTRACT_FIELD("abstract fields"),
+    IF_EXPRESSIONS("if expressions"),
+    TRY_EXPRESSIONS("try expressions"),
+    WHEN_EXPRESSIONS("when expressions")
 }
 
 // Java features without Kotlin equivalents
@@ -178,7 +181,7 @@ val KOTLIN_ONLY_FEATURES = setOf(
     FeatureName.COMPANION_OBJECT,
     FeatureName.HAS_COMPANION_OBJECT,
     FeatureName.NULLABLE_TYPE,
-    FeatureName.WHEN,
+    FeatureName.WHEN_STATEMENT,
     FeatureName.EXPLICIT_TYPE,
     FeatureName.DATA_CLASS,
     FeatureName.OPEN_CLASS,
@@ -188,7 +191,10 @@ val KOTLIN_ONLY_FEATURES = setOf(
     FeatureName.SINGLETON,
     FeatureName.FUNCTIONAL_INTERFACE,
     FeatureName.ANONYMOUS_FUNCTION,
-    FeatureName.ABSTRACT_FIELD
+    FeatureName.ABSTRACT_FIELD,
+    FeatureName.IF_EXPRESSIONS,
+    FeatureName.TRY_EXPRESSIONS,
+    FeatureName.WHEN_EXPRESSIONS
 )
 
 val STRUCTURAL_FEATURES =
@@ -296,7 +302,7 @@ val ORDERED_FEATURES = listOf(
     FeatureName.COMPANION_OBJECT,
     FeatureName.HAS_COMPANION_OBJECT,
     FeatureName.NULLABLE_TYPE,
-    FeatureName.WHEN,
+    FeatureName.WHEN_STATEMENT,
     FeatureName.EXPLICIT_TYPE,
     FeatureName.DATA_CLASS,
     FeatureName.OPEN_CLASS,
@@ -305,8 +311,17 @@ val ORDERED_FEATURES = listOf(
     FeatureName.MULTILEVEL_COLLECTION_INDEXING,
     FeatureName.SINGLETON,
     FeatureName.FUNCTIONAL_INTERFACE,
-    FeatureName.ANONYMOUS_FUNCTION
-)
+    FeatureName.ANONYMOUS_FUNCTION,
+    FeatureName.IF_EXPRESSIONS,
+    FeatureName.TRY_EXPRESSIONS,
+    FeatureName.WHEN_EXPRESSIONS
+).also {
+    val doesExist = it.toSet()
+    val shouldExist = FeatureName.values().toSet() - setOf(FeatureName.EMPTY)
+    check(doesExist == shouldExist) {
+        "Ordered list feature mismatch: ${(doesExist + shouldExist) - (doesExist.intersect(shouldExist))}"
+    }
+}
 
 class FeatureMap(val map: MutableMap<FeatureName, Int> = mutableMapOf()) : MutableMap<FeatureName, Int> by map {
     override fun get(key: FeatureName): Int = map.getOrDefault(key, 0)

@@ -19,7 +19,7 @@ class TestJavaFeatures : StringSpec() {
     override suspend fun afterSpec(spec: Spec) {
         val focused = spec.rootTests().any { it.name.focus }
         if (!focused) {
-            JAVA_FEATURES - seenJavaFeatures shouldBe emptySet()
+            seenJavaFeatures shouldBe JAVA_FEATURES
         }
     }
 

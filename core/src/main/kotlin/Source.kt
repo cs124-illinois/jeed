@@ -7,6 +7,7 @@ import edu.illinois.cs.cs125.jeed.core.server.toFlatSources
 import mu.KotlinLogging
 import org.antlr.v4.runtime.CharStream
 import org.antlr.v4.runtime.Parser
+import org.antlr.v4.runtime.TokenStream
 import org.antlr.v4.runtime.tree.ParseTree
 import java.io.PrintWriter
 import java.io.StringWriter
@@ -77,7 +78,7 @@ open class Source(
         return Location(resultSourceLocation.line, resultSourceLocation.column)
     }
 
-    data class ParsedSource(val tree: ParseTree, val stream: CharStream, val contents: String, val parser: Parser)
+    data class ParsedSource(val tree: ParseTree, val stream: CharStream, val contents: String, val parser: Parser, val tokenStream: TokenStream)
 
     var parsed = false
 

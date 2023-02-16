@@ -17,7 +17,7 @@ class TestKotlinFeatures : StringSpec() {
     override suspend fun afterSpec(spec: Spec) {
         val focused = spec.rootTests().any { it.name.focus }
         if (!focused) {
-            KOTLIN_FEATURES - seenKotlinFeatures shouldBe emptySet()
+            seenKotlinFeatures shouldBe KOTLIN_FEATURES
         }
     }
     init {
@@ -738,8 +738,8 @@ when {
 }
 """
             ).features().check {
-                featureMap[FeatureName.WHEN] shouldBe 2
-                featureList should haveFeatureAt(FeatureName.WHEN, listOf(1, 5))
+                featureMap[FeatureName.WHEN_STATEMENT] shouldBe 2
+                featureList should haveFeatureAt(FeatureName.WHEN_STATEMENT, listOf(1, 5))
 
                 featureMap[FeatureName.ELSE_STATEMENTS] shouldBe 1
                 featureList should haveFeatureAt(FeatureName.ELSE_STATEMENTS, listOf(3))
@@ -1085,6 +1085,68 @@ println(third["test"]!!["test"])
 
                 featureMap[FeatureName.MULTILEVEL_COLLECTION_INDEXING] shouldBe 1
                 featureList should haveFeatureAt(FeatureName.MULTILEVEL_COLLECTION_INDEXING, listOf(6))
+            }
+        }
+        "should count if expressions" {
+            Source.fromKotlinSnippet(
+                """
+val test = if (another) {
+  1
+} else {
+  2
+}
+if (test > 1) {
+  println("Here")
+}
+"""
+            ).features().check {
+                featureMap[FeatureName.IF_STATEMENTS] shouldBe 2
+                featureList should haveFeatureAt(FeatureName.IF_STATEMENTS, listOf(1, 6))
+
+                featureMap[FeatureName.IF_EXPRESSIONS] shouldBe 1
+                featureList should haveFeatureAt(FeatureName.IF_EXPRESSIONS, listOf(1))
+            }
+        }
+        "should count try expressions" {
+            Source.fromKotlinSnippet(
+                """
+val test = try {
+  1
+} catch (e: Exception) {
+  2
+}
+try {
+  check(true)
+} catch (e: Exception) {
+  println("Here")
+}
+"""
+            ).features().check {
+                featureMap[FeatureName.TRY_BLOCK] shouldBe 2
+                featureList should haveFeatureAt(FeatureName.TRY_BLOCK, listOf(1, 6))
+
+                featureMap[FeatureName.TRY_EXPRESSIONS] shouldBe 1
+                featureList should haveFeatureAt(FeatureName.TRY_EXPRESSIONS, listOf(1))
+            }
+        }
+        "should count when expressions" {
+            Source.fromKotlinSnippet(
+                """
+val test = when {
+  true -> 1
+  false -> 0
+}
+when {
+  true -> println("Here")
+  false -> println("Oops")
+}
+"""
+            ).features().check {
+                featureMap[FeatureName.WHEN_STATEMENT] shouldBe 2
+                featureList should haveFeatureAt(FeatureName.WHEN_STATEMENT, listOf(1, 5))
+
+                featureMap[FeatureName.WHEN_EXPRESSIONS] shouldBe 1
+                featureList should haveFeatureAt(FeatureName.WHEN_EXPRESSIONS, listOf(1))
             }
         }
         "should separate statements and blocks" {

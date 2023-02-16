@@ -30,6 +30,8 @@ internal var watchKotlinFeatures = false
 
 @Suppress("TooManyFunctions", "LargeClass", "MagicNumber", "LongMethod", "ComplexMethod")
 class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>) : KotlinParserBaseListener() {
+    private val parsedSource: Source.ParsedSource
+
     @Suppress("unused")
     private val contents = entry.value
     private val filename = entry.key
@@ -75,6 +77,17 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
     private fun TerminalNode.toLocation() = Location(symbol.line, symbol.charPositionInLine)
 
     private fun Token.toLocation() = Location(line, charPositionInLine)
+
+    private fun Token.previousToken(): String {
+        for (i in (tokenIndex - 1) downTo 0) {
+            parsedSource.tokenStream.get(i).text.trim().also {
+                if (it != "") {
+                    return it
+                }
+            }
+        }
+        return ""
+    }
 
     override fun enterKotlinFile(ctx: KotlinParser.KotlinFileContext) {
         val unitFeatures = UnitFeatures(
@@ -438,6 +451,7 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
         return null
     }
 
+    @Suppress("unused")
     private inline fun <reified T : RuleContext> ParserRuleContext.searchUp(): T? {
         var currentParent = parent
         while (currentParent != null) {
@@ -574,10 +588,12 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
     private val topIfs = mutableSetOf<Int>()
     private val seenIfStarts = mutableSetOf<Int>()
     override fun enterIfExpression(ctx: KotlinParser.IfExpressionContext) {
-        val parentStatement = ctx.searchUp<StatementContext>() ?: return // FIXME: Top-level if expressions
         val ifStart = ctx.start.startIndex
-        if (parentStatement.assignment() == null && ifStart !in seenIfStarts) {
+        if (ifStart !in seenIfStarts) {
             count(FeatureName.IF_STATEMENTS, ctx.toLocation())
+            if (ctx.start.previousToken() == "=") {
+                count(FeatureName.IF_EXPRESSIONS, ctx.toLocation())
+            }
             seenIfStarts += ifStart
             topIfs += ifStart
             if (ifDepth > 0) {
@@ -585,6 +601,7 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
             }
             ifDepths[ifDepths.size - 1]++
         }
+
         ctx.controlStructureBody().forEach {
             if (it.isIf()) {
                 count(FeatureName.ELSE_IF, it.toLocation())
@@ -860,7 +877,10 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
     }
 
     override fun enterWhenExpression(ctx: KotlinParser.WhenExpressionContext) {
-        count(FeatureName.WHEN, ctx.toLocation())
+        count(FeatureName.WHEN_STATEMENT, ctx.toLocation())
+        if (ctx.start.previousToken() == "=") {
+            count(FeatureName.WHEN_EXPRESSIONS, ctx.toLocation())
+        }
     }
 
     override fun enterWhenEntry(ctx: KotlinParser.WhenEntryContext) {
@@ -913,6 +933,9 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
 
     override fun enterTryExpression(ctx: KotlinParser.TryExpressionContext) {
         count(FeatureName.TRY_BLOCK, ctx.toLocation())
+        if (ctx.start.previousToken() == "=") {
+            count(FeatureName.TRY_EXPRESSIONS, ctx.toLocation())
+        }
         ctx.finallyBlock()?.also {
             count(FeatureName.FINALLY, it.toLocation())
         }
@@ -949,7 +972,7 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
     }
 
     init {
-        val parsedSource = source.getParsed(filename)
+        parsedSource = source.getParsed(filename)
         // println(parsedSource.tree.format(parsedSource.parser))
         ParseTreeWalker.DEFAULT.walk(this, parsedSource.tree)
     }
