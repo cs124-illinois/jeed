@@ -136,8 +136,9 @@ class Request(
                 }
             }
         }
-        val defaultPermissions = configuration[Limits.Execution.permissions].map { PermissionAdapter().permissionFromJson(it) }
-            .toSet()
+        val defaultPermissions =
+            configuration[Limits.Execution.permissions].map { PermissionAdapter().permissionFromJson(it) }
+                .toSet()
         if (Task.execute in tasks) {
             arguments.execution.setDefaults(
                 configuration[Limits.Execution.timeout],
@@ -234,9 +235,11 @@ class Request(
                     tasks.contains(Task.kompile) -> {
                         Source.FileType.KOTLIN
                     }
+
                     tasks.contains(Task.compile) -> {
                         Source.FileType.JAVA
                     }
+
                     else -> {
                         arguments.snippet.fileType
                     }
@@ -254,12 +257,14 @@ class Request(
                         response.completedTasks.add(Task.compile)
                     }
                 }
+
                 tasks.contains(Task.kompile) -> {
                     actualSource.kompile(arguments.kompilation).also {
                         response.completed.kompilation = CompiledSourceResult(it)
                         response.completedTasks.add(Task.kompile)
                     }
                 }
+
                 else -> {
                     null
                 }
@@ -280,9 +285,20 @@ class Request(
                 response.completedTasks.add(Task.complexity)
             }
 
-            if (tasks.contains(Task.features)) {
+            try {
                 response.completed.features = FlatFeaturesResults(actualSource.features())
-                response.completedTasks.add(Task.features)
+                System.getenv("LOG_FEATURES")?.also {
+                    logger.info { response.completed.features }
+                }
+                if (tasks.contains(Task.features)) {
+                    response.completedTasks.add(Task.features)
+                }
+            } catch (e: Exception) {
+                if (tasks.contains(Task.features)) {
+                    throw e
+                } else {
+                    logger.warn { "Features failure: $e" }
+                }
             }
 
             if (tasks.contains(Task.mutations)) {
