@@ -11,8 +11,7 @@ dependencies {
     implementation("io.github.microutils:kotlin-logging:3.0.5")
 }
 application {
-    @Suppress("DEPRECATION")
-    mainClassName = "edu.illinois.cs.cs125.jeed.leaktest.MainKt"
+    mainClass.set("edu.illinois.cs.cs125.jeed.leaktest.MainKt")
 }
 tasks {
     "run"(JavaExec::class) {

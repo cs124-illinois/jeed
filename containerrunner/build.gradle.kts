@@ -16,8 +16,7 @@ dependencies {
     implementation("io.github.classgraph:classgraph:4.8.154")
 }
 application {
-    @Suppress("DEPRECATION")
-    mainClassName = "edu.illinois.cs.cs125.jeed.containerrunner.MainKt"
+    mainClass.set("edu.illinois.cs.cs125.jeed.containerrunner.MainKt")
 }
 tasks.test {
     useJUnitPlatform()
