@@ -406,9 +406,9 @@ export const Feature = Union(
   Literal("FUNCTIONAL_INTERFACE"),
   Literal("ANONYMOUS_FUNCTION"),
   Literal("ABSTRACT_FIELD"),
-  Literal("IF_EXPRESSION"),
-  Literal("TRY_EXPRESSION"),
-  Literal("WHEN_EXPRESSION")
+  Literal("IF_EXPRESSIONS"),
+  Literal("TRY_EXPRESSIONS"),
+  Literal("WHEN_EXPRESSIONS")
 )
 export type Feature = Static<typeof Feature>
 
@@ -583,8 +583,15 @@ export const ORDERED_FEATURES = Array(Feature).check([
   "WHEN_EXPRESSIONS",
 ])
 
+export const LocatedFeature = Record({
+  feature: Feature,
+  location: Location,
+})
+export type LocatedFeature = Static<typeof LocatedFeature>
+
 export const FeatureValue = Record({
   featureMap: Dictionary(Number, Feature),
+  featureList: Array(LocatedFeature),
   importList: Array(String),
   typeList: Array(String),
   identifierList: Array(String),
@@ -600,9 +607,12 @@ export const FlatClassFeatures = Record({
 export type FlatClassFeatures = Static<typeof FlatClassFeatures>
 export const FlatMethodFeatures = FlatClassFeatures
 export type FlatMethodFeatures = FlatClassFeatures
+export const FlatUnitFeatures = FlatClassFeatures
+export type FlatUnitFeatures = FlatClassFeatures
 
 export const FlatFeaturesResult = Record({
   source: String,
+  unit: FlatUnitFeatures,
   classes: Array(FlatClassFeatures),
   methods: Array(FlatMethodFeatures),
 })
