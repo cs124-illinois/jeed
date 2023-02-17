@@ -27,6 +27,7 @@ import edu.illinois.cs.cs125.jeed.core.Snippet
 import edu.illinois.cs.cs125.jeed.core.SnippetTransformationFailed
 import edu.illinois.cs.cs125.jeed.core.SourceRange
 import edu.illinois.cs.cs125.jeed.core.TemplatingFailed
+import edu.illinois.cs.cs125.jeed.core.UnitFeatures
 import edu.illinois.cs.cs125.jeed.core.moshi.CompiledSourceResult
 import edu.illinois.cs.cs125.jeed.core.moshi.ExecutionFailedResult
 import edu.illinois.cs.cs125.jeed.core.moshi.SourceTaskResults
@@ -144,6 +145,16 @@ data class FlatComplexityResults(val results: List<FlatComplexityResult>) {
 }
 
 @JsonClass(generateAdapter = true)
+data class FlatUnitFeatures(val name: String, val path: String, val range: SourceRange, val features: Features) {
+    constructor(unitFeatures: UnitFeatures, filename: String) : this(
+        unitFeatures.name,
+        filename,
+        unitFeatures.range,
+        unitFeatures.features
+    )
+}
+
+@JsonClass(generateAdapter = true)
 data class FlatClassFeatures(val name: String, val path: String, val range: SourceRange, val features: Features) {
     constructor(classFeatures: ClassFeatures, prefix: String) : this(
         classFeatures.name,
@@ -166,15 +177,21 @@ data class FlatMethodFeatures(val name: String, val path: String, val range: Sou
 @JsonClass(generateAdapter = true)
 data class FlatFeaturesResult(
     val source: String,
+    val unit: FlatUnitFeatures,
     val classes: List<FlatClassFeatures>,
     val methods: List<FlatMethodFeatures>
 ) {
     companion object {
         fun from(source: String, featureResults: Map<String, FeatureValue>): FlatFeaturesResult {
+            val units = featureResults.values.filterIsInstance<UnitFeatures>()
+            check(units.size == 1)
+
             val classes: MutableList<FlatClassFeatures> = mutableListOf()
             val methods: MutableList<FlatMethodFeatures> = mutableListOf()
+
             featureResults.forEach { (_, featureValue) -> add(featureValue, "", classes, methods) }
-            return FlatFeaturesResult(source, classes, methods)
+
+            return FlatFeaturesResult(source, FlatUnitFeatures(units.first(), source), classes, methods)
         }
 
         private fun add(
@@ -200,7 +217,10 @@ data class FlatFeaturesResult(
 }
 
 @JsonClass(generateAdapter = true)
-data class FlatFeaturesResults(val results: List<FlatFeaturesResult>, val allFeatures: Map<String, String> = ALL_FEATURES) {
+data class FlatFeaturesResults(
+    val results: List<FlatFeaturesResult>,
+    val allFeatures: Map<String, String> = ALL_FEATURES
+) {
     constructor(featureResults: FeaturesResults) : this(
         featureResults.results.map { (source, results) ->
             FlatFeaturesResult.from(source, results)

@@ -434,6 +434,9 @@ System.out.println("Hello, world!");
 
                 featureMap[FeatureName.CLASS] shouldBe 1
                 featureList should haveFeatureAt(FeatureName.CLASS, listOf(4))
+
+                featureList should haveFeatureAt(FeatureName.BLOCK_START, listOf(1, 4))
+                featureList should haveFeatureAt(FeatureName.BLOCK_END, listOf(3, 4))
             }
         }
         "should count constructors, methods, getters, setters, visibility modifiers, and static methods in classes" {

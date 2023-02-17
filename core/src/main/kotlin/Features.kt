@@ -205,6 +205,7 @@ val ALL_FEATURES = FeatureName.values().associate { it.name to it.description }
 val JAVA_FEATURES = FeatureName.values().toSet() - KOTLIN_ONLY_FEATURES - STRUCTURAL_FEATURES - setOf(FeatureName.EMPTY)
 val KOTLIN_FEATURES = FeatureName.values().toSet() - JAVA_ONLY_FEATURES - STRUCTURAL_FEATURES - setOf(FeatureName.EMPTY)
 
+@Suppress("unused")
 val ORDERED_FEATURES = listOf(
     FeatureName.LOCAL_VARIABLE_DECLARATIONS,
     FeatureName.VARIABLE_ASSIGNMENTS,

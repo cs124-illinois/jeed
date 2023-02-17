@@ -419,8 +419,8 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
     }
 
     override fun enterBlock(ctx: KotlinParser.BlockContext) {
-        add(FeatureName.BLOCK_START, ctx.start.toLocation())
-        add(FeatureName.BLOCK_END, ctx.stop.toLocation())
+        add(FeatureName.BLOCK_START, ctx.LCURL().toLocation())
+        add(FeatureName.BLOCK_END, ctx.RCURL().toLocation())
 
         if (functionBlockDepths.isNotEmpty()) {
             functionBlockDepths[functionBlockDepths.size - 1]++
@@ -881,6 +881,8 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
         if (ctx.start.previousToken() == "=") {
             count(FeatureName.WHEN_EXPRESSIONS, ctx.toLocation())
         }
+        add(FeatureName.BLOCK_START, ctx.LCURL().toLocation())
+        add(FeatureName.BLOCK_END, ctx.RCURL().toLocation())
     }
 
     override fun enterWhenEntry(ctx: KotlinParser.WhenEntryContext) {
@@ -891,6 +893,8 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
 
     override fun enterEnumClassBody(ctx: KotlinParser.EnumClassBodyContext) {
         count(FeatureName.ENUM, ctx.toLocation())
+        add(FeatureName.BLOCK_START, ctx.LCURL().toLocation())
+        add(FeatureName.BLOCK_END, ctx.RCURL().toLocation())
     }
 
     override fun enterSetter(ctx: KotlinParser.SetterContext) {
@@ -931,6 +935,16 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
         }
     }
 
+    override fun enterClassBody(ctx: ClassBodyContext) {
+        add(FeatureName.BLOCK_START, ctx.LCURL().toLocation())
+        add(FeatureName.BLOCK_END, ctx.RCURL().toLocation())
+    }
+
+    override fun enterInterfaceBody(ctx: KotlinParser.InterfaceBodyContext) {
+        add(FeatureName.BLOCK_START, ctx.LCURL().toLocation())
+        add(FeatureName.BLOCK_END, ctx.RCURL().toLocation())
+    }
+
     override fun enterTryExpression(ctx: KotlinParser.TryExpressionContext) {
         count(FeatureName.TRY_BLOCK, ctx.toLocation())
         if (ctx.start.previousToken() == "=") {
@@ -960,6 +974,8 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
 
     override fun enterLambdaLiteral(ctx: KotlinParser.LambdaLiteralContext) {
         count(FeatureName.LAMBDA_EXPRESSIONS, ctx.toLocation())
+        add(FeatureName.BLOCK_START, ctx.LCURL().toLocation())
+        add(FeatureName.BLOCK_END, ctx.RCURL().toLocation())
     }
 
     override fun enterAnonymousFunction(ctx: KotlinParser.AnonymousFunctionContext) {

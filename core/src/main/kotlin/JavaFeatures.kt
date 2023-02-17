@@ -243,6 +243,16 @@ class JavaFeatureListener(val source: Source, entry: Map.Entry<String, String>) 
         exitClassOrInterface()
     }
 
+    override fun enterClassBody(ctx: JavaParser.ClassBodyContext) {
+        add(FeatureName.BLOCK_START, ctx.LBRACE().toLocation())
+        add(FeatureName.BLOCK_END, ctx.RBRACE().toLocation())
+    }
+
+    override fun enterInterfaceBody(ctx: JavaParser.InterfaceBodyContext) {
+        add(FeatureName.BLOCK_START, ctx.LBRACE().toLocation())
+        add(FeatureName.BLOCK_END, ctx.RBRACE().toLocation())
+    }
+
     override fun enterInterfaceDeclaration(ctx: JavaParser.InterfaceDeclarationContext) {
         count(FeatureName.INTERFACE, ctx.toLocation())
 
@@ -543,6 +553,8 @@ class JavaFeatureListener(val source: Source, entry: Map.Entry<String, String>) 
         }
         ctx.SWITCH()?.also {
             count(FeatureName.SWITCH, ctx.toLocation())
+            add(FeatureName.BLOCK_START, ctx.LBRACE().toLocation())
+            add(FeatureName.BLOCK_END, ctx.RBRACE().toLocation())
         }
         ctx.THROW()?.also {
             count(FeatureName.THROW, ctx.toLocation())
@@ -595,8 +607,8 @@ class JavaFeatureListener(val source: Source, entry: Map.Entry<String, String>) 
     }
 
     override fun enterBlock(ctx: JavaParser.BlockContext) {
-        add(FeatureName.BLOCK_START, ctx.start.toLocation())
-        add(FeatureName.BLOCK_END, ctx.stop.toLocation())
+        add(FeatureName.BLOCK_START, ctx.LBRACE().toLocation())
+        add(FeatureName.BLOCK_END, ctx.RBRACE().toLocation())
     }
 
     private fun ExpressionContext.inPrintStatement(): Boolean {

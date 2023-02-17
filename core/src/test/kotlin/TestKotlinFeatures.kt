@@ -692,7 +692,7 @@ for (i in 0 until 10) {
 fun test(): Int {
   return 0
 }
-class Test
+class Test { }
 println("Hello, world!")
 """
             ).features().check("") {
@@ -704,6 +704,9 @@ println("Hello, world!")
 
                 featureMap[FeatureName.CLASS] shouldBe 1
                 featureList should haveFeatureAt(FeatureName.CLASS, listOf(4))
+
+                featureList should haveFeatureAt(FeatureName.BLOCK_START, listOf(1, 4))
+                featureList should haveFeatureAt(FeatureName.BLOCK_END, listOf(3, 4))
             }
         }
         "should count strings, streams, and null in snippets" {
