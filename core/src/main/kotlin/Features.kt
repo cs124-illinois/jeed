@@ -207,6 +207,10 @@ val KOTLIN_FEATURES = FeatureName.values().toSet() - JAVA_ONLY_FEATURES - STRUCT
 
 @Suppress("unused")
 val ORDERED_FEATURES = listOf(
+    FeatureName.BLOCK_START,
+    FeatureName.BLOCK_END,
+    FeatureName.STATEMENT_START,
+    FeatureName.STATEMENT_END,
     FeatureName.LOCAL_VARIABLE_DECLARATIONS,
     FeatureName.VARIABLE_ASSIGNMENTS,
     FeatureName.VARIABLE_REASSIGNMENTS,
@@ -288,10 +292,6 @@ val ORDERED_FEATURES = listOf(
     FeatureName.DOT_NOTATION,
     FeatureName.DOTTED_METHOD_CALL,
     FeatureName.DOTTED_VARIABLE_ACCESS,
-    FeatureName.BLOCK_START,
-    FeatureName.BLOCK_END,
-    FeatureName.STATEMENT_START,
-    FeatureName.STATEMENT_END,
     FeatureName.NESTED_METHOD,
     FeatureName.JAVA_PRINT_STATEMENTS,
     FeatureName.REQUIRE_OR_CHECK,
@@ -391,7 +391,12 @@ sealed class FeatureValue(
     }
 
     fun finalize(): FeatureValue {
-        features.featureList.sortWith(compareBy({ it.location.line }, { it.location.column }))
+        features.featureList.sortWith(
+            compareBy(
+                { it.location.line },
+                { it.location.column },
+                { ORDERED_FEATURES.indexOf(it.feature) })
+        )
         return this
     }
 }
