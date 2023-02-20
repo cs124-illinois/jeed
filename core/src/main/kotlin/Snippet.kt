@@ -184,7 +184,7 @@ fun Source.Companion.fromSnippet(
     }
 }
 
-internal fun Source.Companion.fromJavaSnippet(
+fun Source.Companion.fromJavaSnippet(
     originalSource: String,
     snippetArguments: SnippetArguments = SnippetArguments(),
     trim: Boolean = true
@@ -198,7 +198,7 @@ internal fun Source.Companion.fromJavaSnippet(
     return sourceFromJavaSnippet(actualSource, snippetArguments.copy(fileType = Source.FileType.JAVA))
 }
 
-internal fun Source.Companion.fromKotlinSnippet(
+fun Source.Companion.fromKotlinSnippet(
     originalSource: String,
     snippetArguments: SnippetArguments = SnippetArguments(),
     trim: Boolean = true
@@ -488,8 +488,7 @@ ${" ".repeat(snippetArguments.indent * 2)}@JvmStatic fun main() {""".lines().let
     )
 }
 
-private val JAVA_VISIBILITY_PATTERN =
-    """^\s*(public|private|protected)""".toRegex()
+private val javaVisibilityPattern = """^\s*(public|private|protected)""".toRegex()
 
 @Suppress("LongMethod", "ComplexMethod", "SpellCheckingInspection")
 private fun sourceFromJavaSnippet(originalSource: String, snippetArguments: SnippetArguments): Snippet {
@@ -744,9 +743,9 @@ private fun sourceFromJavaSnippet(originalSource: String, snippetArguments: Snip
         if (contentMapping[lineNumber]?.startsWith(("method")) == true) {
             val (actualLine, extraIndentation) =
                 if ((contentMapping[lineNumber] == "method:start") && !line.contains("""\bstatic\b""".toRegex())) {
-                    val matchVisibilityModifier = JAVA_VISIBILITY_PATTERN.find(line)
+                    val matchVisibilityModifier = javaVisibilityPattern.find(line)
                     if (matchVisibilityModifier != null) {
-                        val rewrittenLine = line.replace(JAVA_VISIBILITY_PATTERN, "").let {
+                        val rewrittenLine = line.replace(javaVisibilityPattern, "").let {
                             "${matchVisibilityModifier.value} static$it"
                         }
                         Pair(rewrittenLine, "static ".length)
