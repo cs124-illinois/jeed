@@ -104,17 +104,17 @@ class JavaFeatureListener(val source: Source, entry: Map.Entry<String, String>) 
             count(FeatureName.IMPORT, it.toLocation())
         }
         ctx.typeDeclaration()
-            .filter { declaration -> declaration.classOrInterfaceModifier().any { it.FINAL() != null } }.forEach {
+            .mapNotNull { declaration -> declaration.classOrInterfaceModifier().find { it.FINAL() != null } }.forEach {
                 count(FeatureName.FINAL_CLASS, it.toLocation())
             }
         ctx.typeDeclaration()
-            .filter { declaration -> declaration.classOrInterfaceModifier().any { it.ABSTRACT() != null } }.forEach {
+            .mapNotNull { declaration -> declaration.classOrInterfaceModifier().find { it.ABSTRACT() != null } }.forEach {
                 count(FeatureName.ABSTRACT_CLASS, it.toLocation())
             }
         ctx.typeDeclaration()
             .filter { declaration -> declaration.classDeclaration()?.isSnippetClass() != true }
-            .filter { declaration ->
-                declaration.classOrInterfaceModifier().any {
+            .mapNotNull { declaration ->
+                declaration.classOrInterfaceModifier().find {
                     when (it.text) {
                         "public", "private", "protected" -> true
                         else -> false
@@ -153,43 +153,43 @@ class JavaFeatureListener(val source: Source, entry: Map.Entry<String, String>) 
 
         ctx.classBody().classBodyDeclaration().filter { declaration ->
             declaration.memberDeclaration()?.methodDeclaration()?.isSnippetMethod() != true
-        }.filter { declaration ->
-            declaration.modifier().any {
+        }.mapNotNull { declaration ->
+            declaration.modifier().find {
                 it.classOrInterfaceModifier().STATIC() != null &&
                     declaration.memberDeclaration().methodDeclaration() != null
             }
         }.forEach { count(FeatureName.STATIC_METHOD, it.toLocation()) }
 
-        ctx.classBody().classBodyDeclaration().filter { declaration ->
-            declaration.modifier().any {
+        ctx.classBody().classBodyDeclaration().mapNotNull { declaration ->
+            declaration.modifier().find {
                 it.classOrInterfaceModifier().STATIC() != null &&
                     declaration.memberDeclaration().fieldDeclaration() != null
             }
         }.forEach { count(FeatureName.STATIC_FIELD, it.toLocation()) }
 
-        ctx.classBody().classBodyDeclaration().filter { declaration ->
-            declaration.modifier().any {
+        ctx.classBody().classBodyDeclaration().mapNotNull { declaration ->
+            declaration.modifier().find {
                 it.classOrInterfaceModifier().FINAL() != null &&
                     declaration.memberDeclaration().methodDeclaration() != null
             }
         }.forEach { count(FeatureName.FINAL_METHOD, it.toLocation()) }
 
-        ctx.classBody().classBodyDeclaration().filter { declaration ->
-            declaration.modifier().any {
+        ctx.classBody().classBodyDeclaration().mapNotNull { declaration ->
+            declaration.modifier().find {
                 it.classOrInterfaceModifier().FINAL() != null &&
                     declaration.memberDeclaration().fieldDeclaration() != null
             }
         }.forEach { count(FeatureName.FINAL_FIELD, it.toLocation()) }
 
-        ctx.classBody().classBodyDeclaration().filter { declaration ->
-            declaration.modifier().any {
+        ctx.classBody().classBodyDeclaration().mapNotNull { declaration ->
+            declaration.modifier().find {
                 it.classOrInterfaceModifier().ABSTRACT() != null &&
                     declaration.memberDeclaration().methodDeclaration() != null
             }
         }.forEach { count(FeatureName.ABSTRACT_METHOD, it.toLocation()) }
 
-        ctx.classBody().classBodyDeclaration().filter { declaration ->
-            declaration.modifier().any {
+        ctx.classBody().classBodyDeclaration().mapNotNull { declaration ->
+            declaration.modifier().find {
                 it.classOrInterfaceModifier().ABSTRACT() != null &&
                     declaration.memberDeclaration().fieldDeclaration() != null
             }
@@ -199,8 +199,8 @@ class JavaFeatureListener(val source: Source, entry: Map.Entry<String, String>) 
             .filter { it.memberDeclaration() != null }
             .filter { declaration ->
                 declaration.memberDeclaration().methodDeclaration()?.isSnippetMethod() != true
-            }.filter { declaration ->
-                declaration.modifier().any {
+            }.mapNotNull { declaration ->
+                declaration.modifier().find {
                     when (it.text) {
                         "public", "private", "protected" -> true
                         else -> false
@@ -208,8 +208,8 @@ class JavaFeatureListener(val source: Source, entry: Map.Entry<String, String>) 
                 }
             }.forEach { count(FeatureName.VISIBILITY_MODIFIERS, it.toLocation()) }
 
-        ctx.classBody().classBodyDeclaration().filter { declaration ->
-            declaration.modifier().any {
+        ctx.classBody().classBodyDeclaration().mapNotNull { declaration ->
+            declaration.modifier().find {
                 it?.text == "@Override"
             }
         }.forEach { count(FeatureName.OVERRIDE, it.toLocation()) }
@@ -218,15 +218,15 @@ class JavaFeatureListener(val source: Source, entry: Map.Entry<String, String>) 
             declaration.memberDeclaration()?.classDeclaration() != null
         }.forEach { count(FeatureName.NESTED_CLASS, it.toLocation()) }
 
-        ctx.classBody().classBodyDeclaration().filter { declaration ->
-            declaration.modifier().any {
+        ctx.classBody().classBodyDeclaration().mapNotNull { declaration ->
+            declaration.modifier().find {
                 it.classOrInterfaceModifier().FINAL() != null &&
                     declaration.memberDeclaration().classDeclaration() != null
             }
         }.forEach { count(FeatureName.FINAL_CLASS, it.toLocation()) }
 
-        ctx.classBody().classBodyDeclaration().filter { declaration ->
-            declaration.modifier().any {
+        ctx.classBody().classBodyDeclaration().mapNotNull { declaration ->
+            declaration.modifier().find {
                 it.classOrInterfaceModifier().ABSTRACT() != null &&
                     declaration.memberDeclaration().classDeclaration() != null
             }
@@ -262,29 +262,29 @@ class JavaFeatureListener(val source: Source, entry: Map.Entry<String, String>) 
             Location(ctx.stop.line, ctx.stop.charPositionInLine)
         )
 
-        ctx.interfaceBody().interfaceBodyDeclaration().filter { declaration ->
-            declaration.modifier().any {
+        ctx.interfaceBody().interfaceBodyDeclaration().mapNotNull { declaration ->
+            declaration.modifier().find {
                 it.classOrInterfaceModifier().STATIC() != null &&
                     declaration.interfaceMemberDeclaration().interfaceMethodDeclaration() != null
             }
         }.forEach { count(FeatureName.STATIC_METHOD, it.toLocation()) }
 
-        ctx.interfaceBody().interfaceBodyDeclaration().filter { declaration ->
-            declaration.modifier().any {
+        ctx.interfaceBody().interfaceBodyDeclaration().mapNotNull { declaration ->
+            declaration.modifier().find {
                 it.classOrInterfaceModifier().FINAL() != null &&
                     declaration.interfaceMemberDeclaration().interfaceMethodDeclaration() != null
             }
         }.forEach { count(FeatureName.FINAL_METHOD, it.toLocation()) }
 
-        ctx.interfaceBody().interfaceBodyDeclaration().filter { declaration ->
-            declaration.modifier().any {
+        ctx.interfaceBody().interfaceBodyDeclaration().mapNotNull { declaration ->
+            declaration.modifier().find {
                 it.classOrInterfaceModifier().ABSTRACT() != null &&
                     declaration.interfaceMemberDeclaration().interfaceMethodDeclaration() != null
             }
         }.forEach { count(FeatureName.ABSTRACT_METHOD, it.toLocation()) }
 
-        ctx.interfaceBody().interfaceBodyDeclaration().filter { declaration ->
-            declaration.modifier().any {
+        ctx.interfaceBody().interfaceBodyDeclaration().mapNotNull { declaration ->
+            declaration.modifier().find {
                 when (it.text) {
                     "public", "private", "protected" -> true
                     else -> false
@@ -350,18 +350,18 @@ class JavaFeatureListener(val source: Source, entry: Map.Entry<String, String>) 
                 count(FeatureName.THROWS, ctx.toLocation())
             }
         }
-        ctx.methodBody().block()?.blockStatement()?.filter { statement ->
-            statement.localTypeDeclaration()?.classOrInterfaceModifier()?.any {
+        ctx.methodBody().block()?.blockStatement()?.mapNotNull { statement ->
+            statement.localTypeDeclaration()?.classOrInterfaceModifier()?.find {
                 it.FINAL() != null && statement.localTypeDeclaration().classDeclaration() != null
-            } ?: false
+            }
         }?.forEach {
             count(FeatureName.FINAL_CLASS, it.toLocation())
         }
 
-        ctx.methodBody().block()?.blockStatement()?.filter { statement ->
-            statement.localTypeDeclaration()?.classOrInterfaceModifier()?.any {
+        ctx.methodBody().block()?.blockStatement()?.mapNotNull { statement ->
+            statement.localTypeDeclaration()?.classOrInterfaceModifier()?.find {
                 it.ABSTRACT() != null && statement.localTypeDeclaration().classDeclaration() != null
-            } ?: false
+            }
         }?.forEach { count(FeatureName.ABSTRACT_CLASS, it.toLocation()) }
 
         enterMethodOrConstructor(
