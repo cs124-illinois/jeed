@@ -15,7 +15,7 @@ plugins {
 dependencies {
     ksp("com.squareup.moshi:moshi-kotlin-codegen:1.14.0")
 
-    antlr("org.antlr:antlr4:4.11.1")
+    antlr("org.antlr:antlr4:4.12.0")
 
     implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:1.8.10")
 
@@ -40,7 +40,7 @@ dependencies {
     implementation("com.beyondgrader.resource-agent:agent:2022.9.3")
 
     api("org.jacoco:org.jacoco.core:0.8.8")
-    api("com.github.ben-manes.caffeine:caffeine:3.1.3")
+    api("com.github.ben-manes.caffeine:caffeine:3.1.4")
 
     testImplementation("io.kotest:kotest-runner-junit5:5.5.5")
 }
