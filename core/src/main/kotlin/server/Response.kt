@@ -84,7 +84,7 @@ data class FlatClassComplexity(val name: String, val path: String, val range: So
     constructor(classComplexity: ClassComplexity, prefix: String) : this(
         classComplexity.name,
         "$prefix.${classComplexity.name}",
-        classComplexity.range,
+        classComplexity.range!!,
         classComplexity.complexity
     )
 }
@@ -94,7 +94,7 @@ data class FlatMethodComplexity(val name: String, val path: String, val range: S
     constructor(methodComplexity: MethodComplexity, prefix: String) : this(
         methodComplexity.name,
         "$prefix.${methodComplexity.name}",
-        methodComplexity.range,
+        methodComplexity.range!!,
         methodComplexity.complexity
     )
 }
@@ -149,13 +149,13 @@ data class FlatUnitFeatures(val name: String, val path: String, val range: Sourc
     constructor(unitFeatures: UnitFeatures, filename: String) : this(
         unitFeatures.name,
         filename,
-        unitFeatures.range,
+        unitFeatures.range!!,
         unitFeatures.features
     )
 }
 
 @JsonClass(generateAdapter = true)
-data class FlatClassFeatures(val name: String, val path: String, val range: SourceRange, val features: Features) {
+data class FlatClassFeatures(val name: String, val path: String, val range: SourceRange?, val features: Features) {
     constructor(classFeatures: ClassFeatures, prefix: String) : this(
         classFeatures.name,
         "$prefix.${classFeatures.name}",
@@ -165,7 +165,7 @@ data class FlatClassFeatures(val name: String, val path: String, val range: Sour
 }
 
 @JsonClass(generateAdapter = true)
-data class FlatMethodFeatures(val name: String, val path: String, val range: SourceRange, val features: Features) {
+data class FlatMethodFeatures(val name: String, val path: String, val range: SourceRange?, val features: Features) {
     constructor(methodFeatures: MethodFeatures, prefix: String) : this(
         methodFeatures.name,
         "$prefix.${methodFeatures.name}",

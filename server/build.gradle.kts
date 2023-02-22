@@ -10,7 +10,7 @@ plugins {
     id("org.jmailen.kotlinter")
     id("io.gitlab.arturbosch.detekt")
     id("com.google.devtools.ksp")
-    id("com.ryandens.javaagent-test") version "0.4.2"
+    id("com.ryandens.javaagent-test") version "0.5.0"
 }
 dependencies {
     ksp("com.squareup.moshi:moshi-kotlin-codegen:1.14.0")

@@ -119,10 +119,13 @@ private fun ILine.toLineCoverage() = when (status) {
     else -> error("Invalid iLine status: $status")
 }
 
+typealias FileCoverage = Map<Int, LineCoverage>
+typealias ClassCoverage = Map<Int, LineCoverage>
+
 @JsonClass(generateAdapter = true)
 data class CoverageResult(
-    val byFile: Map<String, Map<Int, LineCoverage>>,
-    val byClass: Map<String, Map<Int, LineCoverage>>
+    val byFile: Map<String, FileCoverage>,
+    val byClass: Map<String, ClassCoverage>
 )
 
 fun Source.processCoverage(

@@ -302,6 +302,19 @@ fun haveFileMissedCount(expectedCount: Int, filename: String? = null) = object :
     }
 }
 
+fun haveMissedCount(expectedCount: Int) = object : Matcher<FileCoverage> {
+    override fun test(value: FileCoverage): MatcherResult {
+        val actualCount =
+            value.values.count { it == LineCoverage.PARTLY_COVERED || it == LineCoverage.NOT_COVERED }
+
+        return MatcherResult(
+            expectedCount == actualCount,
+            { "Expected $expectedCount missed lines but found $actualCount" },
+            { "Expected $expectedCount missed lines but found $actualCount" }
+        )
+    }
+}
+
 fun haveFileCoveredCount(expectedCount: Int, filename: String? = null) = object : Matcher<CoverageResult> {
     override fun test(value: CoverageResult): MatcherResult {
         val toRetrieve = filename ?: value.byFile.keys.let {
@@ -309,6 +322,18 @@ fun haveFileCoveredCount(expectedCount: Int, filename: String? = null) = object 
             it.first()
         }
         val actualCount = value.byFile[toRetrieve]!!.values.count { it == LineCoverage.COVERED }
+
+        return MatcherResult(
+            expectedCount == actualCount,
+            { "Expected $expectedCount missed lines but found $actualCount" },
+            { "Expected $expectedCount missed lines but found $actualCount" }
+        )
+    }
+}
+
+fun haveCoveredCount(expectedCount: Int) = object : Matcher<FileCoverage> {
+    override fun test(value: FileCoverage): MatcherResult {
+        val actualCount = value.values.count { it == LineCoverage.COVERED }
 
         return MatcherResult(
             expectedCount == actualCount,

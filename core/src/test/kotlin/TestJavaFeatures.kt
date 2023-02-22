@@ -1169,6 +1169,28 @@ int i = 0;
 
             first.featureList.map { it.feature } shouldNotBe second.featureList.map { it.feature }
         }
+        "should work with templated sources" {
+            Source.fromTemplates(
+                mapOf(
+                    "Test.java" to """System.out.println("Here");"""
+                ),
+                mapOf(
+                    "Test.java.hbs" to """
+public class Question {
+  public static void main() {
+    {{{ contents }}}
+  }
+}""")).features().check("", "Test.java") {
+                featureMap[FeatureName.CLASS] shouldBe 0
+                featureList should haveFeatureAt(FeatureName.CLASS, listOf())
+
+                featureMap[FeatureName.METHOD] shouldBe 0
+                featureList should haveFeatureAt(FeatureName.METHOD, listOf())
+
+                featureMap[FeatureName.PRINT_STATEMENTS] shouldBe 1
+                featureList should haveFeatureAt(FeatureName.PRINT_STATEMENTS, listOf(1))
+            }
+        }
     }
 }
 

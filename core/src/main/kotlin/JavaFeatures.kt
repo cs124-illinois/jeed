@@ -33,10 +33,12 @@ class JavaFeatureListener(val source: Source, entry: Map.Entry<String, String>) 
         val locatedClass = if (source is Snippet && name == source.wrappedClassName) {
             ClassFeatures("", source.snippetRange)
         } else {
-            ClassFeatures(
-                name,
+            val range = try {
                 SourceRange(filename, source.mapLocation(filename, start), source.mapLocation(filename, end))
-            )
+            } catch (e: SourceMappingException) {
+                null
+            }
+            ClassFeatures(name, range)
         }
         if (featureStack.isNotEmpty()) {
             assert(!currentFeatures.classes.containsKey(locatedClass.name)) {
@@ -58,10 +60,12 @@ class JavaFeatureListener(val source: Source, entry: Map.Entry<String, String>) 
             ) {
                 MethodFeatures("", source.snippetRange)
             } else {
-                MethodFeatures(
-                    name,
+                val range = try {
                     SourceRange(name, source.mapLocation(filename, start), source.mapLocation(filename, end))
-                )
+                } catch (e: SourceMappingException) {
+                    null
+                }
+                MethodFeatures(name, range)
             }
         if (featureStack.isNotEmpty()) {
             assert(!currentFeatures.methods.containsKey(locatedMethod.name)) {
@@ -108,7 +112,8 @@ class JavaFeatureListener(val source: Source, entry: Map.Entry<String, String>) 
                 count(FeatureName.FINAL_CLASS, it.toLocation())
             }
         ctx.typeDeclaration()
-            .mapNotNull { declaration -> declaration.classOrInterfaceModifier().find { it.ABSTRACT() != null } }.forEach {
+            .mapNotNull { declaration -> declaration.classOrInterfaceModifier().find { it.ABSTRACT() != null } }
+            .forEach {
                 count(FeatureName.ABSTRACT_CLASS, it.toLocation())
             }
         ctx.typeDeclaration()

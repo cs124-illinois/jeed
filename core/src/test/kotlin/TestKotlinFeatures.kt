@@ -1175,5 +1175,31 @@ var i = 0
 
             first.featureList.map { it.feature } shouldNotBe second.featureList.map { it.feature }
         }
+        "should count templates properly" {
+            Source.fromTemplates(
+                mapOf(
+                    "Test.kt" to """println("Hello, world!")"""
+                ),
+                mapOf(
+                    "Test.kt.hbs" to """
+class Question {
+    companion object {
+        fun main() {
+            {{{ contents }}}
+        }
+    }
+}""".trim()
+                )
+            ).features().check("", "Test.kt") {
+                featureMap[FeatureName.CLASS] shouldBe 0
+                featureList should haveFeatureAt(FeatureName.CLASS, listOf())
+
+                featureMap[FeatureName.METHOD] shouldBe 0
+                featureList should haveFeatureAt(FeatureName.METHOD, listOf())
+
+                featureMap[FeatureName.PRINT_STATEMENTS] shouldBe 1
+                featureList should haveFeatureAt(FeatureName.PRINT_STATEMENTS, listOf(1))
+            }
+        }
     }
 }

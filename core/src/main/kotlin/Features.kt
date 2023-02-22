@@ -376,7 +376,7 @@ data class Features(
 
 sealed class FeatureValue(
     name: String,
-    range: SourceRange,
+    range: SourceRange?,
     methods: MutableMap<String, LocatedClassOrMethod> = mutableMapOf(),
     classes: MutableMap<String, LocatedClassOrMethod> = mutableMapOf(),
     var features: Features
@@ -395,7 +395,8 @@ sealed class FeatureValue(
             compareBy(
                 { it.location.line },
                 { it.location.column },
-                { ORDERED_FEATURES.indexOf(it.feature) })
+                { ORDERED_FEATURES.indexOf(it.feature) }
+            )
         )
         return this
     }
@@ -404,7 +405,7 @@ sealed class FeatureValue(
 @JsonClass(generateAdapter = true)
 class ClassFeatures(
     name: String,
-    range: SourceRange,
+    range: SourceRange?,
     methods: MutableMap<String, LocatedClassOrMethod> = mutableMapOf(),
     classes: MutableMap<String, LocatedClassOrMethod> = mutableMapOf(),
     features: Features = Features()
@@ -413,7 +414,7 @@ class ClassFeatures(
 @JsonClass(generateAdapter = true)
 class MethodFeatures(
     name: String,
-    range: SourceRange,
+    range: SourceRange?,
     methods: MutableMap<String, LocatedClassOrMethod> = mutableMapOf(),
     classes: MutableMap<String, LocatedClassOrMethod> = mutableMapOf(),
     features: Features = Features()

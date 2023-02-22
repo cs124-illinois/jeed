@@ -601,14 +601,24 @@ export type FeatureValue = Static<typeof FeatureValue>
 export const FlatClassFeatures = Record({
   name: String,
   path: String,
+  features: FeatureValue,
+}).And(
+  Partial({
+    range: SourceRange,
+  })
+)
+export type FlatClassFeatures = Static<typeof FlatClassFeatures>
+
+export const FlatMethodFeatures = FlatClassFeatures
+export type FlatMethodFeatures = FlatClassFeatures
+
+export const FlatUnitFeatures = Record({
+  name: String,
+  path: String,
   range: SourceRange,
   features: FeatureValue,
 })
-export type FlatClassFeatures = Static<typeof FlatClassFeatures>
-export const FlatMethodFeatures = FlatClassFeatures
-export type FlatMethodFeatures = FlatClassFeatures
-export const FlatUnitFeatures = FlatClassFeatures
-export type FlatUnitFeatures = FlatClassFeatures
+export type FlatUnitFeatures = Static<typeof FlatUnitFeatures>
 
 export const FlatFeaturesResult = Record({
   source: String,

@@ -17,11 +17,20 @@ public class Main {
   }
 }"""
         )
-        source.coverage().let { coverageResult ->
+        val coverage = source.coverage()
+        val features = source.features()
+
+        coverage.let { coverageResult ->
             coverageResult should haveFileMissedCount(1)
-            coverageResult.adjustWithFeatures(source.features(), source.type)
+            coverageResult.adjustWithFeatures(features, source.type)
         }.also { coverageResult ->
             coverageResult should haveFileMissedCount(0)
+        }
+        coverage.byFile["Main.java"]!!.let { fileCoverage ->
+            fileCoverage should haveMissedCount(1)
+            fileCoverage.adjustWithFeatures(features.lookup("", "Main.java") as UnitFeatures, Source.FileType.JAVA)
+        }.also { fileCoverage ->
+            fileCoverage should haveMissedCount(0)
         }
     }
     "it should ignore reached but not fired Java asserts" {
@@ -125,11 +134,20 @@ fun main() {
 }
 """
         )
-        source.coverage().let { coverageResult ->
+        val coverage = source.coverage()
+        val features = source.features()
+
+        coverage.let { coverageResult ->
             coverageResult should haveFileMissedCount(1)
-            coverageResult.adjustWithFeatures(source.features(), source.type)
+            coverageResult.adjustWithFeatures(features, source.type)
         }.also { coverageResult ->
             coverageResult should haveFileMissedCount(0)
+        }
+        coverage.byFile["Main.kt"]!!.let { fileCoverage ->
+            fileCoverage should haveMissedCount(1)
+            fileCoverage.adjustWithFeatures(features.lookup("", "Main.kt") as UnitFeatures, Source.FileType.KOTLIN)
+        }.also { fileCoverage ->
+            fileCoverage should haveMissedCount(0)
         }
     }
 })
