@@ -1180,7 +1180,9 @@ public class Question {
   public static void main() {
     {{{ contents }}}
   }
-}""")).features().check("", "Test.java") {
+}"""
+                )
+            ).features().check("", "Test.java") {
                 featureMap[FeatureName.CLASS] shouldBe 0
                 featureList should haveFeatureAt(FeatureName.CLASS, listOf())
 
