@@ -17,9 +17,9 @@
     "tsc": "tsc --noEmit"
   },
   "dependencies": {
-    "@cs124/jeed-output": "2023.2.2",
-    "@cs124/jeed-react": "2023.2.2",
-    "@cs124/jeed-types": "2023.2.2",
+    "@cs124/jeed-output": "2023.2.3",
+    "@cs124/jeed-react": "2023.2.3",
+    "@cs124/jeed-types": "2023.2.3",
     "@cs124/react-google-login": "2022.10.0",
     "next": "13.1.6",
     "react": "18.2.0",
