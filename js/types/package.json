@@ -1,6 +1,6 @@
 {
   "name": "@cs124/jeed-types",
-  "version": "2023.2.2",
+  "version": "2023.2.3",
   "license": "MIT",
   "main": "dist/index.js",
   "scripts": {
@@ -26,8 +26,8 @@
     "@types/js-yaml": "4.0.5",
     "@types/lodash": "4.14.191",
     "@types/mocha": "10.0.1",
-    "@typescript-eslint/eslint-plugin": "5.52.0",
-    "@typescript-eslint/parser": "5.52.0",
+    "@typescript-eslint/eslint-plugin": "5.53.0",
+    "@typescript-eslint/parser": "5.53.0",
     "deep-diff": "1.0.2",
     "depcheck": "1.4.3",
     "eslint": "8.34.0",
@@ -36,7 +36,7 @@
     "js-yaml": "4.1.0",
     "lodash": "4.17.21",
     "mocha": "10.2.0",
-    "npm-check-updates": "16.7.5",
+    "npm-check-updates": "16.7.9",
     "prettier": "2.8.4",
     "prettier-package-json": "2.8.0",
     "prettier-plugin-organize-imports": "3.2.2",
