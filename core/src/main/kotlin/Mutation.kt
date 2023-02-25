@@ -551,7 +551,13 @@ class NumberLiteralTrim(
     override fun applyMutation(random: Random) = options.shuffled(random).first()
 
     companion object {
+        private val exponentRegex = Regex("[eE][+-]?[0-9]+$")
+
+        private val suffixes = setOf('f', 'F', 'd', 'D', 'l', 'L')
+
         private fun String.trims(base: Int = 10): List<String> {
+            var current = this
+
             val prefix = when (base) {
                 10 -> ""
                 2 -> "0b"
@@ -559,19 +565,35 @@ class NumberLiteralTrim(
                 8 -> "0"
                 else -> error("Invalid base $base")
             }
-            check(startsWith(prefix))
-            val suffix = removePrefix(prefix).split(".").last().filter {
-                Character.digit(it, base) == -1
+            check(current.startsWith(prefix))
+            current = current.removePrefix(prefix)
+
+            check(current.isNotEmpty())
+            val suffix = if (suffixes.contains(current.last())) {
+                current.last().toString()
+            } else {
+                ""
+            }.let {
+                if (base == 16 && it.uppercase() == "F") {
+                    ""
+                } else {
+                    it
+                }
             }
-            check(endsWith(suffix)) { "Whoops: $this, $suffix" }
-            val digitContent = removePrefix(prefix).removeSuffix(suffix)
-            return digitContent.split(".", limit = 2).filter { it.length > 1 }.mapIndexed { index, s ->
+            check(current.endsWith(suffix))
+            current = current.removeSuffix(suffix)
+
+            val exponent = exponentRegex.find(current)?.value ?: ""
+            check(current.endsWith(exponent))
+            current = current.removeSuffix(exponent)
+
+            return current.split(".", limit = 2).filter { it.length > 1 }.mapIndexed { index, s ->
                 when (index) {
                     0 -> s.substring(1, s.length)
                     1 -> s.substring(0, s.length - 1)
                     else -> error("Invalid index")
                 }
-            }.map { "$prefix$it$suffix" }
+            }.map { "$prefix$it$exponent$suffix" }
         }
 
         fun matches(contents: String, base: Int = 10) = contents.trims(base).isNotEmpty()
@@ -935,7 +957,7 @@ class RemoveMethod(
     }
 
     companion object {
-        @Suppress("DEPRECATION", "ComplexMethod")
+        @Suppress("ComplexMethod")
         private fun forReturnType(returnType: String, fileType: Source.FileType) = when (fileType) {
             Source.FileType.JAVA -> when (returnType) {
                 "String" -> "return \"\""

@@ -34,7 +34,7 @@ dependencies {
     implementation("io.github.classgraph:classgraph:4.8.154")
     implementation("net.java.dev.jna:jna:5.13.0")
     implementation("io.github.java-diff-utils:java-diff-utils:4.12")
-    implementation("com.google.googlejavaformat:google-java-format:1.15.0")
+    implementation("com.google.googlejavaformat:google-java-format:1.16.0")
     implementation("net.sf.extjwnl:extjwnl:2.0.5")
     implementation("net.sf.extjwnl:extjwnl-data-wn31:1.2")
     implementation("com.beyondgrader.resource-agent:agent:2022.9.3")

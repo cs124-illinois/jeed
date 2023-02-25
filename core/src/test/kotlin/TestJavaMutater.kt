@@ -815,7 +815,7 @@ public class Example {
             mutations shouldHaveSize 4
             mutations[0].check(contents, "1, 2, 4")
             mutations[1].check(contents, "{1, 2}, {4, 5}").also {
-                it shouldMatch ".*\\{1, 2\\}.*".toRegex(RegexOption.DOT_MATCHES_ALL)
+                it shouldMatch ".*\\{1, 2}.*".toRegex(RegexOption.DOT_MATCHES_ALL)
             }
         }
     }
@@ -1209,6 +1209,18 @@ public class Question {
 }
             """.trimMargin()
         ).allMutations()
+    }
+    "it should work on exponents" {
+        Source.fromJava(
+            """
+public class Question {
+  public static void test() {
+    int test = (int) 2e32;
+    float another = 2e-20F;
+  }
+}
+            """.trimMargin()
+        ).also { it.compile() }.allMutations()
     }
 })
 

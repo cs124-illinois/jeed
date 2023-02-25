@@ -6,7 +6,7 @@ plugins {
     kotlin("jvm")
     application
     `maven-publish`
-    id("com.github.johnrengelman.shadow") version "7.1.2"
+    id("com.github.johnrengelman.shadow") version "8.0.0"
     id("org.jmailen.kotlinter")
     id("io.gitlab.arturbosch.detekt")
     id("com.google.devtools.ksp")
