@@ -28,7 +28,7 @@ class SourceExecutionArguments(
     var methodToRun: Method? = null,
     @Transient
     internal val plugins: MutableList<ConfiguredSandboxPlugin<*, *>> = mutableListOf(),
-    systemInStream: InputStream? = null
+    systemInStream: InputStream? = null,
 ) : Sandbox.ExecutionArguments(
     timeout,
     permissions.union(REQUIRED_PERMISSIONS),
@@ -38,7 +38,7 @@ class SourceExecutionArguments(
     classLoaderConfiguration,
     waitForShutdown,
     returnTimeout,
-    systemInStream = systemInStream
+    systemInStream = systemInStream,
 ) {
     companion object {
         const val DEFAULT_KLASS = "Main"
@@ -55,7 +55,7 @@ class SourceExecutionArguments(
             RuntimePermission("localeServiceProvider"),
             // Not sure why this is required by Date, but it seems to be
             // ClassLoader enumeration is probably not unsafe...
-            RuntimePermission("getClassLoader")
+            RuntimePermission("getClassLoader"),
         )
     }
 
@@ -77,7 +77,7 @@ class SourceExecutionArguments(
 
 class ExecutionFailed(
     val classNotFound: ClassMissingException? = null,
-    val methodNotFound: MethodNotFoundException? = null
+    val methodNotFound: MethodNotFoundException? = null,
 ) : Exception() {
     class ClassMissingException(@Suppress("unused") val klass: String, message: String?) : Exception(message)
     class MethodNotFoundException(@Suppress("unused") val method: String, message: String?) : Exception(message)
@@ -88,7 +88,7 @@ class ExecutionFailed(
 
 fun CompiledSource.updateExecutionArguments(
     executionArguments: SourceExecutionArguments,
-    noFind: Boolean = false
+    noFind: Boolean = false,
 ): SourceExecutionArguments {
     // Coroutines need some extra time and threads to run.
     if (this.source.type == Source.FileType.KOTLIN && this.usesCoroutines()) {
@@ -115,7 +115,7 @@ fun CompiledSource.updateExecutionArguments(
         executionArguments.klass,
         executionArguments.method,
         defaultKlass,
-        SourceExecutionArguments.DEFAULT_METHOD
+        SourceExecutionArguments.DEFAULT_METHOD,
     )
     executionArguments.klass = executionArguments.klass ?: executionArguments.methodToRun!!.declaringClass.simpleName
     executionArguments.method = executionArguments.method ?: executionArguments.methodToRun!!.getQualifiedName()
@@ -125,7 +125,7 @@ fun CompiledSource.updateExecutionArguments(
 @Throws(ExecutionFailed::class)
 @Suppress("ReturnCount")
 suspend fun CompiledSource.execute(
-    executionArguments: SourceExecutionArguments = SourceExecutionArguments()
+    executionArguments: SourceExecutionArguments = SourceExecutionArguments(),
 ): Sandbox.TaskResults<out Any?> {
     val actualArguments = updateExecutionArguments(executionArguments)
     return Sandbox.execute(classLoader, actualArguments, actualArguments.plugins) sandbox@{ (classLoader) ->
@@ -153,7 +153,7 @@ suspend fun CompiledSource.execute(
 @Suppress("ReturnCount")
 suspend fun <T> CompiledSource.executeWith(
     executionArguments: SourceExecutionArguments = SourceExecutionArguments(),
-    executor: (classLoader: Sandbox.SandboxedClassLoader) -> T
+    executor: (classLoader: Sandbox.SandboxedClassLoader) -> T,
 ): Sandbox.TaskResults<out T?> {
     val actualArguments = updateExecutionArguments(executionArguments, noFind = true)
     return Sandbox.execute(classLoader, actualArguments, actualArguments.plugins) sandbox@{ (classLoader) ->
@@ -176,7 +176,7 @@ fun ClassLoader.findClassMethod(
     klass: String? = null,
     name: String? = null,
     defaultKlass: String = SourceExecutionArguments.DEFAULT_KLASS,
-    defaultMethod: String = SourceExecutionArguments.DEFAULT_METHOD
+    defaultMethod: String = SourceExecutionArguments.DEFAULT_METHOD,
 ): Method {
     this as Sandbox.EnumerableClassLoader
     val klassToLoad = if (klass == null && definedClasses.size == 1) {
@@ -208,7 +208,7 @@ fun ClassLoader.findClassMethod(
                 }
             } ?: throw ExecutionFailed.MethodNotFoundException(
                 nameToFind,
-                "Cannot locate public static no-argument method $name in $klassToLoad"
+                "Cannot locate public static no-argument method $name in $klassToLoad",
             )
         }
     } catch (methodNotFoundException: ExecutionFailed.MethodNotFoundException) {

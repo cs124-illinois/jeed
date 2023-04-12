@@ -72,8 +72,8 @@ class KotlinMutationListener(private val parsedSource: Source.ParsedSource) : Ko
                     PrimitiveReturn(
                         returnLocation,
                         parsedSource.contents(returnLocation),
-                        Source.FileType.KOTLIN
-                    )
+                        Source.FileType.KOTLIN,
+                    ),
                 )
             }
             if (TrueReturn.matches(returnToken.text, currentReturnType!!)) {
@@ -84,8 +84,8 @@ class KotlinMutationListener(private val parsedSource: Source.ParsedSource) : Ko
                     FalseReturn(
                         returnLocation,
                         parsedSource.contents(returnLocation),
-                        Source.FileType.KOTLIN
-                    )
+                        Source.FileType.KOTLIN,
+                    ),
                 )
             }
             if (NullReturn.matches(returnToken.text, currentReturnType!!, Source.FileType.KOTLIN)) {
@@ -97,8 +97,8 @@ class KotlinMutationListener(private val parsedSource: Source.ParsedSource) : Ko
                 SwapBreakContinue(
                     ctx.toLocation(),
                     parsedSource.contents(ctx.toLocation()),
-                    Source.FileType.KOTLIN
-                )
+                    Source.FileType.KOTLIN,
+                ),
             )
         }
         ctx.CONTINUE()?.also {
@@ -106,8 +106,8 @@ class KotlinMutationListener(private val parsedSource: Source.ParsedSource) : Ko
                 SwapBreakContinue(
                     ctx.toLocation(),
                     parsedSource.contents(ctx.toLocation()),
-                    Source.FileType.KOTLIN
-                )
+                    Source.FileType.KOTLIN,
+                ),
             )
         }
     }
@@ -122,8 +122,8 @@ class KotlinMutationListener(private val parsedSource: Source.ParsedSource) : Ko
                 RemoveRuntimeCheck(
                     statementLocation,
                     parsedSource.contents(statementLocation),
-                    Source.FileType.KOTLIN
-                )
+                    Source.FileType.KOTLIN,
+                ),
             )
         }
         if (ctx.declaration() == null) {
@@ -131,8 +131,8 @@ class KotlinMutationListener(private val parsedSource: Source.ParsedSource) : Ko
                 RemoveStatement(
                     statementLocation,
                     parsedSource.contents(statementLocation),
-                    Source.FileType.KOTLIN
-                )
+                    Source.FileType.KOTLIN,
+                ),
             )
         }
     }
@@ -153,7 +153,7 @@ class KotlinMutationListener(private val parsedSource: Source.ParsedSource) : Ko
             lines.filterIndexed { index, _ -> index >= start.line - 1 && index <= stop.line - 1 }
                 .joinToString("\n"),
             start.line,
-            stop.line
+            stop.line,
         )
 
     private fun List<TerminalNode>.toLocation() =
@@ -163,7 +163,7 @@ class KotlinMutationListener(private val parsedSource: Source.ParsedSource) : Ko
             lines.filterIndexed { index, _ -> index >= first().symbol.line - 1 && index <= last().symbol.line - 1 }
                 .joinToString("\n"),
             first().symbol.line,
-            last().symbol.line
+            last().symbol.line,
         )
 
     override fun enterLineStringContent(ctx: KotlinParser.LineStringContentContext) {
@@ -277,15 +277,15 @@ class KotlinMutationListener(private val parsedSource: Source.ParsedSource) : Ko
                             index >= ctx.ELSE().symbol.line - 1 && index <= ctx.controlStructureBody(1).stop.line - 1
                         }.joinToString("\n"),
                         ctx.ELSE().symbol.line,
-                        ctx.controlStructureBody(1).stop.line
+                        ctx.controlStructureBody(1).stop.line,
                     )
                     mutations.add(RemoveIf(location, parsedSource.contents(location), Source.FileType.KOTLIN))
                     mutations.add(
                         RemoveIf(
                             ctx.toLocation(),
                             parsedSource.contents(ctx.toLocation()),
-                            Source.FileType.KOTLIN
-                        )
+                            Source.FileType.KOTLIN,
+                        ),
                     )
                 } else { // is an else if
                     val location = Mutation.Location(
@@ -295,7 +295,7 @@ class KotlinMutationListener(private val parsedSource: Source.ParsedSource) : Ko
                             index >= ctx.start.line - 1 && index <= ctx.ELSE().symbol.line - 1
                         }.joinToString("\n"),
                         ctx.start.line,
-                        ctx.ELSE().symbol.line
+                        ctx.ELSE().symbol.line,
                     )
                     mutations.add(RemoveIf(location, parsedSource.contents(location), Source.FileType.KOTLIN))
                 }
@@ -313,8 +313,8 @@ class KotlinMutationListener(private val parsedSource: Source.ParsedSource) : Ko
                     AddBreak(
                         rightCurlLocation,
                         parsedSource.contents(rightCurlLocation),
-                        Source.FileType.KOTLIN
-                    )
+                        Source.FileType.KOTLIN,
+                    ),
                 )
             }
         }
@@ -326,8 +326,8 @@ class KotlinMutationListener(private val parsedSource: Source.ParsedSource) : Ko
                     AddBreak(
                         rightCurlLocation,
                         parsedSource.contents(rightCurlLocation),
-                        Source.FileType.KOTLIN
-                    )
+                        Source.FileType.KOTLIN,
+                    ),
                 )
             }
         }
@@ -339,8 +339,8 @@ class KotlinMutationListener(private val parsedSource: Source.ParsedSource) : Ko
                     AddBreak(
                         rightCurlLocation,
                         parsedSource.contents(rightCurlLocation),
-                        Source.FileType.KOTLIN
-                    )
+                        Source.FileType.KOTLIN,
+                    ),
                 )
             }
         }
@@ -416,8 +416,8 @@ class KotlinMutationListener(private val parsedSource: Source.ParsedSource) : Ko
                     ctx.toLocation(),
                     parsedSource.contents(ctx.toLocation()),
                     Source.FileType.KOTLIN,
-                    "=="
-                )
+                    "==",
+                ),
             )
         }
         if (ctx.text == "===") {
@@ -426,8 +426,8 @@ class KotlinMutationListener(private val parsedSource: Source.ParsedSource) : Ko
                     ctx.toLocation(),
                     parsedSource.contents(ctx.toLocation()),
                     Source.FileType.KOTLIN,
-                    "==="
-                )
+                    "===",
+                ),
             )
         }
     }
@@ -459,8 +459,8 @@ class KotlinMutationListener(private val parsedSource: Source.ParsedSource) : Ko
                     PlusOrMinusOneToZero(
                         ctx.expression(1).toLocation(),
                         parsedSource.contents(ctx.expression(1).toLocation()),
-                        Source.FileType.KOTLIN
-                    )
+                        Source.FileType.KOTLIN,
+                    ),
                 )
             }
         }
@@ -468,10 +468,10 @@ class KotlinMutationListener(private val parsedSource: Source.ParsedSource) : Ko
             val identifier = ctx.expression().getOrNull(0)?.primaryExpression()?.simpleIdentifier()
             val arguments = ctx.postfixUnarySuffix()?.firstOrNull()?.callSuffix()?.valueArguments() ?: return
             if ((
-                identifier?.text == "arrayOf" ||
-                    identifier?.text == "listOf" ||
-                    identifier?.text?.endsWith("ArrayOf") == true
-                ) &&
+                    identifier?.text == "arrayOf" ||
+                        identifier?.text == "listOf" ||
+                        identifier?.text?.endsWith("ArrayOf") == true
+                    ) &&
                 arguments.valueArgument().size > 1
             ) {
                 val start = arguments.valueArgument().first().toLocation()
@@ -482,7 +482,7 @@ class KotlinMutationListener(private val parsedSource: Source.ParsedSource) : Ko
                     lines.filterIndexed { index, _ -> index >= start.startLine - 1 && index <= end.endLine - 1 }
                         .joinToString("\n"),
                     start.startLine,
-                    end.endLine
+                    end.endLine,
                 )
                 val contents = parsedSource.contents(location)
                 val parts = arguments.valueArgument().map {
@@ -502,8 +502,8 @@ class KotlinMutationListener(private val parsedSource: Source.ParsedSource) : Ko
                 ChangeLengthAndSize(
                     ctx.simpleIdentifier().toLocation(),
                     parsedSource.contents(ctx.simpleIdentifier().toLocation()),
-                    Source.FileType.KOTLIN
-                )
+                    Source.FileType.KOTLIN,
+                ),
             )
         }
     }
@@ -518,7 +518,7 @@ class KotlinMutationListener(private val parsedSource: Source.ParsedSource) : Ko
                 .filterIndexed { index, _ -> index >= front.start.line - 1 && index <= back.start.line - 1 }
                 .joinToString("\n"),
             front.start.line,
-            back.start.line
+            back.start.line,
         )
         val backLocation = Mutation.Location(
             front.stop.stopIndex + 1,
@@ -527,7 +527,7 @@ class KotlinMutationListener(private val parsedSource: Source.ParsedSource) : Ko
                 .filterIndexed { index, _ -> index >= front.stop.line - 1 && index <= back.stop.line - 1 }
                 .joinToString("\n"),
             front.start.line,
-            back.stop.line
+            back.stop.line,
         )
         return Pair(frontLocation, backLocation)
     }

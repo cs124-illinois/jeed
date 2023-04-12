@@ -99,8 +99,8 @@ class JavaFeatureListener(val source: Source, entry: Map.Entry<String, String>) 
             SourceRange(
                 filename,
                 Location(ctx.start.line, ctx.start.charPositionInLine),
-                Location(ctx.stop.line, ctx.stop.charPositionInLine)
-            )
+                Location(ctx.stop.line, ctx.stop.charPositionInLine),
+            ),
         )
         assert(featureStack.isEmpty())
         featureStack.add(0, unitFeatures)
@@ -149,7 +149,7 @@ class JavaFeatureListener(val source: Source, entry: Map.Entry<String, String>) 
         enterClassOrInterface(
             ctx.identifier().text,
             Location(ctx.start.line, ctx.start.charPositionInLine),
-            Location(ctx.stop.line, ctx.stop.charPositionInLine)
+            Location(ctx.stop.line, ctx.stop.charPositionInLine),
         )
 
         ctx.classBody().classBodyDeclaration()
@@ -264,7 +264,7 @@ class JavaFeatureListener(val source: Source, entry: Map.Entry<String, String>) 
         enterClassOrInterface(
             ctx.identifier().text,
             Location(ctx.start.line, ctx.start.charPositionInLine),
-            Location(ctx.stop.line, ctx.stop.charPositionInLine)
+            Location(ctx.stop.line, ctx.stop.charPositionInLine),
         )
 
         ctx.interfaceBody().interfaceBodyDeclaration().mapNotNull { declaration ->
@@ -306,7 +306,7 @@ class JavaFeatureListener(val source: Source, entry: Map.Entry<String, String>) 
         enterClassOrInterface(
             ctx.identifier().text,
             Location(ctx.start.line, ctx.start.charPositionInLine),
-            Location(ctx.stop.line, ctx.stop.charPositionInLine)
+            Location(ctx.stop.line, ctx.stop.charPositionInLine),
         )
         count(FeatureName.ENUM, ctx.toLocation())
     }
@@ -319,7 +319,7 @@ class JavaFeatureListener(val source: Source, entry: Map.Entry<String, String>) 
         enterClassOrInterface(
             ctx.identifier().text,
             Location(ctx.start.line, ctx.start.charPositionInLine),
-            Location(ctx.stop.line, ctx.stop.charPositionInLine)
+            Location(ctx.stop.line, ctx.stop.charPositionInLine),
         )
         count(FeatureName.RECORD, ctx.toLocation())
     }
@@ -372,7 +372,7 @@ class JavaFeatureListener(val source: Source, entry: Map.Entry<String, String>) 
         enterMethodOrConstructor(
             "${ctx.typeTypeOrVoid().text} ${ctx.fullName()}",
             Location(ctx.start.line, ctx.start.charPositionInLine),
-            Location(ctx.stop.line, ctx.stop.charPositionInLine)
+            Location(ctx.stop.line, ctx.stop.charPositionInLine),
         )
     }
 
@@ -387,7 +387,7 @@ class JavaFeatureListener(val source: Source, entry: Map.Entry<String, String>) 
         enterMethodOrConstructor(
             "${ctx.typeTypeOrVoid().text} ${ctx.identifier().text}($parameters)",
             Location(ctx.start.line, ctx.start.charPositionInLine),
-            Location(ctx.stop.line, ctx.stop.charPositionInLine)
+            Location(ctx.stop.line, ctx.stop.charPositionInLine),
         )
         count(FeatureName.METHOD, ctx.toLocation())
     }
@@ -405,7 +405,7 @@ class JavaFeatureListener(val source: Source, entry: Map.Entry<String, String>) 
         enterMethodOrConstructor(
             "${currentClass.name}($parameters)",
             Location(ctx.start.line, ctx.start.charPositionInLine),
-            Location(ctx.stop.line, ctx.stop.charPositionInLine)
+            Location(ctx.stop.line, ctx.stop.charPositionInLine),
         )
 
         count(FeatureName.CONSTRUCTOR, ctx.toLocation())
@@ -770,7 +770,7 @@ class JavaFeatureListener(val source: Source, entry: Map.Entry<String, String>) 
                 name,
                 Location(creator.start.line, creator.start.charPositionInLine),
                 Location(creator.stop.line, creator.stop.charPositionInLine),
-                true
+                true,
             )
         }
     }

@@ -9,14 +9,14 @@ class TestSource : StringSpec({
         val first = Source(
             mapOf(
                 "Main.java" to """public class Main {}""",
-                "Test.java" to """public class Test {}"""
-            )
+                "Test.java" to """public class Test {}""",
+            ),
         )
         val second = Source(
             mapOf(
                 "Test.java" to """public class Test {}""",
-                "Main.java" to """public class Main {}"""
-            )
+                "Main.java" to """public class Main {}""",
+            ),
         )
         first.md5 shouldBe second.md5
         first.hashCode() shouldBe second.hashCode()
@@ -26,14 +26,14 @@ class TestSource : StringSpec({
         val first = Source(
             mapOf(
                 "Main.java" to """public class Main {}""",
-                "Test.java" to """public class Test {}"""
-            )
+                "Test.java" to """public class Test {}""",
+            ),
         )
         val second = Source(
             mapOf(
                 "Test.java" to """public class Test { }""",
-                "Main.java" to """public class Main {}"""
-            )
+                "Main.java" to """public class Main {}""",
+            ),
         )
         first.md5 shouldNotBe second.md5
         first.hashCode() shouldNotBe second.hashCode()

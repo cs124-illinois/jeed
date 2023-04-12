@@ -32,7 +32,7 @@ public class Main {
     Test test2 = new Test();
     System.out.println("Yay");
   }
-}"""
+}""",
         ).coverage().also { coverageMap ->
             coverageMap should haveFileMissedCount(1)
             coverageMap should haveClassMissedCount(0, klass = "Test")
@@ -56,7 +56,7 @@ public class Main {
     Test test = new Test(10);
     System.out.println("Hmm");
   }
-}"""
+}""",
         ).coverage().also { coverageMap ->
             coverageMap should haveFileMissedCount(4)
             coverageMap should haveClassMissedCount(3, klass = "Test")
@@ -71,7 +71,7 @@ public class Main {
     Main main = new Main();
     System.out.println(main.getClass().getDeclaredMethods().length);
   }
-}"""
+}""",
         ).compile()
         source.execute().also {
             it should haveCompleted()
@@ -91,7 +91,7 @@ public class Main {
     // do something with the lookup?
   }
   public static void main() { }
-}"""
+}""",
         ).compile()
         assertThrows<IOException> {
             // Jacoco refuses to re-instrument, which is good
@@ -107,7 +107,7 @@ public class Main {
     i += 1;
     System.out.println(i);
   }
-}"""
+}""",
         ).compile().execute(SourceExecutionArguments().addPlugin(Jacoco).addPlugin(LineTrace))
         result should haveCompleted()
         result should haveOutput("5")
@@ -151,8 +151,8 @@ fun main() {
   try {
     val pongPonger = PingPonger("barg")
   } catch (e: Exception) {}
-}""".trim()
-            )
+}""".trim(),
+            ),
         ).kompile()
 
         compiledSource.execute(SourceExecutionArguments().addPlugin(Jacoco)).let { results ->
@@ -182,7 +182,7 @@ public class Main {
     Test test = new Test();
     test.test();
   }
-}"""
+}""",
         ).checkCoverage().also { testCoverage ->
             testCoverage.printLines()
         }
@@ -200,7 +200,7 @@ public class Main {
     Test test = new Test();
     test.test();
   }
-}"""
+}""",
         )
         source.coverage().also { coverageResult ->
             coverageResult should haveFileCoverageAt(3, LineCoverage.PARTLY_COVERED)
@@ -217,11 +217,11 @@ public class Main {
                 "Main.java" to """
 public static void main() {
   System.out.println("Here");
-}""".trim()
+}""".trim(),
             ),
             mapOf(
-                "Main.java.hbs" to "public class Main { {{{ contents }}} }"
-            )
+                "Main.java.hbs" to "public class Main { {{{ contents }}} }",
+            ),
         ).coverage().also { coverageResult ->
             coverageResult should haveFileCoverageAt(2, LineCoverage.COVERED)
         }
@@ -235,11 +235,11 @@ public static void main() {
 }""".trim(),
                 "Test.java" to """
 public class Test {}
-                """.trimIndent()
+                """.trimIndent(),
             ),
             mapOf(
-                "Main.java.hbs" to "public class Main { {{{ contents }}} }"
-            )
+                "Main.java.hbs" to "public class Main { {{{ contents }}} }",
+            ),
         )
         source.compile().execute(SourceExecutionArguments().addPlugin(Jacoco)).also { taskResults ->
             taskResults.completed shouldBe true
@@ -280,7 +280,7 @@ fun haveFileCoverageAt(line: Int, expectedCoverage: LineCoverage, filename: Stri
             return MatcherResult(
                 expectedCoverage == actualCoverage,
                 { "Expected coverage $expectedCoverage at line $line but found $actualCoverage" },
-                { "Expected coverage $expectedCoverage at line $line but found $actualCoverage" }
+                { "Expected coverage $expectedCoverage at line $line but found $actualCoverage" },
             )
         }
     }
@@ -297,7 +297,7 @@ fun haveFileMissedCount(expectedCount: Int, filename: String? = null) = object :
         return MatcherResult(
             expectedCount == actualCount,
             { "Expected $expectedCount missed lines but found $actualCount" },
-            { "Expected $expectedCount missed lines but found $actualCount" }
+            { "Expected $expectedCount missed lines but found $actualCount" },
         )
     }
 }
@@ -310,7 +310,7 @@ fun haveMissedCount(expectedCount: Int) = object : Matcher<FileCoverage> {
         return MatcherResult(
             expectedCount == actualCount,
             { "Expected $expectedCount missed lines but found $actualCount" },
-            { "Expected $expectedCount missed lines but found $actualCount" }
+            { "Expected $expectedCount missed lines but found $actualCount" },
         )
     }
 }
@@ -326,7 +326,7 @@ fun haveFileCoveredCount(expectedCount: Int, filename: String? = null) = object 
         return MatcherResult(
             expectedCount == actualCount,
             { "Expected $expectedCount missed lines but found $actualCount" },
-            { "Expected $expectedCount missed lines but found $actualCount" }
+            { "Expected $expectedCount missed lines but found $actualCount" },
         )
     }
 }
@@ -338,7 +338,7 @@ fun haveCoveredCount(expectedCount: Int) = object : Matcher<FileCoverage> {
         return MatcherResult(
             expectedCount == actualCount,
             { "Expected $expectedCount missed lines but found $actualCount" },
-            { "Expected $expectedCount missed lines but found $actualCount" }
+            { "Expected $expectedCount missed lines but found $actualCount" },
         )
     }
 }
@@ -355,7 +355,7 @@ fun haveClassMissedCount(expectedCount: Int, klass: String? = null) = object : M
         return MatcherResult(
             expectedCount == actualCount,
             { "Expected $expectedCount missed lines but found $actualCount" },
-            { "Expected $expectedCount missed lines but found $actualCount" }
+            { "Expected $expectedCount missed lines but found $actualCount" },
         )
     }
 }
@@ -371,7 +371,7 @@ fun haveClassCoveredCount(expectedCount: Int, klass: String? = null) = object : 
         return MatcherResult(
             expectedCount == actualCount,
             { "Expected $expectedCount missed lines but found $actualCount" },
-            { "Expected $expectedCount missed lines but found $actualCount" }
+            { "Expected $expectedCount missed lines but found $actualCount" },
         )
     }
 }

@@ -56,7 +56,7 @@ class JavaMutationListener(private val parsedSource: Source.ParsedSource) : Java
             lines.filterIndexed { index, _ -> index >= start.line - 1 && index <= stop.line - 1 }
                 .joinToString("\n"),
             start.line,
-            stop.line
+            stop.line,
         )
 
     private fun Token.toLocation() = Mutation.Location(startIndex, stopIndex, lines[line - 1], line, line)
@@ -67,7 +67,7 @@ class JavaMutationListener(private val parsedSource: Source.ParsedSource) : Java
             lines.filterIndexed { index, _ -> index >= first().symbol.line - 1 && index <= last().symbol.line - 1 }
                 .joinToString("\n"),
             first().symbol.line,
-            last().symbol.line
+            last().symbol.line,
         )
 
     override fun enterLiteral(ctx: JavaParser.LiteralContext) {
@@ -145,7 +145,7 @@ class JavaMutationListener(private val parsedSource: Source.ParsedSource) : Java
                 }
                 .joinToString("\n"),
             front.start.line,
-            back.start.line
+            back.start.line,
         )
         val backLocation = Mutation.Location(
             front.stop.stopIndex + 1,
@@ -156,7 +156,7 @@ class JavaMutationListener(private val parsedSource: Source.ParsedSource) : Java
                 }
                 .joinToString("\n"),
             front.start.line,
-            back.stop.line
+            back.stop.line,
         )
         return Pair(frontLocation, backLocation)
     }
@@ -191,15 +191,15 @@ class JavaMutationListener(private val parsedSource: Source.ParsedSource) : Java
                             RemoveBinary(
                                 frontLocation,
                                 parsedSource.contents(frontLocation),
-                                Source.FileType.JAVA
-                            )
+                                Source.FileType.JAVA,
+                            ),
                         )
                         mutations.add(
                             RemoveBinary(
                                 backLocation,
                                 parsedSource.contents(backLocation),
-                                Source.FileType.JAVA
-                            )
+                                Source.FileType.JAVA,
+                            ),
                         )
                     }
                 }
@@ -263,8 +263,8 @@ class JavaMutationListener(private val parsedSource: Source.ParsedSource) : Java
                         Source.FileType.JAVA,
                         "==",
                         ctx.expression(0).text,
-                        ctx.expression(1).text
-                    )
+                        ctx.expression(1).text,
+                    ),
                 )
             }
             @Suppress("ComplexCondition")
@@ -279,8 +279,8 @@ class JavaMutationListener(private val parsedSource: Source.ParsedSource) : Java
                         Source.FileType.JAVA,
                         ".equals",
                         ctx.expression(0).text,
-                        ctx.methodCall().expressionList().expression(0).text
-                    )
+                        ctx.methodCall().expressionList().expression(0).text,
+                    ),
                 )
             }
             if (contents == "." && ctx.identifier()?.text == "length") {
@@ -288,8 +288,8 @@ class JavaMutationListener(private val parsedSource: Source.ParsedSource) : Java
                     ChangeLengthAndSize(
                         ctx.identifier().toLocation(),
                         parsedSource.contents(ctx.identifier().toLocation()),
-                        Source.FileType.JAVA
-                    )
+                        Source.FileType.JAVA,
+                    ),
                 )
             }
             if (contents == "." &&
@@ -300,8 +300,8 @@ class JavaMutationListener(private val parsedSource: Source.ParsedSource) : Java
                     ChangeLengthAndSize(
                         ctx.methodCall().toLocation(),
                         parsedSource.contents(ctx.methodCall().toLocation()),
-                        Source.FileType.JAVA
-                    )
+                        Source.FileType.JAVA,
+                    ),
                 )
             }
             if (contents == "+" || contents == "-") {
@@ -311,8 +311,8 @@ class JavaMutationListener(private val parsedSource: Source.ParsedSource) : Java
                         PlusOrMinusOneToZero(
                             ctx.expression(1).toLocation(),
                             parsedSource.contents(ctx.expression(1).toLocation()),
-                            Source.FileType.JAVA
-                        )
+                            Source.FileType.JAVA,
+                        ),
                     )
                 }
             }
@@ -341,7 +341,7 @@ class JavaMutationListener(private val parsedSource: Source.ParsedSource) : Java
                             lines.filterIndexed { index, _ -> index >= start.line - 1 && index <= end.line - 1 }
                                 .joinToString("\n"),
                             start.line,
-                            end.line
+                            end.line,
                         )
                     mutations.add(RemoveIf(elseLocation, parsedSource.contents(elseLocation), Source.FileType.JAVA))
                 } else if (ctx.statement().size >= 2) {
@@ -364,14 +364,14 @@ class JavaMutationListener(private val parsedSource: Source.ParsedSource) : Java
                                         }
                                         .joinToString("\n"),
                                     previousMarker.symbol.line,
-                                    end.stop.line
+                                    end.stop.line,
                                 )
                             mutations.add(
                                 RemoveIf(
                                     currentLocation,
                                     parsedSource.contents(currentLocation),
-                                    Source.FileType.JAVA
-                                )
+                                    Source.FileType.JAVA,
+                                ),
                             )
                         }
                         previousMarker = statement.ELSE()
@@ -417,8 +417,8 @@ class JavaMutationListener(private val parsedSource: Source.ParsedSource) : Java
                         AddBreak(
                             endBraceLocation,
                             parsedSource.contents(endBraceLocation),
-                            Source.FileType.JAVA
-                        )
+                            Source.FileType.JAVA,
+                        ),
                     )
                 }
             }
@@ -427,8 +427,8 @@ class JavaMutationListener(private val parsedSource: Source.ParsedSource) : Java
                     RemoveLoop(
                         ctx.toLocation(),
                         parsedSource.contents(ctx.toLocation()),
-                        Source.FileType.JAVA
-                    )
+                        Source.FileType.JAVA,
+                    ),
                 )
             }
         }
@@ -451,8 +451,8 @@ class JavaMutationListener(private val parsedSource: Source.ParsedSource) : Java
                 RemoveStatement(
                     ctx.toLocation(),
                     parsedSource.contents(ctx.toLocation()),
-                    Source.FileType.JAVA
-                )
+                    Source.FileType.JAVA,
+                ),
             )
         }
         ctx.BREAK()?.symbol?.also {
@@ -460,8 +460,8 @@ class JavaMutationListener(private val parsedSource: Source.ParsedSource) : Java
                 SwapBreakContinue(
                     it.toLocation(),
                     parsedSource.contents(it.toLocation()),
-                    Source.FileType.JAVA
-                )
+                    Source.FileType.JAVA,
+                ),
             )
         }
         ctx.CONTINUE()?.symbol?.also {
@@ -469,8 +469,8 @@ class JavaMutationListener(private val parsedSource: Source.ParsedSource) : Java
                 SwapBreakContinue(
                     it.toLocation(),
                     parsedSource.contents(it.toLocation()),
-                    Source.FileType.JAVA
-                )
+                    Source.FileType.JAVA,
+                ),
             )
         }
     }
@@ -487,7 +487,7 @@ class JavaMutationListener(private val parsedSource: Source.ParsedSource) : Java
             lines.filterIndexed { index, _ -> index >= start.startLine - 1 && index <= end.endLine - 1 }
                 .joinToString("\n"),
             start.startLine,
-            end.endLine
+            end.endLine,
         )
         val contents = parsedSource.contents(location)
         val parts = ctx.variableInitializer().map {

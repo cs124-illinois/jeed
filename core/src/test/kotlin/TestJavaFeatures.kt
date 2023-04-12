@@ -34,7 +34,7 @@ i += 1;
 i++;
 --j;
 final int k = 8;
-"""
+""",
             ).features().check {
                 featureMap[FeatureName.LOCAL_VARIABLE_DECLARATIONS] shouldBe 3
                 featureList should haveFeatureAt(FeatureName.LOCAL_VARIABLE_DECLARATIONS, listOf(1, 2, 7))
@@ -77,7 +77,7 @@ int[] arr = new int[10];
 for (int num : arr) {
     num++;
 }
-"""
+""",
             ).features().check {
                 featureMap[FeatureName.FOR_LOOPS] shouldBe 2
                 featureList should haveFeatureAt(FeatureName.FOR_LOOPS, listOf(1, 5))
@@ -109,7 +109,7 @@ for (int i = 0; i < 10; i++) {
         System.out.println(i + j);
     }
 }
-"""
+""",
             ).features().check {
                 featureMap[FeatureName.FOR_LOOPS] shouldBe 2
                 featureList should haveFeatureAt(FeatureName.FOR_LOOPS, listOf(1, 2))
@@ -131,7 +131,7 @@ while (i < 10) {
     }
     i++;
 }
-"""
+""",
             ).features().check {
                 featureMap[FeatureName.WHILE_LOOPS] shouldBe 2
                 featureList should haveFeatureAt(FeatureName.WHILE_LOOPS, listOf(2, 3))
@@ -153,7 +153,7 @@ if (i < 10) {
     }
     i++;
 }
-"""
+""",
             ).features().check {
                 featureMap[FeatureName.WHILE_LOOPS] shouldBe 1
                 featureList should haveFeatureAt(FeatureName.WHILE_LOOPS, listOf(3))
@@ -175,7 +175,7 @@ do {
         j++;
     } while (j < 10);
 } while (i < 10);
-"""
+""",
             ).features().check {
                 featureMap[FeatureName.DO_WHILE_LOOPS] shouldBe 2
                 featureList should haveFeatureAt(FeatureName.DO_WHILE_LOOPS, listOf(2, 7))
@@ -196,7 +196,7 @@ if (i < 5) {
 } else {
     i--;
 }
-"""
+""",
             ).features().check {
                 featureMap[FeatureName.IF_STATEMENTS] shouldBe 1
                 featureList should haveFeatureAt(FeatureName.IF_STATEMENTS, listOf(2))
@@ -218,7 +218,7 @@ if (i < 5) {
 } else {
     i--;
 }
-"""
+""",
             ).features().check {
                 featureMap[FeatureName.IF_STATEMENTS] shouldBe 1
                 featureList should haveFeatureAt(FeatureName.IF_STATEMENTS, listOf(2))
@@ -246,7 +246,7 @@ if (i < 15) {
         }
     }
 }
-"""
+""",
             ).features().check {
                 featureMap[FeatureName.IF_STATEMENTS] shouldBe 4
                 featureList should haveFeatureAt(FeatureName.IF_STATEMENTS, listOf(2, 3, 5, 9))
@@ -268,7 +268,7 @@ if (i < 5 || i > 15) {
 } else {
     i--;
 }
-"""
+""",
             ).features().check {
                 featureMap[FeatureName.COMPARISON_OPERATORS] shouldBe 5
                 featureList should haveFeatureAt(FeatureName.COMPARISON_OPERATORS, listOf(2, 2, 3, 6, 6))
@@ -296,7 +296,7 @@ try {
 } catch (Exception e) {
     System.out.println("Oops");
 } finally { }
-"""
+""",
             ).features().check {
                 featureMap[FeatureName.TRY_BLOCK] shouldBe 1
                 featureList should haveFeatureAt(FeatureName.TRY_BLOCK, listOf(2))
@@ -330,7 +330,7 @@ if (i < 5) {
     j = i < j ? i : j;
 }
 j = j << 2;
-"""
+""",
             ).features().check {
                 featureMap[FeatureName.UNARY_OPERATORS] shouldBe 2
                 featureList should haveFeatureAt(FeatureName.UNARY_OPERATORS, listOf(7, 10))
@@ -356,7 +356,7 @@ arr[0 + 0] = 5;
 arr[1] = 10;
 arr[2] = arr[0] + arr[1];
 int[] nums = {1, 2, 4};
-"""
+""",
             ).features().check {
                 featureMap[FeatureName.ARRAYS] shouldBe 2
                 featureList should haveFeatureAt(FeatureName.ARRAYS, listOf(1, 5))
@@ -379,7 +379,7 @@ import java.util.stream.Stream;
 String first = "Hello, world!";
 String second = null;
 Stream<String> stream;
-"""
+""",
             ).features().check {
                 featureMap[FeatureName.STRING] shouldBe 3
                 featureList should haveFeatureAt(FeatureName.STRING, listOf(3, 4, 5))
@@ -399,7 +399,7 @@ Stream<String> stream;
                 """
 int[][] array = new int[5][5];
 char[][] array1 = new char[10][10];
-"""
+""",
             ).features().check {
                 featureMap[FeatureName.MULTIDIMENSIONAL_ARRAYS] shouldBe 2
                 featureList should haveFeatureAt(FeatureName.MULTIDIMENSIONAL_ARRAYS, listOf(1, 2))
@@ -410,7 +410,7 @@ char[][] array1 = new char[10][10];
                 """
 var first = 0;
 val second = "Hello, world!";
-"""
+""",
             ).features().check {
                 featureMap[FeatureName.TYPE_INFERENCE] shouldBe 2
                 featureList should haveFeatureAt(FeatureName.TYPE_INFERENCE, listOf(1, 2))
@@ -424,7 +424,7 @@ int test() {
 }
 public class Test { }
 System.out.println("Hello, world!");
-"""
+""",
             ).features().check("") {
                 featureMap[FeatureName.METHOD] shouldBe 1
                 featureList should haveFeatureAt(FeatureName.METHOD, listOf(1))
@@ -465,8 +465,8 @@ public class Test {
     
     class InnerClass { }
 }
-""".trim()
-                )
+""".trim(),
+                ),
             ).features().check("", "Test.java") {
                 featureMap[FeatureName.CLASS] shouldBe 2
                 featureList should haveFeatureAt(FeatureName.CLASS, listOf(1, 21))
@@ -512,7 +512,7 @@ public class Student extends Person {
         this.school = setSchool;
     }
 }
-"""
+""",
             ).features().check("Student") {
                 featureMap[FeatureName.EXTENDS] shouldBe 1
                 featureList should haveFeatureAt(FeatureName.EXTENDS, listOf(7))
@@ -533,7 +533,7 @@ if (name instanceof String) {
     int rounded = (int) temperature;
     String test = (String) "test";
 }
-"""
+""",
             ).features().check {
                 featureMap[FeatureName.INSTANCEOF] shouldBe 1
                 featureList should haveFeatureAt(FeatureName.INSTANCEOF, listOf(3))
@@ -563,8 +563,8 @@ public class Test {
         return "String";
     }
 }
-""".trim()
-                )
+""".trim(),
+                ),
             ).features().check("Test", "Test.java") {
                 featureMap[FeatureName.OVERRIDE] shouldBe 1
                 featureList should haveFeatureAt(FeatureName.OVERRIDE, listOf(10))
@@ -579,7 +579,7 @@ public class Test {
 String first = "Hello";
 String second = "World";
 boolean third = first == second;
-"""
+""",
             ).features().check {
                 featureMap[FeatureName.REFERENCE_EQUALITY] shouldBe 1
                 featureList should haveFeatureAt(FeatureName.REFERENCE_EQUALITY, listOf(3))
@@ -601,7 +601,7 @@ public class Calculator implements Test {
         return x - y;
     }
 }
-"""
+""",
             ).features().check("") {
                 featureMap[FeatureName.INTERFACE] shouldBe 1
                 featureList should haveFeatureAt(FeatureName.INTERFACE, listOf(1))
@@ -632,7 +632,7 @@ public class Calculator implements Test {
     }
 }
 public record Person(String name, String address) {}
-"""
+""",
             ).features().check("Test") {
                 featureMap[FeatureName.ABSTRACT_METHOD] shouldBe 2
                 featureList should haveFeatureAt(FeatureName.ABSTRACT_METHOD, listOf(2, 3))
@@ -658,7 +658,7 @@ Person student = new Person() {
     return "Student";
   }
 };
-"""
+""",
             ).features().check {
                 featureMap[FeatureName.ANONYMOUS_CLASSES] shouldBe 1
                 featureList should haveFeatureAt(FeatureName.ANONYMOUS_CLASSES, listOf(6))
@@ -672,7 +672,7 @@ interface Modify {
 }
 Modify first = (value) -> value + 1;
 Modify second = (value) -> value - 10;
-"""
+""",
             ).features().check {
                 featureMap[FeatureName.LAMBDA_EXPRESSIONS] shouldBe 2
                 featureList should haveFeatureAt(FeatureName.LAMBDA_EXPRESSIONS, listOf(4, 5))
@@ -687,7 +687,7 @@ void container(int setSize) throws IllegalArgumentException {
     }
     values = new int[setSize];
 }
-"""
+""",
             ).features().check("") {
                 featureMap[FeatureName.THROW] shouldBe 1
                 featureList should haveFeatureAt(FeatureName.THROW, listOf(3))
@@ -719,8 +719,8 @@ public class Counter<T> {
     return count;
   }
 }
-""".trim()
-                )
+""".trim(),
+                ),
             ).features().check("Counter", "Counter.java") {
                 featureMap[FeatureName.GENERIC_CLASS] shouldBe 1
                 featureList should haveFeatureAt(FeatureName.GENERIC_CLASS, listOf(1))
@@ -741,8 +741,8 @@ public class Test {
         class Class { }
     }
 }
-""".trim()
-                )
+""".trim(),
+                ),
             ).features().check("", "Test.java") {
                 featureMap[FeatureName.CLASS] shouldBe 2
                 featureList should haveFeatureAt(FeatureName.CLASS, listOf(1, 9))
@@ -767,8 +767,8 @@ public final class Test {
         public abstract class AbstractSecond { }
     }
 }
-""".trim()
-                )
+""".trim(),
+                ),
             ).features().check("", "Test.java") {
                 featureMap[FeatureName.FINAL_CLASS] shouldBe 3
                 featureList should haveFeatureAt(FeatureName.FINAL_CLASS, listOf(1, 8, 12))
@@ -785,8 +785,8 @@ public interface Test {
     private final int add(int x, int y);
     private static int subtract(int x, int y);
 }
-                """.trim()
-                )
+                """.trim(),
+                ),
             ).features().check("", "Test.java") {
                 featureMap[FeatureName.INTERFACE] shouldBe 1
                 featureList should haveFeatureAt(FeatureName.INTERFACE, listOf(1))
@@ -813,8 +813,8 @@ public enum Test {
     SECOND,
     THIRD
 }
-                """.trim()
-                )
+                """.trim(),
+                ),
             ).features().check("", "Test.java") {
                 featureMap[FeatureName.ENUM] shouldBe 1
                 featureList should haveFeatureAt(FeatureName.ENUM, listOf(1))
@@ -828,7 +828,7 @@ double j = 5.0;
 boolean foo = true;
 String string = "Hello, world!";
 
-"""
+""",
             ).features().check {
                 typeList shouldBe arrayListOf("int", "double", "boolean", "String")
                 identifierList shouldBe arrayListOf("i", "j", "foo", "string")
@@ -842,8 +842,8 @@ import java.util.List;
 import java.util.ArrayList;
                     
 public class Test { }
-                """.trim()
-                )
+                """.trim(),
+                ),
             ).features().check("", "Test.java") {
                 importList shouldBe arrayListOf("java.util.List", "java.util.ArrayList")
             }
@@ -857,8 +857,8 @@ public class Test implements Comparable {
         return 0;
     }
 }
-                """.trim()
-                )
+                """.trim(),
+                ),
             ).features().check("", "Test.java") {
                 featureMap[FeatureName.COMPARABLE] shouldBe 1
                 featureList should haveFeatureAt(FeatureName.COMPARABLE, listOf(1))
@@ -874,7 +874,7 @@ for (int i = 0; i < 10; i++) {
         break;
     }
 }
-"""
+""",
             ).features().check {
                 featureMap[FeatureName.BREAK] shouldBe 1
                 featureList should haveFeatureAt(FeatureName.BREAK, listOf(5))
@@ -891,8 +891,8 @@ public class Test {
     static int number = 0;
     final String string = "string";
 }
-                """.trim()
-                )
+                """.trim(),
+                ),
             ).features().check("Test", "Test.java") {
                 featureMap[FeatureName.STATIC_FIELD] shouldBe 1
                 featureList should haveFeatureAt(FeatureName.STATIC_FIELD, listOf(2))
@@ -913,7 +913,7 @@ import java.util.ArrayList;
 Integer first = new Integer("1");
 Boolean second = true;
 List<String> list = new ArrayList<>();
-"""
+""",
             ).features().check {
                 featureMap[FeatureName.BOXING_CLASSES] shouldBe 2
                 featureList should haveFeatureAt(FeatureName.BOXING_CLASSES, listOf(4, 5))
@@ -929,7 +929,7 @@ System.out.println("Hello, world!");
 System.out.print("Hello, world!");
 System.err.println("Hello, world!");
 System.err.print("Hello, world!");
-"""
+""",
             ).features().check {
                 featureMap[FeatureName.PRINT_STATEMENTS] shouldBe 4
                 featureList should haveFeatureAt(FeatureName.PRINT_STATEMENTS, (1..4).toList())
@@ -953,8 +953,8 @@ public class Test {
         System.out.println("Instance initializer");
     }
 }
-                """.trim()
-                )
+                """.trim(),
+                ),
             ).features()
         }
         "should not choke on static initializer blocks" {
@@ -966,13 +966,13 @@ public class Test {
         System.out.println("Static initializer");
     }
 }
-                """.trim()
-                )
+                """.trim(),
+                ),
             ).features()
         }
         "should not find static in snippets" {
             Source.fromJavaSnippet(
-                "int i = 0;"
+                "int i = 0;",
             ).features().check {
                 featureMap[FeatureName.STATIC_METHOD] shouldBe 0
                 featureList should haveFeatureAt(FeatureName.STATIC_METHOD, listOf())
@@ -983,7 +983,7 @@ public class Test {
                 """
 int[] array = new int[8];
 int l = array.length;
-"""
+""",
             ).features().check {
                 featureMap[FeatureName.DOTTED_VARIABLE_ACCESS] shouldBe 0
                 featureList should haveFeatureAt(FeatureName.DOTTED_VARIABLE_ACCESS, listOf())
@@ -998,7 +998,7 @@ int l = array.length;
 String test = new String("test");
 int[] test1 = new int[8];
 int[] test2 = new int[] {1, 2, 4};
-"""
+""",
             ).features().check {
                 featureMap[FeatureName.NEW_KEYWORD] shouldBe 0
                 featureList should haveFeatureAt(FeatureName.NEW_KEYWORD, listOf())
@@ -1012,7 +1012,7 @@ int[] midThree(int[] values) {
     values[values.length / 2 - 1], values[values.length / 2], values[values.length / 2 + 1]
   };
 }
-"""
+""",
             ).features().check {
                 featureMap[FeatureName.NEW_KEYWORD] shouldBe 0
                 featureList should haveFeatureAt(FeatureName.NEW_KEYWORD, listOf())
@@ -1037,8 +1037,8 @@ public class Simple {
     return val * val;
   }
 }
-"""
-                )
+""",
+                ),
             ).features()
         }
         "should identify and record dotted method calls and property access" {
@@ -1048,7 +1048,7 @@ int[] array = new int[] {1, 2, 4};
 System.out.println(array.something);
 array.sort();
 int[] sorted = array.sorted();
-"""
+""",
             ).features().check {
                 featureMap[FeatureName.DOTTED_METHOD_CALL] shouldBe 2
                 featureList should haveFeatureAt(FeatureName.DOTTED_METHOD_CALL, listOf(3, 4))
@@ -1063,7 +1063,7 @@ int[] sorted = array.sorted();
             Source.fromJavaSnippet(
                 """
 System.out.println(array.something);
-"""
+""",
             ).features().check {
                 featureMap[FeatureName.DOTTED_METHOD_CALL] shouldBe 0
                 featureList should haveFeatureAt(FeatureName.DOTTED_METHOD_CALL, listOf())
@@ -1107,7 +1107,7 @@ public static IWhichHemisphere create(Position p) {
     };
   }
 }
-"""
+""",
             ).features().check("") {
                 featureMap[FeatureName.ANONYMOUS_CLASSES] shouldBe 3
                 featureList should haveFeatureAt(FeatureName.ANONYMOUS_CLASSES, listOf(4, 14, 23))
@@ -1122,7 +1122,7 @@ public interface Modify {
 public class Modifier {
   Modify modify = value -> value + 1;
 }
-"""
+""",
             ).features().check("") {
                 featureMap[FeatureName.LAMBDA_EXPRESSIONS] shouldBe 1
                 featureList should haveFeatureAt(FeatureName.LAMBDA_EXPRESSIONS, listOf(5))
@@ -1137,7 +1137,7 @@ t == "another";
 "string" == "another";
 t == 1;
 2 == 3;
-"""
+""",
             ).features().check("") {
                 featureMap[FeatureName.EQUALITY] shouldBe 1
                 featureList should haveFeatureAt(FeatureName.EQUALITY, listOf(2))
@@ -1153,7 +1153,7 @@ if (first) {
   System.out.println("Here");
   int i = 0;
 }
-"""
+""",
             ).features().lookup(".").features
 
             val second = Source.fromJavaSnippet(
@@ -1162,7 +1162,7 @@ if (first) {
   System.out.println("Here");
 }
 int i = 0;
-"""
+""",
             ).features().lookup(".").features
 
             first.featureMap shouldBe second.featureMap
@@ -1172,7 +1172,7 @@ int i = 0;
         "should work with templated sources" {
             Source.fromTemplates(
                 mapOf(
-                    "Test.java" to """System.out.println("Here");"""
+                    "Test.java" to """System.out.println("Here");""",
                 ),
                 mapOf(
                     "Test.java.hbs" to """
@@ -1180,8 +1180,8 @@ public class Question {
   public static void main() {
     {{{ contents }}}
   }
-}"""
-                )
+}""",
+                ),
             ).features().check("", "Test.java") {
                 featureMap[FeatureName.CLASS] shouldBe 0
                 featureList should haveFeatureAt(FeatureName.CLASS, listOf())
@@ -1204,7 +1204,7 @@ fun haveFeatureAt(feature: FeatureName, lines: List<Int>) = object : Matcher<Lis
         return MatcherResult(
             expectedLocations == actualLocations,
             { "Expected feature at $expectedLocations but found it at $actualLocations" },
-            { "Expected feature at $expectedLocations but found it at $actualLocations" }
+            { "Expected feature at $expectedLocations but found it at $actualLocations" },
         )
     }
 }

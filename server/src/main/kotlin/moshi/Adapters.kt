@@ -18,7 +18,7 @@ import edu.illinois.cs.cs125.jeed.server.Status
 @JvmField
 val Adapters = setOf(
     JobAdapter(),
-    ResultAdapter()
+    ResultAdapter(),
 )
 
 @JsonClass(generateAdapter = true)
@@ -30,7 +30,7 @@ class RequestJson(
     val tasks: Set<Task>,
     val arguments: TaskArguments?,
     val label: String,
-    val checkForSnippet: Boolean? = false
+    val checkForSnippet: Boolean? = false,
 )
 
 class JobAdapter {
@@ -45,7 +45,7 @@ class JobAdapter {
             requestJson.tasks,
             requestJson.arguments,
             requestJson.label,
-            requestJson.checkForSnippet ?: false
+            requestJson.checkForSnippet ?: false,
         )
     }
 
@@ -59,7 +59,7 @@ class JobAdapter {
             request.tasks,
             request.arguments,
             request.label,
-            request.checkForSnippet
+            request.checkForSnippet,
         )
     }
 }
@@ -74,7 +74,7 @@ data class ResponseJson(
     val completedTasks: Set<Task>,
     val failed: FailedTasks,
     val failedTasks: Set<Task>,
-    val interval: Interval
+    val interval: Interval,
 )
 
 class ResultAdapter {
@@ -128,7 +128,7 @@ class ResultAdapter {
             response.completedTasks,
             response.failed,
             response.failedTasks,
-            response.interval
+            response.interval,
         )
     }
 }

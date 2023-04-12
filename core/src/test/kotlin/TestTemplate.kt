@@ -10,11 +10,11 @@ class TestTemplate : StringSpec({
     "should work with simple templates" {
         val templatedSource = Source.fromTemplates(
             mapOf(
-                "Test.java" to "int i = 0;"
+                "Test.java" to "int i = 0;",
             ),
             mapOf(
-                "Test.java.hbs" to "public class Question { {{{ contents }}} }"
-            )
+                "Test.java.hbs" to "public class Question { {{{ contents }}} }",
+            ),
         )
 
         templatedSource.sources.keys shouldHaveSize 1
@@ -25,14 +25,14 @@ class TestTemplate : StringSpec({
     "should not create blank lines in templates" {
         val templatedSource = Source.fromTemplates(
             mapOf(
-                "Test.java" to "int i = 0;\n\nSystem.out.println(i);"
+                "Test.java" to "int i = 0;\n\nSystem.out.println(i);",
             ),
             mapOf(
                 "Test.java.hbs" to """
 public class Question {
   {{{ contents }}}
-}""".trim()
-            )
+}""".trim(),
+            ),
         )
 
         templatedSource.sources.keys shouldHaveSize 1
@@ -42,11 +42,11 @@ public class Question {
     "should work multiple times" {
         val templatedSource1 = Source.fromTemplates(
             mapOf(
-                "Test.java" to "int i = 0;"
+                "Test.java" to "int i = 0;",
             ),
             mapOf(
-                "Test.java.hbs" to "public class Question { {{{ contents }}} }"
-            )
+                "Test.java.hbs" to "public class Question { {{{ contents }}} }",
+            ),
         )
 
         templatedSource1.sources.keys shouldHaveSize 1
@@ -56,11 +56,11 @@ public class Question {
 
         val templatedSource2 = Source.fromTemplates(
             mapOf(
-                "Test.java" to "int i = 1;"
+                "Test.java" to "int i = 1;",
             ),
             mapOf(
-                "Test.java.hbs" to "public class Question { {{{ contents }}} }"
-            )
+                "Test.java.hbs" to "public class Question { {{{ contents }}} }",
+            ),
         )
 
         templatedSource2.sources.keys shouldHaveSize 1
@@ -71,7 +71,7 @@ public class Question {
     "should work with indented templates" {
         val templatedSource = Source.fromTemplates(
             mapOf(
-                "Test.java" to "int i = 0;"
+                "Test.java" to "int i = 0;",
             ),
             mapOf(
                 "Test.java.hbs" to """
@@ -79,8 +79,8 @@ public class Question {
     public static void main() {
         {{{ contents }}}
     }
-}""".trim()
-            )
+}""".trim(),
+            ),
         )
 
         templatedSource.sources.keys shouldHaveSize 1
@@ -99,7 +99,7 @@ public class Question {
                 "Test.java" to """
 int i = 0;
 i += 4;
-""".trim()
+""".trim(),
             ),
             mapOf(
                 "Test.java.hbs" to """
@@ -107,8 +107,8 @@ public class Question {
     public static void main() {
         {{{ contents }}}
     }
-}""".trim()
-            )
+}""".trim(),
+            ),
         )
 
         templatedSource.sources.keys shouldHaveSize 1
@@ -129,7 +129,7 @@ i += 4;
         val templatingFailed = shouldThrow<TemplatingFailed> {
             Source.fromTemplates(
                 mapOf(
-                    "Test.java" to "int i = 0;"
+                    "Test.java" to "int i = 0;",
                 ),
                 mapOf(
                     "Test.java.hbs" to """
@@ -137,8 +137,8 @@ public class Question {
     public static void main() {
         {{{ contents }}
     }
-}""".trim()
-                )
+}""".trim(),
+                ),
             )
         }
         templatingFailed.errors shouldHaveSize 1
@@ -148,7 +148,7 @@ public class Question {
     "should remap line numbers properly" {
         val templatedSource = Source.fromTemplates(
             mapOf(
-                "Test.java" to "int i = ;"
+                "Test.java" to "int i = ;",
             ),
             mapOf(
                 "Test.java.hbs" to """
@@ -156,8 +156,8 @@ public class Question {
     public static void main() {
         {{{ contents }}}
     }
-}""".trim()
-            )
+}""".trim(),
+            ),
         )
 
         templatedSource.sources.keys shouldHaveSize 1
@@ -180,7 +180,7 @@ public class Question {
     "should remap Kotlin line numbers properly" {
         val templatedSource = Source.fromTemplates(
             mapOf(
-                "Test.kt" to "val i = "
+                "Test.kt" to "val i = ",
             ),
             mapOf(
                 "Test.kt.hbs" to """
@@ -190,8 +190,8 @@ class Question {
             {{{ contents }}}
         }
     }
-}""".trim()
-            )
+}""".trim(),
+            ),
         )
 
         templatedSource.sources.keys shouldHaveSize 1
@@ -216,7 +216,7 @@ class Question {
     "should remap exception line numbers properly" {
         val source = Source.fromTemplates(
             mapOf(
-                "Test.java" to "String s = null;\ns.length();"
+                "Test.java" to "String s = null;\ns.length();",
             ),
             mapOf(
                 "Test.java.hbs" to """
@@ -224,8 +224,8 @@ public class Question {
     public static void main() {
         {{{ contents }}}
     }
-}""".trim()
-            )
+}""".trim(),
+            ),
         )
         val executionResult = source.compile().execute()
         executionResult shouldNot haveCompleted()

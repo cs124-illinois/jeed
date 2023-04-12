@@ -161,7 +161,7 @@ private fun levenshteinDistance(first: List<Int>, second: List<Int>): Int {
                         nw
                     } else {
                         nw + 1
-                    }
+                    },
                 )
             nw = costs[j]
             costs[j] = cj

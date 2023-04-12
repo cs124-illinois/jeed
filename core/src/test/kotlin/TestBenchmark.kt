@@ -11,7 +11,7 @@ public class Main {
     System.out.println("Hello, world!");
   }
 }
-            """.trimIndent()
+            """.trimIndent(),
         )
 
         source.compile(CompilationArguments(useCache = false)).also { compiledSource ->
@@ -29,7 +29,7 @@ public class Main {
     System.out.println("Hello, world!");
   }
 }
-            """.trimIndent()
+            """.trimIndent(),
         ).compile()
 
         compiledSource.execute().also { executionResult ->

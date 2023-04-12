@@ -36,7 +36,7 @@ class JeedErrorListener(val source: Source, entry: Map.Entry<String, String>) : 
         line: Int,
         charPositionInLine: Int,
         msg: String,
-        e: RecognitionException?
+        e: RecognitionException?,
     ) {
         val location = try {
             source.mapLocation(SourceLocation(name, line, charPositionInLine))
@@ -146,7 +146,7 @@ class DistinguishErrorListener : BaseErrorListener() {
         line: Int,
         charPositionInLine: Int,
         msg: String,
-        e: RecognitionException?
+        e: RecognitionException?,
     ) {
         check(!msg.trim().startsWith("extraneous input"))
         if (e != null) {

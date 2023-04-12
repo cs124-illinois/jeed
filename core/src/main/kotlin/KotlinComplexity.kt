@@ -29,7 +29,7 @@ class KotlinComplexityListener(val source: Source, entry: Map.Entry<String, Stri
         } else {
             ClassComplexity(
                 name,
-                SourceRange(filename, source.mapLocation(filename, start), source.mapLocation(filename, end))
+                SourceRange(filename, source.mapLocation(filename, start), source.mapLocation(filename, end)),
             )
         }
         if (complexityStack.isNotEmpty()) {
@@ -50,7 +50,7 @@ class KotlinComplexityListener(val source: Source, entry: Map.Entry<String, Stri
                 MethodComplexity(
                     name,
                     SourceRange(filename, source.mapLocation(filename, start), source.mapLocation(filename, end)),
-                    complexity = initialComplexity
+                    complexity = initialComplexity,
                 )
             }
         if (complexityStack.isNotEmpty()) {
@@ -89,7 +89,7 @@ class KotlinComplexityListener(val source: Source, entry: Map.Entry<String, Stri
         enterClassOrInterface(
             currentClass,
             Location(ctx.start.line, ctx.start.charPositionInLine),
-            Location(ctx.stop.line, ctx.stop.charPositionInLine)
+            Location(ctx.stop.line, ctx.stop.charPositionInLine),
         )
     }
 
@@ -103,7 +103,7 @@ class KotlinComplexityListener(val source: Source, entry: Map.Entry<String, Stri
         enterMethodOrConstructor(
             fullName,
             Location(ctx.start.line, ctx.start.charPositionInLine),
-            Location(ctx.stop.line, ctx.stop.charPositionInLine)
+            Location(ctx.stop.line, ctx.stop.charPositionInLine),
         )
     }
 
@@ -118,7 +118,7 @@ class KotlinComplexityListener(val source: Source, entry: Map.Entry<String, Stri
         enterMethodOrConstructor(
             fullName,
             Location(ctx.start.line, ctx.start.charPositionInLine),
-            Location(ctx.stop.line, ctx.stop.charPositionInLine)
+            Location(ctx.stop.line, ctx.stop.charPositionInLine),
         )
     }
 
@@ -143,7 +143,7 @@ class KotlinComplexityListener(val source: Source, entry: Map.Entry<String, Stri
         enterMethodOrConstructor(
             longName,
             Location(ctx.start.line, ctx.start.charPositionInLine),
-            Location(ctx.stop.line, ctx.stop.charPositionInLine)
+            Location(ctx.stop.line, ctx.stop.charPositionInLine),
         )
     }
 
@@ -162,7 +162,7 @@ class KotlinComplexityListener(val source: Source, entry: Map.Entry<String, Stri
                 1
             } else {
                 0
-            }
+            },
         )
     }
 

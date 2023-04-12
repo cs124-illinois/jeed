@@ -7,7 +7,7 @@ sealed class ComplexityValue(
     range: SourceRange,
     methods: MutableMap<String, LocatedClassOrMethod> = mutableMapOf(),
     classes: MutableMap<String, LocatedClassOrMethod> = mutableMapOf(),
-    var complexity: Int
+    var complexity: Int,
 ) : LocatedClassOrMethod(name, range, methods, classes) {
     fun lookup(name: String): ComplexityValue {
         check(name.isNotEmpty())
@@ -26,7 +26,7 @@ class ClassComplexity(
     range: SourceRange,
     methods: MutableMap<String, LocatedClassOrMethod> = mutableMapOf(),
     classes: MutableMap<String, LocatedClassOrMethod> = mutableMapOf(),
-    complexity: Int = 0
+    complexity: Int = 0,
 ) : ComplexityValue(name, range, classes, methods, complexity)
 
 @JsonClass(generateAdapter = true)
@@ -35,7 +35,7 @@ class MethodComplexity(
     range: SourceRange,
     methods: MutableMap<String, LocatedClassOrMethod> = mutableMapOf(),
     classes: MutableMap<String, LocatedClassOrMethod> = mutableMapOf(),
-    complexity: Int = 1
+    complexity: Int = 1,
 ) : ComplexityValue(name, range, classes, methods, complexity)
 
 class ComplexityFailed(errors: List<SourceError>) : JeedError(errors) {
@@ -70,11 +70,11 @@ class ComplexityResults(val source: Source, val results: Map<String, Map<String,
 
     override fun toString() = results.map { (filename, values) ->
         val start = "${
-        if (source is Snippet) {
-            source.wrappedClassName + source.type.extension()
-        } else {
-            filename
-        }
+            if (source is Snippet) {
+                source.wrappedClassName + source.type.extension()
+            } else {
+                filename
+            }
         }:"
         val rest = values.values.joinToString("\n") { it.print(2) }
         "$start\n$rest"
@@ -129,7 +129,7 @@ fun Source.complexity(names: Set<String> = sources.keys.toSet()): ComplexityResu
                     Source.FileType.JAVA -> JavaComplexityListener(this, it).results
                     Source.FileType.KOTLIN -> KotlinComplexityListener(this, it).results
                 }
-            }
+            },
         )
     } catch (e: JeedParsingException) {
         throw ComplexityFailed(e.errors)

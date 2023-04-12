@@ -61,7 +61,7 @@ object LineTrace : SandboxPluginWithDefaultArguments<LineTraceArguments, LineTra
     override fun createInstrumentationData(
         arguments: LineTraceArguments,
         classLoaderConfiguration: Sandbox.ClassLoaderConfiguration,
-        allPlugins: List<ConfiguredSandboxPlugin<*, *>>
+        allPlugins: List<ConfiguredSandboxPlugin<*, *>>,
     ): Any {
         val plugins = allPlugins.map { it.plugin }
         val thisIndex = plugins.indexOf(this)
@@ -190,7 +190,7 @@ object LineTrace : SandboxPluginWithDefaultArguments<LineTraceArguments, LineTra
 
     private data class ClassPreinspection(
         val sourceFile: String?,
-        val methodPreinspections: Map<MethodId, Map<Int, LabelLine>>
+        val methodPreinspections: Map<MethodId, Map<Int, LabelLine>>,
     )
     private data class MethodId(val name: String, val descriptor: String)
     private data class LabelInfo(val index: Int, var line: Int?, var waitForFrame: Boolean)
@@ -198,7 +198,7 @@ object LineTrace : SandboxPluginWithDefaultArguments<LineTraceArguments, LineTra
 
     private class LineTraceInstrumentationData(
         val arguments: LineTraceArguments,
-        var nextMethodId: Int = 0
+        var nextMethodId: Int = 0,
     )
 
     private class LineTraceWorkingData(
@@ -207,7 +207,7 @@ object LineTrace : SandboxPluginWithDefaultArguments<LineTraceArguments, LineTra
         val threads: MutableMap<Int, PerThreadWorkingData> = mutableMapOf(),
         var nextThreadIndex: Int = LineTraceResult.MAIN_THREAD,
         val lineCallbacks: MutableList<LineCallback> = mutableListOf(),
-        val threadTrackingSyncRoot: Any = Object()
+        val threadTrackingSyncRoot: Any = Object(),
     ) {
         class PerThreadWorkingData(
             var linesRun: Long = 0,
@@ -216,7 +216,7 @@ object LineTrace : SandboxPluginWithDefaultArguments<LineTraceArguments, LineTra
             var lastLabelSequence: Int? = null,
             var unsynchronizedLines: Int = 0,
             var linesRunByOtherThreads: Long = 0,
-            val syncLock: Any = Object()
+            val syncLock: Any = Object(),
         )
     }
 
@@ -233,7 +233,7 @@ object LineTrace : SandboxPluginWithDefaultArguments<LineTraceArguments, LineTra
             name: String,
             descriptor: String,
             signature: String?,
-            exceptions: Array<out String>?
+            exceptions: Array<out String>?,
         ): MethodVisitor {
             val labelLines = mutableMapOf<Int, LabelLine>()
             inspectedMethods[MethodId(name, descriptor)] = labelLines
@@ -241,7 +241,7 @@ object LineTrace : SandboxPluginWithDefaultArguments<LineTraceArguments, LineTra
         }
 
         private class PreinspectingMethodVisitor(
-            val labelLines: MutableMap<Int, LabelLine>
+            val labelLines: MutableMap<Int, LabelLine>,
         ) : MethodVisitor(Opcodes.ASM9) {
             private val knownLabels = mutableMapOf<Label, LabelInfo>()
             private var mightNeedFrame: LabelInfo? = null
@@ -259,7 +259,7 @@ object LineTrace : SandboxPluginWithDefaultArguments<LineTraceArguments, LineTra
                 numLocal: Int,
                 local: Array<out Any>?,
                 numStack: Int,
-                stack: Array<out Any>?
+                stack: Array<out Any>?,
             ) {
                 mightNeedFrame?.let { it.waitForFrame = true } // If it's still pending, no insn was visited
                 mightNeedFrame = null
@@ -289,7 +289,7 @@ object LineTrace : SandboxPluginWithDefaultArguments<LineTraceArguments, LineTra
                 name: String?,
                 descriptor: String?,
                 bootstrapMethodHandle: Handle?,
-                vararg bootstrapMethodArguments: Any?
+                vararg bootstrapMethodArguments: Any?,
             ) {
                 mightNeedFrame = null
             }
@@ -307,7 +307,7 @@ object LineTrace : SandboxPluginWithDefaultArguments<LineTraceArguments, LineTra
                 owner: String?,
                 name: String?,
                 descriptor: String?,
-                isInterface: Boolean
+                isInterface: Boolean,
             ) {
                 mightNeedFrame = null
             }
@@ -333,14 +333,14 @@ object LineTrace : SandboxPluginWithDefaultArguments<LineTraceArguments, LineTra
     private class TracingClassVisitor(
         visitor: ClassVisitor,
         private val preinspection: ClassPreinspection,
-        private val instrumentationData: LineTraceInstrumentationData
+        private val instrumentationData: LineTraceInstrumentationData,
     ) : ClassVisitor(Opcodes.ASM9, visitor) {
         override fun visitMethod(
             access: Int,
             name: String,
             descriptor: String,
             signature: String?,
-            exceptions: Array<out String>?
+            exceptions: Array<out String>?,
         ): MethodVisitor {
             val methodId = instrumentationData.nextMethodId
             instrumentationData.nextMethodId++
@@ -348,7 +348,7 @@ object LineTrace : SandboxPluginWithDefaultArguments<LineTraceArguments, LineTra
                 super.visitMethod(access, name, descriptor, signature, exceptions),
                 preinspection.sourceFile ?: error("should only trace a class with a source file"),
                 preinspection.methodPreinspections[MethodId(name, descriptor)] ?: error("missing preinspection"),
-                methodId
+                methodId,
             )
         }
     }
@@ -357,7 +357,7 @@ object LineTrace : SandboxPluginWithDefaultArguments<LineTraceArguments, LineTra
         visitor: MethodVisitor,
         private val sourceFile: String,
         private val labelLines: Map<Int, LabelLine>,
-        private val methodId: Int
+        private val methodId: Int,
     ) : MethodVisitor(Opcodes.ASM9, visitor) {
         private var currentLabelIndex = 0
         private var waitingForFrameLabel: LabelLine? = null
@@ -379,7 +379,7 @@ object LineTrace : SandboxPluginWithDefaultArguments<LineTraceArguments, LineTra
             numLocal: Int,
             local: Array<out Any>?,
             numStack: Int,
-            stack: Array<out Any>?
+            stack: Array<out Any>?,
         ) {
             super.visitFrame(type, numLocal, local, numStack, stack)
             waitingForFrameLabel?.let {
@@ -402,7 +402,7 @@ object LineTrace : SandboxPluginWithDefaultArguments<LineTraceArguments, LineTra
                 tracingClassName,
                 tracingLineMethodName,
                 tracingLineMethodDesc,
-                false
+                false,
             )
         }
     }
@@ -414,7 +414,7 @@ data class LineTraceArguments(
     val runLineLimit: Long? = null,
     val runLineLimitExceededAction: RunLineLimitAction = RunLineLimitAction.KILL_SANDBOX,
     val maxUnsynchronizedLines: Int = DEFAULT_MAX_UNSYNCHRONIZED_LINES,
-    val coalesceDuplicates: Boolean = true
+    val coalesceDuplicates: Boolean = true,
 ) {
     enum class RunLineLimitAction {
         KILL_SANDBOX, THROW_ERROR
@@ -430,7 +430,7 @@ data class LineTraceArguments(
 data class LineTraceResult(
     val arguments: LineTraceArguments,
     val steps: List<LineStep>,
-    val linesRun: Long
+    val linesRun: Long,
 ) {
     @JsonClass(generateAdapter = true)
     data class LineStep(val source: String, val line: Int, val threadIndex: Int)

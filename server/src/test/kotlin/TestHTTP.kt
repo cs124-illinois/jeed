@@ -34,7 +34,7 @@ class TestHTTP : StringSpec() {
 "label": "test",
 "snippet": "System.out.println(\"Here\");",
 "tasks": [ "compile", "execute" ]
-}""".trim()
+}""".trim(),
                     )
                 }.apply {
                     response.shouldHaveStatus(HttpStatusCode.OK.value)
@@ -60,7 +60,7 @@ while (true) {
   i++;
 }",
 "tasks": [ "compile", "execute" ]
-}""".trim()
+}""".trim(),
                     )
                 }.apply {
                     response.shouldHaveStatus(HttpStatusCode.OK.value)
@@ -92,7 +92,7 @@ while (true) {
     "lineCountLimit": "1000"
   }
 }
-}""".trim()
+}""".trim(),
                     )
                 }.apply {
                     response.shouldHaveStatus(HttpStatusCode.OK.value)
@@ -119,7 +119,7 @@ int[] values = new int[1024 * 1024 * 1024];
 values[0] = 0;
 ",
 "tasks": [ "compile", "execute" ]
-}""".trim()
+}""".trim(),
                     )
                 }.apply {
                     response.shouldHaveStatus(HttpStatusCode.OK.value)
@@ -152,7 +152,7 @@ public class Main {
   }
 ],
 "tasks": [ "compile", "execute" ]
-}""".trim()
+}""".trim(),
                     )
                 }.apply {
                     response.shouldHaveStatus(HttpStatusCode.OK.value)
@@ -177,7 +177,7 @@ public class Main {
 "label": "test",
 "snippet": "System.out.println(\"Here\");",
 "tasks": [ "compile", "cexecute" ]
-}""".trim()
+}""".trim(),
                     )
                 }.apply {
                     response.shouldHaveStatus(HttpStatusCode.OK.value)
@@ -199,7 +199,7 @@ public class Main {
 "label": "test",
 "snippet": "println(\"Here\")",
 "tasks": [ "kompile", "execute" ]
-}""".trim()
+}""".trim(),
                     )
                 }.apply {
                     response.shouldHaveStatus(HttpStatusCode.OK.value)
@@ -231,7 +231,7 @@ public class Main {
   }
 ],
 "tasks": [ "compile", "execute" ]
-}""".trim()
+}""".trim(),
                     )
                 }.apply {
                     response.shouldHaveStatus(HttpStatusCode.OK.value)
@@ -260,7 +260,7 @@ fun main() {
   }
 ],
 "tasks": [ "kompile", "execute" ]
-}""".trim()
+}""".trim(),
                     )
                 }.apply {
                     response.shouldHaveStatus(HttpStatusCode.OK.value)
@@ -299,7 +299,7 @@ fun main() {
   }
 ],
 "tasks": [ "kompile", "execute" ]
-}""".trim()
+}""".trim(),
                     )
                 }.apply {
                     response.shouldHaveStatus(HttpStatusCode.OK.value)
@@ -334,7 +334,7 @@ public static void main() {
   }
 ],
 "tasks": [ "checkstyle", "compile", "execute" ]
-}""".trim()
+}""".trim(),
                     )
                 }.apply {
                     response.shouldHaveStatus(HttpStatusCode.OK.value)
@@ -363,7 +363,7 @@ fun main() {
   }
 ],
 "tasks": [ "ktlint", "kompile", "execute" ]
-}""".trim()
+}""".trim(),
                     )
                 }.apply {
                     response.shouldHaveStatus(HttpStatusCode.OK.value)
@@ -392,7 +392,7 @@ fun main() {
   }
 ],
 "tasks": [ "checkstyle", "kompile", "execute" ]
-}""".trim()
+}""".trim(),
                     )
                 }.apply {
                     response.shouldHaveStatus(HttpStatusCode.BadRequest.value)
@@ -425,7 +425,7 @@ public static void main() {
   }
 ],
 "tasks": [ "template", "compile", "execute" ]
-}""".trim()
+}""".trim(),
                     )
                 }.apply {
                     response.shouldHaveStatus(HttpStatusCode.OK.value)
@@ -456,7 +456,7 @@ public class Main {
   }
 ],
 "tasks": [ "complexity" ]
-}""".trim()
+}""".trim(),
                     )
                 }.apply {
                     response.shouldHaveStatus(HttpStatusCode.OK.value)
@@ -487,7 +487,7 @@ public class Main {
   }
 ],
 "tasks": [ "features" ]
-}""".trim()
+}""".trim(),
                     )
                 }.apply {
                     response.shouldHaveStatus(HttpStatusCode.OK.value)
@@ -518,7 +518,7 @@ public class Main {
   }
 ],
 "tasks": [ "features" ]
-}""".trim()
+}""".trim(),
                     )
                 }.apply {
                     response.shouldHaveStatus(HttpStatusCode.OK.value)
@@ -549,7 +549,7 @@ public class Main {
   }
 ],
 "tasks": [ "mutations" ]
-}""".trim()
+}""".trim(),
                     )
                 }.apply {
                     response.shouldHaveStatus(HttpStatusCode.OK.value)
@@ -582,7 +582,7 @@ class Main {
   }
 ],
 "tasks": [ "complexity" ]
-}""".trim()
+}""".trim(),
                     )
                 }.apply {
                     response.shouldHaveStatus(HttpStatusCode.OK.value)
@@ -603,7 +603,7 @@ class Main {
 "label": "test",
 "snippet": "System.out.println(\"Here\")",
 "tasks": [ "snippet" ]
-}""".trim()
+}""".trim(),
                     )
                 }.apply {
                     response.shouldHaveStatus(HttpStatusCode.OK.value)
@@ -641,7 +641,7 @@ public static void main() {
   }
 ],
 "tasks": [ "template" ]
-}""".trim()
+}""".trim(),
                     )
                 }.apply {
                     response.shouldHaveStatus(HttpStatusCode.OK.value)
@@ -673,7 +673,7 @@ public class Main {
   }
 ],
 "tasks": [ "compile" ]
-}""".trim()
+}""".trim(),
                     )
                 }.apply {
                     response.shouldHaveStatus(HttpStatusCode.OK.value)
@@ -703,7 +703,7 @@ fun main() {
   }
 ],
 "tasks": [ "kompile" ]
-}""".trim()
+}""".trim(),
                     )
                 }.apply {
                     response.shouldHaveStatus(HttpStatusCode.OK.value)
@@ -740,7 +740,7 @@ System.out.println(\"Here\");
   }
 ],
 "tasks": [ "checkstyle", "compile", "execute" ]
-}""".trim()
+}""".trim(),
                     )
                 }.apply {
                     response.shouldHaveStatus(HttpStatusCode.OK.value)
@@ -772,7 +772,7 @@ System.out.println(\"Here\");
   }
 ],
 "tasks": [ "checkstyle", "compile", "execute" ]
-}""".trim()
+}""".trim(),
                     )
                 }.apply {
                     response.shouldHaveStatus(HttpStatusCode.OK.value)
@@ -805,7 +805,7 @@ public class Main {
   }
 ],
 "tasks": [ "compile", "execute" ]
-}""".trim()
+}""".trim(),
                     )
                 }.apply {
                     response.shouldHaveStatus(HttpStatusCode.OK.value)
@@ -837,7 +837,7 @@ public class Main {
   }
 ],
 "tasks": [ "compile", "cexecute" ]
-}""".trim()
+}""".trim(),
                     )
                 }.apply {
                     response.shouldHaveStatus(HttpStatusCode.OK.value)
@@ -870,7 +870,7 @@ public class Main {
   }
 ],
 "tasks": [ "compile", "execute" ]
-}""".trim()
+}""".trim(),
                     )
                 }
             }.apply {
@@ -895,7 +895,7 @@ System.out.println(\"Here\");
 ],
 "tasks": [ "compile", "execute" ],
 "checkForSnippet": true
-}""".trim()
+}""".trim(),
                     )
                 }
             }.apply {
@@ -928,7 +928,7 @@ println(\"Here\")
 ],
 "tasks": [ "kompile", "execute" ],
 "checkForSnippet": true
-}""".trim()
+}""".trim(),
                     )
                 }
             }.apply {
@@ -952,7 +952,7 @@ println(\"Here\")
 {
 "label": "test",
 "tasks": [ "compile", "execute" ]
-}""".trim()
+}""".trim(),
                     )
                 }
             }.apply {
@@ -976,7 +976,7 @@ public class Main {
 }"
 },
 "tasks": [ "compile", "execute" ]
-}""".trim()
+}""".trim(),
                     )
                 }
             }.apply {
@@ -1003,7 +1003,7 @@ public class Main {
   }
 ],
 "tasks": [ "compile", "disassemble" ]
-}""".trim()
+}""".trim(),
                     )
                 }.apply {
                     response.shouldHaveStatus(HttpStatusCode.OK.value)
@@ -1033,7 +1033,7 @@ fun main() {
   }
 ],
 "tasks": [ "kompile", "disassemble" ]
-}""".trim()
+}""".trim(),
                     )
                 }.apply {
                     response.shouldHaveStatus(HttpStatusCode.OK.value)

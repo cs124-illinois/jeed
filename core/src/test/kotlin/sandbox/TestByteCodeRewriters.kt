@@ -33,7 +33,7 @@ try {
 } finally {
     System.out.println("Finally");
 }
-            """.trim()
+            """.trim(),
         ).compile().execute()
 
         executionResult should haveCompleted()
@@ -52,15 +52,15 @@ try {
 } finally {
     System.out.println("Finally");
 }
-            """.trim()
+            """.trim(),
         ).compile().execute(
             SourceExecutionArguments(
                 classLoaderConfiguration = Sandbox.ClassLoaderConfiguration(
                     unsafeExceptions = setOf(
-                        "java.lang.NullPointerException"
-                    )
-                )
-            )
+                        "java.lang.NullPointerException",
+                    ),
+                ),
+            ),
         )
 
         executionResult shouldNot haveCompleted()
@@ -80,15 +80,15 @@ try {
 } finally {
     System.out.println("Finally");
 }
-            """.trim()
+            """.trim(),
         ).compile().execute(
             SourceExecutionArguments(
                 classLoaderConfiguration = Sandbox.ClassLoaderConfiguration(
                     unsafeExceptions = setOf(
-                        "java.lang.NullPointerException"
-                    )
-                )
-            )
+                        "java.lang.NullPointerException",
+                    ),
+                ),
+            ),
         )
 
         executionResult shouldNot haveCompleted()
@@ -106,15 +106,15 @@ try {
 } finally {
     System.out.println("Finally");
 }
-            """.trim()
+            """.trim(),
         ).compile().execute(
             SourceExecutionArguments(
                 classLoaderConfiguration = Sandbox.ClassLoaderConfiguration(
                     unsafeExceptions = setOf(
-                        "java.lang.NullPointerException"
-                    )
-                )
-            )
+                        "java.lang.NullPointerException",
+                    ),
+                ),
+            ),
         )
 
         executionResult shouldNot haveCompleted()
@@ -134,15 +134,15 @@ try {
 } finally {
     System.out.println("Finally");
 }
-            """.trim()
+            """.trim(),
         ).compile().execute(
             SourceExecutionArguments(
                 classLoaderConfiguration = Sandbox.ClassLoaderConfiguration(
                     unsafeExceptions = setOf(
-                        "java.lang.ClassCastException"
-                    )
-                )
-            )
+                        "java.lang.ClassCastException",
+                    ),
+                ),
+            ),
         )
 
         executionResult shouldNot haveCompleted()
@@ -169,15 +169,15 @@ try {
 } finally {
     System.out.println("Bah");
 }
-            """.trim()
+            """.trim(),
         ).compile().execute(
             SourceExecutionArguments(
                 classLoaderConfiguration = Sandbox.ClassLoaderConfiguration(
                     unsafeExceptions = setOf(
-                        "java.lang.NullPointerException"
-                    )
-                )
-            )
+                        "java.lang.NullPointerException",
+                    ),
+                ),
+            ),
         )
 
         executionResult shouldNot haveCompleted()
@@ -200,15 +200,15 @@ while (true) {
         System.out.println("Finally");
     }
 }
-            """.trim()
+            """.trim(),
         ).compile().execute(
             SourceExecutionArguments(
                 classLoaderConfiguration = Sandbox.ClassLoaderConfiguration(
                     unsafeExceptions = setOf(
-                        "java.lang.NullPointerException"
-                    )
-                )
-            )
+                        "java.lang.NullPointerException",
+                    ),
+                ),
+            ),
         )
 
         executionResult shouldNot haveCompleted()
@@ -225,7 +225,7 @@ try {
 } catch (ExampleException e) {
     System.out.println("Catch");
 }
-            """.trim()
+            """.trim(),
         ).compile().execute()
         executionResult should haveCompleted()
         executionResult should haveOutput("Catch")
@@ -240,7 +240,7 @@ try {
 } catch (ExampleError e) {
     System.out.println("Catch");
 }
-            """.trim()
+            """.trim(),
         ).compile().execute()
         executionResult shouldNot haveCompleted()
         executionResult.threw should beInstanceOf(Error::class)
@@ -255,7 +255,7 @@ try {
 } catch (Exception e) {
     System.out.println(e.getMessage());
 }
-            """.trim()
+            """.trim(),
         ).compile().execute()
 
         executionResult should haveCompleted()
@@ -271,7 +271,7 @@ try {
 } finally {
     System.out.println("Finally");
 }
-            """.trim()
+            """.trim(),
         ).compile().execute()
 
         executionResult shouldNot haveCompleted()
@@ -291,7 +291,7 @@ try {
 } finally {
     System.out.println("Finally");
 }
-            """.trim()
+            """.trim(),
         ).compile().execute()
 
         executionResult shouldNot haveCompleted()
@@ -309,7 +309,7 @@ try {
 } finally {
     System.out.println("Finally");
 }
-            """.trim()
+            """.trim(),
         ).compile().execute()
 
         executionResult shouldNot haveCompleted()
@@ -329,7 +329,7 @@ try {
 } finally {
     System.out.println("Finally");
 }
-            """.trim()
+            """.trim(),
         ).compile().execute()
 
         executionResult shouldNot haveCompleted()
@@ -349,7 +349,7 @@ public class Example {
     }
 }
 Example ex = new Example();
-            """.trim()
+            """.trim(),
         ).compile().execute()
         executionResult should haveCompleted()
         executionResult shouldNot haveOutput("Finalizer")
@@ -372,7 +372,7 @@ public class Example {
     }
 }
 Example ex = new Example();
-            """.trim()
+            """.trim(),
         ).compile().execute()
         executionResult should haveCompleted()
         executionResult should haveOutput("Finalizer 1\nFinalizer 2")
@@ -413,8 +413,8 @@ public class Main {
         other.join();
         System.out.println(counter);
     }
-}""".trim()
-            )
+}""".trim(),
+            ),
         ).compile().execute(SourceExecutionArguments(maxExtraThreads = 1, timeout = 1000L))
         executionResult shouldNot haveTimedOut()
         executionResult should haveCompleted()
@@ -447,8 +447,8 @@ public class Main {
             }
         }
     }
-}""".trim().replace("[PARAM_LIST]", waitParamList)
-                )
+}""".trim().replace("[PARAM_LIST]", waitParamList),
+                ),
             )
                 .compile().execute(SourceExecutionArguments(maxExtraThreads = 1))
             executionResult should haveCompleted()
@@ -467,15 +467,15 @@ public class LockHog {
             while (true) {}
         }
     }
-}""".trim()
-            )
+}""".trim(),
+            ),
         ).compile()
         val goodCompileResult = Source.fromSnippet(
             """
 Thread.sleep(100);
 synchronized (Object.class) {
     System.out.println("Synchronized");
-}""".trim()
+}""".trim(),
         ).compile()
         val badTask = async {
             badCompileResult.execute(SourceExecutionArguments(timeout = 800L, klass = "LockHog"))
@@ -495,7 +495,7 @@ synchronized (Object.class) {
                 return 5;
             }
             System.out.println(getFive());
-            """.trimIndent()
+            """.trimIndent(),
         ).compile().execute()
         executionResult should haveCompleted()
         executionResult should haveOutput("5")
@@ -515,7 +515,7 @@ synchronized (Object.class) {
                 }
             }
             System.out.println(getFive());
-            """.trimIndent()
+            """.trimIndent(),
         ).compile().execute()
         executionResult should haveCompleted()
         executionResult should haveOutput("Finally\n5")
@@ -536,7 +536,7 @@ synchronized (Object.class) {
                 }
             }
             System.out.println(getFive());
-            """.trimIndent()
+            """.trimIndent(),
         ).compile().execute()
         executionResult should haveCompleted()
         executionResult should haveOutput("Synchronized\nBoom!\nFinally\n5")
@@ -554,7 +554,7 @@ synchronized (Object.class) {
             } catch (Exception e) {
                 System.out.println(e.getMessage());
             }
-            """.trimIndent()
+            """.trimIndent(),
         ).compile().execute()
         executionResult should haveCompleted()
         executionResult should haveOutput("Synchronized\n5")
@@ -567,7 +567,7 @@ synchronized (Object.class) {
                 return "5";
             }
             System.out.println(getFive());
-            """.trimIndent()
+            """.trimIndent(),
         ).compile().execute()
         executionResult should haveCompleted()
         executionResult should haveOutput("5")
@@ -583,7 +583,7 @@ synchronized (Object.class) {
                 return 3.14159;
             }
             System.out.println((int) (getFive() * getFive() * getPi()));
-            """.trimIndent()
+            """.trimIndent(),
         ).compile().execute()
         executionResult should haveCompleted()
         executionResult should haveOutput("78")
@@ -597,7 +597,7 @@ synchronized (Object.class) {
                 System.out.println(prefix + sum);
             }
             printSum("Sum: ", (byte) 10, 100, 3.13);
-            """.trimIndent()
+            """.trimIndent(),
         ).compile().execute()
         executionResult should haveCompleted()
         executionResult should haveOutput("Sum: 323.0")
@@ -610,7 +610,7 @@ synchronized (Object.class) {
                 return (a + b + c + d) * factor;
             }
             System.out.println(sum(10, 20, 30, 40, 1.5));
-            """.trimIndent()
+            """.trimIndent(),
         ).compile().execute()
         executionResult should haveCompleted()
         executionResult should haveOutput("150.0")
@@ -623,7 +623,7 @@ synchronized (Object.class) {
                 return (byte) (a + b);
             }
             System.out.println(addToByte(2.0f, (short) 3));
-            """.trimIndent()
+            """.trimIndent(),
         ).compile().execute()
         executionResult should haveCompleted()
         executionResult should haveOutput("5")
@@ -640,7 +640,7 @@ synchronized (Object.class) {
                 }
             }
             System.out.println(factorial(14));
-            """.trimIndent()
+            """.trimIndent(),
         ).compile().execute()
         executionResult should haveCompleted()
         executionResult should haveOutput("87178291200")
@@ -655,7 +655,7 @@ synchronized (Object.class) {
                 }
             }
             System.out.println(new Example().getFivePlus((short) 10));
-            """.trimIndent()
+            """.trimIndent(),
         ).compile().execute()
         executionResult should haveCompleted()
         executionResult should haveOutput("15")
@@ -673,7 +673,7 @@ synchronized (Object.class) {
             }
             int[] parsed = parse(new String[] {"5"});
             System.out.println(parsed[0]);
-            """.trimIndent()
+            """.trimIndent(),
         ).compile().execute()
         executionResult should haveCompleted()
         executionResult should haveOutput("5")
@@ -702,7 +702,7 @@ synchronized (Object.class) {
             Thread t = new Thread(new Example());
             t.start();
             t.join();
-            """.trimIndent()
+            """.trimIndent(),
         ).compile().execute(SourceExecutionArguments(maxExtraThreads = 1))
         executionResult should haveCompleted()
         executionResult should haveOutput("Hi!\nBye!")
@@ -735,7 +735,7 @@ synchronized (Object.class) {
             Thread t = new Thread(new Example());
             t.start();
             t.join();
-            """.trimIndent()
+            """.trimIndent(),
         ).compile().execute(SourceExecutionArguments(maxExtraThreads = 1))
         executionResult should haveCompleted()
         executionResult should haveOutput("Hi!\nBye!")
@@ -774,8 +774,8 @@ public class Main {
         other.join();
         System.out.println(Counter.counter);
     }
-}""".trim()
-            )
+}""".trim(),
+            ),
         ).compile().execute(SourceExecutionArguments(maxExtraThreads = 1, timeout = 500L))
         executionResult shouldNot haveTimedOut()
         executionResult should haveCompleted()
@@ -796,8 +796,8 @@ public class Main {
             }
         };
     }
-}""".trim()
-            )
+}""".trim(),
+            ),
         ).compile().execute()
         executionResult should haveCompleted()
         assertThrows<SecurityException> { executionResult.returned!!.toString() }
@@ -817,8 +817,8 @@ public class Main {
             }
         };
     }
-}""".trim()
-            )
+}""".trim(),
+            ),
         ).compile().execute()
         executionResult shouldNot haveCompleted()
         executionResult.threw!!.javaClass shouldBe SecurityException::class.java
@@ -842,8 +842,8 @@ public class Main {
             }
         }.printDescription();
     }
-}""".trim()
-            )
+}""".trim(),
+            ),
         ).compile().execute()
         executionResult should haveCompleted()
         executionResult should haveOutput("Implementation")
@@ -854,12 +854,12 @@ public class Main {
             """
 import kotlinx.coroutines.*;
 GlobalScope.class.toString();
-            """.trim()
+            """.trim(),
         ).compile()
         val executeArgs = SourceExecutionArguments(
             classLoaderConfiguration = Sandbox.ClassLoaderConfiguration(
-                unsafeExceptions = setOf("java.lang.ArithmeticException", "java.lang.StackOverflowError")
-            )
+                unsafeExceptions = setOf("java.lang.ArithmeticException", "java.lang.StackOverflowError"),
+            ),
         )
         val firstExecution = compileResult.execute(executeArgs)
         firstExecution.sandboxedClassLoader!!.transformedReloadedClasses shouldNotBe 0
@@ -872,22 +872,22 @@ GlobalScope.class.toString();
             """
 import kotlinx.coroutines.*;
 GlobalScope.class.toString();
-            """.trim()
+            """.trim(),
         ).compile()
         val firstExecution = compileResult.execute(
             SourceExecutionArguments(
                 classLoaderConfiguration = Sandbox.ClassLoaderConfiguration(
-                    unsafeExceptions = setOf("java.lang.StackOverflowError", "java.lang.InternalError")
-                )
-            )
+                    unsafeExceptions = setOf("java.lang.StackOverflowError", "java.lang.InternalError"),
+                ),
+            ),
         )
         firstExecution.sandboxedClassLoader!!.transformedReloadedClasses shouldNotBe 0
         val secondExecution = compileResult.execute(
             SourceExecutionArguments(
                 classLoaderConfiguration = Sandbox.ClassLoaderConfiguration(
-                    unsafeExceptions = setOf("java.lang.InternalError")
-                )
-            )
+                    unsafeExceptions = setOf("java.lang.InternalError"),
+                ),
+            ),
         )
         secondExecution.sandboxedClassLoader!!.transformedReloadedClasses shouldNotBe 0
     }
@@ -906,15 +906,15 @@ try {
     String s = new String("x".hashCode() > 0 ? "a" : "b");
     System.out.println(s);
 }
-            """.trim()
+            """.trim(),
         ).compile().execute(
             SourceExecutionArguments(
                 classLoaderConfiguration = Sandbox.ClassLoaderConfiguration(
                     unsafeExceptions = setOf(
-                        "java.lang.NullPointerException"
-                    )
-                )
-            )
+                        "java.lang.NullPointerException",
+                    ),
+                ),
+            ),
         )
 
         executionResult shouldNot haveCompleted()
@@ -958,7 +958,7 @@ try {
                 System.out.println(boundInstanceGet.getAsInt());
                 System.out.println(widget.getInnerFactory().get());
                 System.out.println(widget.getSuperStringify().get());
-            """.trimIndent()
+            """.trimIndent(),
         ).compile().execute()
         executionResult should haveCompleted()
         executionResult.output shouldStartWith "2.25\n10\n10\nInner\nWidget@"
@@ -980,7 +980,7 @@ try {
                 System.out.println(unboundLong.applyAsLong(l));
                 LongSupplier boundLong = l::longValue;
                 System.out.println(boundLong.getAsLong());
-            """.trimIndent()
+            """.trimIndent(),
         ).compile().execute()
         executionResult should haveCompleted()
         val longResult = 1L shl 33
@@ -1003,7 +1003,7 @@ try {
                 System.out.println(unboundLong.apply(l));
                 Supplier<Long> boundLong = l::longValue;
                 System.out.println(boundLong.get());
-            """.trimIndent()
+            """.trimIndent(),
         ).compile().execute()
         executionResult should haveCompleted()
         val longResult = 1L shl 33
@@ -1023,7 +1023,7 @@ try {
                 Function<CharSequence, IntStream> csChars = CharSequence::chars;
                 System.out.println(csChars.apply(c).count());
                 
-            """.trimIndent()
+            """.trimIndent(),
         ).compile().execute()
         executionResult should haveCompleted()
         executionResult should haveOutput("3\n5\n5")
@@ -1043,7 +1043,7 @@ try {
                 System.out.println(parseLongRadix.apply("FF", 16));
                 Function<String, List<String>> singletonize = List::of; // Interface static method!
                 System.out.println(singletonize.apply("hi"));
-            """.trimIndent()
+            """.trimIndent(),
         ).compile().execute()
         executionResult should haveCompleted()
         executionResult should haveOutput("10\n255\n[hi]")
@@ -1057,7 +1057,7 @@ try {
                 System.out.println(strFromChars.apply(new char[] {'h', 'i'}));
                 LongFunction<Long> boxLong = Long::new;
                 System.out.println(boxLong.apply(2L));
-            """.trimIndent()
+            """.trimIndent(),
         ).compile().execute()
         executionResult should haveCompleted()
         executionResult should haveOutput("hi\n2")
@@ -1071,7 +1071,7 @@ try {
                 var list = new ArrayList<String>();
                 Supplier<String> s = list::toString;
                 System.out.println(s.get());
-            """.trimIndent()
+            """.trimIndent(),
         ).compile().execute()
         executionResult should haveCompleted()
         executionResult should haveOutput("[]")
@@ -1086,7 +1086,7 @@ try {
                 for (String s : (Iterable<String>) stream::iterator) {
                   System.out.println(s);
                 }
-            """.trimIndent()
+            """.trimIndent(),
         ).compile().execute()
         executionResult should haveCompleted()
         executionResult should haveOutput("hello\nworld")

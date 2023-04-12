@@ -6,11 +6,11 @@ import com.github.jknack.handlebars.HandlebarsException
 class TemplatedSource(
     sources: Sources,
     val originalSources: Sources,
-    @Transient private val remappedLineMapping: Map<String, RemappedLines>
+    @Transient private val remappedLineMapping: Map<String, RemappedLines>,
 ) : Source(
     sources,
     sourceMappingFunction = { mapLocation(it, remappedLineMapping) },
-    leadingIndentationFunction = { leadingIndentation(it, remappedLineMapping) }
+    leadingIndentationFunction = { leadingIndentation(it, remappedLineMapping) },
 ) {
     data class RemappedLines(val start: Int, val end: Int, val addedIndentation: Int = 0)
     companion object {
@@ -22,7 +22,7 @@ class TemplatedSource(
             return SourceLocation(
                 input.source,
                 input.line - remappedLineInfo.start + 1,
-                input.column - remappedLineInfo.addedIndentation
+                input.column - remappedLineInfo.addedIndentation,
             )
         }
 
@@ -47,7 +47,7 @@ class TemplatingError(
     name: String,
     line: Int,
     column: Int,
-    message: String
+    message: String,
 ) : AlwaysLocatedSourceError(SourceLocation(name, line, column), message)
 
 class TemplatingFailed(errors: List<TemplatingError>) : AlwaysLocatedJeedError(errors)
@@ -88,7 +88,7 @@ fun Source.Companion.fromTemplates(sourceMap: Map<String, String>, templateMap: 
             remappedLineMapping[name] = TemplatedSource.RemappedLines(
                 templateLine.first + 1,
                 templateLine.first + sourceLength,
-                leadingWhitespaceAmount
+                leadingWhitespaceAmount,
             )
             whitespaceContent
         } else {

@@ -20,7 +20,7 @@ public class Example {
     boolean first = true;
     boolean second = false;
   }
-}"""
+}""",
         ).checkMutations<BooleanLiteral> { mutations, contents ->
             mutations shouldHaveSize 2
             mutations[0].check(contents, "true", "false")
@@ -35,7 +35,7 @@ public class Example {
     char first = 'a';
     char second = '!';
   }
-}"""
+}""",
         ).checkMutations<CharLiteral> { mutations, contents ->
             mutations shouldHaveSize 2
             mutations[0].check(contents, "'a'")
@@ -50,7 +50,7 @@ public class Example {
     System.out.println("Hello, world!");
     String s = "";
   }
-}"""
+}""",
         ).checkMutations<StringLiteral> { mutations, contents ->
             mutations shouldHaveSize 2
             mutations[0].check(contents, "\"Hello, world!\"").also {
@@ -67,7 +67,7 @@ public class Example {
     System.out.println("Hello, world");
     String s = "";
   }
-}"""
+}""",
         ).checkMutations<StringLiteralLookalike> { mutations, contents ->
             mutations shouldHaveSize 1
             mutations[0].check(contents, "\"Hello, world\"").also {
@@ -85,7 +85,7 @@ public class Example {
     String w = "67 test";
     String s = "";
   }
-}"""
+}""",
         ).checkMutations<StringLiteralCase> { mutations, contents ->
             mutations shouldHaveSize 2
             mutations[0].check(contents, "\"Hello, world\"").also {
@@ -102,7 +102,7 @@ public class Example {
     System.out.println("Hello, world!");
     String s = "";
   }
-}"""
+}""",
         ).checkMutations<StringLiteralTrim> { mutations, contents ->
             mutations shouldHaveSize 1
             mutations[0].check(contents, """"Hello, world!"""".trimMargin())
@@ -115,7 +115,7 @@ public class Example {
   public static void example() {
     System.out.println("\\\\");
   }
-}"""
+}""",
         ).checkMutations<StringLiteral> { mutations, contents ->
             mutations shouldHaveSize 1
             mutations[0].check(contents, """"\\\\"""").also {
@@ -128,7 +128,7 @@ public class Example {
   public static void example() {
     System.out.println("\\t\\");
   }
-}"""
+}""",
         ).checkMutations<StringLiteral> { mutations, contents ->
             mutations shouldHaveSize 1
             mutations[0].check(contents, """"\\t\\"""").also {
@@ -141,7 +141,7 @@ public class Example {
   public static void example() {
     System.out.println("\\t\\");
   }
-}"""
+}""",
         ).checkMutations<StringLiteral> { mutations, contents ->
             mutations shouldHaveSize 1
             mutations[0].check(contents, """"\\t\\"""").also {
@@ -154,7 +154,7 @@ public class Example {
   public static void example() {
     System.out.println("\\t\\te");
   }
-}"""
+}""",
         ).checkMutations<StringLiteral> { mutations, contents ->
             mutations shouldHaveSize 1
             mutations[0].check(contents, """"\\t\\te"""").also {
@@ -170,7 +170,7 @@ public class Example {
     System.out.println(1234);
     float f = 1.01f;
   }
-}"""
+}""",
         ).checkMutations<NumberLiteral> { mutations, contents ->
             mutations shouldHaveSize 2
             mutations[0].check(contents, "1234")
@@ -190,7 +190,7 @@ public class Example {
     int second = 0x101;
     int third = 0b101010;
   }
-}"""
+}""",
         ).checkMutations<NumberLiteralTrim> { mutations, contents ->
             mutations shouldHaveSize 4
             mutations[0].check(contents, "1234")
@@ -206,7 +206,7 @@ public class Example {
     i++;
     --j;
   }
-}"""
+}""",
         ).checkMutations<IncrementDecrement> { mutations, contents ->
             mutations shouldHaveSize 2
             mutations[0].check(contents, "++", "--")
@@ -222,7 +222,7 @@ public class Example {
     int j = -1;
     int k = -j;
   }
-}"""
+}""",
         ).checkMutations<InvertNegation> { mutations, contents ->
             mutations shouldHaveSize 2
             mutations[0].check(contents, "-", "")
@@ -248,7 +248,7 @@ public class Example {
     l = i >> 2;
     k = i >>> j;
   }
-}"""
+}""",
         ).checkMutations<MutateMath> { mutations, contents ->
             mutations shouldHaveSize 10
             mutations[0].check(contents, "-", "+")
@@ -272,7 +272,7 @@ public class Example {
     int j = 1;
     int k = i + j;
   }
-}"""
+}""",
         ).checkMutations<PlusToMinus> { mutations, contents ->
             mutations shouldHaveSize 1
             mutations[0].check(contents, "+", "-")
@@ -290,7 +290,7 @@ public class Example {
       System.out.println("There");
     }
   }
-}"""
+}""",
         ).checkMutations<ConditionalBoundary> { mutations, contents ->
             mutations shouldHaveSize 2
             mutations[0].check(contents, "<", "<=")
@@ -311,7 +311,7 @@ public class Example {
       System.out.println("Again");
     }
   }
-}"""
+}""",
         ).checkMutations<NegateConditional> { mutations, contents ->
             mutations shouldHaveSize 3
             mutations[0].check(contents, "<", ">=")
@@ -345,7 +345,7 @@ public class Example {
   public static double eighth() {
     return 0.0f;
   }
-}"""
+}""",
         ).checkMutations<PrimitiveReturn> { mutations, contents ->
             mutations shouldHaveSize 2
             mutations[0].check(contents, "1", "0")
@@ -367,7 +367,7 @@ public class Example {
   public static boolean fourth() {
     return true;
   }
-}"""
+}""",
         ).checkMutations<TrueReturn> { mutations, contents ->
             mutations shouldHaveSize 2
             mutations[0].check(contents, "it", "true")
@@ -389,7 +389,7 @@ public class Example {
   public static boolean fourth() {
     return true;
   }
-}"""
+}""",
         ).checkMutations<FalseReturn> { mutations, contents ->
             mutations shouldHaveSize 2
             mutations[0].check(contents, "it", "false")
@@ -414,7 +414,7 @@ public class Example {
   public static int[] fifth() {
     return new int[] {};
   }
-}"""
+}""",
         ).checkMutations<NullReturn> { mutations, contents ->
             mutations shouldHaveSize 2
             mutations[0].check(contents, "new Object()", "null")
@@ -429,7 +429,7 @@ public class Example {
     assert first > 0;
     assert second >= 0 : "Bad second value";
   }
-}"""
+}""",
         ).checkMutations<RemoveRuntimeCheck> { mutations, contents ->
             mutations shouldHaveSize 2
             mutations[0].check(contents, "assert first > 0;", "")
@@ -450,7 +450,7 @@ public class Example {
   public static long[] test(int first, int second) {
     return new long[] {1L, 2L, 4L};
   }
-}"""
+}""",
         ).checkMutations<RemoveMethod> { mutations, _ ->
             mutations shouldHaveSize 2
         }
@@ -470,7 +470,7 @@ public class Example {
   public static void test4(int first, int second) {
 return ;
 }
-}"""
+}""",
         ).checkMutations<RemoveMethod> { mutations, _ ->
             mutations shouldHaveSize 0
         }
@@ -486,7 +486,7 @@ public class Example {
       return second;
     }
   }
-}"""
+}""",
         ).checkMutations<NegateIf> { mutations, contents ->
             mutations shouldHaveSize 1
             mutations[0].check(contents, "(first > second)", "(!(first > second))")
@@ -502,7 +502,7 @@ public class Example {
       i++;
     }
   }
-}"""
+}""",
         ).checkMutations<NegateWhile> { mutations, contents ->
             mutations shouldHaveSize 1
             mutations[0].check(contents, "(i < first)", "(!(i < first))")
@@ -534,7 +534,7 @@ public class Example {
       System.out.println(7);
     }
   }
-}"""
+}""",
         ).checkMutations<RemoveIf> { mutations, contents ->
             mutations shouldHaveSize 8
             mutations[0].check(
@@ -542,7 +542,7 @@ public class Example {
                 """if (first > 0) {
       System.out.println(1);
     }""",
-                ""
+                "",
             )
         }
     }
@@ -555,7 +555,7 @@ public class Example {
       System.out.println(1);
     }
   }
-}"""
+}""",
         ).checkMutations<SwapAndOr> { mutations, contents ->
             mutations shouldHaveSize 1
             mutations[0].check(contents, "&&", "||")
@@ -575,7 +575,7 @@ public class Example {
       }
     }
   }
-}"""
+}""",
         ).checkMutations<SwapBreakContinue> { mutations, contents ->
             mutations shouldHaveSize 2
             mutations[0].check(contents, "continue", "break")
@@ -591,7 +591,7 @@ public class Example {
     int i = i + 1;
     int j = j - 1;
   }
-}"""
+}""",
         ).checkMutations<PlusOrMinusOneToZero> { mutations, contents ->
             mutations shouldHaveSize 2
             mutations[0].check(contents, "1", "0")
@@ -606,7 +606,7 @@ public class Example {
     int i = i + 1;
     int j = j - 1;
   }
-}"""
+}""",
         ).checkMutations<NumberLiteral> { mutations, contents ->
             mutations shouldHaveSize 2
             mutations[0].check(contents, "1", "0")
@@ -623,7 +623,7 @@ public class Example {
     for (int i : new int[] {1, 2, 4}) { }
     do {} while (true);
   }
-}"""
+}""",
         ).checkMutations<RemoveLoop> { mutations, contents ->
             mutations shouldHaveSize 4
             mutations[0].check(contents, "for (int i = 0; i < first; i++) { }", "")
@@ -639,7 +639,7 @@ public class Example {
     }
     for (int i : new int[] {1, 2, 4}) { }
   }
-}"""
+}""",
         ).checkMutations<AddBreak> { mutations, contents ->
             mutations shouldHaveSize 2
             mutations[0].check(contents, "}", "break; }")
@@ -659,7 +659,7 @@ public class Example {
         i += 1;
     } while (true);
   }
-}"""
+}""",
         ).checkMutations<AddBreak> { mutations, contents ->
             mutations shouldHaveSize 2
             mutations[0].check(contents, "}", "break; }")
@@ -674,7 +674,7 @@ public class Example {
     if (true && false) { }
     if (false || true) { }
   }
-}"""
+}""",
         ).checkMutations<RemoveAndOr> { mutations, contents ->
             mutations shouldHaveSize 4
             mutations[0].check(contents, "true && ", "")
@@ -690,7 +690,7 @@ public class Example {
       int value = 0;
     } catch (Exception e) { }
   }
-}"""
+}""",
         ).checkMutations<RemoveTry> { mutations, _ ->
             mutations shouldHaveSize 1
         }
@@ -707,7 +707,7 @@ public class Example {
       i++;
     }
   }
-}"""
+}""",
         ).checkMutations<RemoveStatement> { mutations, _ ->
             mutations shouldHaveSize 3
         }
@@ -720,7 +720,7 @@ public class Example {
     int i = 1 + 2;
     i = 3 + 4;
   }
-}"""
+}""",
         ).checkMutations<RemovePlus> { mutations, contents ->
             mutations shouldHaveSize 4
             mutations[0].check(contents, "1 + ", "")
@@ -746,7 +746,7 @@ public class Example {
     l = i >> 2;
     k = i >>> j;
   }
-}"""
+}""",
         ).checkMutations<RemoveBinary> { mutations, _ ->
             mutations shouldHaveSize 20
         }
@@ -764,7 +764,7 @@ public class Example {
     System.out.println(example2.equals(example3));
   }
 }
-""".trim()
+""".trim(),
         ).checkMutations<ChangeEquals> { mutations, contents ->
             mutations shouldHaveSize 2
             mutations[0].check(contents, "example1 == example3", "(example1.equals(example3))")
@@ -792,7 +792,7 @@ public class Example {
     int testing = s.length("foo");
   }
 }
-""".trim()
+""".trim(),
         ).checkMutations<ChangeLengthAndSize> { mutations, contents ->
             mutations shouldHaveSize 3
             mutations[0].check(contents, "length")
@@ -810,7 +810,7 @@ public class Example {
     int[][] values = new int[][] {{1, 2}, {4, 5}};
   }
 }
-""".trim()
+""".trim(),
         ).checkMutations<ModifyArrayLiteral> { mutations, contents ->
             mutations shouldHaveSize 4
             mutations[0].check(contents, "1, 2, 4")
@@ -827,7 +827,7 @@ public class Example {
     assert first > 0;
     assert second >= 0 : "Bad second value";
   }
-}""".trim()
+}""".trim(),
         )
         source.allMutations(types = setOf(Mutation.Type.REMOVE_RUNTIME_CHECK)).also { mutations ->
             mutations shouldHaveSize 2
@@ -847,7 +847,7 @@ public class Example {
     }
     return new Object(); // mutate-disable
   }
-}"""
+}""",
         ).allMutations().also { mutations ->
             mutations shouldHaveSize 7
             mutations[0].cleaned().also {
@@ -866,7 +866,7 @@ public class Example {
     // mutate-disable
     return new Object();
   }
-}"""
+}""",
         ).allMutations().also { mutations ->
             mutations shouldHaveSize 7
             mutations[0].cleaned().also {
@@ -886,7 +886,7 @@ public class Example {
       return second;
     }
   }
-}"""
+}""",
         ).allMutations().also { mutations ->
             mutations shouldHaveSize 6
             mutations[0].cleaned().also {
@@ -903,7 +903,7 @@ public class Example {
     int i = 0;
     System.out.println("Hello, world!");
   }
-}"""
+}""",
         ).also { source ->
             source.mutater(seed = 124)
                 .also { mutater ->
@@ -937,7 +937,7 @@ public class Example {
   public static int testing() {
     return 10;
   }
-}"""
+}""",
         ).also { source ->
             source.mutater(types = ALL - setOf(Mutation.Type.REMOVE_METHOD)).also { mutater ->
                 mutater.size shouldBe 3
@@ -954,7 +954,7 @@ public class Example {
     boolean it = true;
     return 10;
   }
-}"""
+}""",
         ).also { source ->
             source.mutater(shuffle = false, types = ALL - setOf(Mutation.Type.REMOVE_METHOD)).also { mutater ->
                 mutater.size shouldBe 4
@@ -977,7 +977,7 @@ public class Example {
     boolean it = true;
     return 10;
   }
-}"""
+}""",
         ).also { source ->
             val first = source.allMutations(random = Random(seed = 10))
             val second = source.allMutations(random = Random(seed = 10))
@@ -998,7 +998,7 @@ public class Example {
     String[] parts = input.split(",");
     return parts[1].trim() + " " + parts[0].trim();
   }
-}"""
+}""",
         ).also { source ->
             source.allMutations()
         }
@@ -1011,7 +1011,7 @@ public class Example {
     String test = "foobarfoobarfoobarfoobar";
     return test;
   }
-}"""
+}""",
         ).also { source ->
             source.mutationStream(random = Random(124)).toList().size shouldBe 987
         }
@@ -1027,7 +1027,7 @@ public class Example {
     }
     return test; // 1 mutation
   }
-}"""
+}""",
         ).allFixedMutations(random = Random(124)).also { mutations ->
             mutations.size shouldBe 29
         }
@@ -1041,7 +1041,7 @@ public class Example {
     i++;
     return i;
   }
-}"""
+}""",
         ).also { source ->
             source.mutationStream().take(1024).toList().size shouldBe 5
         }
@@ -1054,7 +1054,7 @@ public class Example {
   void reformatName(String input) {
     return;
   }
-}"""
+}""",
         ).also { source ->
             source.allMutations() shouldHaveSize 0
         }
@@ -1069,7 +1069,7 @@ public class Example {
         }
         System.out.println("Hello, " + input);
     }
-}"""
+}""",
         ).allMutations().also { mutations ->
             mutations shouldHaveSize 13
             mutations.forEach { mutatedSource ->
@@ -1091,7 +1091,7 @@ public class Example {
         values[2] = larger;
         return values;
     }
-}"""
+}""",
         ).allMutations().also { mutations ->
             mutations shouldHaveSize 16
             mutations.forEach { mutatedSource ->
@@ -1115,7 +1115,7 @@ public class Example {
             return "";
         }
     }
-}"""
+}""",
         ).allMutations().onEach { mutatedSource ->
             mutatedSource.marked().checkstyle().also { errors ->
                 errors.errors.filter { it.key != "block.noStatement" } shouldHaveSize 0
@@ -1134,7 +1134,7 @@ public class Example {
           default -> false;
         };
     }
-}"""
+}""",
         ).allMutations()
     }
 
@@ -1147,7 +1147,7 @@ public class Example {
       case 1, 2, 3 -> true;
       default -> false;
     };
-}"""
+}""",
         ).allMutations()
     }
 
@@ -1173,7 +1173,7 @@ public class Question {
         return ' ';
     }
 }
-"""
+""",
         ).allMutations().onEach { mutatedSource ->
             mutatedSource.marked().checkstyle().also { errors ->
                 errors.errors.filter {
@@ -1193,7 +1193,7 @@ public class Question {
     System.out.println(x);
   }
 }
-            """.trimMargin()
+            """.trimMargin(),
         ).allMutations()
     }
     "it should work on if-else without braces" {
@@ -1207,7 +1207,7 @@ public class Question {
       System.out.println("Buy Cat Food At 20% Off");
   }
 }
-            """.trimMargin()
+            """.trimMargin(),
         ).allMutations()
     }
     "it should work on exponents" {
@@ -1219,13 +1219,13 @@ public class Question {
     float another = 2e-20F;
   }
 }
-            """.trimMargin()
+            """.trimMargin(),
         ).also { it.compile() }.allMutations()
     }
 })
 
 inline fun <reified T : Mutation> Source.checkMutations(
-    checker: (mutations: List<Mutation>, contents: String) -> Unit
+    checker: (mutations: List<Mutation>, contents: String) -> Unit,
 ) = getParsed(name).also { parsedSource ->
     checker(Mutation.find<T>(parsedSource, type), contents)
 }

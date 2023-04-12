@@ -24,7 +24,7 @@ object Limits : ConfigSpec() {
         val permissions by optional(
             SourceExecutionArguments.REQUIRED_PERMISSIONS.toList().map {
                 PermissionAdapter().permissionToJson(it)
-            }
+            },
         )
         val maxExtraThreads by optional(Sandbox.ExecutionArguments.DEFAULT_MAX_EXTRA_THREADS)
         val maxOutputLines by optional(Sandbox.ExecutionArguments.DEFAULT_MAX_OUTPUT_LINES)

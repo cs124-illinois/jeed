@@ -27,7 +27,7 @@ int testing() {
 }
 class AnotherTest { }
 int i = 0;
-i++;""".trim()
+i++;""".trim(),
         )
     }
     "should parse Kotlin snippets" {
@@ -45,7 +45,7 @@ fun testing(): Int {
 class AnotherTest
 var i = 0
 i++""".trim(),
-            SnippetArguments(fileType = Source.FileType.KOTLIN)
+            SnippetArguments(fileType = Source.FileType.KOTLIN),
         )
     }
     "should not fail with new switch statements in snippets" {
@@ -57,7 +57,7 @@ public boolean shouldMakeCoffee(String situation) {
           case "Midnight" -> true;
           default -> false;
         };
-}""".trim()
+}""".trim(),
         )
     }
     "should identify a parse errors in a broken snippet" {
@@ -76,7 +76,7 @@ int testing() {
 }
 int i = 0;
 i++
-""".trim()
+""".trim(),
             )
         }
         exception.errors shouldHaveSize 1
@@ -97,7 +97,7 @@ int testing() {
     return 10;
 }
 return;
-""".trim()
+""".trim(),
             )
         }
         exception.errors shouldHaveSize 1
@@ -110,7 +110,7 @@ return;
 package test.me;
 int i = 0;
 System.out.println(i);
-""".trim()
+""".trim(),
             )
         }
         exception.errors shouldHaveSize 1
@@ -133,7 +133,7 @@ int testing() {
 }
 int i = 0;
 i++
-""".trim()
+""".trim(),
             )
         }
         exception.errors shouldHaveSize 3
@@ -177,7 +177,7 @@ println(second())
             Source.fromSnippet(
                 """
 return;
-        """.trim()
+        """.trim(),
             )
         }
     }
@@ -189,7 +189,7 @@ int i = 0;
 if (i > 2) {
     return;
 }
-        """.trim()
+        """.trim(),
             )
         }
     }
@@ -211,7 +211,7 @@ protected void test3() {
   public void test4() {
   System.out.println("Hello, world!");
 }
-        """.trim()
+        """.trim(),
         ).compile()
     }
     "should parse Java 13 constructs in snippets" {
@@ -227,7 +227,7 @@ static String test(int arg) {
   };
 }
 System.out.println(test(0));
-        """.trim()
+        """.trim(),
         ).compile().execute()
         executionResult should haveCompleted()
         executionResult should haveOutput("test")
@@ -239,7 +239,7 @@ System.out.println(test(0));
 public class Foo { }
 System.out.println("Hello, world!");
 import java.util.List;
-        """.trim()
+        """.trim(),
             )
         }
         exception.errors shouldHaveSize 1
@@ -253,7 +253,7 @@ if (value) {
   class Foo { }
 }
 System.out.println("Hello, world!");
-        """.trim()
+        """.trim(),
         ).compile()
     }
     "should allow top-level lambda expression returns" {
@@ -268,7 +268,7 @@ void tester(Test test) {
 tester(() -> {
   return 0;
 });
-        """.trim()
+        """.trim(),
         ).compile()
     }
     "should allow method declarations in anonymous classes in snippets" {
@@ -294,7 +294,7 @@ System.out.println(countArray(array, new IncludeValue() {
     return value < 5 && value > 10;
   }
 }));
-        """.trim()
+        """.trim(),
         ).compile()
     }
     "should handle warnings from outside the snippet" {
@@ -302,7 +302,7 @@ System.out.println(countArray(array, new IncludeValue() {
             """
 import net.bytebuddy.agent.ByteBuddyAgent;
 ByteBuddyAgent.install(ByteBuddyAgent.AttachmentProvider.ForEmulatedAttachment.INSTANCE);
-        """.trim()
+        """.trim(),
         ).compile()
     }
     "should parse kotlin snippets" {
@@ -316,7 +316,7 @@ val i = 0
 println(i)
 test()
 """.trim(),
-            SnippetArguments(fileType = Source.FileType.KOTLIN)
+            SnippetArguments(fileType = Source.FileType.KOTLIN),
         )
     }
     "should parse kotlin snippets containing only comments" {
@@ -324,7 +324,7 @@ test()
             """
 // Test me
 """.trim(),
-            SnippetArguments(fileType = Source.FileType.KOTLIN)
+            SnippetArguments(fileType = Source.FileType.KOTLIN),
         )
     }
     "should identify parse errors in broken kotlin snippets" {
@@ -341,7 +341,7 @@ val i = 0
 println(i)
 test()
 """.trim(),
-                SnippetArguments(fileType = Source.FileType.KOTLIN)
+                SnippetArguments(fileType = Source.FileType.KOTLIN),
             )
         }
         exception.errors shouldHaveSize 1
@@ -372,7 +372,7 @@ test()
                 """
 return
         """.trim(),
-                SnippetArguments(fileType = Source.FileType.KOTLIN)
+                SnippetArguments(fileType = Source.FileType.KOTLIN),
             )
         }
         exception.errors shouldHaveSize 1
@@ -387,7 +387,7 @@ if (i < 1) {
     return
 }
         """.trim(),
-                SnippetArguments(fileType = Source.FileType.KOTLIN)
+                SnippetArguments(fileType = Source.FileType.KOTLIN),
             )
         }
         exception.errors shouldHaveSize 1
@@ -402,7 +402,7 @@ fun add(a: Int, b: Int): Int {
 }
 println(add(2, 3))
         """.trim(),
-            SnippetArguments(fileType = Source.FileType.KOTLIN)
+            SnippetArguments(fileType = Source.FileType.KOTLIN),
         )
     }
     "should not allow package declarations in kotlin snippets" {
@@ -413,7 +413,7 @@ package test.me
 
 println("Hello, world!")
         """.trim(),
-                SnippetArguments(fileType = Source.FileType.KOTLIN)
+                SnippetArguments(fileType = Source.FileType.KOTLIN),
             )
         }
         exception.errors shouldHaveSize 1
@@ -427,7 +427,7 @@ class MainKt() { }
 
 println("Hello, world!")
         """.trim(),
-                SnippetArguments(fileType = Source.FileType.KOTLIN)
+                SnippetArguments(fileType = Source.FileType.KOTLIN),
             )
         }
         exception.errors shouldHaveSize 1
@@ -440,7 +440,7 @@ println("Hello, world!")
 data class Person(name: String)
 println("Hello, world!")
         """.trim(),
-                SnippetArguments(fileType = Source.FileType.KOTLIN)
+                SnippetArguments(fileType = Source.FileType.KOTLIN),
             ).kompile()
         }
         exception.errors shouldHaveSize 1
@@ -453,7 +453,7 @@ Object o = new String("");
 if (o instanceof String s) {
   System.out.println(s.length());
 }
-            """.trim()
+            """.trim(),
         ).compile()
     }
     "should parse records properly" {
@@ -465,7 +465,7 @@ record Range(int lo, int hi) {
             throw new IllegalArgumentException(String.format("(%d,%d)", lo, hi));
         }
     }
-}            """.trim()
+}            """.trim(),
         ).compile()
     }
     "should parse text blocks properly" {
@@ -488,7 +488,7 @@ record Range(int lo, int hi) {
 int count(int[] v) {
   return 0;
 }}
-            """.trim()
+            """.trim(),
             ).compile()
         }
     }
@@ -501,7 +501,7 @@ interface Test {
 class Tester implements Test {
   public void test() { }
 }
-            """.trim()
+            """.trim(),
         ).compile()
     }
     "should allow generic methods in Java snippets" {
@@ -510,7 +510,7 @@ class Tester implements Test {
 <T> T max(T[] array) {
   return null;
 }
-            """.trim()
+            """.trim(),
         ).compile()
     }
     "should allow generic methods in Kotlin snippets" {
@@ -519,7 +519,7 @@ class Tester implements Test {
 class Test<T>
 fun <T> Test<T>.requireIndexIsNotNegative(index: Int): Unit = require(index >= 0)
             """.trim(),
-            SnippetArguments(fileType = Source.FileType.KOTLIN)
+            SnippetArguments(fileType = Source.FileType.KOTLIN),
         ).kompile()
     }
     "should allow anonymous classes in snippets" {
@@ -534,7 +534,7 @@ Adder addOne = new Adder() {
     return value + 1;
   }
 };
-            """.trim()
+            """.trim(),
         ).compile()
     }
     "should allow anonymous classes in Kotlin snippets" {
@@ -551,7 +551,7 @@ val student = object : Person() {
   }
 }
 """.trim(),
-            SnippetArguments(fileType = Source.FileType.KOTLIN)
+            SnippetArguments(fileType = Source.FileType.KOTLIN),
         ).kompile()
     }
     "should hoist functions in Kotlin snippets" {
@@ -564,7 +564,7 @@ fun second(): Test {
 }
 println(second())
             """.trim(),
-            SnippetArguments(fileType = Source.FileType.KOTLIN, indent = 4)
+            SnippetArguments(fileType = Source.FileType.KOTLIN, indent = 4),
         ).also {
             it.ktLint(KtLintArguments(failOnError = true))
         }.kompile().execute().also {
@@ -582,7 +582,7 @@ fun second(test: Int) {
 }
 second(3)
             """.trim(),
-            SnippetArguments(fileType = Source.FileType.KOTLIN)
+            SnippetArguments(fileType = Source.FileType.KOTLIN),
         )
         source.kompile().execute().also { results ->
             results.threw!!.getStackTraceForSource(source).lines().also {
@@ -605,7 +605,7 @@ fun reversePrint(values: CharArray): Int {
   return temp.size
 }
             """.trim(),
-                SnippetArguments(fileType = Source.FileType.KOTLIN)
+                SnippetArguments(fileType = Source.FileType.KOTLIN),
             ).kompile()
         }
         exception.errors.first().location!!.line shouldBe 3
@@ -621,7 +621,7 @@ class Dog(val name: String?) {
     get() = field
 }
             """.trim(),
-            SnippetArguments(fileType = Source.FileType.KOTLIN)
+            SnippetArguments(fileType = Source.FileType.KOTLIN),
         )
         Source.fromSnippet(
             """
@@ -633,7 +633,7 @@ class Dog(val name: String?) {
     }
 }
             """.trim(),
-            SnippetArguments(fileType = Source.FileType.KOTLIN)
+            SnippetArguments(fileType = Source.FileType.KOTLIN),
         )
     }
     "should parse Kotlin secondary constructors" {
@@ -646,7 +646,7 @@ class Person(val name: String, var age: Double) {
   }
 }
             """.trim(),
-            SnippetArguments(fileType = Source.FileType.KOTLIN)
+            SnippetArguments(fileType = Source.FileType.KOTLIN),
         )
     }
     "should parse Kotlin functional interfaces" {
@@ -657,7 +657,7 @@ fun interface It {
 }
 val first = It { value -> value % 2 == 0 }
             """.trim(),
-            SnippetArguments(fileType = Source.FileType.KOTLIN)
+            SnippetArguments(fileType = Source.FileType.KOTLIN),
         )
     }
     "should parse Java 15 case syntax" {
@@ -670,7 +670,7 @@ boolean boo = switch (foo) {
   default -> false;
 };
 System.out.println(boo);
-            """.trim()
+            """.trim(),
             )
         }
     }
@@ -687,7 +687,7 @@ boolean boo = switch (foo) {
   default:
     yield true;
 };
-            """.trim()
+            """.trim(),
             )
         }
     }
@@ -699,7 +699,7 @@ public class Example {
   public static void main(String[] unused) {
     System.out.println("Here");
   }
-}""".trim()
+}""".trim(),
         ).compile().execute().also { executionResult ->
             executionResult should haveCompleted()
             executionResult should haveOutput("Here")
@@ -711,7 +711,7 @@ public class Example {
     int[] array = new int[] {1, 2, 4};
     System.out.println("ran");
   }
-}""".trim()
+}""".trim(),
         ).compile().execute().also { executionResult ->
             executionResult should haveCompleted()
             executionResult should haveOutput("ran")
@@ -725,7 +725,7 @@ public class Example {
   public static void main(String[] unused) {
     System.out.println("Here");
   }
-}""".trim()
+}""".trim(),
         ).compile().execute().also { executionResult ->
             executionResult should haveCompleted()
             executionResult should haveOutput("Here")
@@ -741,7 +741,7 @@ public class Example {
   public static void main(String[] unused) {
     System.out.println("Here");
   }
-}""".trim()
+}""".trim(),
         ).compile().execute().also { executionResult ->
             executionResult should haveCompleted()
             executionResult should haveOutput("")
@@ -754,7 +754,7 @@ class Example {
   public static void main(String[] unused) {
     System.out.println("Here");
   }
-}""".trim()
+}""".trim(),
         ).compile().execute().also { executionResult ->
             executionResult should haveCompleted()
             executionResult should haveOutput("")
@@ -767,7 +767,7 @@ fun test() {
   i = 0
 }
 """.trim(),
-            SnippetArguments(fileType = Source.FileType.KOTLIN)
+            SnippetArguments(fileType = Source.FileType.KOTLIN),
         ).also {
             it.rewrittenSource.lines() shouldHaveSize 9
             val compilerError = shouldThrow<CompilationFailed> {
@@ -782,7 +782,7 @@ fun test() {
   i = 0
 }
 """.trim(),
-            SnippetArguments(fileType = Source.FileType.KOTLIN, noEmptyMain = true)
+            SnippetArguments(fileType = Source.FileType.KOTLIN, noEmptyMain = true),
         ).also {
             it.rewrittenSource.lines() shouldHaveSize 7
             val compilerError = shouldThrow<CompilationFailed> {
@@ -799,7 +799,7 @@ fun main() {
   println("Here")
 }
                 """.trim(),
-            SnippetArguments(fileType = Source.FileType.KOTLIN, noEmptyMain = true)
+            SnippetArguments(fileType = Source.FileType.KOTLIN, noEmptyMain = true),
         ).kompile()
     }
     "should not include snippet errors past the end" {
@@ -808,7 +808,7 @@ fun main() {
                 """
 System.out.println("He
                 """.trim(),
-                SnippetArguments()
+                SnippetArguments(),
             )
         }.also {
             it.errors.size shouldBe 1
@@ -821,7 +821,7 @@ System.out.println("He
   System.out.println("Here");
 
                 """.trim(),
-                SnippetArguments()
+                SnippetArguments(),
             )
         }.also {
             it.errors.size shouldBe 1
@@ -833,7 +833,7 @@ System.out.println("He
   System.out.println("Here");
 }}
                 """.trim(),
-                SnippetArguments()
+                SnippetArguments(),
             )
         }.also {
             it.errors.size shouldBe 1
@@ -845,7 +845,7 @@ System.out.println("He
 /*
 comment
                 """.trim(),
-                SnippetArguments()
+                SnippetArguments(),
             )
         }.also {
             it.errors.size shouldBe 1
@@ -857,7 +857,7 @@ comment
 /*
 comment
                 """.trim(),
-                SnippetArguments(fileType = Source.FileType.KOTLIN)
+                SnippetArguments(fileType = Source.FileType.KOTLIN),
             )
         }.also {
             it.errors.size shouldBe 1
@@ -875,7 +875,7 @@ val second = Modify { value -> value - 10 }
 
 println(first.modify(10))
 println(second.modify(3))
-            """.trim()
+            """.trim(),
         ).kompile().execute().also { executionResult ->
             executionResult should haveCompleted()
             executionResult should haveOutput("11\n-7")
@@ -888,7 +888,7 @@ fun haveParseErrorOnLine(line: Int) = object : Matcher<SnippetTransformationFail
         return MatcherResult(
             value.errors.any { it.location.line == line },
             { "should have parse error on line $line" },
-            { "should not have parse error on line $line" }
+            { "should not have parse error on line $line" },
         )
     }
 }

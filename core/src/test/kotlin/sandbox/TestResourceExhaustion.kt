@@ -28,7 +28,7 @@ int i = 0;
 while (true) {
     i++;
 }
-        """.trim()
+        """.trim(),
         ).compile().execute()
 
         executionResult shouldNot haveCompleted()
@@ -47,8 +47,8 @@ public class Main {
         }
     }
 }
-        """.trim()
-            )
+        """.trim(),
+            ),
         ).compile().execute()
 
         executionResult shouldNot haveCompleted()
@@ -63,7 +63,7 @@ int i = 0;
 while (true) {
     i++;
 }
-            """.trim()
+            """.trim(),
         ).compile().execute()
         executionResult shouldNot haveCompleted()
         executionResult should haveTimedOut()
@@ -81,7 +81,7 @@ public class Main {
     return 1;
   }
 }
-            """.trim()
+            """.trim(),
         ).compile().execute()
         executionResult shouldNot haveCompleted()
         executionResult should haveTimedOut()
@@ -105,7 +105,7 @@ thread.start();
 try {
     thread.join();
 } catch (Throwable e) { }
-        """.trim()
+        """.trim(),
         ).compile().execute(SourceExecutionArguments(maxExtraThreads = 1))
 
         executionResult shouldNot haveCompleted()
@@ -128,7 +128,7 @@ for (long i = 0;; i++) {
         thread.start();
     } catch (Throwable e) { }
 }
-        """.trim()
+        """.trim(),
         ).compile().execute(SourceExecutionArguments(maxExtraThreads = 16, timeout = 1000L))
 
         executionResult shouldNot haveCompleted()
@@ -155,7 +155,7 @@ for (long i = 0;; i++) {
         thread.start();
     } catch (Throwable e) {}
 }
-        """.trim()
+        """.trim(),
         ).compile().execute(SourceExecutionArguments(maxExtraThreads = 16, timeout = 1000L))
 
         executionResult shouldNot haveCompleted()
@@ -184,7 +184,7 @@ while (true) {
         thread.start();
     } catch (Throwable e) { }
 }
-        """.trim()
+        """.trim(),
         ).compile().execute(SourceExecutionArguments(maxExtraThreads = 256, timeout = 1000L))
 
         executionResult shouldNot haveCompleted()
@@ -209,7 +209,7 @@ while (true) {
         thread.start();
     } catch (Throwable e) { }
 }
-        """.trim()
+        """.trim(),
         ).compile().execute(SourceExecutionArguments(maxExtraThreads = 256, timeout = 1000L))
 
         executionResult shouldNot haveCompleted()
@@ -233,7 +233,7 @@ while (true) {
         thread.start();
     } catch (Throwable e) { }
 }
-        """.trim()
+        """.trim(),
         ).compile().execute(SourceExecutionArguments(maxExtraThreads = 256, timeout = 1000L))
 
         executionResult shouldNot haveCompleted()
@@ -258,7 +258,7 @@ while (true) {
         thread.start();
     } catch (Throwable e) { }
 }
-        """.trim()
+        """.trim(),
         ).compile().execute(SourceExecutionArguments(maxExtraThreads = 256, timeout = 1000L))
 
         executionResult shouldNot haveCompleted()
@@ -286,7 +286,7 @@ thread.start();
 try {
     Thread.sleep(Long.MAX_VALUE);
 } catch (Throwable e) { }
-        """.trim()
+        """.trim(),
         ).compile().execute(SourceExecutionArguments(maxExtraThreads = 256, timeout = 1000L))
 
         executionResult shouldNot haveCompleted()
@@ -321,7 +321,7 @@ thread.start();
 try {
     Thread.sleep(Long.MAX_VALUE);
 } catch (Throwable t) { }
-        """.trim()
+        """.trim(),
         ).compile().execute(SourceExecutionArguments(maxExtraThreads = 256, timeout = 1000L))
 
         executionResult shouldNot haveCompleted()
@@ -358,7 +358,7 @@ thread.start();
 try {
     Thread.sleep(Long.MAX_VALUE);
 } catch (Throwable e) { }
-        """.trim()
+        """.trim(),
         ).compile().execute(SourceExecutionArguments(maxExtraThreads = 256, timeout = 1000L))
 
         executionResult shouldNot haveCompleted()
@@ -397,7 +397,7 @@ thread.start();
 try {
     Thread.sleep(Long.MAX_VALUE);
 } catch (Throwable t) { }
-        """.trim()
+        """.trim(),
                 ).compile().execute(SourceExecutionArguments(maxExtraThreads = 256, timeout = 2000L))
             }
         }.map {
@@ -432,7 +432,7 @@ while (true) {
         thread.start();
     } catch (Throwable e) { }
 }
-        """.trim()
+        """.trim(),
         ).compile().execute(SourceExecutionArguments(maxExtraThreads = 16, timeout = 1000L))
     }
     "should recover from excessive memory usage" {
@@ -449,7 +449,7 @@ while (true) {
         }
     } catch (Throwable e) {}
 }
-            """.trim()
+            """.trim(),
         ).compile().execute(SourceExecutionArguments(maxExtraThreads = 256, timeout = 1000L))
     }
     "should recover from excessive console printing" {
@@ -460,7 +460,7 @@ while (true) {
 for (long i = 0; i < 10000000L; i++) {
     System.out.println(i);
 }
-    """.trim()
+    """.trim(),
             ).compile().execute(SourceExecutionArguments(timeout = 100L))
 
             result.outputLines[0].line shouldBe "0"
@@ -480,9 +480,9 @@ for (long i = 0; i < 10000000L; i++) {
 for (int i = 0; i < (($value + 10) * 10000); i++) {
     System.out.println($value);
 }
-                    """.trim()
+                    """.trim(),
                     ).compile().execute(SourceExecutionArguments(timeout = 100L)),
-                    value
+                    value,
                 )
             }
         }.map { it ->
@@ -567,7 +567,7 @@ class A {
     A(Character a, Character b) { }
 }
 new A();
-            """.trimIndent()
+            """.trimIndent(),
         ).compile()
         try {
             compileResult.execute()
@@ -593,7 +593,7 @@ thread.start();
 try {
     thread.join();
 } catch (Throwable e) { }
-        """.trim()
+        """.trim(),
         ).compile().execute(SourceExecutionArguments(maxExtraThreads = 1))
 
         executionResult shouldNot haveCompleted()
@@ -615,8 +615,8 @@ public class Main {
             }
         }
     }
-}""".trim()
-            )
+}""".trim(),
+            ),
         ).compile()
 
         (1..8).forEach { _ -> // Flaky
@@ -645,8 +645,8 @@ public class Main {
         new Thread(new Other()).start();
         Sync.deadlock();
     }
-}""".trim()
-            )
+}""".trim(),
+            ),
         ).compile()
         val executionResult = compileResult.execute(SourceExecutionArguments(maxExtraThreads = 1, timeout = 200L))
         executionResult shouldNot haveCompleted()
@@ -678,8 +678,8 @@ public class Main {
             }
         }
     }
-}""".trim()
-            )
+}""".trim(),
+            ),
         ).compile()
         val executionResult = compileResult.execute(SourceExecutionArguments(maxExtraThreads = 1, timeout = 200L))
         executionResult shouldNot haveCompleted()
@@ -704,7 +704,7 @@ for (int n = 0; n < 10000; n++) {
 }
 System.out.println("Warmed up");
 countedLoop(1000000);
-""".trim()
+""".trim(),
         ).compile().execute()
         executionResult should haveTimedOut()
         executionResult shouldNot haveCompleted()
@@ -720,8 +720,8 @@ public class Main {
         var scanner = new Scanner(System.in);
         scanner.nextLine();
     }
-}""".trim()
-            )
+}""".trim(),
+            ),
         ).compile()
 
         (1..8).forEach { _ ->
@@ -741,8 +741,8 @@ public class Main {
             System.out.println(b);
         }
     }
-}""".trim()
-            )
+}""".trim(),
+            ),
         ).compile()
 
         (1..8).forEach { _ ->
@@ -762,8 +762,8 @@ public class Main {
         System.out.println("Main");
     }
 }
-        """.trim()
-            )
+        """.trim(),
+            ),
         ).compile().execute()
 
         executionResult shouldNot haveCompleted()

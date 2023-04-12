@@ -50,7 +50,7 @@ try {
     thread.join();
 } catch (Exception e) { }
 System.out.println("There");
-        """.trim()
+        """.trim(),
         ).compile().execute(SourceExecutionArguments(maxExtraThreads = 7))
 
         executionResult shouldNot haveCompleted()
@@ -60,7 +60,7 @@ System.out.println("There");
         val executionResult = Source.fromSnippet(
             """
 System.exit(2);
-        """.trim()
+        """.trim(),
         ).compile().execute()
 
         executionResult shouldNot haveCompleted()
@@ -74,7 +74,7 @@ import java.io.*;
 ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 PrintStream printStream = new PrintStream(byteArrayOutputStream);
 System.setOut(printStream);
-        """.trim()
+        """.trim(),
         ).compile().execute()
 
         executionResult shouldNot haveCompleted()
@@ -95,7 +95,7 @@ System.setOut(printStream);
             """
 import java.io.*;
 System.out.println(new File("/").listFiles().length);
-        """.trim()
+        """.trim(),
         ).compile().execute()
 
         executionResult shouldNot haveCompleted()
@@ -108,7 +108,7 @@ import java.io.*;
 var writer = new PrintWriter("test.txt", "UTF-8");
 writer.println("Uh oh");
 writer.close();
-        """.trim()
+        """.trim(),
         ).compile().execute()
 
         executionResult shouldNot haveCompleted()
@@ -122,7 +122,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 Path file = Paths.get("test.txt");
 Files.write(file, Arrays.asList("oh", "no"), StandardCharsets.UTF_8);
-        """.trim()
+        """.trim(),
         ).compile().execute()
 
         executionResult shouldNot haveCompleted()
@@ -134,7 +134,7 @@ Files.write(file, Arrays.asList("oh", "no"), StandardCharsets.UTF_8);
 import java.io.File
 File("test.txt").writeText("uh oh")
                 """.trim(),
-            SnippetArguments(fileType = Source.FileType.KOTLIN)
+            SnippetArguments(fileType = Source.FileType.KOTLIN),
         ).kompile().execute()
 
         executionResult shouldNot haveCompleted()
@@ -144,9 +144,9 @@ File("test.txt").writeText("uh oh")
         val executionResult = Source.fromSnippet(
             """
 System.out.println(System.getProperty("file.separator"));
-        """.trim()
+        """.trim(),
         ).compile().execute(
-            SourceExecutionArguments(permissions = setOf(PropertyPermission("*", "read")))
+            SourceExecutionArguments(permissions = setOf(PropertyPermission("*", "read"))),
         )
 
         executionResult should haveCompleted()
@@ -156,7 +156,7 @@ System.out.println(System.getProperty("file.separator"));
         val executionResult = Source.fromSnippet(
             """
 System.out.println(System.getProperty("file.separator"));
-        """.trim()
+        """.trim(),
         ).compile().execute()
 
         executionResult shouldNot haveCompleted()
@@ -166,7 +166,7 @@ System.out.println(System.getProperty("file.separator"));
         val compiledSource = Source.fromSnippet(
             """
 System.out.println(System.getProperty("file.separator"));
-        """.trim()
+        """.trim(),
         ).compile()
 
         val failedExecution = compiledSource.execute()
@@ -175,8 +175,8 @@ System.out.println(System.getProperty("file.separator"));
 
         val successfulExecution = compiledSource.execute(
             SourceExecutionArguments(
-                permissions = setOf(PropertyPermission("*", "read"))
-            )
+                permissions = setOf(PropertyPermission("*", "read")),
+            ),
         )
         successfulExecution should haveCompleted()
         successfulExecution.permissionDenied shouldBe false
@@ -190,7 +190,7 @@ public class Example implements Runnable {
 Thread thread = new Thread(new Example());
 thread.start();
 System.out.println("Started");
-        """.trim()
+        """.trim(),
         ).compile().execute()
 
         executionResult shouldNot haveCompleted()
@@ -212,7 +212,7 @@ try {
 } catch (Exception e) {
     System.out.println(e);
 }
-        """.trim()
+        """.trim(),
         ).compile()
 
         val failedExecutionResult = compiledSource.execute()
@@ -239,7 +239,7 @@ for (int i = 0; i < threads.length; i++) {
     System.out.println(i);
 }
 threads[0].join();
-        """.trim()
+        """.trim(),
         ).compile().execute(SourceExecutionArguments(maxExtraThreads = 1))
         result shouldNot haveCompleted()
         result.permissionDenied shouldBe true
@@ -250,9 +250,9 @@ threads[0].join();
             Source.fromSnippet(
                 """
 System.exit(3);
-            """.trim()
+            """.trim(),
             ).compile().execute(
-                SourceExecutionArguments(permissions = setOf(RuntimePermission("exitVM")))
+                SourceExecutionArguments(permissions = setOf(RuntimePermission("exitVM"))),
             )
         }
     }
@@ -270,7 +270,7 @@ strings.stream()
     .sorted()
     .map(String::new)
     .forEach(System.out::println);
-        """.trim()
+        """.trim(),
         ).compile().execute()
 
         executionResult should haveCompleted()
@@ -295,8 +295,8 @@ public class Main {
         System.out.println(test(new A[] { }));
     }
 }
-        """.trim()
-            )
+        """.trim(),
+            ),
         ).compile().execute()
 
         executionResult should haveCompleted()
@@ -324,7 +324,7 @@ System.out.println(sb);
 if (br != null) {
     br.close();
 }
-        """.trim()
+        """.trim(),
         ).compile().execute()
 
         executionResult shouldNot haveCompleted()
@@ -343,7 +343,7 @@ String line = null;
 while ((line = in.readLine()) != null) {
     System.out.println(line);
 }
-        """.trim()
+        """.trim(),
         ).compile().execute()
 
         executionResult shouldNot haveCompleted()
@@ -353,7 +353,7 @@ while ((line = in.readLine()) != null) {
         val executionResult = Source.fromSnippet(
             """
 ProcessHandle.allProcesses().forEach(p -> System.out.println(p.info()));
-        """.trim()
+        """.trim(),
         ).compile().execute()
 
         executionResult shouldNot haveCompleted()
@@ -365,7 +365,7 @@ ProcessHandle.allProcesses().forEach(p -> System.out.println(p.info()));
             """
 Class<SecurityManager> c = SecurityManager.class;
 SecurityManager s = c.newInstance();
-        """.trim()
+        """.trim(),
         ).compile().execute()
 
         executionResult shouldNot haveCompleted()
@@ -390,7 +390,7 @@ Method compile = Class.forName(
 );
 Object compileArgs = compileArgsClass.newInstance();
 Object compiledSource = compile.invoke(null, snippet, compileArgs);
-        """.trim()
+        """.trim(),
         ).compile().execute()
 
         executionResult shouldNot haveCompleted()
@@ -406,7 +406,7 @@ Class<?> sandboxClass = Class.forName("edu.illinois.cs.cs125.jeed.core.Sandbox")
 Field field = sandboxClass.getDeclaredField("confinedTasks");
 field.setAccessible(true);
 Map confinedTasks = (Map) field.get(null);
-        """.trim()
+        """.trim(),
         ).compile().execute()
 
         executionResult shouldNot haveCompleted()
@@ -442,8 +442,8 @@ public class Example {
         System.out.println("Main");
     }
 }
-        """
-            )
+        """,
+            ),
         ).compile().execute(SourceExecutionArguments("Example"))
 
         executionResult shouldNot haveCompleted()
@@ -468,8 +468,8 @@ public class Example {
         System.exit(-1);
     }
 }
-""".trim()
-            )
+""".trim(),
+            ),
         ).compile().execute(SourceExecutionArguments("Example", maxOutputLines = 10240))
         System.gc()
         executionResult.outputLines shouldHaveSize 10000
@@ -496,7 +496,7 @@ try {
 } catch (Throwable t) {
     throw new RuntimeException(t);
 }
-        """.trim()
+        """.trim(),
         ).compile().execute(SourceExecutionArguments(maxExtraThreads = 1))
         executionResult.permissionDenied shouldBe true
     }
@@ -523,7 +523,7 @@ try {
 } catch (Throwable t) {
     throw new RuntimeException(t);
 }
-        """.trim()
+        """.trim(),
         ).compile().execute(SourceExecutionArguments(timeout = 10000))
         executionResult.permissionDenied shouldBe true
     }
@@ -552,7 +552,7 @@ try {
 } catch (Throwable t) {
     throw new RuntimeException(t);
 }
-        """.trim()
+        """.trim(),
         ).compile().execute(SourceExecutionArguments(timeout = 10000))
         executionResult.permissionDenied shouldBe true
     }
@@ -564,7 +564,7 @@ import java.lang.invoke.MethodHandles;
 MethodHandles.Lookup lookup = null;
 var clazz = lookup.findClass("edu.illinois.cs.cs125.jeed.core.Sandbox");
 System.out.println(clazz);
-        """.trim()
+        """.trim(),
         ).compile().execute(SourceExecutionArguments(timeout = 10000))
         executionResult.permissionDenied shouldBe true
         executionResult.threw shouldBe instanceOf<SecurityException>()
@@ -576,7 +576,7 @@ System.out.println(clazz);
 import net.bytebuddy.agent.ByteBuddyAgent;
 
 ByteBuddyAgent.install(ByteBuddyAgent.AttachmentProvider.ForEmulatedAttachment.INSTANCE);
-        """.trim()
+        """.trim(),
         ).compile().execute(SourceExecutionArguments(timeout = 10000))
         executionResult.permissionDenied shouldBe true
         executionResult.completed shouldBe false
@@ -588,7 +588,7 @@ ByteBuddyAgent.install(ByteBuddyAgent.AttachmentProvider.ForEmulatedAttachment.I
 import net.bytebuddy.agent.ByteBuddyAgent;
 
 ByteBuddyAgent.install();
-        """.trim()
+        """.trim(),
         ).compile().execute(SourceExecutionArguments(timeout = 10000))
         executionResult.completed shouldBe false
         executionResult.threw shouldNot beNull()
@@ -601,7 +601,7 @@ import com.sun.tools.attach.VirtualMachine;
 var vms = VirtualMachine.list();
 var vmid = vms.get(0).id();
 var vm = VirtualMachine.attach(vmid);
-        """.trim()
+        """.trim(),
         ).compile().execute(SourceExecutionArguments(timeout = 10000))
         executionResult.permissionDenied shouldBe true
         executionResult.completed shouldBe false
@@ -619,7 +619,7 @@ class Example {
 Constructor<?> cons = Example.class.getDeclaredConstructors()[0];
 cons.setAccessible(true);
 System.out.println(cons.newInstance());
-        """.trim()
+        """.trim(),
         ).compile().execute(SourceExecutionArguments(timeout = 10000))
         executionResult.permissionDenied shouldBe true
         executionResult.completed shouldBe false
@@ -631,7 +631,7 @@ import sun.misc.Unsafe;
 
 Unsafe unsafe = null;
 unsafe.getInt(null, 0); // obvious NPE, but should fail in classloading first
-        """.trim()
+        """.trim(),
         ).compile().execute(SourceExecutionArguments(timeout = 10000))
         executionResult.permissionDenied shouldBe true
         executionResult.permissionRequests.find {
@@ -645,7 +645,7 @@ unsafe.getInt(null, 0); // obvious NPE, but should fail in classloading first
 class X {}
 var cl = X.class.getClassLoader().getParent();
 System.out.println(Class.forName("edu.illinois.cs.cs125.jeed.core.Sandbox", true, cl));
-        """.trim()
+        """.trim(),
         ).compile().execute(SourceExecutionArguments(timeout = 10000))
         executionResult shouldNot haveCompleted()
         executionResult.permissionDenied shouldBe true
@@ -657,7 +657,7 @@ System.out.println(Class.forName("edu.illinois.cs.cs125.jeed.core.Sandbox", true
                 class X {}
                 Function<Class<?>, ClassLoader> gcl = Class::getClassLoader;
                 System.out.println(gcl.apply(X.class));
-            """.trimIndent()
+            """.trimIndent(),
         ).compile().execute()
         executionResult shouldNot haveCompleted()
         executionResult.permissionDenied shouldBe true
@@ -668,7 +668,7 @@ System.out.println(Class.forName("edu.illinois.cs.cs125.jeed.core.Sandbox", true
 class X {}
 var cl = X.class.getClassLoader().getParent();
 System.out.println(cl.loadClass("edu.illinois.cs.cs125.jeed.core.Sandbox"));
-        """.trim()
+        """.trim(),
         ).compile().execute(SourceExecutionArguments(timeout = 10000))
         executionResult shouldNot haveCompleted()
         executionResult.permissionDenied shouldBe true
@@ -680,7 +680,7 @@ import com.puppycrawl.tools.checkstyle.api.CheckstyleException;
 import java.security.SecureClassLoader;
 var cl = (SecureClassLoader) CheckstyleException.class.getClassLoader();
 System.out.println(cl.loadClass("edu.illinois.cs.cs125.jeed.core.Sandbox"));
-        """.trim()
+        """.trim(),
         ).compile().execute(SourceExecutionArguments(timeout = 10000))
         executionResult shouldNot haveCompleted()
         executionResult.permissionDenied shouldBe true
@@ -694,7 +694,7 @@ val klass = RewriteBytecode::class
 val sandboxKlass = klass.java.enclosingClass.kotlin
 println(sandboxKlass.constructors)
                 """.trim(),
-            SnippetArguments(fileType = Source.FileType.KOTLIN)
+            SnippetArguments(fileType = Source.FileType.KOTLIN),
         ).kompile().execute()
         executionMainResult shouldNot haveCompleted()
         executionMainResult.permissionDenied shouldBe true
@@ -704,7 +704,7 @@ println(sandboxKlass.constructors)
             """
 import java.nio.*;
 MappedByteBuffer.allocateDirect(1000);
-        """.trim()
+        """.trim(),
         ).compile().execute(SourceExecutionArguments(timeout = 10000))
         executionResult shouldNot haveCompleted()
         executionResult.permissionDenied shouldBe true
@@ -718,7 +718,7 @@ MappedByteBuffer.allocateDirect(1000);
                 import java.util.Arrays;
                 int[] ints = new int[1024];
                 Arrays.stream(ints).parallel().forEach(System::exit);
-                """.trimIndent()
+                """.trimIndent(),
             ).compile().execute()
             executionResult shouldNot haveCompleted()
             executionResult.threw should beInstanceOf<SecurityException>()
@@ -731,7 +731,7 @@ MappedByteBuffer.allocateDirect(1000);
             import java.util.Arrays;
             int[] ints = new int[1024];
             Arrays.stream(ints).parallel().forEach(System::exit);
-            """.trimIndent()
+            """.trimIndent(),
         ).compile().execute()
         executionResult shouldNot haveCompleted()
         executionResult.threw should beInstanceOf<SecurityException>()
@@ -747,7 +747,7 @@ MappedByteBuffer.allocateDirect(1000);
             FileOutputStream fdOut = new FileOutputStream(FileDescriptor.out);
             PrintStream psOut = new PrintStream(fdOut, true);
             psOut.println("Uh oh");
-            """.trimIndent()
+            """.trimIndent(),
         ).compile().execute()
         executionResult shouldNot haveCompleted()
         executionResult.permissionDenied shouldBe true

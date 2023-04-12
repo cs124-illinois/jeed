@@ -55,7 +55,7 @@ data class KompilationArguments(
     val waitForCache: Boolean = false,
     @Transient val parentFileManager: JeedFileManager? = null,
     val parameters: Boolean = DEFAULT_PARAMETERS,
-    val jvmTarget: String = DEFAULT_JVM_TARGET
+    val jvmTarget: String = DEFAULT_JVM_TARGET,
 ) {
     val arguments: K2JVMCompilerArguments = K2JVMCompilerArguments()
 
@@ -112,9 +112,9 @@ private class JeedMessageCollector(val source: Source, val allWarningsAsErrors: 
         get() = messages.filter {
             it.kind == CompilerMessageSeverity.ERROR.presentableName ||
                 allWarningsAsErrors && (
-                it.kind == CompilerMessageSeverity.WARNING.presentableName ||
-                    it.kind == CompilerMessageSeverity.STRONG_WARNING.presentableName
-                )
+                    it.kind == CompilerMessageSeverity.WARNING.presentableName ||
+                        it.kind == CompilerMessageSeverity.STRONG_WARNING.presentableName
+                    )
         }.map {
             CompilationError(it.location, it.message)
         }
@@ -159,7 +159,7 @@ private fun kompile(
     kompilationArguments: KompilationArguments,
     source: Source,
     parentFileManager: JeedFileManager? = kompilationArguments.parentFileManager,
-    parentClassLoader: ClassLoader? = kompilationArguments.parentClassLoader
+    parentClassLoader: ClassLoader? = kompilationArguments.parentClassLoader,
 ): CompiledSource {
     require(source.type == Source.FileType.KOTLIN) { "Kotlin compiler needs Kotlin sources" }
 
@@ -185,7 +185,7 @@ private fun kompile(
         val environment = KotlinCoreEnvironment.createForProduction(
             rootDisposable,
             configuration,
-            EnvironmentConfigFiles.JVM_CONFIG_FILES
+            EnvironmentConfigFiles.JVM_CONFIG_FILES,
         )
 
         val psiFileFactory = PsiFileFactory.getInstance(environment.project) as PsiFileFactoryImpl
@@ -221,7 +221,7 @@ private fun kompile(
 
         val fileManager = JeedFileManager(
             parentFileManager ?: standardFileManager,
-            GeneratedClassLoader(state.factory, kompilationArguments.parentClassLoader)
+            GeneratedClassLoader(state.factory, kompilationArguments.parentClassLoader),
         )
         val classLoader = JeedClassLoader(fileManager, parentClassLoader)
 
@@ -231,7 +231,7 @@ private fun kompile(
             started,
             Interval(started, Instant.now()),
             classLoader,
-            fileManager
+            fileManager,
         ).also {
             it.cache(kompilationArguments)
         }
@@ -270,8 +270,8 @@ fun JeedFileManager.toVirtualFile(): VirtualFile {
                 SimpleVirtualFile(
                     parts.last(),
                     contents = file.openInputStream().readAllBytes(),
-                    up = workingDirectory
-                )
+                    up = workingDirectory,
+                ),
             )
         }
     }
@@ -302,7 +302,7 @@ class SimpleVirtualFile(
     children: List<SimpleVirtualFile> = listOf(),
     private val directory: Boolean? = null,
     val contents: ByteArray? = null,
-    val up: SimpleVirtualFile? = null
+    val up: SimpleVirtualFile? = null,
 ) : VirtualFile() {
     private val created = LocalTimeCounter.currentTime()
 

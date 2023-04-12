@@ -44,7 +44,7 @@ class TestSourceUtilities : StringSpec({
             |for (i in test) {
             |  println(i) // test me
             |}
-            """.trimMargin()
+            """.trimMargin(),
         ).stripComments().contents shouldBe
             """
             |for (i in test) {
@@ -91,7 +91,7 @@ class TestSourceUtilities : StringSpec({
             |  }
             |}
             |
-            """.trimMargin()
+            """.trimMargin(),
         ).stripAssertionMessages().googleFormat().contents shouldBe
             """public class Test {
             |  public static void main() {
@@ -115,7 +115,7 @@ class TestSourceUtilities : StringSpec({
             |  error("Bad")
             |  error ( "Whoops" )
             |}
-            """.trimMargin()
+            """.trimMargin(),
         ).stripAssertionMessages().trimLines().contents shouldBe
             """fun main() {
             |  assert(false)
@@ -138,7 +138,7 @@ public class Test {
   public int another(int foo) {
     return foo;
   }
-}""".trim()
+}""".trim(),
         ).identifiers() shouldBe setOf("Test", "main", "i", "j", "bad", "another", "foo")
     }
     "should collect Kotlin identifiers" {
@@ -156,7 +156,7 @@ class Test {
 fun another(foo: Int): Int {
   return foo
 }
-""".trim()
+""".trim(),
         ).identifiers() shouldBe setOf("Test", "main", "i", "j", "bad", "another", "foo", "Int")
     }
     "should collect Java strings" {
@@ -170,7 +170,7 @@ public class Test {
       Here we go
     ""${"\""};
   }
-}""".trim()
+}""".trim(),
         ).strings() shouldBe setOf("me", "foo, bar", "Here we go")
     }
     "should detect bad words in Java sources" {
@@ -186,7 +186,7 @@ public class OhFuck {
     return foo;
   }
 }
-""".trim()
+""".trim(),
         ).apply {
             hasBadWords() shouldNotBe null
             getBadWords() shouldBe setOf("fuck")
@@ -206,7 +206,7 @@ public class HoldOn {
     return foo;
   }
 }
-""".trim()
+""".trim(),
         ).apply {
             hasBadWords() shouldBe null
             getBadWords() shouldBe setOf()
@@ -218,7 +218,7 @@ public class HoldOn {
 fun shittyFunction() {
   return true
 }
-""".trim()
+""".trim(),
         ).apply {
             hasBadWords() shouldNotBe null
             getBadWords() shouldBe setOf("shitty")
@@ -233,7 +233,7 @@ fun holdOn(): String {
   val test = "something good"
   return "search index"
 }
-""".trim()
+""".trim(),
         ).apply {
             hasBadWords() shouldBe null
             getBadWords() shouldBe setOf()
@@ -250,7 +250,7 @@ fun holdOn(): String {
   var setTitle = "me"
   return "search index"
 }
-""".trim()
+""".trim(),
         ).apply {
             hasBadWords() shouldBe null
             getBadWords() shouldBe setOf()
@@ -333,7 +333,7 @@ fun emailToNetID(email: String): String {
 //(you can see previous)
 // But I included the @
 //Idk if you take off points for using stuff we're not supposed to know but plz dont
-        """
+        """,
         ).stripAssertionMessages()
     }
     "should fail properly when stripping assertions" {
@@ -347,7 +347,7 @@ fun emailToNetID(email: String): String {
  } else {
    System.out.println("Smaller");
  }
-                    """.trimIndent()
+                    """.trimIndent(),
                 ),
                 mapOf(
                     "Question.java.hbs" to """
@@ -356,8 +356,8 @@ fun emailToNetID(email: String): String {
      {{{ contents }}}
    }
  }
-                    """.trimIndent()
-                )
+                    """.trimIndent(),
+                ),
             ).stripAssertionMessages()
         }
     }

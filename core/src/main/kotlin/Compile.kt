@@ -23,7 +23,7 @@ import javax.tools.StandardLocation
 import javax.tools.ToolProvider
 
 private val systemCompiler = ToolProvider.getSystemJavaCompiler() ?: error(
-    "systemCompiler not found: you are probably running a JRE, not a JDK"
+    "systemCompiler not found: you are probably running a JRE, not a JDK",
 )
 const val DEFAULT_JAVA_VERSION = 10
 val systemCompilerName = systemCompiler.sourceVersions.maxOrNull().toString()
@@ -58,7 +58,7 @@ data class CompilationArguments(
     val waitForCache: Boolean = false,
     val isolatedClassLoader: Boolean = false,
     val parameters: Boolean = DEFAULT_PARAMETERS,
-    val debugInfo: Boolean = DEFAULT_DEBUG
+    val debugInfo: Boolean = DEFAULT_DEBUG,
 ) {
     companion object {
         const val DEFAULT_WERROR = false
@@ -113,7 +113,7 @@ class CompiledSource(
     @Transient val classLoader: JeedClassLoader,
     @Transient val fileManager: JeedFileManager,
     @Suppress("unused") val compilerName: String = systemCompilerName,
-    val cached: Boolean = false
+    val cached: Boolean = false,
 )
 
 @Suppress("LongMethod", "ComplexMethod")
@@ -122,7 +122,7 @@ private fun compile(
     source: Source,
     compilationArguments: CompilationArguments = CompilationArguments(),
     parentFileManager: JavaFileManager? = compilationArguments.parentFileManager,
-    parentClassLoader: ClassLoader? = compilationArguments.parentClassLoader ?: ClassLoader.getSystemClassLoader()
+    parentClassLoader: ClassLoader? = compilationArguments.parentClassLoader ?: ClassLoader.getSystemClassLoader(),
 ): CompiledSource {
     require(source.type == Source.FileType.JAVA) { "Java compiler needs Java sources" }
     require(!compilationArguments.isolatedClassLoader || compilationArguments.parentClassLoader == null) {
@@ -204,21 +204,21 @@ private fun compile(
         started,
         Interval(started, Instant.now()),
         JeedClassLoader(fileManager, actualParentClassloader),
-        fileManager
+        fileManager,
     ).also {
         it.cache(compilationArguments)
     }
 }
 
 fun Source.compile(
-    compilationArguments: CompilationArguments = CompilationArguments()
+    compilationArguments: CompilationArguments = CompilationArguments(),
 ): CompiledSource {
     return compile(this, compilationArguments)
 }
 
 fun Source.compileWith(
     compiledSource: CompiledSource,
-    compilationArguments: CompilationArguments = CompilationArguments()
+    compilationArguments: CompilationArguments = CompilationArguments(),
 ): CompiledSource {
     require(compilationArguments.parentFileManager == null) {
         "compileWith overrides parentFileManager compilation argument"
@@ -296,7 +296,7 @@ class JeedFileManager(private val parentFileManager: JavaFileManager) :
 
     constructor(
         parentFileManager: JavaFileManager,
-        generatedClassLoader: GeneratedClassLoader
+        generatedClassLoader: GeneratedClassLoader,
     ) : this(parentFileManager) {
         generatedClassLoader.allGeneratedFiles.filter {
             ".${File(it.relativePath).extension}" == JavaFileObject.Kind.CLASS.extension
@@ -318,7 +318,7 @@ class JeedFileManager(private val parentFileManager: JavaFileManager) :
         location: JavaFileManager.Location?,
         className: String,
         kind: JavaFileObject.Kind?,
-        sibling: FileObject?
+        sibling: FileObject?,
     ): JavaFileObject {
         val classPath = classNameToPathWithClass(className)
         return when {
@@ -335,7 +335,7 @@ class JeedFileManager(private val parentFileManager: JavaFileManager) :
     override fun getJavaFileForInput(
         location: JavaFileManager.Location?,
         className: String,
-        kind: JavaFileObject.Kind
+        kind: JavaFileObject.Kind,
     ): JavaFileObject? {
         return if (location != StandardLocation.CLASS_OUTPUT) {
             super.getJavaFileForInput(location, className, kind)
@@ -348,7 +348,7 @@ class JeedFileManager(private val parentFileManager: JavaFileManager) :
         location: JavaFileManager.Location?,
         packageName: String,
         kinds: MutableSet<JavaFileObject.Kind>,
-        recurse: Boolean
+        recurse: Boolean,
     ): MutableIterable<JavaFileObject> {
         val parentList = synchronized(standardFileManagerSyncRoot) {
             super.list(location, packageName, kinds, recurse)
@@ -427,7 +427,7 @@ class JeedClassLoader(private val fileManager: JeedFileManager, parentClassLoade
             val classFile = fileManager.getJavaFileForInput(
                 StandardLocation.CLASS_OUTPUT,
                 name,
-                JavaFileObject.Kind.CLASS
+                JavaFileObject.Kind.CLASS,
             ) ?: throw ClassNotFoundException()
             val byteArray = classFile.openInputStream().readAllBytes()
             loadedClasses += name

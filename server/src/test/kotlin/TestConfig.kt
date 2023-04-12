@@ -27,7 +27,7 @@ class TestConfig : StringSpec({
 limits:
   execution:
     timeout: 10000
-        """.trim()
+        """.trim(),
         )
         config[Limits.Execution.timeout] shouldBeExactly 10000L
     }
@@ -40,7 +40,7 @@ limits:
       - klass: java.lang.RuntimePermission
         name: createClassLoader
     timeout: 10000
-        """.trim()
+        """.trim(),
         )
 
         config[Limits.Execution.timeout] shouldBeExactly 10000L
@@ -48,7 +48,7 @@ limits:
         config[Limits.Execution.permissions][0] shouldBe PermissionJson(
             "java.lang.RuntimePermission",
             "createClassLoader",
-            null
+            null,
         )
     }
     "should reject snippet request with too long timeout" {
@@ -66,7 +66,7 @@ limits:
       "timeout": "${configuration[Limits.Execution.timeout] + 1}"
     }
   }
-}""".trim()
+}""".trim(),
                 )
             }.apply {
                 response.shouldHaveStatus(HttpStatusCode.BadRequest.value)
@@ -85,7 +85,7 @@ limits:
       "timeout": "${configuration[Limits.Execution.timeout] + 1}"
     }
   }
-}""".trim()
+}""".trim(),
                 )
             }.apply {
                 response.shouldHaveStatus(HttpStatusCode.BadRequest.value)
@@ -107,7 +107,7 @@ limits:
       "maxExtraThreads": "${configuration[Limits.Execution.maxExtraThreads] + 1}"
     }
   }
-}""".trim()
+}""".trim(),
                 )
             }.apply {
                 response.shouldHaveStatus(HttpStatusCode.BadRequest.value)
@@ -126,7 +126,7 @@ limits:
       "maxExtraThreads": "${configuration[Limits.Execution.maxExtraThreads] + 1}"
     }
   }
-}""".trim()
+}""".trim(),
                 )
             }.apply {
                 response.shouldHaveStatus(HttpStatusCode.BadRequest.value)
@@ -154,7 +154,7 @@ limits:
       }]
     }
   }
-}""".trim()
+}""".trim(),
                 )
             }.apply {
                 response.shouldHaveStatus(HttpStatusCode.OK.value)
@@ -179,7 +179,7 @@ limits:
       }]
     }
   }
-}""".trim()
+}""".trim(),
                 )
             }.apply {
                 response.shouldHaveStatus(HttpStatusCode.BadRequest.value)
@@ -205,7 +205,7 @@ limits:
       }
     }
   }
-}""".trim()
+}""".trim(),
                 )
             }.apply {
                 response.shouldHaveStatus(HttpStatusCode.OK.value)
@@ -226,7 +226,7 @@ limits:
       }
     }
   }
-}""".trim()
+}""".trim(),
                 )
             }.apply {
                 response.shouldHaveStatus(HttpStatusCode.BadRequest.value)
@@ -256,7 +256,7 @@ limits:
       }
     }
   }
-}""".trim()
+}""".trim(),
                 )
             }.apply {
                 response.shouldHaveStatus(HttpStatusCode.BadRequest.value)

@@ -15,7 +15,7 @@ public class Main {
     whoops();
     System.out.println("Done!");
   }
-}"""
+}""",
         )
         val coverage = source.coverage()
         val features = source.features()
@@ -40,7 +40,7 @@ public class Main {
   public static void main() {
     assert System.currentTimeMillis() != 0;
   }
-}"""
+}""",
         )
         source.coverage().let { coverageResult ->
             coverageResult should haveFileMissedCount(2)
@@ -56,7 +56,7 @@ fun main() {
   assert(System.currentTimeMillis() != 0L)
   assert(System.currentTimeMillis() != 1L)
   assert(System.currentTimeMillis() != 2L)
-}"""
+}""",
         )
         source.coverage().let { coverageResult ->
             coverageResult should haveFileMissedCount(3)
@@ -73,7 +73,7 @@ fun main() {
     println(i)
   }
 }
-"""
+""",
         )
         source.coverage().let { coverageResult ->
             coverageResult should haveFileMissedCount(1)
@@ -93,7 +93,7 @@ fun printRange(top: Int) {
 fun main() {
   printRange(10)
 }
-"""
+""",
         )
         source.coverage().let { coverageResult ->
             coverageResult should haveFileMissedCount(1)
@@ -112,7 +112,7 @@ fun main() {
   val c = C()
   println(c?.s ?: "null")
 }
-"""
+""",
         )
         source.coverage().let { coverageResult ->
             coverageResult should haveFileMissedCount(1)
@@ -132,7 +132,7 @@ class Test {
 fun main() {
   println(Test.test)
 }
-"""
+""",
         )
         val coverage = source.coverage()
         val features = source.features()

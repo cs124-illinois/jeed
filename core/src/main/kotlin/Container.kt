@@ -32,7 +32,7 @@ data class ContainerExecutionArguments(
     val timeout: Long = DEFAULT_TIMEOUT,
     val maxOutputLines: Int = Sandbox.ExecutionArguments.DEFAULT_MAX_OUTPUT_LINES,
     val containerArguments: String =
-        """--network="none""""
+        """--network="none"""",
 ) {
     companion object {
         const val DEFAULT_IMAGE = "cs125/jeed-containerrunner:latest"
@@ -49,7 +49,7 @@ data class ContainerExecutionResults(
     val outputLines: List<Sandbox.TaskResults.OutputLine>,
     val interval: Interval,
     val executionInterval: Interval,
-    val truncatedLines: Int
+    val truncatedLines: Int,
 ) {
     val completed: Boolean
         get() {
@@ -63,7 +63,7 @@ data class ContainerExecutionResults(
 
 @Suppress("LongMethod", "BlockingMethodInNonBlockingContext")
 suspend fun CompiledSource.cexecute(
-    executionArguments: ContainerExecutionArguments = ContainerExecutionArguments()
+    executionArguments: ContainerExecutionArguments = ContainerExecutionArguments(),
 ): ContainerExecutionResults {
     val started = Instant.now()
 
@@ -79,7 +79,7 @@ suspend fun CompiledSource.cexecute(
         executionArguments.klass,
         executionArguments.method,
         defaultKlass,
-        SourceExecutionArguments.DEFAULT_METHOD
+        SourceExecutionArguments.DEFAULT_METHOD,
     )
     executionArguments.klass = executionArguments.klass ?: methodToRun.declaringClass.simpleName
     executionArguments.method = executionArguments.method ?: methodToRun.getQualifiedName()
@@ -111,12 +111,12 @@ suspend fun CompiledSource.cexecute(
             val stdoutLines = StreamGobbler(
                 Sandbox.TaskResults.OutputLine.Console.STDOUT,
                 process.inputStream,
-                executionArguments.maxOutputLines
+                executionArguments.maxOutputLines,
             )
             val stderrLines = StreamGobbler(
                 Sandbox.TaskResults.OutputLine.Console.STDERR,
                 process.errorStream,
-                executionArguments.maxOutputLines
+                executionArguments.maxOutputLines,
             )
             val stderrThread = Thread(stdoutLines)
             val stdoutThread = Thread(stderrLines)
@@ -164,7 +164,7 @@ suspend fun CompiledSource.cexecute(
                 outputLines,
                 Interval(started, Instant.now()),
                 Interval(executionStarted, executionEnded),
-                truncatedLines
+                truncatedLines,
             )
         }
     }
@@ -173,7 +173,7 @@ suspend fun CompiledSource.cexecute(
 class StreamGobbler(
     private val console: Sandbox.TaskResults.OutputLine.Console,
     private val inputStream: InputStream,
-    private val maxOutputLines: Int
+    private val maxOutputLines: Int,
 ) : Runnable {
     val commandOutputLines: MutableList<Sandbox.TaskResults.OutputLine> = mutableListOf()
     var truncatedLines = 0

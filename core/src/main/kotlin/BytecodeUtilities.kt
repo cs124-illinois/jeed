@@ -22,7 +22,7 @@ fun KFunction<*>.asAsmHandle(): Handle {
         classNameToPath(javaMethod.declaringClass.name),
         javaMethod.name,
         Type.getMethodDescriptor(javaMethod),
-        false
+        false,
     )
 }
 
@@ -34,7 +34,7 @@ fun KFunction<*>.asAsmMethodInsn(): MethodInsnNode {
         classNameToPath(javaMethod.declaringClass.name),
         javaMethod.name,
         Type.getMethodDescriptor(javaMethod),
-        false
+        false,
     )
 }
 
@@ -77,7 +77,7 @@ class NewLabelSplittingClassVisitor(visitor: ClassVisitor) : ClassVisitor(Opcode
         name: String?,
         descriptor: String?,
         signature: String?,
-        exceptions: Array<out String>?
+        exceptions: Array<out String>?,
     ): MethodVisitor {
         return NewLabelSplittingMethodVisitor(super.visitMethod(access, name, descriptor, signature, exceptions))
     }
@@ -141,7 +141,7 @@ private class NewLabelSplittingMethodVisitor(visitor: MethodVisitor) : MethodVis
         name: String?,
         descriptor: String?,
         bootstrapMethodHandle: Handle?,
-        vararg bootstrapMethodArguments: Any?
+        vararg bootstrapMethodArguments: Any?,
     ) {
         super.visitInvokeDynamicInsn(name, descriptor, bootstrapMethodHandle, *bootstrapMethodArguments)
         lastLabel = null
@@ -167,7 +167,7 @@ private class NewLabelSplittingMethodVisitor(visitor: MethodVisitor) : MethodVis
         owner: String?,
         name: String?,
         descriptor: String?,
-        isInterface: Boolean
+        isInterface: Boolean,
     ) {
         super.visitMethodInsn(opcode, owner, name, descriptor, isInterface)
         lastLabel = null

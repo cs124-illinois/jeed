@@ -20,7 +20,7 @@ object Jacoco : SandboxPlugin<Unit, CoverageBuilder> {
     override fun createInstrumentationData(
         arguments: Unit,
         classLoaderConfiguration: Sandbox.ClassLoaderConfiguration,
-        allPlugins: List<ConfiguredSandboxPlugin<*, *>>
+        allPlugins: List<ConfiguredSandboxPlugin<*, *>>,
     ): Any {
         return JacocoInstrumentationData()
     }
@@ -29,7 +29,7 @@ object Jacoco : SandboxPlugin<Unit, CoverageBuilder> {
         bytecode: ByteArray,
         name: String,
         instrumentationData: Any?,
-        context: RewritingContext
+        context: RewritingContext,
     ): ByteArray {
         if (context != RewritingContext.UNTRUSTED) return bytecode
         instrumentationData as JacocoInstrumentationData
@@ -62,12 +62,12 @@ object Jacoco : SandboxPlugin<Unit, CoverageBuilder> {
 }
 
 private class JacocoInstrumentationData(
-    val coverageClasses: MutableMap<String, ByteArray> = mutableMapOf()
+    val coverageClasses: MutableMap<String, ByteArray> = mutableMapOf(),
 )
 
 private class JacocoWorkingData(
     val instrumentationData: JacocoInstrumentationData,
-    val runtimeData: RuntimeData = RuntimeData()
+    val runtimeData: RuntimeData = RuntimeData(),
 )
 
 object IsolatedJacocoRuntime : IRuntime {
@@ -80,7 +80,7 @@ object IsolatedJacocoRuntime : IRuntime {
             classNameToPath(RuntimeDataAccessor::class.java.name),
             "get",
             "()Ljava/lang/Object;",
-            false
+            false,
         )
         RuntimeData.generateAccessCall(classid, classname, probecount, mv)
         return STACK_SIZE
@@ -108,7 +108,7 @@ enum class LineCoverage(val description: String) {
     NOT_COVERED("not covered"),
     PARTLY_COVERED("partly covered"),
     COVERED("fully covered"),
-    IGNORED("ignored")
+    IGNORED("ignored"),
 }
 
 private fun ILine.toLineCoverage() = when (status) {
@@ -125,11 +125,11 @@ typealias ClassCoverage = Map<Int, LineCoverage>
 @JsonClass(generateAdapter = true)
 data class CoverageResult(
     val byFile: Map<String, FileCoverage>,
-    val byClass: Map<String, ClassCoverage>
+    val byClass: Map<String, ClassCoverage>,
 )
 
 fun Source.processCoverage(
-    coverage: CoverageBuilder
+    coverage: CoverageBuilder,
 ): CoverageResult {
     val byFile = coverage.sourceFiles.associate { fileCoverage ->
         fileCoverage.name!! to (fileCoverage.firstLine..fileCoverage.lastLine).toList().map { lineNumber ->

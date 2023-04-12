@@ -36,7 +36,7 @@ open class Source(
     sourceMap: Map<String, String>,
     checkSourceNames: (Sources) -> FileType = ::defaultCheckSourceNames,
     @Transient val sourceMappingFunction: (SourceLocation) -> SourceLocation = { it },
-    @Transient val leadingIndentationFunction: (SourceLocation) -> Int = { 0 }
+    @Transient val leadingIndentationFunction: (SourceLocation) -> Int = { 0 },
 ) {
     val sources = Sources(sourceMap.mapValues { (_, value) -> value.replace("""\r\n?""".toRegex(), "\n") })
 
@@ -55,7 +55,7 @@ open class Source(
 
     enum class FileType(val type: String) {
         JAVA("Java"),
-        KOTLIN("Kotlin")
+        KOTLIN("Kotlin"),
     }
 
     val type: FileType
@@ -118,8 +118,8 @@ open class Source(
         MessageDigest.getInstance("MD5")?.let { message ->
             message.digest(
                 moshi.adapter(FlattenedSources::class.java).toJson(
-                    FlattenedSources(sources.toFlatSources().sortedBy { it.path })
-                ).toByteArray()
+                    FlattenedSources(sources.toFlatSources().sortedBy { it.path }),
+                ).toByteArray(),
             )
         }?.joinToString(separator = "") {
             String.format(Locale.US, "%02x", it)
@@ -185,7 +185,7 @@ open class Source(
 data class SourceLocation(
     val source: String,
     val line: Int,
-    val column: Int
+    val column: Int,
 ) {
     override fun toString(): String {
         return if (source != SNIPPET_SOURCE) {
@@ -206,7 +206,7 @@ data class Location(val line: Int, val column: Int) {
 data class SourceRange(
     val source: String?,
     val start: Location,
-    val end: Location
+    val end: Location,
 )
 
 @JsonClass(generateAdapter = true)
@@ -214,13 +214,13 @@ open class LocatedClassOrMethod(
     val name: String,
     @Suppress("unused") val range: SourceRange?,
     val classes: MutableMap<String, LocatedClassOrMethod> = mutableMapOf(),
-    val methods: MutableMap<String, LocatedClassOrMethod> = mutableMapOf()
+    val methods: MutableMap<String, LocatedClassOrMethod> = mutableMapOf(),
 )
 
 @JsonClass(generateAdapter = true)
 open class SourceError(
     open val location: SourceLocation?,
-    val message: String
+    val message: String,
 ) {
     override fun toString(): String {
         return if (location == null) message else "$location: $message"
@@ -230,7 +230,7 @@ open class SourceError(
 @JsonClass(generateAdapter = true)
 open class AlwaysLocatedSourceError(
     final override val location: SourceLocation,
-    message: String
+    message: String,
 ) : SourceError(location, message)
 
 abstract class JeedError(open val errors: List<SourceError>) : Exception() {
@@ -262,8 +262,8 @@ fun Throwable.getStackTraceForSource(
     source: Source,
     boundaries: List<String> = listOf(
         """at java.base/jdk.internal""",
-        """at MainKt.main()"""
-    )
+        """at MainKt.main()""",
+    ),
 ): String {
     val originalStackTrace = this.getStackTraceAsString().lines().toMutableList()
     val firstLine = originalStackTrace.removeAt(0)

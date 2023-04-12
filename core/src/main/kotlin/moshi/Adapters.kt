@@ -55,7 +55,7 @@ val Adapters = setOf(
     TemplatedSourceResultAdapter(),
     FeatureMapAdapter(),
     FeaturesFailedAdapter(),
-    MutationsFailedAdapter()
+    MutationsFailedAdapter(),
 )
 
 class InstantAdapter {
@@ -157,23 +157,23 @@ data class SnippetTransformationErrorJson(val line: Int, val column: Int, val me
 class SnippetTransformationErrorAdapter {
     @FromJson
     fun snippetTransformationErrorFromJson(
-        snippetParseErrorJson: SnippetTransformationErrorJson
+        snippetParseErrorJson: SnippetTransformationErrorJson,
     ): SnippetTransformationError {
         return SnippetTransformationError(
             snippetParseErrorJson.line,
             snippetParseErrorJson.column,
-            snippetParseErrorJson.message
+            snippetParseErrorJson.message,
         )
     }
 
     @ToJson
     fun snippetTransformationErrorToJson(
-        snippetTransformationError: SnippetTransformationError
+        snippetTransformationError: SnippetTransformationError,
     ): SnippetTransformationErrorJson {
         return SnippetTransformationErrorJson(
             snippetTransformationError.location.line,
             snippetTransformationError.location.column,
-            snippetTransformationError.message
+            snippetTransformationError.message,
         )
     }
 }
@@ -184,7 +184,7 @@ data class SnippetTransformationFailedJson(val errors: List<SnippetTransformatio
 class SnippetTransformationFailedAdapter {
     @FromJson
     fun snippetParsingFailedFromJson(
-        snippetParsingFailedJson: SnippetTransformationFailedJson
+        snippetParsingFailedJson: SnippetTransformationFailedJson,
     ): SnippetTransformationFailed {
         return SnippetTransformationFailed(snippetParsingFailedJson.errors)
     }
@@ -192,7 +192,7 @@ class SnippetTransformationFailedAdapter {
     @Suppress("UNCHECKED_CAST")
     @ToJson
     fun snippetParsingFailedToJson(
-        snippetTransformationFailed: SnippetTransformationFailed
+        snippetTransformationFailed: SnippetTransformationFailed,
     ): SnippetTransformationFailedJson {
         return SnippetTransformationFailedJson(snippetTransformationFailed.errors as List<SnippetTransformationError>)
     }
@@ -208,7 +208,7 @@ class TemplatingErrorAdapter {
             templatingErrorJson.name,
             templatingErrorJson.line,
             templatingErrorJson.column,
-            templatingErrorJson.message
+            templatingErrorJson.message,
         )
     }
 
@@ -218,7 +218,7 @@ class TemplatingErrorAdapter {
             templatingError.location.source,
             templatingError.location.line,
             templatingError.location.column,
-            templatingError.message
+            templatingError.message,
         )
     }
 }
@@ -247,7 +247,7 @@ data class SnippetJson(
     val snippetRange: SourceRange,
     val wrappedClassName: String,
     val looseCodeMethodName: String,
-    val fileType: String
+    val fileType: String,
 )
 
 class SnippetAdapter {
@@ -260,7 +260,7 @@ class SnippetAdapter {
             snippetJson.snippetRange,
             snippetJson.wrappedClassName,
             snippetJson.looseCodeMethodName,
-            Source.FileType.valueOf(snippetJson.fileType)
+            Source.FileType.valueOf(snippetJson.fileType),
         )
     }
 
@@ -273,7 +273,7 @@ class SnippetAdapter {
             snippet.snippetRange,
             snippet.wrappedClassName,
             snippet.looseCodeMethodName,
-            snippet.fileType.name
+            snippet.fileType.name,
         )
     }
 }
@@ -281,7 +281,7 @@ class SnippetAdapter {
 @JsonClass(generateAdapter = true)
 data class ExecutionFailedResult(
     val classNotFound: String?,
-    val methodNotFound: String?
+    val methodNotFound: String?,
 ) {
     constructor(executionFailed: ExecutionFailed) : this(
         if (executionFailed.classNotFound != null) {
@@ -293,7 +293,7 @@ data class ExecutionFailedResult(
             executionFailed.methodNotFound.method
         } else {
             null
-        }
+        },
     )
 }
 
@@ -304,14 +304,14 @@ class CompiledSourceResult(
     val compiled: Instant,
     val interval: Interval,
     val compilerName: String,
-    val cached: Boolean
+    val cached: Boolean,
 ) {
     constructor(compiledSource: CompiledSource) : this(
         compiledSource.messages,
         compiledSource.compiled,
         compiledSource.interval,
         compiledSource.compilerName,
-        compiledSource.cached
+        compiledSource.cached,
     )
 }
 
@@ -319,7 +319,7 @@ class CompiledSourceResult(
 @JsonClass(generateAdapter = true)
 class TemplatedSourceResult(
     val sources: Map<String, String>,
-    val originalSources: Map<String, String>
+    val originalSources: Map<String, String>,
 ) {
     constructor(templatedSource: TemplatedSource) : this(templatedSource.sources, templatedSource.originalSources)
 }
@@ -329,12 +329,12 @@ class TemplatedSourceResult(
 class ThrownException(
     val klass: String,
     val stacktrace: String,
-    val message: String?
+    val message: String?,
 ) {
     constructor(throwable: Throwable, source: Source) : this(
         throwable::class.java.typeName,
         throwable.getStackTraceForSource(source),
-        throwable.message
+        throwable.message,
     )
 }
 
@@ -353,12 +353,12 @@ data class SourceTaskResults(
     val executionInterval: Interval,
     val truncatedLines: Int,
     @Transient
-    val taskResults: Sandbox.TaskResults<*>? = null
+    val taskResults: Sandbox.TaskResults<*>? = null,
 ) {
     constructor(
         source: Source,
         taskResults: Sandbox.TaskResults<*>,
-        sourceExecutionArguments: SourceExecutionArguments
+        sourceExecutionArguments: SourceExecutionArguments,
     ) : this(
         sourceExecutionArguments.klass ?: error("should have a klass name"),
         sourceExecutionArguments.method ?: error("Should have a method name"),
@@ -375,7 +375,7 @@ data class SourceTaskResults(
         taskResults.interval,
         taskResults.executionInterval,
         taskResults.truncatedLines,
-        taskResults
+        taskResults,
     )
 }
 
@@ -387,7 +387,7 @@ class TemplatedSourceResultAdapter {
     fun templatedSourceResultFromJson(templatedSourceResultJson: TemplatedSourceResultJson): TemplatedSourceResult {
         return TemplatedSourceResult(
             templatedSourceResultJson.sources.toSource(),
-            templatedSourceResultJson.originalSources.toSource()
+            templatedSourceResultJson.originalSources.toSource(),
         )
     }
 
@@ -395,7 +395,7 @@ class TemplatedSourceResultAdapter {
     fun templatedSourceResultToJson(templatedSourceResult: TemplatedSourceResult): TemplatedSourceResultJson {
         return TemplatedSourceResultJson(
             templatedSourceResult.sources.toFlatSources(),
-            templatedSourceResult.originalSources.toFlatSources()
+            templatedSourceResult.originalSources.toFlatSources(),
         )
     }
 }

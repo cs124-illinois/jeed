@@ -1,3 +1,5 @@
+// ktlint-disable filename
+
 package edu.illinois.cs.cs125.jeed.core
 
 import edu.illinois.cs.cs125.jeed.core.antlr.JavaLexer
@@ -27,7 +29,7 @@ class JavaComplexityListener(val source: Source, entry: Map.Entry<String, String
         } else {
             ClassComplexity(
                 name,
-                SourceRange(filename, source.mapLocation(filename, start), source.mapLocation(filename, end))
+                SourceRange(filename, source.mapLocation(filename, start), source.mapLocation(filename, end)),
             )
         }
         if (complexityStack.isNotEmpty()) {
@@ -49,7 +51,7 @@ class JavaComplexityListener(val source: Source, entry: Map.Entry<String, String
             } else {
                 MethodComplexity(
                     name,
-                    SourceRange(name, source.mapLocation(filename, start), source.mapLocation(filename, end))
+                    SourceRange(name, source.mapLocation(filename, start), source.mapLocation(filename, end)),
                 )
             }
         if (complexityStack.isNotEmpty()) {
@@ -86,7 +88,7 @@ class JavaComplexityListener(val source: Source, entry: Map.Entry<String, String
         enterClassOrInterface(
             ctx.identifier().text,
             Location(ctx.start.line, ctx.start.charPositionInLine),
-            Location(ctx.stop.line, ctx.stop.charPositionInLine)
+            Location(ctx.stop.line, ctx.stop.charPositionInLine),
         )
     }
 
@@ -98,7 +100,7 @@ class JavaComplexityListener(val source: Source, entry: Map.Entry<String, String
         enterClassOrInterface(
             ctx.identifier().text,
             Location(ctx.start.line, ctx.start.charPositionInLine),
-            Location(ctx.stop.line, ctx.stop.charPositionInLine)
+            Location(ctx.stop.line, ctx.stop.charPositionInLine),
         )
     }
 
@@ -110,7 +112,7 @@ class JavaComplexityListener(val source: Source, entry: Map.Entry<String, String
         enterClassOrInterface(
             ctx.identifier().text,
             Location(ctx.start.line, ctx.start.charPositionInLine),
-            Location(ctx.stop.line, ctx.stop.charPositionInLine)
+            Location(ctx.stop.line, ctx.stop.charPositionInLine),
         )
     }
 
@@ -129,7 +131,7 @@ class JavaComplexityListener(val source: Source, entry: Map.Entry<String, String
         enterMethodOrConstructor(
             "${ctx.typeTypeOrVoid().text} ${ctx.identifier().text}($parameters)",
             Location(ctx.start.line, ctx.start.charPositionInLine),
-            Location(ctx.stop.line, ctx.stop.charPositionInLine)
+            Location(ctx.stop.line, ctx.stop.charPositionInLine),
         )
     }
 
@@ -149,7 +151,7 @@ class JavaComplexityListener(val source: Source, entry: Map.Entry<String, String
         enterMethodOrConstructor(
             "${currentClass.name}($parameters)",
             Location(ctx.start.line, ctx.start.charPositionInLine),
-            Location(ctx.stop.line, ctx.stop.charPositionInLine)
+            Location(ctx.stop.line, ctx.stop.charPositionInLine),
         )
     }
 

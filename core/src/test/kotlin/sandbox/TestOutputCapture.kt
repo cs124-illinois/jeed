@@ -29,7 +29,7 @@ class TestOutputCapture : StringSpec({
         val executionResult = Source.fromSnippet(
             """
 System.out.println("Here");
-            """.trim()
+            """.trim(),
         ).compile().execute()
         executionResult should haveCompleted()
         executionResult shouldNot haveTimedOut()
@@ -40,7 +40,7 @@ System.out.println("Here");
         val executionResult = Source.fromSnippet(
             """
 System.err.println("Here");
-            """.trim()
+            """.trim(),
         ).compile().execute()
         executionResult should haveCompleted()
         executionResult shouldNot haveTimedOut()
@@ -52,7 +52,7 @@ System.err.println("Here");
             """
 System.out.println("Here");
 System.err.println("There");
-            """.trim()
+            """.trim(),
         ).compile().execute()
         executionResult should haveCompleted()
         executionResult shouldNot haveTimedOut()
@@ -65,7 +65,7 @@ System.err.println("There");
             """
 System.out.print("Here");
 System.err.print("There");
-            """.trim()
+            """.trim(),
         ).compile().execute()
         executionResult should haveCompleted()
         executionResult shouldNot haveTimedOut()
@@ -89,7 +89,7 @@ System.err.print("There");
 for (int i = 0; i < 32; i++) {
     for (long j = 0; j < 1024 * 1024 * 1024; j++);
 }
-                        """.trim()
+                        """.trim(),
                     ).compile().execute(SourceExecutionArguments(timeout = 1000L))
                 }
             } else {
@@ -118,7 +118,7 @@ for (int i = 0; i < 32; i++) {
 System.out.println("Here");
 System.out.println("There");
 System.err.println("There");
-            """.trim()
+            """.trim(),
         ).compile()
         val executionResult = Sandbox.execute(compiledSource.classLoader) { (classLoader, redirectOutput) ->
             redirectOutput {
@@ -140,7 +140,7 @@ for (int i = 0; i < 1024; i++) {
   System.out.println("Here");
   System.err.println("There");
 }
-            """.trim()
+            """.trim(),
         ).compile()
         val executionResult = Sandbox.execute(compiledSource.classLoader) { (classLoader) ->
             Sandbox.redirectOutput(redirectingOutputLimit = 32) {
@@ -160,7 +160,7 @@ for (int i = 0; i < 1024; i++) {
 System.out.println("Here");
 System.out.print("There");
 System.err.print("There");
-            """.trim()
+            """.trim(),
         ).compile()
         val executionResult = Sandbox.execute(compiledSource.classLoader) { (classLoader, redirectOutput) ->
             redirectOutput {
@@ -187,7 +187,7 @@ System.err.print("There");
 for (int i = 0; i < 1024; i++) {
   System.out.println("Here");
 }
-            """.trim()
+            """.trim(),
         ).compile()
 
         compiledSource.execute().also { executionResult ->
@@ -208,7 +208,7 @@ for (int i = 0; i < 1024; i++) {
             """
 int[] output = null;
 System.out.println(output);
-            """.trim()
+            """.trim(),
         ).compile().execute()
         executionResult should haveCompleted()
         executionResult shouldNot haveTimedOut()
@@ -219,7 +219,7 @@ System.out.println(output);
         val executionResult = Source.fromSnippet(
             """
 System.out.print("Hello");
-            """.trim()
+            """.trim(),
         ).compile().execute()
         executionResult should haveCompleted()
         executionResult shouldNot haveTimedOut()

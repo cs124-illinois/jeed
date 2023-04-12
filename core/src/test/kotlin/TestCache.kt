@@ -13,10 +13,10 @@ import java.util.PropertyPermission
 class TestCache : StringSpec({
     "should cache compiled simple snippets" {
         val first = Source.fromSnippet(
-            "int weirdName = 8;"
+            "int weirdName = 8;",
         ).compile(CompilationArguments(useCache = true, waitForCache = true))
         val second = Source.fromSnippet(
-            "int weirdName = 8;"
+            "int weirdName = 8;",
         ).compile(CompilationArguments(useCache = true, waitForCache = true))
 
         first.cached shouldBe false
@@ -26,17 +26,17 @@ class TestCache : StringSpec({
     }
     "should calculate size for file managers" {
         val snippet = Source.fromSnippet(
-            "int weirdName = 8;"
+            "int weirdName = 8;",
         ).compile(CompilationArguments(useCache = true, waitForCache = true))
 
         snippet.fileManager.size shouldBeGreaterThan 0
     }
     "cache should return different classloaders and file managers for identical code" {
         val first = Source.fromSnippet(
-            "int weirdName = 9;"
+            "int weirdName = 9;",
         ).compile(CompilationArguments(useCache = true, waitForCache = true))
         val second = Source.fromSnippet(
-            "int weirdName = 9;"
+            "int weirdName = 9;",
         ).compile(CompilationArguments(useCache = true, waitForCache = true))
 
         first.cached shouldBe false
@@ -47,14 +47,14 @@ class TestCache : StringSpec({
         val first = Source(
             mapOf(
                 "Weird.java" to "public class Weird {}",
-                "Name.java" to "public class Name {}"
-            )
+                "Name.java" to "public class Name {}",
+            ),
         ).compile(CompilationArguments(useCache = true, waitForCache = true))
         val second = Source(
             mapOf(
                 "Name.java" to "public class Name {}",
-                "Weird.java" to "public class Weird {}"
-            )
+                "Weird.java" to "public class Weird {}",
+            ),
         ).compile(CompilationArguments(useCache = true, waitForCache = true))
 
         first.cached shouldBe false
@@ -66,14 +66,14 @@ class TestCache : StringSpec({
         val first = Source(
             mapOf(
                 "Testee.java" to "public class Testee {}",
-                "Meee.java" to "public class Meee {}"
-            )
+                "Meee.java" to "public class Meee {}",
+            ),
         ).compile(CompilationArguments(useCache = true, waitForCache = true))
         val second = Source(
             mapOf(
                 "Meee.java" to "public class Meee {}",
-                "Testee.java" to "public class Testee {}"
-            )
+                "Testee.java" to "public class Testee {}",
+            ),
         ).compile(CompilationArguments(useCache = false))
 
         first.cached shouldBe false
@@ -93,8 +93,8 @@ public class Main {
         times++;
         System.out.println(times);
     }
-}""".trim()
-            )
+}""".trim(),
+            ),
         )
         val first = source.compile(CompilationArguments(useCache = true, waitForCache = true))
         val second = source.compile(CompilationArguments(useCache = true, waitForCache = true))
@@ -114,11 +114,11 @@ public class Main {
     "should cache compiled simple kotlin snippets" {
         val first = Source.fromSnippet(
             "val weirdKame = 8",
-            SnippetArguments(fileType = Source.FileType.KOTLIN)
+            SnippetArguments(fileType = Source.FileType.KOTLIN),
         ).kompile(KompilationArguments(useCache = true, waitForCache = true))
         val second = Source.fromSnippet(
             "val weirdKame = 8",
-            SnippetArguments(fileType = Source.FileType.KOTLIN)
+            SnippetArguments(fileType = Source.FileType.KOTLIN),
         ).kompile(KompilationArguments(useCache = true, waitForCache = true))
 
         first.cached shouldBe false
@@ -130,14 +130,14 @@ public class Main {
         val first = Source(
             mapOf(
                 "Weird.kt" to "class Weird {}",
-                "Name.kt" to "data class Name(val name: String)"
-            )
+                "Name.kt" to "data class Name(val name: String)",
+            ),
         ).kompile(KompilationArguments(useCache = true, waitForCache = true))
         val second = Source(
             mapOf(
                 "Name.kt" to "data class Name(val name: String)",
-                "Weird.kt" to "class Weird {}"
-            )
+                "Weird.kt" to "class Weird {}",
+            ),
         ).kompile(KompilationArguments(useCache = true, waitForCache = true))
 
         first.cached shouldBe false
@@ -149,14 +149,14 @@ public class Main {
         val first = Source(
             mapOf(
                 "Testee.kt" to "class Testee {}",
-                "Meee.kt" to "data class Meee(val whee: Int)"
-            )
+                "Meee.kt" to "data class Meee(val whee: Int)",
+            ),
         ).kompile(KompilationArguments(useCache = true, waitForCache = true))
         val second = Source(
             mapOf(
                 "Meee.kt" to "data class Meee(val whee: Int)",
-                "Testee.kt" to "class Testee {}"
-            )
+                "Testee.kt" to "class Testee {}",
+            ),
         ).kompile(KompilationArguments(useCache = false))
 
         first.cached shouldBe false
@@ -167,7 +167,7 @@ public class Main {
         val source = Source.fromSnippet(
             """
 System.out.println(System.getProperty("file.separator"));
-        """.trim()
+        """.trim(),
         )
 
         val compiled1 = source.compile()
@@ -175,13 +175,13 @@ System.out.println(System.getProperty("file.separator"));
 
         compiled1.execute(
             SourceExecutionArguments(
-                permissions = setOf(PropertyPermission("*", "read"))
-            )
+                permissions = setOf(PropertyPermission("*", "read")),
+            ),
         )
         val executionResult2 = compiled2.execute(
             SourceExecutionArguments(
-                permissions = setOf(PropertyPermission("*", "read"))
-            )
+                permissions = setOf(PropertyPermission("*", "read")),
+            ),
         )
 
         executionResult2.threw?.printStackTrace()
@@ -200,20 +200,20 @@ try {
 } finally {
     System.out.println("Finally");
 }
-            """.trim()
+            """.trim(),
         )
         source.compile() // .execute(SourceExecutionArguments(dryRun = true))
 
         val executionResult = source.compile(
-            CompilationArguments(useCache = true, waitForCache = true)
+            CompilationArguments(useCache = true, waitForCache = true),
         ).execute(
             SourceExecutionArguments(
                 classLoaderConfiguration = Sandbox.ClassLoaderConfiguration(
                     unsafeExceptions = setOf(
-                        "java.lang.NullPointerException"
-                    )
-                )
-            )
+                        "java.lang.NullPointerException",
+                    ),
+                ),
+            ),
         )
 
         executionResult shouldNot haveCompleted()

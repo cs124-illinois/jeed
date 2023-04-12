@@ -47,7 +47,7 @@ class CompletedTasks(
     var cexecution: ContainerExecutionResults? = null,
     var features: FlatFeaturesResults? = null,
     var mutations: MutationsResults? = null,
-    var disassemble: DisassembleResults? = null
+    var disassemble: DisassembleResults? = null,
 )
 
 @JsonClass(generateAdapter = true)
@@ -64,7 +64,7 @@ class FailedTasks(
     var cexecution: ExecutionFailedResult? = null,
     var features: FeaturesFailed? = null,
     var mutations: MutationsFailed? = null,
-    var disassemble: DisassembleFailedResult? = null
+    var disassemble: DisassembleFailedResult? = null,
 )
 
 @JsonClass(generateAdapter = true)
@@ -85,7 +85,7 @@ data class FlatClassComplexity(val name: String, val path: String, val range: So
         classComplexity.name,
         "$prefix.${classComplexity.name}",
         classComplexity.range!!,
-        classComplexity.complexity
+        classComplexity.complexity,
     )
 }
 
@@ -95,7 +95,7 @@ data class FlatMethodComplexity(val name: String, val path: String, val range: S
         methodComplexity.name,
         "$prefix.${methodComplexity.name}",
         methodComplexity.range!!,
-        methodComplexity.complexity
+        methodComplexity.complexity,
     )
 }
 
@@ -103,7 +103,7 @@ data class FlatMethodComplexity(val name: String, val path: String, val range: S
 data class FlatComplexityResult(
     val source: String,
     val classes: List<FlatClassComplexity>,
-    val methods: List<FlatMethodComplexity>
+    val methods: List<FlatMethodComplexity>,
 ) {
     companion object {
         fun from(source: String, complexityResults: Map<String, ComplexityValue>): FlatComplexityResult {
@@ -117,7 +117,7 @@ data class FlatComplexityResult(
             complexityValue: ComplexityValue,
             prefix: String,
             classes: MutableList<FlatClassComplexity>,
-            methods: MutableList<FlatMethodComplexity>
+            methods: MutableList<FlatMethodComplexity>,
         ) {
             if (complexityValue is MethodComplexity) {
                 methods.add(FlatMethodComplexity(complexityValue, prefix))
@@ -140,7 +140,7 @@ data class FlatComplexityResults(val results: List<FlatComplexityResult>) {
     constructor(complexityResults: ComplexityResults) : this(
         complexityResults.results.map { (source, results) ->
             FlatComplexityResult.from(source, results)
-        }
+        },
     )
 }
 
@@ -150,7 +150,7 @@ data class FlatUnitFeatures(val name: String, val path: String, val range: Sourc
         unitFeatures.name,
         filename,
         unitFeatures.range!!,
-        unitFeatures.features
+        unitFeatures.features,
     )
 }
 
@@ -160,7 +160,7 @@ data class FlatClassFeatures(val name: String, val path: String, val range: Sour
         classFeatures.name,
         "$prefix.${classFeatures.name}",
         classFeatures.range,
-        classFeatures.features
+        classFeatures.features,
     )
 }
 
@@ -170,7 +170,7 @@ data class FlatMethodFeatures(val name: String, val path: String, val range: Sou
         methodFeatures.name,
         "$prefix.${methodFeatures.name}",
         methodFeatures.range,
-        methodFeatures.features
+        methodFeatures.features,
     )
 }
 
@@ -179,7 +179,7 @@ data class FlatFeaturesResult(
     val source: String,
     val unit: FlatUnitFeatures,
     val classes: List<FlatClassFeatures>,
-    val methods: List<FlatMethodFeatures>
+    val methods: List<FlatMethodFeatures>,
 ) {
     companion object {
         fun from(source: String, featureResults: Map<String, FeatureValue>): FlatFeaturesResult {
@@ -198,7 +198,7 @@ data class FlatFeaturesResult(
             featureValue: FeatureValue,
             prefix: String,
             classes: MutableList<FlatClassFeatures>,
-            methods: MutableList<FlatMethodFeatures>
+            methods: MutableList<FlatMethodFeatures>,
         ) {
             if (featureValue is MethodFeatures) {
                 methods.add(FlatMethodFeatures(featureValue, prefix))
@@ -219,11 +219,11 @@ data class FlatFeaturesResult(
 @JsonClass(generateAdapter = true)
 data class FlatFeaturesResults(
     val results: List<FlatFeaturesResult>,
-    val allFeatures: Map<String, String> = ALL_FEATURES
+    val allFeatures: Map<String, String> = ALL_FEATURES,
 ) {
     constructor(featureResults: FeaturesResults) : this(
         featureResults.results.map { (source, results) ->
             FlatFeaturesResult.from(source, results)
-        }
+        },
     )
 }

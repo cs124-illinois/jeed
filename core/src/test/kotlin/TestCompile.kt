@@ -22,7 +22,7 @@ class TestCompile : StringSpec({
 int i = 0;
 private static int main() {
     return 0;
-}""".trim()
+}""".trim(),
         ).compile()
 
         compiledSource should haveDefinedExactlyTheseClasses(setOf("Main"))
@@ -36,7 +36,7 @@ public class Foo {
     int i;
 }
 Foo foo = new Foo();
-""".trim()
+""".trim(),
         ).compile()
 
         compiledSource should haveDefinedExactlyTheseClasses(setOf("Main", "Foo"))
@@ -46,8 +46,8 @@ Foo foo = new Foo();
         val compiledSource = Source(
             mapOf(
                 "Test.java" to "public class Test {}",
-                "Me.java" to "public class Me {}"
-            )
+                "Me.java" to "public class Me {}",
+            ),
         ).compile()
 
         compiledSource should haveDefinedExactlyTheseClasses(setOf("Test", "Me"))
@@ -61,8 +61,8 @@ public class Test {
   public static void main() {
     String record = "record";
   }
-}""".trim()
-            )
+}""".trim(),
+            ),
         ).compile()
 
         compiledSource should haveDefinedExactlyTheseClasses(setOf("Test"))
@@ -75,7 +75,7 @@ String record = "record";
 int record() {
   return 0;
 }
-""".trim()
+""".trim(),
         ).compile()
 
         compiledSource should haveDefinedExactlyTheseClasses(setOf("Main"))
@@ -85,8 +85,8 @@ int record() {
         val compiledSource = Source(
             mapOf(
                 "Test.java" to "public class Test {}",
-                "Me.java" to "public class Me extends Test {}"
-            )
+                "Me.java" to "public class Me extends Test {}",
+            ),
         ).compile()
 
         compiledSource should haveDefinedExactlyTheseClasses(setOf("Test", "Me"))
@@ -96,8 +96,8 @@ int record() {
         val compiledSource = Source(
             mapOf(
                 "Test.java" to "public class Test extends Me {}",
-                "Me.java" to "public class Me {}"
-            )
+                "Me.java" to "public class Me {}",
+            ),
         ).compile()
 
         compiledSource should haveDefinedExactlyTheseClasses(setOf("Test", "Me"))
@@ -113,8 +113,8 @@ public class Test {}
                 "me/Me.java" to """
 package me;
 public class Me {}
-""".trim()
-            )
+""".trim(),
+            ),
         ).compile()
 
         compiledSource should haveDefinedExactlyTheseClasses(setOf("test.Test", "me.Me"))
@@ -131,8 +131,8 @@ public class Test extends Me {}
                 "me/Me.java" to """
 package me;
 public class Me {}
-""".trim()
-            )
+""".trim(),
+            ),
         ).compile()
 
         compiledSource should haveDefinedExactlyTheseClasses(setOf("test.Test", "me.Me"))
@@ -146,8 +146,8 @@ public class Test {
     public static void main() {
         var i = 0;
     }
-}""".trim()
-            )
+}""".trim(),
+            ),
         ).compile()
 
         compiledSource should haveDefinedExactlyTheseClasses(setOf("Test"))
@@ -165,8 +165,8 @@ public class Test {
     public static void main() {
         Test test = new Test();
     }
-}""".trim()
-            )
+}""".trim(),
+            ),
         ).compile()
 
         compiledSource should haveDefinedExactlyTheseClasses(setOf("Test", "Test\$Inner"))
@@ -185,7 +185,7 @@ public class Test {
 void test(blah it) {
   System.out.println(it);
 }
-            """.trim()
+            """.trim(),
             ).compile()
         }
         failedCompilation should haveCompilationErrorAt(line = 1, column = 11)
@@ -197,7 +197,7 @@ void test(blah it) {
 public void test(blah it) {
   System.out.println(it);
 }
-            """.trim()
+            """.trim(),
             ).compile()
         }
         failedCompilation should haveCompilationErrorAt(line = 1, column = 18)
@@ -208,7 +208,7 @@ public void test(blah it) {
                 """
 int i = a;
 Foo f = new Foo();
-""".trim()
+""".trim(),
             ).compile()
         }
 
@@ -225,7 +225,7 @@ public void foo() {
 public class Bar { }
 int i = a;
 Foo f = new Foo();
-""".trim()
+""".trim(),
             ).compile()
         }
 
@@ -238,7 +238,7 @@ Foo f = new Foo();
 import java.util.List;
 import java.util.ArrayList;
 List test = new ArrayList();
-""".trim()
+""".trim(),
         ).compile()
 
         compiledSource.messages shouldHaveSize 2
@@ -250,7 +250,7 @@ List test = new ArrayList();
 import java.util.List;
 import java.util.ArrayList;
 List test = new ArrayList();
-""".trim()
+""".trim(),
         ).compile(CompilationArguments(Xlint = "none"))
 
         compiledSource.messages shouldHaveSize 0
@@ -262,7 +262,7 @@ List test = new ArrayList();
 import java.util.List;
 import java.util.ArrayList;
 List test = new ArrayList();
-""".trim()
+""".trim(),
             ).compile(CompilationArguments(wError = true))
         }
 
@@ -275,7 +275,7 @@ class Test {}
 class Me {}
 Test test = new Test();
 Me me = new Me();
-""".trim()
+""".trim(),
         ).compile()
 
         compiledSource should haveDefinedExactlyTheseClasses(setOf("Test", "Me", "Main"))
@@ -293,15 +293,15 @@ Me me = new Me();
             mapOf(
                 "Test.java" to """
 public class Test {}
-            """.trim()
-            )
+            """.trim(),
+            ),
         ).compile()
         val compiledFooSource = Source(
             mapOf(
                 "Foo.java" to """
     public class Foo extends Test { }
-            """.trim()
-            )
+            """.trim(),
+            ),
         ).compileWith(compiledTestSource)
 
         compiledFooSource should haveDefinedExactlyTheseClasses(setOf("Foo"))
@@ -313,8 +313,8 @@ public class Test {}
                 "test/Me.java" to """
 package test;
 public class Me {}
-            """.trim()
-            )
+            """.trim(),
+            ),
         ).compile()
 
         val compiledFooSource = Source(
@@ -323,8 +323,8 @@ public class Me {}
 package another;
 import test.Me;
 public class Foo extends Me { }
-            """.trim()
-            )
+            """.trim(),
+            ),
         ).compileWith(compiledMeSource)
 
         compiledFooSource should haveDefinedExactlyTheseClasses(setOf("another.Foo"))
@@ -337,7 +337,7 @@ import java.util.List;
 import java.util.ArrayList;
 
 List list = new ArrayList();
-""".trim()
+""".trim(),
         ).compile()
 
         compiledSource should haveDefinedExactlyTheseClasses(setOf("Main"))
@@ -350,7 +350,7 @@ List list = new ArrayList();
 import com.puppycrawl.tools.checkstyle.Checker;
 
 System.out.println(new Checker());
-""".trim()
+""".trim(),
         ).compile()
         compiledSource should haveDefinedExactlyTheseClasses(setOf("Main"))
     }
@@ -361,7 +361,7 @@ System.out.println(new Checker());
 import edu.illinois.cs.cs125.testingjeed.importable.*;
 
 Widget w = new Widget();
-""".trim()
+""".trim(),
         ).compile()
         compiledSource should haveDefinedExactlyTheseClasses(setOf("Main"))
     }
@@ -381,8 +381,8 @@ public class Test {
     public static void main() {
         System.out.println(testYieldKeyword(1));
     }
-}""".trim()
-                )
+}""".trim(),
+                ),
             ).compile()
 
             compiledSource should haveDefinedExactlyTheseClasses(setOf("Test"))
@@ -405,8 +405,8 @@ public class Test {
     public static void main() {
         System.out.println(testYieldKeyword(1));
     }
-}""".trim()
-                )
+}""".trim(),
+                ),
             ).compile()
 
             compiledSource should haveDefinedExactlyTheseClasses(setOf("Test"))
@@ -429,8 +429,8 @@ public class Test {
     public static void main() {
         testInstanceOfPatternMatching();
     }
-}""".trim()
-                )
+}""".trim(),
+                ),
             ).compile()
 
             compiledSource should haveDefinedExactlyTheseClasses(setOf("Test"))
@@ -449,8 +449,8 @@ public class Test {
                            Hello world!
                            $tripleQuote;
     }
-}""".trim()
-                )
+}""".trim(),
+                ),
             ).compile()
 
             compiledSource should haveDefinedExactlyTheseClasses(setOf("Test"))
@@ -470,8 +470,8 @@ public class Test {
                            Hello world!
                            $tripleQuote;
     }
-}""".trim()
-                    )
+}""".trim(),
+                    ),
                 ).compile(CompilationArguments(enablePreview = false))
             }
         }
@@ -488,8 +488,8 @@ public class Test {
                            Hello world!
                            $tripleQuote;
     }
-}""".trim()
-                )
+}""".trim(),
+                ),
             ).compile(CompilationArguments(enablePreview = false))
         }
     }
@@ -502,8 +502,8 @@ public class Test {
     System.out.println("test");
   }
 }
-""".trim()
-            )
+""".trim(),
+            ),
         ).compile()
 
         Source(
@@ -515,8 +515,8 @@ public class Example {
     test.print();
   }
 }
-""".trim()
-            )
+""".trim(),
+            ),
         ).compile(compilationArguments = CompilationArguments(parentFileManager = first.fileManager))
     }
     "should not crash when compiling in parallel" {
@@ -526,7 +526,7 @@ public class Example {
                 synchronized (Object.class) {
                     System.out.println($it);
                 }
-                """.trimIndent()
+                """.trimIndent(),
             ).compile()
         }.allMatch { true }
     }
@@ -540,7 +540,7 @@ public class Example {
                 System.out.println(new Checker());
                 System.out.println(new Widget());
                 System.out.println($it);
-                """.trimIndent()
+                """.trimIndent(),
             ).compile()
         }.allMatch {
             it.classLoader.definedClasses == setOf("Main")
@@ -557,8 +557,8 @@ public class Test {
         return "Jeed";
     }
 }
-            """.trim()
-            )
+            """.trim(),
+            ),
         )
         source.compile().also {
             // Incorrectly loads the class from the classpath when not isolated
@@ -578,8 +578,8 @@ public class Test {
 public class Test {
     public static void method(int first, String second) { }
 }
-            """.trim()
-            )
+            """.trim(),
+            ),
         )
         source.compile().also { compiledSource ->
             val klass = compiledSource.classLoader.loadClass("Test")
@@ -602,7 +602,7 @@ fun haveCompilationErrorAt(source: String = SNIPPET_SOURCE, line: Int, column: I
                         (column == null || it.location?.column == column)
                 },
                 { "should have compilation error on line $line" },
-                { "should not have compilation error on line $line" }
+                { "should not have compilation error on line $line" },
             )
         }
     }
@@ -612,7 +612,7 @@ fun haveCompilationMessageAt(source: String = SNIPPET_SOURCE, line: Int) = objec
         return MatcherResult(
             value.messages.any { it.location?.source == source && it.location?.line == line },
             { "should have compilation message on line $line" },
-            { "should not have compilation message on line $line" }
+            { "should not have compilation message on line $line" },
         )
     }
 }
@@ -629,12 +629,12 @@ fun <T> haveDefinedExactlyTheseClasses(classes: Set<String>) = object : Matcher<
             {
                 "should have defined ${classes.joinToString(separator = ", ")} " +
                     "(found ${
-                    definedClasses.joinToString(
-                        separator = ", "
-                    )
+                        definedClasses.joinToString(
+                            separator = ", ",
+                        )
                     })"
             },
-            { "should not have defined ${classes.joinToString(separator = ", ")}" }
+            { "should not have defined ${classes.joinToString(separator = ", ")}" },
         )
     }
 }
@@ -649,7 +649,7 @@ fun <T> haveProvidedThisManyClasses(count: Int) = object : Matcher<T> {
         return MatcherResult(
             providedClassCount == count,
             { "should have loaded $count classes (found $providedClassCount)" },
-            { "should not have loaded $count classes" }
+            { "should not have loaded $count classes" },
         )
     }
 }
@@ -665,11 +665,11 @@ fun <T> haveProvidedExactlyTheseClasses(classes: Set<String>) = object : Matcher
             providedClasses == classes,
             {
                 "should have provided ${classes.joinToString(separator = ", ")} (found ${
-                providedClasses
-                    .joinToString(separator = ", ")
+                    providedClasses
+                        .joinToString(separator = ", ")
                 })"
             },
-            { "should not have provided ${classes.joinToString(separator = ", ")}" }
+            { "should not have provided ${classes.joinToString(separator = ", ")}" },
         )
     }
 }
@@ -686,12 +686,12 @@ fun <T> haveLoadedAtLeastTheseClasses(classes: Set<String>) = object : Matcher<T
             {
                 "should have loaded at least ${classes.joinToString(separator = ", ")} " +
                     "(found ${
-                    loadedClasses.joinToString(
-                        separator = ", "
-                    )
+                        loadedClasses.joinToString(
+                            separator = ", ",
+                        )
                     })"
             },
-            { "should not have loaded at least ${classes.joinToString(separator = ", ")}" }
+            { "should not have loaded at least ${classes.joinToString(separator = ", ")}" },
         )
     }
 }

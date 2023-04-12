@@ -12,7 +12,7 @@ int add(int i, int j) {
     return i + j;
 }
 int i = 0;
-""".trim()
+""".trim(),
         ).complexity().also {
             it.lookup("").complexity shouldBe 2
         }
@@ -31,8 +31,8 @@ public class Test {
         return i + j;
     }
 }
-""".trim()
-            )
+""".trim(),
+            ),
         ).complexity().also {
             it.lookup("Test.int add(int,int)", "Test.java").complexity shouldBe 1
             it.lookup("Test.Test(int,double)", "Test.java").complexity shouldBe 2
@@ -48,8 +48,8 @@ public class Test
         return i + j;
     }
 }
-""".trim()
-                )
+""".trim(),
+                ),
             ).complexity()
         }
     }
@@ -66,8 +66,8 @@ public class Test {
         }
     }
 }
-""".trim()
-            )
+""".trim(),
+            ),
         ).complexity().also {
             it.lookup("Test.int chooser(int,int)", "Test.java").complexity shouldBe 2
         }
@@ -89,8 +89,8 @@ public class Test {
         }
     }
 }
-""".trim()
-            )
+""".trim(),
+            ),
         ).complexity().also {
             it.lookup("Test.int chooser(int,int)", "Test.java").complexity shouldBe 4
         }
@@ -110,8 +110,8 @@ public class Test {
         }
     }
 }
-""".trim()
-            )
+""".trim(),
+            ),
         ).complexity().also {
             it.lookup("Test.int chooser(int)", "Test.java").complexity shouldBe 4
         }
@@ -135,8 +135,8 @@ public class Test {
         }
     }
 }
-""".trim()
-            )
+""".trim(),
+            ),
         ).complexity().also {
             it.lookup("Test.int chooser(int)", "Test.java").complexity shouldBe 5
         }
@@ -147,7 +147,7 @@ public class Test {
 class Example {
   int value = 0;
 }
-            """.trim()
+            """.trim(),
         ).complexity().also {
             it.lookup("Example", "").complexity shouldBe 0
         }
@@ -156,7 +156,7 @@ class Example {
         Source.fromSnippet(
             """
 record Example(int value) { };
-            """.trim()
+            """.trim(),
         ).complexity().also {
             it.lookup("Example", "").complexity shouldBe 0
         }
@@ -169,7 +169,7 @@ record Example(int value) {
     return value;
   }
 };
-            """.trim()
+            """.trim(),
         ).complexity().also {
             it.lookup("Example", "").complexity shouldBe 1
             it.lookup("Example.int it()", "").complexity shouldBe 1
@@ -181,7 +181,7 @@ record Example(int value) {
 interface Simple {
   int simple(int first);
 }
-            """.trim()
+            """.trim(),
         ).complexity().also {
             it.lookup("Simple", "").complexity shouldBe 0
         }
@@ -200,7 +200,7 @@ Test second = new Test() {
   @Override
   public void test() { }
 };
-            """.trim()
+            """.trim(),
         ).complexity().also {
             it.lookup(".", "").complexity shouldBe 3
         }
@@ -211,7 +211,7 @@ Test second = new Test() {
 <T> T max(T[] array) {
   return null;
 }
-            """.trim()
+            """.trim(),
         ).complexity().also {
             it.lookup(".T max(T[])", "").complexity shouldBe 1
         }
@@ -222,7 +222,7 @@ Test second = new Test() {
 Thread thread = new Thread(() -> {
   System.out.println("Blah");
 });
-            """.trim()
+            """.trim(),
         ).complexity().also {
             it.lookup(".", "").complexity shouldBe 2
         }
@@ -235,7 +235,7 @@ interface Modify {
 }
 Modify first = (v) -> v + 1;
 System.out.println(first.getClass());
-            """.trim()
+            """.trim(),
         ).complexity().also {
             it.lookup(".", "").complexity shouldBe 2
         }
@@ -248,7 +248,7 @@ public class Example {
     int[] array = new int[] {1, 2, 4};
     System.out.println("ran");
   }
-}""".trim()
+}""".trim(),
         ).complexity().also {
             it.lookup("Example", "").complexity shouldBe 1
         }
@@ -258,7 +258,7 @@ public class Example {
             """
 public class Example {
   public Example() { }
-}""".trim()
+}""".trim(),
         ).complexity().also {
             it.lookup("Example", "").complexity shouldBe 1
         }
@@ -281,7 +281,7 @@ Filter bothNegative = new Filter() {
     return first < 0 && second < 0;
   }
 };
-""".trim()
+""".trim(),
         ).complexity().also {
             it.lookup(".", "").complexity shouldBe 5
         }
@@ -293,7 +293,7 @@ public class Example {
   {
     System.out.println("Instance initializer");
   }
-}""".trim()
+}""".trim(),
         ).complexity()
     }
     "should not fail on class declarations with static initializer blocks" {
@@ -303,7 +303,7 @@ public class Example {
   static {
     System.out.println("Static initializer");
   }
-}""".trim()
+}""".trim(),
         ).complexity()
     }
     "!should not overflow on deep nesting" {
@@ -642,7 +642,7 @@ public class Mystery {
     }
   }
 }
-                """.trimIndent()
+                """.trimIndent(),
             ).complexity()
         }
     }
@@ -680,7 +680,7 @@ public static IWhichHemisphere create(Position p) {
       }
     };
   }
-}""".trim()
+}""".trim(),
         ).complexity()
     }
     "should allow top-level lambda methods" {
@@ -692,7 +692,7 @@ public interface Modify {
 public class Modifier {
   Modify modify = value -> value + 1;
 }
-""".trim()
+""".trim(),
         ).complexity()
     }
 })

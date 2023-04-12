@@ -35,7 +35,7 @@ class TestContainer : StringSpec() {
             val runResults = Source.fromSnippet(
                 """
 while (true) {}
-            """.trim()
+            """.trim(),
             )
                 .compile()
                 .cexecute()
@@ -44,7 +44,7 @@ while (true) {}
         "it should run a simple Kotlin program in a container" {
             val runResults = Source.fromSnippet(
                 """println("Hello, world!")""",
-                SnippetArguments(fileType = Source.FileType.KOTLIN)
+                SnippetArguments(fileType = Source.FileType.KOTLIN),
             )
                 .kompile()
                 .cexecute()
@@ -71,8 +71,8 @@ public class Test {
   public String toString() {
     return "Hello, world!";
   }
-}""".trim()
-                )
+}""".trim(),
+                ),
             )
                 .compile()
                 .cexecute(executionArguments = ContainerExecutionArguments(method = "entry()"))
@@ -88,7 +88,7 @@ fun containerHaveCompleted() = object : Matcher<ContainerExecutionResults> {
         return MatcherResult(
             value.completed,
             { "Code should have run" },
-            { "Code should not have run" }
+            { "Code should not have run" },
         )
     }
 }
@@ -98,7 +98,7 @@ fun containerHaveTimedOut() = object : Matcher<ContainerExecutionResults> {
         return MatcherResult(
             value.timeout,
             { "Code should have timed out" },
-            { "Code should not have timed out" }
+            { "Code should not have timed out" },
         )
     }
 }
@@ -109,7 +109,7 @@ fun containerHaveOutput(output: String = "") = object : Matcher<ContainerExecuti
         return MatcherResult(
             actualOutput == output,
             { "Expected output $output, found $actualOutput" },
-            { "Expected to not find output $actualOutput" }
+            { "Expected to not find output $actualOutput" },
         )
     }
 }

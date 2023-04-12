@@ -25,7 +25,7 @@ for (int i = 0; i < 2; i++) {
     for (long j = 0; j < 1024 * 1024; j++);
     System.out.println($value);
 }
-                    """.trim()
+                    """.trim(),
                         ).compile().execute(SourceExecutionArguments(timeout = 128L))
 
                     result should haveCompleted()

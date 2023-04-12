@@ -14,7 +14,7 @@ public class Main {
     public static void main() {
         System.out.println("hi");
     }
-}""".trim()
+}""".trim(),
         ).compile().disassemble()
         result.disassemblies.keys shouldBe setOf("Main")
         result.disassemblies["Main"] shouldContain "GETSTATIC"
@@ -32,7 +32,7 @@ public class Main {
         };
         customObject.run();
     }
-}""".trim()
+}""".trim(),
         ).compile().disassemble()
         result.disassemblies shouldHaveSize 2
         result.disassemblies["Main"] shouldContain "NEW "
@@ -44,7 +44,7 @@ public class Main {
             """
 fun main() {
     println("hi")
-}""".trim()
+}""".trim(),
         ).kompile().disassemble()
         result.disassemblies.keys shouldBe setOf("MainKt")
         result.disassemblies["MainKt"] shouldContain "GETSTATIC"
@@ -60,7 +60,7 @@ fun main() {
 private fun addOne(x: Int): Int {
     return x + 1
 }
-""".trim()
+""".trim(),
         ).kompile().disassemble()
         result.disassemblies shouldHaveSize 2
         result.disassemblies["MainKt"] shouldContain "INVOKEINTERFACE"

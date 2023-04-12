@@ -17,7 +17,7 @@ fun example() {
   if (true == true) return
   if (false === true) return
 }
-""".trim()
+""".trim(),
         ).checkMutations<ChangeEquals> { mutations, contents ->
             mutations shouldHaveSize 2
             mutations[0].check(contents, "==", "===")
@@ -32,7 +32,7 @@ class Example() {
     val first: Boolean = true
     val second: Boolean = false
   }
-}"""
+}""",
         ).checkMutations<BooleanLiteral> { mutations, contents ->
             mutations shouldHaveSize 2
             mutations[0].check(contents, "true", "false")
@@ -48,7 +48,7 @@ class Example {
     val second: Char = '!'
     val third: Char = '\n'
   }
-}"""
+}""",
         ).checkMutations<CharLiteral> { mutations, contents ->
             mutations shouldHaveSize 3
             mutations[0].check(contents, "'a'")
@@ -67,7 +67,7 @@ fun example() {
     val u = "front ${"$"}{l.size} middle ${"$"}{l.size} back"
     val v = ${"\"\"\""}front ${"$"}{l.size} middle ${"$"}{l.size} back${"\"\"\""}
 }
-""".trim()
+""".trim(),
         ).checkMutations<StringLiteral> { mutations, contents ->
             mutations shouldHaveSize 9
             mutations[0].check(contents, "Hello, world!").also {
@@ -88,7 +88,7 @@ fun example() {
     val u = "front ${"$"}{l.size} middle ${"$"}{l.size} back"
     val v = ${"\"\"\""}front ${"$"}{l.size} middle ${"$"}{l.size} back${"\"\"\""}
 }
-""".trim()
+""".trim(),
         ).checkMutations<StringLiteralLookalike> { mutations, contents ->
             mutations shouldHaveSize 5
             mutations[0].check(contents, "Hello, world").also {
@@ -107,7 +107,7 @@ fun example() {
     val u = "front ${"$"}{l.size} middle ${"$"}{l.size} back"
     val v = ${"\"\"\""}front ${"$"}{l.size} middle ${"$"}{l.size} back${"\"\"\""}
 }
-""".trim()
+""".trim(),
         ).checkMutations<StringLiteralTrim> { mutations, contents ->
             mutations shouldHaveSize 8
             mutations[0].check(contents, "Hello, world!")
@@ -121,7 +121,7 @@ fun example() {
     val list = listOf(1, 2, 4)
     println("${"$"}{list.size}")
 }
-""".trim()
+""".trim(),
         ).checkMutations<StringLiteral> { mutations, _ ->
             mutations shouldHaveSize 0
         }
@@ -135,7 +135,7 @@ fun example() {
     var hex: Int = 0x0F
     val bin = 0b1001011
 }
-""".trim()
+""".trim(),
         ).checkMutations<NumberLiteral> { mutations, contents ->
             mutations shouldHaveSize 4
             mutations[0].check(contents, "1234")
@@ -154,7 +154,7 @@ fun example() {
     var hex: Int = 0x0F
     val bin = 0b1001011
 }
-""".trim()
+""".trim(),
         ).checkMutations<NumberLiteralTrim> { mutations, contents ->
             mutations shouldHaveSize 5
             mutations[0].check(contents, "1234")
@@ -173,7 +173,7 @@ fun example() {
   i++
   --j
 }
-""".trim()
+""".trim(),
         ).checkMutations<IncrementDecrement> { mutations, contents ->
             mutations shouldHaveSize 2
             mutations[0].check(contents, "++", "--")
@@ -188,7 +188,7 @@ fun example() {
   val j = -1
   val k = -j
 }
-""".trim()
+""".trim(),
         ).checkMutations<InvertNegation> { mutations, contents ->
             mutations shouldHaveSize 2
             mutations[0].check(contents, "-", "")
@@ -207,7 +207,7 @@ fun example() {
   k = i / j
   var l = i % 10
 }
-""".trim()
+""".trim(),
         ).checkMutations<MutateMath> { mutations, contents ->
             mutations shouldHaveSize 4
             mutations[0].check(contents, "-", "+")
@@ -224,7 +224,7 @@ fun example() {
   val j = 1
   val k = i + j
 }
-""".trim()
+""".trim(),
         ).checkMutations<PlusToMinus> { mutations, contents ->
             mutations shouldHaveSize 1
             mutations[0].check(contents, "+", "-")
@@ -241,7 +241,7 @@ fun example() {
     println("There")
   }
 }
-""".trim()
+""".trim(),
         ).checkMutations<ConditionalBoundary> { mutations, contents ->
             mutations shouldHaveSize 2
             mutations[0].check(contents, "<", "<=")
@@ -261,7 +261,7 @@ fun example() {
     println("Again")
   }
 }
-""".trim()
+""".trim(),
         ).checkMutations<NegateConditional> { mutations, contents ->
             mutations shouldHaveSize 3
             mutations[0].check(contents, "<", ">=")
@@ -294,7 +294,7 @@ fun seventh(): Double {
 fun eighth(): Double {
   return 0.0f
 }
-""".trim()
+""".trim(),
         ).checkMutations<PrimitiveReturn> { mutations, contents ->
             mutations shouldHaveSize 2
             mutations[0].check(contents, "1", "0")
@@ -315,7 +315,7 @@ fun third(): Boolean {
 fun fourth(): Boolean {
   return true
 }
-""".trim()
+""".trim(),
         ).checkMutations<TrueReturn> { mutations, contents ->
             mutations shouldHaveSize 2
             mutations[0].check(contents, "it", "true")
@@ -336,7 +336,7 @@ fun third(): Boolean {
 fun fourth(): Boolean {
   return true
 }
-""".trim()
+""".trim(),
         ).checkMutations<FalseReturn> { mutations, contents ->
             mutations shouldHaveSize 2
             mutations[0].check(contents, "it", "false")
@@ -360,7 +360,7 @@ fun fourth(): Object {
 fun fifth(): IntArray {
   return IntArray(5)
 }
-""".trim()
+""".trim(),
         ).checkMutations<NullReturn> { mutations, contents ->
             mutations shouldHaveSize 2
             mutations[0].check(contents, "Object()", "null")
@@ -376,7 +376,7 @@ fun test(first: Int, second: Int) {
   check(first >= 100)
   assert(second >= 0) {"Bad second value"}
 }
-""".trim()
+""".trim(),
         ).checkMutations<RemoveRuntimeCheck> { mutations, contents ->
             mutations shouldHaveSize 4
             mutations[0].check(contents, "assert(first > 0)", "")
@@ -398,7 +398,7 @@ fun test(first: Int, second: Int): Int {
 fun test(first: Int, second: Int): LongArray {
   return longArrayOf(1L, 2L, 4L)
 }
-""".trim()
+""".trim(),
         ).checkMutations<RemoveMethod> { mutations, _ ->
             mutations shouldHaveSize 2
         }
@@ -417,7 +417,7 @@ fun test4(first: Int, second: Int) { return }
 fun test4(first: Int, second: Int) {
   return
 }
-""".trim()
+""".trim(),
         ).checkMutations<RemoveMethod> { mutations, _ ->
             mutations shouldHaveSize 0
         }
@@ -432,7 +432,7 @@ fun test(first: Int, second: Int): Int {
     return second
   }
 }
-""".trim()
+""".trim(),
         ).checkMutations<NegateIf> { mutations, contents ->
             mutations shouldHaveSize 1
             mutations[0].check(contents, "first > second", "!(first > second)")
@@ -450,7 +450,7 @@ fun test(first: Int): Int {
     i++
   } while (i > first)
 }
-""".trim()
+""".trim(),
         ).checkMutations<NegateWhile> { mutations, contents ->
             mutations shouldHaveSize 2
             mutations[0].check(contents, "i < first", "!(i < first)")
@@ -482,7 +482,7 @@ fun test(first: Int) {
     println(7)
   }
 }
-""".trim()
+""".trim(),
         ).checkMutations<RemoveIf> { mutations, contents ->
             mutations shouldHaveSize 8
             mutations[0].check(
@@ -490,7 +490,7 @@ fun test(first: Int) {
                 """if (first > 0) {
     println(1)
   }""",
-                ""
+                "",
             )
         }
     }
@@ -502,7 +502,7 @@ fun test(first: Int) {
     println(1)
   }
 }
-""".trim()
+""".trim(),
         ).checkMutations<SwapAndOr> { mutations, contents ->
             mutations shouldHaveSize 1
             mutations[0].check(contents, "&&", "||")
@@ -521,7 +521,7 @@ fun test(first: Int) {
     }
   }
 }
-""".trim()
+""".trim(),
         ).checkMutations<SwapBreakContinue> { mutations, contents ->
             mutations shouldHaveSize 2
             mutations[0].check(contents, "continue", "break")
@@ -535,7 +535,7 @@ fun test() {
   var j = 0
   var i = i + 1
   var j = j - 1
-}"""
+}""",
         ).checkMutations<PlusOrMinusOneToZero> { mutations, contents ->
             mutations shouldHaveSize 2
             mutations[0].check(contents, "1", "0")
@@ -551,7 +551,7 @@ fun test(first: Int) {
   for (item: Int in intArrayOf(1, 2, 4)) { }
   do {} while (true)
 }
-""".trim()
+""".trim(),
         ).checkMutations<RemoveLoop> { mutations, contents ->
             mutations shouldHaveSize 4
             mutations[0].check(contents, "for (i in 0..first) { }", "")
@@ -569,7 +569,7 @@ fun test(first: Int) {
   }
   for (item: Int in intArrayOf(1, 2, 4)) { }
 }
-""".trim()
+""".trim(),
         ).checkMutations<AddBreak> { mutations, contents ->
             mutations shouldHaveSize 2
             mutations[0].check(contents, "}", "break }")
@@ -583,7 +583,7 @@ fun test(first: Int) {
   while (true && false) { }
   while (false || true) { }
 }
-""".trim()
+""".trim(),
         ).checkMutations<RemoveAndOr> { mutations, contents ->
             mutations shouldHaveSize 4
             mutations[0].check(contents, "true && ", "")
@@ -599,7 +599,7 @@ fun test(first: Int) {
   if (true && false) { }
   if (false || true) { }
 }
-""".trim()
+""".trim(),
         ).checkMutations<RemoveAndOr> { mutations, contents ->
             mutations shouldHaveSize 4
             mutations[0].check(contents, "true && ", "")
@@ -616,7 +616,7 @@ fun test(first: Int) {
     val value = 0
   } catch (e: Exception) { }
 }
-""".trim()
+""".trim(),
         ).checkMutations<RemoveTry> { mutations, _ ->
             mutations shouldHaveSize 1
         }
@@ -632,7 +632,7 @@ fun test() {
     i++
   }
 }
-""".trim()
+""".trim(),
         ).checkMutations<RemoveStatement> { mutations, _ ->
             mutations shouldHaveSize 4
         }
@@ -644,7 +644,7 @@ fun test() {
   var i = 1 + 2
   i = 3 + 4
 }
-""".trim()
+""".trim(),
         ).checkMutations<RemovePlus> { mutations, contents ->
             mutations shouldHaveSize 4
             mutations[0].check(contents, "1 + ", "")
@@ -666,7 +666,7 @@ fun test() {
     println(i)
   }
 }
-""".trim()
+""".trim(),
         ).checkMutations<ChangeLengthAndSize> { mutations, contents ->
             mutations shouldHaveSize 2
             mutations[0].check(contents, "size")
@@ -682,7 +682,7 @@ fun test() {
   val second = arrayOf(arrayOf(1, 2), arrayOf(4, 5))
   val list = listOf("test,me", "again")
 }
-""".trim()
+""".trim(),
         ).checkMutations<ModifyArrayLiteral> { mutations, contents ->
             mutations shouldHaveSize 5
             mutations[0].check(contents, "1, 2, 4")
@@ -699,7 +699,7 @@ fun test(first: Int, second: Int) {
   assert(first > 0)
   assert(second >= 0) {"Bad second value"}
 }
-""".trim()
+""".trim(),
         )
         source.allMutations(types = setOf(Mutation.Type.REMOVE_RUNTIME_CHECK)).also { mutations ->
             mutations shouldHaveSize 2
@@ -718,7 +718,7 @@ fun fourth(): Object {
   }
     return Object() // mutate-disable
   }
-""".trim()
+""".trim(),
         ).allMutations().also { mutations ->
             mutations shouldHaveSize 8
             mutations[0].cleaned().also {
@@ -736,7 +736,7 @@ fun example(first: Int, second: Int): Int {
     return second
   }
 }
-""".trim()
+""".trim(),
         ).allMutations().also { mutations ->
             mutations shouldHaveSize 10
             mutations[0].cleaned().also {
@@ -751,7 +751,7 @@ fun greeting() {
   val i = 0
   println("Hello, world!")
 }
-""".trim()
+""".trim(),
         ).also { source ->
             source.mutater(seed = 124)
                 .also { mutater ->
@@ -784,7 +784,7 @@ fun greeting() {
 fun testing(): Int {
   return 10
 }
-""".trim()
+""".trim(),
         ).also { source ->
             source.mutater(types = ALL - setOf(Mutation.Type.REMOVE_METHOD, Mutation.Type.REMOVE_STATEMENT))
                 .also { mutater ->
@@ -801,11 +801,11 @@ fun testing(): Int {
   val it = true
   return 10
 }
-""".trim()
+""".trim(),
         ).also { source ->
             source.mutater(
                 shuffle = false,
-                types = ALL - setOf(Mutation.Type.REMOVE_METHOD, Mutation.Type.REMOVE_STATEMENT)
+                types = ALL - setOf(Mutation.Type.REMOVE_METHOD, Mutation.Type.REMOVE_STATEMENT),
             )
                 .also { mutater ->
                     mutater.size shouldBe 4
@@ -828,7 +828,7 @@ fun testing(): Int {
   val it = true
   return 10
 }
-""".trim()
+""".trim(),
         ).also { source ->
             val first = source.allMutations(random = Random(seed = 10))
             val second = source.allMutations(random = Random(seed = 10))
@@ -848,7 +848,7 @@ fun reformatName(input: String?): String? {
   val parts = input.split(",")
   return parts[1].trim() + " " + parts[0].trim()
 }
-""".trim()
+""".trim(),
         ).also { source ->
             source.allMutations()
         }
@@ -857,7 +857,7 @@ fun reformatName(input: String?): String? {
         Source.fromKotlin(
             """
 fun isOdd(arg: Int) = arg % 2 != 0
-""".trim()
+""".trim(),
         ).also { source ->
             source.allMutations().also {
                 it shouldHaveAtLeastSize 1
@@ -871,7 +871,7 @@ fun testStream(): String {
   val test = "foobarfoobarfoobarfoobar"
   return test
 }
-""".trim()
+""".trim(),
         ).also { source ->
             source.mutationStream().take(512).toList().size shouldBe 512
         }
@@ -886,7 +886,7 @@ fun testStream(): String {
   }
   return test
 }
-""".trim()
+""".trim(),
         ).allFixedMutations(random = Random(124)).also { mutations ->
             mutations shouldHaveSize 32
         }
@@ -899,7 +899,7 @@ fun testStream(): Int {
   i++
   return i
 }
-""".trim()
+""".trim(),
         ).also { source ->
             source.mutationStream().take(1024).toList().size shouldBe 6
         }
@@ -910,7 +910,7 @@ fun testStream(): Int {
 @Suppress("unused")
 fun reformatName(input: String) {
 }
-""".trim()
+""".trim(),
         ).also { source ->
             source.allMutations() shouldHaveSize 0
         }
@@ -924,7 +924,7 @@ fun reformatName(input: String?) {
     }
     println("Hello, " + input)
 }
-""".trim()
+""".trim(),
         ).allMutations().also { mutations ->
             mutations shouldHaveSize 15
             mutations.forEach { mutatedSource ->
@@ -949,7 +949,7 @@ fun startWord(input: String, word: String): String {
         return ""
     }
 }
-""".trim()
+""".trim(),
         ).allMutations().onEach { mutatedSource ->
             mutatedSource.marked().ktLint().also { errors ->
                 errors.errors.filter {
@@ -984,7 +984,7 @@ class Question {
         return ' '
     }
 }
-"""
+""",
         ).allMutations().onEach { mutatedSource ->
             mutatedSource.marked().ktLint().also { errors ->
                 errors.errors.filter { it.ruleId != "indent" && it.ruleId != "no-trailing-spaces" } shouldHaveSize 0
@@ -1004,7 +1004,7 @@ class Adder() {
     return value
   }
 }
-"""
+""",
         ).allMutations()
     }
     "it should handle braceless loops" {
@@ -1015,7 +1015,7 @@ fun listSum(list: List<Int>): Int {
   for (item in list) sum += item
   return sum
 }
-"""
+""",
         ).allMutations()
     }
     "it should handle braceless statements" {
@@ -1029,7 +1029,7 @@ fun test() {
     println("Not Adult")
   }
 }
-"""
+""",
         ).allMutations()
     }
 })

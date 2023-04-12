@@ -46,7 +46,7 @@ fun Throwable.cleanStackTrace(): String {
     val betterStackTrace = mutableListOf(firstLine)
     for (line in originalStackTrace) {
         if (line.trim()
-            .startsWith("""at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)""")
+                .startsWith("""at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)""")
         ) {
             break
         }

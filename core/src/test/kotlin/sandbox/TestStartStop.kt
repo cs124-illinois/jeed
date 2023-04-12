@@ -24,7 +24,7 @@ class TestStartStop : StringSpec({
 int i = 0;
 i++;
 System.out.println(i);
-            """.trim()
+            """.trim(),
         ).compile().execute()
         executeMainResult should haveCompleted()
         executeMainResult should haveOutput("1")

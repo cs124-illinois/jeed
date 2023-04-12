@@ -11,8 +11,8 @@ class TestKompile : StringSpec({
     "should compile simple sources" {
         val compiledSource = Source(
             mapOf(
-                "Test.kt" to """val test = "string""""
-            )
+                "Test.kt" to """val test = "string"""",
+            ),
         ).kompile()
 
         compiledSource should haveDefinedExactlyTheseClasses(setOf("TestKt"))
@@ -26,8 +26,8 @@ data class Person(val name: String)
 fun main() {
   println("Here")
 }
-""".trim()
-            )
+""".trim(),
+            ),
         ).kompile()
 
         compiledSource should haveDefinedExactlyTheseClasses(setOf("TestKt", "Person"))
@@ -41,8 +41,8 @@ data class Person(val name: String)
 fun main() {
   println("Here")
 }
-""".trim().replace("\n", "\r\n")
-            )
+""".trim().replace("\n", "\r\n"),
+            ),
         ).kompile()
 
         compiledSource should haveDefinedExactlyTheseClasses(setOf("TestKt", "Person"))
@@ -52,8 +52,8 @@ fun main() {
         val compiledSource = Source(
             mapOf(
                 "Test.kt" to "open class Test()",
-                "Me.kt" to "class Me() : Test()"
-            )
+                "Me.kt" to "class Me() : Test()",
+            ),
         ).kompile()
 
         compiledSource should haveDefinedExactlyTheseClasses(setOf("Test", "Me"))
@@ -63,8 +63,8 @@ fun main() {
         val compiledSource = Source(
             mapOf(
                 "Me.kt" to "class Me() : Test()",
-                "Test.kt" to "open class Test()"
-            )
+                "Test.kt" to "open class Test()",
+            ),
         ).kompile()
 
         compiledSource should haveDefinedExactlyTheseClasses(setOf("Test", "Me"))
@@ -79,8 +79,8 @@ fun main() {
   println("Hello, world!")
 }
             """.trim(),
-                "Test.kt" to "open class Test()"
-            )
+                "Test.kt" to "open class Test()",
+            ),
         ).kompile()
 
         compiledSource.source.parsed shouldBe false
@@ -95,8 +95,8 @@ data class Person(val name: String)
 fun main() {
   println("Here")
 }
-""".trim()
-            )
+""".trim(),
+            ),
         )
         val kompilationArguments = KompilationArguments(useCache = false)
         source.kompile(kompilationArguments)
@@ -116,8 +116,8 @@ public class Test {
     System.out.println("test");
   }
 }
-""".trim()
-            )
+""".trim(),
+            ),
         ).compile()
 
         val second = Source(
@@ -127,13 +127,13 @@ fun main() {
   val test = Test()
   test.print()
 }
-""".trim()
-            )
+""".trim(),
+            ),
         ).kompile(
             kompilationArguments = KompilationArguments(
                 parentFileManager = first.fileManager,
-                parentClassLoader = first.classLoader
-            )
+                parentClassLoader = first.classLoader,
+            ),
         )
             .execute()
 
@@ -156,8 +156,8 @@ public class SimpleLinkedList {
   }
   protected Item start;
 }
-""".trim()
-            )
+""".trim(),
+            ),
         ).compile()
 
         Source(
@@ -176,13 +176,13 @@ class CountLinkedList : SimpleLinkedList() {
     return count
   }
 }
-""".trim()
-            )
+""".trim(),
+            ),
         ).kompile(
             kompilationArguments = KompilationArguments(
                 parentFileManager = first.fileManager,
-                parentClassLoader = first.classLoader
-            )
+                parentClassLoader = first.classLoader,
+            ),
         )
     }
     "should load classes from package in a separate classloader" {
@@ -196,8 +196,8 @@ public class Test {
     System.out.println("test");
   }
 }
-""".trim()
-            )
+""".trim(),
+            ),
         ).compile()
 
         val second = Source(
@@ -209,13 +209,13 @@ fun main() {
   val test = Test()
   test.print()
 }
-""".trim()
-            )
+""".trim(),
+            ),
         ).kompile(
             kompilationArguments = KompilationArguments(
                 parentFileManager = first.fileManager,
-                parentClassLoader = first.classLoader
-            )
+                parentClassLoader = first.classLoader,
+            ),
         )
             .execute()
 
@@ -233,8 +233,8 @@ public class Test {
     System.out.println("test");
   }
 }
-""".trim()
-            )
+""".trim(),
+            ),
         ).compile()
 
         val second = Source(
@@ -250,19 +250,19 @@ fun main() {
   val test = Test()
   test.print()
 }
-""".trim()
-            )
+""".trim(),
+            ),
         ).kompile(
             kompilationArguments = KompilationArguments(
                 parentFileManager = first.fileManager,
-                parentClassLoader = first.classLoader
-            )
+                parentClassLoader = first.classLoader,
+            ),
         )
 
         second.fileManager.allClassFiles.keys shouldContainExactlyInAnyOrder listOf(
             "blah/AnotherTest.class",
             "blah/MainKt.class",
-            "test/Test.class"
+            "test/Test.class",
         )
     }
     "should compile with parameter names when requested" {
@@ -272,8 +272,8 @@ fun main() {
 class Test {
   fun method(first: Int, second: Int) { }
 }
-            """.trim()
-            )
+            """.trim(),
+            ),
         )
         source.kompile().also { compiledSource ->
             val klass = compiledSource.classLoader.loadClass("Test")
@@ -300,8 +300,8 @@ class Person(var name: String) {
     }
 }
 
-            """.trim()
-                )
+            """.trim(),
+                ),
             ).kompile()
         }
     }

@@ -9,7 +9,7 @@ fun main() {
             """
 fun main() {
   println("Hello, $i")
-}""".trim()
+}""".trim(),
         ).kompile().also {
             val available = Runtime.getRuntime().freeMemory().toDouble() / Runtime.getRuntime().totalMemory().toDouble()
             println("$i ${it.interval.length} ${available * 100}")

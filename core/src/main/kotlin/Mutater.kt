@@ -20,13 +20,13 @@ fun MutableList<Mutation.Location.SourcePath>.method(): String =
 @JsonClass(generateAdapter = true)
 data class SourceMutation(
     val name: String,
-    val mutation: Mutation
+    val mutation: Mutation,
 )
 
 @JsonClass(generateAdapter = true)
 data class AppliedSourceMutation(
     val name: String,
-    val mutation: AppliedMutation
+    val mutation: AppliedMutation,
 ) {
     constructor(sourceMutation: SourceMutation) : this(sourceMutation.name, AppliedMutation(sourceMutation.mutation))
 }
@@ -37,7 +37,7 @@ class MutatedSource(
     val originalSources: Sources,
     val mutations: List<AppliedSourceMutation>,
     val appliedMutations: Int,
-    val unappliedMutations: Int
+    val unappliedMutations: Int,
 ) : Source(sources) {
     fun cleaned() = Source(sources.mapValues { removeMutationSuppressions(it.value) })
 
@@ -114,7 +114,7 @@ class MutatedSource(
                     output += nextLine
                 }
                 output.joinToString("\n")
-            }
+            },
         )
     }
 
@@ -132,7 +132,7 @@ class Mutater(
     private val originalSource: Source,
     shuffle: Boolean,
     seed: Int,
-    types: Set<Mutation.Type>
+    types: Set<Mutation.Type>,
 ) {
     private val random = Random(seed)
     private val mutations = originalSource.sources.keys.map { name ->
@@ -187,7 +187,7 @@ class Mutater(
             originalSource.sources,
             appliedMutations,
             appliedMutations.size,
-            availableMutations.size
+            availableMutations.size,
         )
     }
 }
@@ -199,7 +199,7 @@ fun Source.mutate(
     shuffle: Boolean = true,
     seed: Int = Random.nextInt(),
     limit: Int = 1,
-    types: Set<Mutation.Type> = Mutation.Type.values().toSet()
+    types: Set<Mutation.Type> = Mutation.Type.values().toSet(),
 ) =
     Mutater(this, shuffle, seed, types).mutate(limit)
 
@@ -218,9 +218,9 @@ fun SourceMutation.suppressed(contents: String) = mutation.location.line.lines()
         }
         line.split("""//""").also { parts ->
             if (parts.size == 2 && (
-                parts[1].split(" ").contains("mutate-disable") ||
-                    parts[1].split(" ").contains(mutation.mutationType.suppressionComment())
-                )
+                    parts[1].split(" ").contains("mutate-disable") ||
+                        parts[1].split(" ").contains(mutation.mutationType.suppressionComment())
+                    )
             ) {
                 return@let true
             }
@@ -232,7 +232,7 @@ fun SourceMutation.suppressed(contents: String) = mutation.location.line.lines()
 fun Source.allMutations(
     suppressWithComments: Boolean = true,
     random: Random = Random,
-    types: Set<Mutation.Type> = ALL
+    types: Set<Mutation.Type> = ALL,
 ): List<MutatedSource> {
     val mutations = sources.keys.map { name ->
         Mutation.find<Mutation>(getParsed(name), type).map { mutation -> SourceMutation(name, mutation) }
@@ -252,7 +252,7 @@ fun Source.allMutations(
             sources,
             listOf(AppliedSourceMutation(sourceMutation)),
             1,
-            mutations.size - 1
+            mutations.size - 1,
         )
     }
 }
@@ -261,7 +261,7 @@ fun Source.mutationStream(
     suppressWithComments: Boolean = true,
     random: Random = Random,
     types: Set<Mutation.Type> = ALL,
-    retryCount: Int = 32
+    retryCount: Int = 32,
 ) = sequence {
     val mutations = sources.keys.asSequence().map { name ->
         Mutation.find<Mutation>(getParsed(name), type).map { mutation -> SourceMutation(name, mutation) }
@@ -290,7 +290,7 @@ fun Source.mutationStream(
             sources,
             listOf(AppliedSourceMutation(mutation)),
             1,
-            mutations.size - 1
+            mutations.size - 1,
         )
         if (source.md5 !in seen) {
             retries = 0
@@ -317,7 +317,7 @@ fun Source.allFixedMutations(
     random: Random = Random,
     types: Set<Mutation.Type> = ALL,
     nonFixedMax: Int = 4,
-    retryCount: Int = 8
+    retryCount: Int = 8,
 ): List<MutatedSource> {
     val mutations = sources.keys.asSequence()
         .map {
@@ -350,7 +350,7 @@ fun Source.allFixedMutations(
                 sources,
                 listOf(AppliedSourceMutation(mutation)),
                 1,
-                mutations.size - 1
+                mutations.size - 1,
             )
             if (source.md5 !in seen) {
                 retries = 0
@@ -381,7 +381,7 @@ data class MutationsResults(val source: Map<String, String>, val mutatedSources:
     data class MutatedSource(
         val mutatedSource: String,
         val mutatedSources: Map<String, String>,
-        val mutation: AppliedMutation
+        val mutation: AppliedMutation,
     )
 }
 
@@ -394,7 +394,7 @@ fun Source.mutations(mutationsArguments: MutationsArguments = MutationsArguments
                 MutationsResults.MutatedSource(
                     it.mutations.first().name,
                     it.sources.sources,
-                    it.mutations.first().mutation
+                    it.mutations.first().mutation,
                 )
             }
             .take(mutationsArguments.limit)

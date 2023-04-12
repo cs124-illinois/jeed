@@ -27,7 +27,7 @@ public class Main {
     i += 1;
     System.out.println(i);
   }
-}""".trim()
+}""".trim(),
         ).compile(CompilationArguments(debugInfo = true))
             .execute(SourceExecutionArguments().addPlugin(LineTrace).addPlugin(ExecutionTrace))
         result should haveCompleted()
@@ -44,7 +44,7 @@ public class Main {
     i += 1;
     System.out.println(i);
   }
-}""".trim()
+}""".trim(),
         ).compile(CompilationArguments(debugInfo = true))
             .execute(SourceExecutionArguments().addPlugin(ExecutionTrace))
         val executionTrace = result.pluginResult(ExecutionTrace)
@@ -65,7 +65,7 @@ void printSum(short a, short b) {
     printInt(a + b);
 }
 printSum((short) 6, (short) 4);
-""".trim()
+""".trim(),
         ).compile(CompilationArguments(debugInfo = true))
             .execute(SourceExecutionArguments().addPlugin(ExecutionTrace))
         result should haveCompleted()
@@ -99,7 +99,7 @@ class Adder {
 }
 Adder adder = new Adder(5);
 System.out.println(adder.add(2));
-""".trim()
+""".trim(),
         ).compile(CompilationArguments(debugInfo = true))
             .execute(SourceExecutionArguments().addPlugin(ExecutionTrace))
         result should haveCompleted()
@@ -122,7 +122,7 @@ class Adder {
     }
 }
 Adder adder = new Adder(5);
-""".trim()
+""".trim(),
         ).compile(CompilationArguments(debugInfo = true))
             .execute(SourceExecutionArguments().addPlugin(ExecutionTrace))
         result should haveCompleted()
@@ -155,7 +155,7 @@ class Child extends Parent {
     }
 }
 Child c = new Child("hi");
-""".trim()
+""".trim(),
         ).compile(CompilationArguments(debugInfo = true))
             .execute(SourceExecutionArguments().addPlugin(ExecutionTrace))
         result should haveCompleted()
@@ -186,7 +186,7 @@ void printSum(int a, int b) {
     System.out.println(a + b);
 }
 printSum(10, 2);
-""".trim()
+""".trim(),
         ).compile(CompilationArguments(debugInfo = true))
             .execute(SourceExecutionArguments().addPlugin(ExecutionTrace))
         result should haveCompleted()
@@ -208,7 +208,7 @@ int addOrSubtract(int a, int b, boolean subtract) {
 }
 addOrSubtract(10, 5, false);
 addOrSubtract(10, 5, true);
-""".trim()
+""".trim(),
         ).compile(CompilationArguments(debugInfo = true))
             .execute(SourceExecutionArguments().addPlugin(ExecutionTrace))
         result should haveCompleted()
@@ -241,7 +241,7 @@ class Child extends Parent {
     }
 }
 Child c = new Child();
-""".trim()
+""".trim(),
         ).compile(CompilationArguments(debugInfo = true))
             .execute(SourceExecutionArguments().addPlugin(ExecutionTrace))
         result should haveCompleted()
@@ -297,7 +297,7 @@ try {
 } catch (Exception e) {
     System.out.println(e.getMessage());
 }
-""".trim()
+""".trim(),
         ).compile(CompilationArguments(debugInfo = true))
             .execute(SourceExecutionArguments().addPlugin(ExecutionTrace))
         result should haveCompleted()
@@ -324,7 +324,7 @@ class Child extends Parent {
     }
 }
 Child c = new Child("hi");
-""".trim()
+""".trim(),
         ).compile(CompilationArguments(debugInfo = true))
             .execute(SourceExecutionArguments().addPlugin(ExecutionTrace))
         result.threw should beInstanceOf<RuntimeException>()
@@ -353,7 +353,7 @@ class Child extends Parent {
     }
 }
 Child c = new Child("hi");
-""".trim()
+""".trim(),
         ).compile(CompilationArguments(debugInfo = true))
             .execute(SourceExecutionArguments().addPlugin(ExecutionTrace))
         result.threw should beInstanceOf<RuntimeException>()
@@ -386,7 +386,7 @@ class Child extends Parent {
     }
 }
 Child c = new Child();
-""".trim()
+""".trim(),
         ).compile(CompilationArguments(debugInfo = true))
             .execute(SourceExecutionArguments().addPlugin(ExecutionTrace))
         result.threw!!.message shouldBe "boom"
@@ -419,7 +419,7 @@ try {
 } catch (NullPointerException e) {
     System.out.println("NPE");
 }
-""".trim()
+""".trim(),
         ).compile(CompilationArguments(debugInfo = true))
             .execute(SourceExecutionArguments().addPlugin(ExecutionTrace))
         result should haveCompleted()
@@ -450,7 +450,7 @@ class Child extends Parent {
     }
 }
 Child c = new Child();
-""".trim()
+""".trim(),
         ).compile(CompilationArguments(debugInfo = true))
             .execute(SourceExecutionArguments().addPlugin(ExecutionTrace))
         result.threw should beInstanceOf<SecurityException>()
@@ -472,7 +472,7 @@ for (int i = 0; i < 3; i++) {
     int iCubed = iSquared * i;
     System.out.println(iCubed);
 }
-""".trim()
+""".trim(),
         ).compile(CompilationArguments(debugInfo = true))
             .execute(SourceExecutionArguments().addPlugin(ExecutionTrace))
         result should haveCompleted()
@@ -504,7 +504,7 @@ try {
 } catch (Exception e) {
     System.out.println("oops");
 }
-""".trim()
+""".trim(),
         ).compile(CompilationArguments(debugInfo = true))
             .execute(SourceExecutionArguments().addPlugin(ExecutionTrace))
         result should haveCompleted()
@@ -527,7 +527,7 @@ try {
             """
 short raw = (short) 5;
 Short box = new Short(raw);
-""".trim()
+""".trim(),
         ).compile(CompilationArguments(debugInfo = true))
             .execute(SourceExecutionArguments().addPlugin(ExecutionTrace))
         result should haveCompleted()
@@ -548,7 +548,7 @@ int number = 254;
 number++;
 text = Integer.toHexString(number);
 System.out.println(text);
-""".trim()
+""".trim(),
         ).compile(CompilationArguments(debugInfo = true))
             .execute(SourceExecutionArguments().addPlugin(ExecutionTrace))
         result should haveCompleted()
@@ -574,7 +574,7 @@ System.out.println(text);
             """
 String text = new String("x".hashCode() == 0 ? "a" : "b");
 System.out.println(text);
-""".trim()
+""".trim(),
         ).compile(CompilationArguments(debugInfo = true))
             .execute(SourceExecutionArguments().addPlugin(ExecutionTrace))
         result should haveCompleted()
@@ -598,7 +598,7 @@ try {
     String s = new String(e instanceof NullPointerException ? "npe" : "otherwise");
     System.out.println(s);
 }
-""".trim()
+""".trim(),
         ).compile(CompilationArguments(debugInfo = true))
             .execute(SourceExecutionArguments().addPlugin(ExecutionTrace))
         result should haveCompleted()
@@ -623,7 +623,7 @@ try {
 String greeting = "hello";
 String newGreeting = new String(greeting);
 System.out.println(newGreeting);
-""".trim()
+""".trim(),
         ).compile(CompilationArguments(debugInfo = true))
             .execute(SourceExecutionArguments().addPlugin(ExecutionTrace))
         result should haveCompleted()
@@ -649,7 +649,7 @@ System.out.println(newGreeting);
             """
 var chars = "hi".toCharArray();
 System.out.println(chars);
-""".trim()
+""".trim(),
         ).compile(CompilationArguments(debugInfo = true))
             .execute(SourceExecutionArguments().addPlugin(ExecutionTrace))
         result should haveCompleted()
@@ -670,7 +670,7 @@ System.out.println(chars);
             """
 var array = new int[3][10];
 System.out.println(array);
-""".trim()
+""".trim(),
         ).compile(CompilationArguments(debugInfo = true))
             .execute(SourceExecutionArguments().addPlugin(ExecutionTrace))
         result should haveCompleted()
@@ -691,7 +691,7 @@ var numbers = new int[] { 2, 5 };
 numbers[1] = 10;
 numbers[0] = 3;
 System.out.println(numbers);
-""".trim()
+""".trim(),
         ).compile(CompilationArguments(debugInfo = true))
             .execute(SourceExecutionArguments().addPlugin(ExecutionTrace))
         result should haveCompleted()
@@ -722,7 +722,7 @@ System.out.println(numbers);
 var numbers = new long[2];
 numbers[1] = 100000000000L;
 System.out.println(numbers);
-""".trim()
+""".trim(),
         ).compile(CompilationArguments(debugInfo = true))
             .execute(SourceExecutionArguments().addPlugin(ExecutionTrace))
         result should haveCompleted()
@@ -739,7 +739,7 @@ System.out.println(numbers);
             """
 void sink(Object... things) {}
 sink("hi", 5, false);
-""".trim()
+""".trim(),
         ).compile(CompilationArguments(debugInfo = true))
             .execute(SourceExecutionArguments().addPlugin(ExecutionTrace))
         result should haveCompleted()
@@ -757,7 +757,7 @@ sink("hi", 5, false);
 var words = new String[2];
 words[0] = "hello";
 System.out.println(words);
-""".trim()
+""".trim(),
         ).compile(CompilationArguments(debugInfo = true))
             .execute(SourceExecutionArguments().addPlugin(ExecutionTrace))
         result should haveCompleted()
@@ -781,7 +781,7 @@ var bytes = new byte[3];
 bytes[2] = (byte) 20;
 var bools = new boolean[2];
 bools[1] = true;
-""".trim()
+""".trim(),
         ).compile(CompilationArguments(debugInfo = true))
             .execute(SourceExecutionArguments().addPlugin(ExecutionTrace))
         result should haveCompleted()
@@ -829,7 +829,7 @@ try {
 } catch (Exception e) {
   System.out.println("oops");
 }
-""".trim()
+""".trim(),
         ).compile(CompilationArguments(debugInfo = true))
             .execute(SourceExecutionArguments().addPlugin(ExecutionTrace))
         result should haveCompleted()

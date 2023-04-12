@@ -95,8 +95,8 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
             SourceRange(
                 filename,
                 Location(ctx.start.line, ctx.start.charPositionInLine),
-                Location(ctx.stop.line, ctx.stop.charPositionInLine)
-            )
+                Location(ctx.stop.line, ctx.stop.charPositionInLine),
+            ),
         )
         assert(featureStack.isEmpty())
         featureStack.add(0, unitFeatures)
@@ -224,7 +224,7 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
         enterClassOrInterface(
             ctx.simpleIdentifier().text,
             Location(ctx.start.line, ctx.start.charPositionInLine),
-            Location(ctx.stop.line, ctx.stop.charPositionInLine)
+            Location(ctx.stop.line, ctx.stop.charPositionInLine),
         )
         ctx.delegationSpecifiers()?.annotatedDelegationSpecifier()?.map { it.delegationSpecifier() }
             ?.forEach { delegationSpecifier ->
@@ -249,7 +249,7 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
         exitClassOrInterface(
             ctx.simpleIdentifier().text,
             Location(ctx.start.line, ctx.start.charPositionInLine),
-            Location(ctx.stop.line, ctx.stop.charPositionInLine)
+            Location(ctx.stop.line, ctx.stop.charPositionInLine),
         )
     }
 
@@ -261,7 +261,7 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
         enterClassOrInterface(
             ctx.simpleIdentifier().text,
             Location(ctx.start.line, ctx.start.charPositionInLine),
-            Location(ctx.stop.line, ctx.stop.charPositionInLine)
+            Location(ctx.stop.line, ctx.stop.charPositionInLine),
         )
     }
 
@@ -269,7 +269,7 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
         exitClassOrInterface(
             ctx.simpleIdentifier().text,
             Location(ctx.start.line, ctx.start.charPositionInLine),
-            Location(ctx.stop.line, ctx.stop.charPositionInLine)
+            Location(ctx.stop.line, ctx.stop.charPositionInLine),
         )
     }
 
@@ -323,7 +323,7 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
         enterMethodOrConstructor(
             ctx.fullName(),
             Location(ctx.start.line, ctx.start.charPositionInLine),
-            Location(ctx.stop.line, ctx.stop.charPositionInLine)
+            Location(ctx.stop.line, ctx.stop.charPositionInLine),
         )
         functionBlockDepths += 0
         ifDepths += 0
@@ -345,7 +345,7 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
         enterMethodOrConstructor(
             ctx.fullName(),
             Location(ctx.start.line, ctx.start.charPositionInLine),
-            Location(ctx.stop.line, ctx.stop.charPositionInLine)
+            Location(ctx.stop.line, ctx.stop.charPositionInLine),
         )
     }
 
@@ -358,7 +358,7 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
         enterMethodOrConstructor(
             ctx.fullName(),
             Location(ctx.start.line, ctx.start.charPositionInLine),
-            Location(ctx.stop.line, ctx.stop.charPositionInLine)
+            Location(ctx.stop.line, ctx.stop.charPositionInLine),
         )
     }
 
@@ -384,7 +384,7 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
         enterMethodOrConstructor(
             "init${initCounter++}",
             Location(ctx.start.line, ctx.start.charPositionInLine),
-            Location(ctx.stop.line, ctx.stop.charPositionInLine)
+            Location(ctx.stop.line, ctx.stop.charPositionInLine),
         )
     }
 
@@ -409,7 +409,7 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
         enterMethodOrConstructor(
             "constructor${constructorCounter++}",
             Location(ctx.start.line, ctx.start.charPositionInLine),
-            Location(ctx.stop.line, ctx.stop.charPositionInLine)
+            Location(ctx.stop.line, ctx.stop.charPositionInLine),
         )
     }
 
@@ -658,7 +658,7 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
                 } else {
                     count(
                         FeatureName.DOTTED_VARIABLE_ACCESS,
-                        current.navigationSuffix().memberAccessOperator().DOT().toLocation()
+                        current.navigationSuffix().memberAccessOperator().DOT().toLocation(),
                     )
                 }
             }
@@ -752,7 +752,7 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
                     ) {
                         count(
                             FeatureName.DOT_NOTATION,
-                            current.navigationSuffix().memberAccessOperator().DOT().toLocation()
+                            current.navigationSuffix().memberAccessOperator().DOT().toLocation(),
                         )
                         if (next?.callSuffix() != null) {
                             val identifier = current.navigationSuffix().simpleIdentifier().text
@@ -761,13 +761,13 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
                             if (identifier in typeCasts) {
                                 count(
                                     FeatureName.PRIMITIVE_CASTING,
-                                    current.navigationSuffix().simpleIdentifier().toLocation()
+                                    current.navigationSuffix().simpleIdentifier().toLocation(),
                                 )
                             }
                         } else {
                             count(
                                 FeatureName.DOTTED_VARIABLE_ACCESS,
-                                current.navigationSuffix().memberAccessOperator().DOT().toLocation()
+                                current.navigationSuffix().memberAccessOperator().DOT().toLocation(),
                             )
                         }
                     }
@@ -965,7 +965,7 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
         enterClassOrInterface(
             ctx.simpleIdentifier().text,
             Location(ctx.start.line, ctx.start.charPositionInLine),
-            Location(ctx.stop.line, ctx.stop.charPositionInLine)
+            Location(ctx.stop.line, ctx.stop.charPositionInLine),
         )
     }
 
@@ -973,7 +973,7 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
         exitClassOrInterface(
             ctx.simpleIdentifier().text,
             Location(ctx.start.line, ctx.start.charPositionInLine),
-            Location(ctx.stop.line, ctx.stop.charPositionInLine)
+            Location(ctx.stop.line, ctx.stop.charPositionInLine),
         )
     }
 

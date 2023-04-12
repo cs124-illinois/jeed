@@ -13,7 +13,7 @@ sealed class Mutation(
     val mutationType: Type,
     var location: Location,
     val original: String,
-    val fileType: Source.FileType
+    val fileType: Source.FileType,
 ) {
     @JsonClass(generateAdapter = true)
     data class Location(
@@ -21,7 +21,7 @@ sealed class Mutation(
         val end: Int,
         val line: String,
         val startLine: Int,
-        val endLine: Int
+        val endLine: Int,
     ) {
         init {
             check(end >= start) { "Invalid location: $end $start" }
@@ -154,7 +154,7 @@ data class AppliedMutation(
     val original: String,
     val mutated: String,
     val linesChanged: Int,
-    val mightNotCompile: Boolean
+    val mightNotCompile: Boolean,
 ) {
     constructor(mutation: Mutation) : this(
         mutation.mutationType,
@@ -162,7 +162,7 @@ data class AppliedMutation(
         mutation.original,
         mutation.modified!!,
         mutation.linesChanged!!,
-        mutation.mightNotCompile
+        mutation.mightNotCompile,
     ) {
         require(mutation.applied) { "Must be created from an applied mutation" }
     }
@@ -185,7 +185,7 @@ val PITEST = setOf(
     Mutation.Type.TRUE_RETURN,
     Mutation.Type.FALSE_RETURN,
     Mutation.Type.NULL_RETURN,
-    Mutation.Type.PLUS_TO_MINUS
+    Mutation.Type.PLUS_TO_MINUS,
 )
 val OTHER = setOf(
     Mutation.Type.REMOVE_RUNTIME_CHECK,
@@ -205,7 +205,7 @@ val OTHER = setOf(
     Mutation.Type.STRING_LITERAL_TRIM,
     Mutation.Type.NUMBER_LITERAL_TRIM,
     Mutation.Type.MODIFY_LENGTH_AND_SIZE,
-    Mutation.Type.MODIFY_ARRAY_LITERAL
+    Mutation.Type.MODIFY_ARRAY_LITERAL,
 )
 val ALL = PITEST + OTHER
 
@@ -215,7 +215,7 @@ fun Mutation.Type.mutationName() = name.lowercase().replace("_", "-")
 class BooleanLiteral(
     location: Location,
     original: String,
-    fileType: Source.FileType
+    fileType: Source.FileType,
 ) : Mutation(Type.BOOLEAN_LITERAL, location, original, fileType) {
     override val preservesLength = false
     override val estimatedCount = 1
@@ -236,7 +236,7 @@ val ALPHANUMERIC_CHARS = (('a'..'z') + ('A'..'Z') + ('0'..'9')).toSet()
 class CharLiteral(
     location: Location,
     original: String,
-    fileType: Source.FileType
+    fileType: Source.FileType,
 ) : Mutation(Type.CHAR_LITERAL, location, original, fileType) {
     override val preservesLength = false
     override val estimatedCount = ALPHANUMERIC_CHARS.size - 1
@@ -267,7 +267,7 @@ class StringLiteral(
     location: Location,
     original: String,
     fileType: Source.FileType,
-    private val withQuotes: Boolean = true
+    private val withQuotes: Boolean = true,
 ) : Mutation(Type.STRING_LITERAL, location, original, fileType) {
     private val string = if (withQuotes) {
         original.removeSurrounding("\"")
@@ -308,7 +308,7 @@ class StringLiteralLookalike(
     location: Location,
     original: String,
     fileType: Source.FileType,
-    private val withQuotes: Boolean = true
+    private val withQuotes: Boolean = true,
 ) : Mutation(Type.STRING_LITERAL_LOOKALIKE, location, original, fileType) {
     override val preservesLength = true
     private val string = if (withQuotes) {
@@ -355,7 +355,7 @@ class StringLiteralCase(
     location: Location,
     original: String,
     fileType: Source.FileType,
-    private val withQuotes: Boolean = true
+    private val withQuotes: Boolean = true,
 ) : Mutation(Type.STRING_LITERAL_CASE, location, original, fileType) {
     override val preservesLength = true
     private val string = if (withQuotes) {
@@ -370,7 +370,7 @@ class StringLiteralCase(
             string
                 .split(" ")
                 .filter { it.isNotEmpty() && (it.first().isUpperCase() || it.first().isLowerCase()) }
-                .size
+                .size,
         ).toInt() - 1
     override val mightNotCompile = false
     override val fixedCount = false
@@ -420,7 +420,7 @@ class StringLiteralTrim(
     location: Location,
     original: String,
     fileType: Source.FileType,
-    private val withQuotes: Boolean = true
+    private val withQuotes: Boolean = true,
 ) : Mutation(Type.STRING_LITERAL_TRIM, location, original, fileType) {
     override val preservesLength = false
     private val string = if (withQuotes) {
@@ -468,7 +468,7 @@ internal fun MutableList<Mutation>.addStringMutations(
     location: Mutation.Location,
     contents: String,
     fileType: Source.FileType,
-    withQuotes: Boolean = true
+    withQuotes: Boolean = true,
 ) {
     add(StringLiteral(location, contents, fileType, withQuotes))
     if (StringLiteralLookalike.matches(contents, withQuotes)) {
@@ -486,7 +486,7 @@ class NumberLiteral(
     location: Location,
     original: String,
     fileType: Source.FileType,
-    private val base: Int = 10
+    private val base: Int = 10,
 ) : Mutation(Type.NUMBER_LITERAL, location, original, fileType) {
     override val preservesLength = true
     override val mightNotCompile = false
@@ -539,7 +539,7 @@ class NumberLiteralTrim(
         8
     } else {
         10
-    }
+    },
 ) : Mutation(Type.NUMBER_LITERAL_TRIM, location, original, fileType) {
     override val preservesLength = false
     override val mightNotCompile = false
@@ -603,7 +603,7 @@ class NumberLiteralTrim(
 class IncrementDecrement(
     location: Location,
     original: String,
-    fileType: Source.FileType
+    fileType: Source.FileType,
 ) : Mutation(Type.INCREMENT_DECREMENT, location, original, fileType) {
     override val preservesLength = true
     override val estimatedCount = 1
@@ -629,7 +629,7 @@ class IncrementDecrement(
 class InvertNegation(
     location: Location,
     original: String,
-    fileType: Source.FileType
+    fileType: Source.FileType,
 ) : Mutation(Type.INVERT_NEGATION, location, original, fileType) {
     override val preservesLength = false
     override val estimatedCount = 1
@@ -646,7 +646,7 @@ class InvertNegation(
 class MutateMath(
     location: Location,
     original: String,
-    fileType: Source.FileType
+    fileType: Source.FileType,
 ) : Mutation(Type.MATH, location, original, fileType) {
     override val preservesLength = false
     override val estimatedCount = 1
@@ -683,7 +683,7 @@ class MutateMath(
         fun matches(contents: String) = contents in setOf(
             SUBTRACT, MULTIPLY, DIVIDE, REMAINDER,
             BITWISE_AND, BITWISE_OR, BITWISE_XOR,
-            LEFT_SHIFT, RIGHT_SHIFT, UNSIGNED_RIGHT_SHIFT
+            LEFT_SHIFT, RIGHT_SHIFT, UNSIGNED_RIGHT_SHIFT,
         )
     }
 }
@@ -691,7 +691,7 @@ class MutateMath(
 class PlusToMinus(
     location: Location,
     original: String,
-    fileType: Source.FileType
+    fileType: Source.FileType,
 ) : Mutation(Type.PLUS_TO_MINUS, location, original, fileType) {
     override val preservesLength = false
     override val estimatedCount = 1
@@ -717,7 +717,7 @@ object Conditionals {
 class ConditionalBoundary(
     location: Location,
     original: String,
-    fileType: Source.FileType
+    fileType: Source.FileType,
 ) : Mutation(Type.CONDITIONAL_BOUNDARY, location, original, fileType) {
     override val preservesLength = false
     override val estimatedCount = 1
@@ -739,7 +739,7 @@ class ConditionalBoundary(
             Conditionals.LT,
             Conditionals.LTE,
             Conditionals.GT,
-            Conditionals.GTE
+            Conditionals.GTE,
         )
     }
 }
@@ -747,7 +747,7 @@ class ConditionalBoundary(
 class NegateConditional(
     location: Location,
     original: String,
-    fileType: Source.FileType
+    fileType: Source.FileType,
 ) : Mutation(Type.NEGATE_CONDITIONAL, location, original, fileType) {
     override val preservesLength = false
     override val estimatedCount = 1
@@ -773,7 +773,7 @@ class NegateConditional(
             Conditionals.LT,
             Conditionals.LTE,
             Conditionals.GT,
-            Conditionals.GTE
+            Conditionals.GTE,
         )
     }
 }
@@ -781,7 +781,7 @@ class NegateConditional(
 class SwapAndOr(
     location: Location,
     original: String,
-    fileType: Source.FileType
+    fileType: Source.FileType,
 ) : Mutation(Type.SWAP_AND_OR, location, original, fileType) {
     override val preservesLength = true
     override val estimatedCount = 1
@@ -804,7 +804,7 @@ class SwapAndOr(
 class SwapBreakContinue(
     location: Location,
     original: String,
-    fileType: Source.FileType
+    fileType: Source.FileType,
 ) : Mutation(Type.SWAP_BREAK_CONTINUE, location, original, fileType) {
     override val preservesLength = false
     override val estimatedCount = 1
@@ -823,7 +823,7 @@ class SwapBreakContinue(
 class PlusOrMinusOneToZero(
     location: Location,
     original: String,
-    fileType: Source.FileType
+    fileType: Source.FileType,
 ) : Mutation(Type.PLUS_OR_MINUS_ONE_TO_ZERO, location, original, fileType) {
     override val preservesLength = false
     override val estimatedCount = 1
@@ -844,7 +844,7 @@ private val kotlinPrimitiveTypes = setOf("Byte", "Short", "Int", "Long", "Float"
 class PrimitiveReturn(
     location: Location,
     original: String,
-    fileType: Source.FileType
+    fileType: Source.FileType,
 ) : Mutation(Type.PRIMITIVE_RETURN, location, original, fileType) {
     override val preservesLength = false
     override val estimatedCount = 1
@@ -865,7 +865,7 @@ class PrimitiveReturn(
 class TrueReturn(
     location: Location,
     original: String,
-    fileType: Source.FileType
+    fileType: Source.FileType,
 ) : Mutation(Type.TRUE_RETURN, location, original, fileType) {
     override val preservesLength = false
     override val estimatedCount = 1
@@ -883,7 +883,7 @@ class TrueReturn(
 class FalseReturn(
     location: Location,
     original: String,
-    fileType: Source.FileType
+    fileType: Source.FileType,
 ) : Mutation(Type.FALSE_RETURN, location, original, fileType) {
     override val preservesLength = false
     override val estimatedCount = 1
@@ -901,7 +901,7 @@ class FalseReturn(
 class NullReturn(
     location: Location,
     original: String,
-    fileType: Source.FileType
+    fileType: Source.FileType,
 ) : Mutation(Type.NULL_RETURN, location, original, fileType) {
     override val preservesLength = false
     override val estimatedCount = 1
@@ -925,7 +925,7 @@ class NullReturn(
 class RemoveRuntimeCheck(
     location: Location,
     original: String,
-    fileType: Source.FileType
+    fileType: Source.FileType,
 ) : Mutation(Type.REMOVE_RUNTIME_CHECK, location, original, fileType) {
     override val preservesLength = false
     override val estimatedCount = 1
@@ -939,7 +939,7 @@ class RemoveMethod(
     location: Location,
     original: String,
     private val returnType: String,
-    fileType: Source.FileType
+    fileType: Source.FileType,
 ) : Mutation(Type.REMOVE_METHOD, location, original, fileType) {
     override val preservesLength = false
     override val estimatedCount = 1
@@ -1029,7 +1029,7 @@ class RemoveMethod(
 class NegateIf(
     location: Location,
     original: String,
-    fileType: Source.FileType
+    fileType: Source.FileType,
 ) : Mutation(Type.NEGATE_IF, location, original, fileType) {
     override val preservesLength = false
     override val estimatedCount = 1
@@ -1044,7 +1044,7 @@ class NegateIf(
 class NegateWhile(
     location: Location,
     original: String,
-    fileType: Source.FileType
+    fileType: Source.FileType,
 ) : Mutation(Type.NEGATE_WHILE, location, original, fileType) {
     override val preservesLength = false
     override val estimatedCount = 1
@@ -1059,7 +1059,7 @@ class NegateWhile(
 class RemoveIf(
     location: Location,
     original: String,
-    fileType: Source.FileType
+    fileType: Source.FileType,
 ) : Mutation(Type.REMOVE_IF, location, original, fileType) {
     override val preservesLength = false
     override val estimatedCount = 1
@@ -1072,7 +1072,7 @@ class RemoveIf(
 class RemoveLoop(
     location: Location,
     original: String,
-    fileType: Source.FileType
+    fileType: Source.FileType,
 ) : Mutation(Type.REMOVE_LOOP, location, original, fileType) {
     override val preservesLength = false
     override val estimatedCount = 1
@@ -1085,7 +1085,7 @@ class RemoveLoop(
 class RemoveAndOr(
     location: Location,
     original: String,
-    fileType: Source.FileType
+    fileType: Source.FileType,
 ) : Mutation(Type.REMOVE_AND_OR, location, original, fileType) {
     override val preservesLength = false
     override val estimatedCount = 1
@@ -1098,7 +1098,7 @@ class RemoveAndOr(
 class RemoveTry(
     location: Location,
     original: String,
-    fileType: Source.FileType
+    fileType: Source.FileType,
 ) : Mutation(Type.REMOVE_TRY, location, original, fileType) {
     override val preservesLength = false
     override val estimatedCount = 1
@@ -1111,7 +1111,7 @@ class RemoveTry(
 class RemoveStatement(
     location: Location,
     original: String,
-    fileType: Source.FileType
+    fileType: Source.FileType,
 ) : Mutation(Type.REMOVE_STATEMENT, location, original, fileType) {
     override val preservesLength = false
     override val estimatedCount = 1
@@ -1126,7 +1126,7 @@ class RemoveStatement(
 class RemovePlus(
     location: Location,
     original: String,
-    fileType: Source.FileType
+    fileType: Source.FileType,
 ) : Mutation(Type.REMOVE_PLUS, location, original, fileType) {
     override val preservesLength = false
     override val estimatedCount = 1
@@ -1143,7 +1143,7 @@ class RemovePlus(
 class RemoveBinary(
     location: Location,
     original: String,
-    fileType: Source.FileType
+    fileType: Source.FileType,
 ) : Mutation(Type.REMOVE_BINARY, location, original, fileType) {
     override val preservesLength = false
     override val estimatedCount = 1
@@ -1164,7 +1164,7 @@ class ChangeEquals(
     fileType: Source.FileType,
     private val originalEqualsType: String = "",
     private val firstValue: String = "",
-    private val secondValue: String = ""
+    private val secondValue: String = "",
 ) : Mutation(Type.CHANGE_EQUALS, location, original, fileType) {
     override val preservesLength = false
     override val estimatedCount = 1
@@ -1194,7 +1194,7 @@ class ChangeEquals(
 class AddBreak(
     location: Location,
     original: String,
-    fileType: Source.FileType
+    fileType: Source.FileType,
 ) : Mutation(Type.ADD_BREAK, location, original, fileType) {
     override val preservesLength = false
     override val estimatedCount = 1
@@ -1212,7 +1212,7 @@ class ModifyArrayLiteral(
     location: Location,
     original: String,
     fileType: Source.FileType,
-    private val parts: List<String>
+    private val parts: List<String>,
 ) : Mutation(Type.MODIFY_ARRAY_LITERAL, location, original, fileType) {
     init {
         check(parts.size > 1)
@@ -1237,7 +1237,7 @@ class ModifyArrayLiteral(
 class ChangeLengthAndSize(
     location: Location,
     original: String,
-    fileType: Source.FileType
+    fileType: Source.FileType,
 ) : Mutation(Type.MODIFY_LENGTH_AND_SIZE, location, original, fileType) {
     override val preservesLength = false
     override val estimatedCount = 2

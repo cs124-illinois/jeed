@@ -24,7 +24,7 @@ class Status(
     var lastRequest: Instant? = null,
     val versions: Versions = Versions(JEED_VERSION, VERSION, COMPILER_NAME, KOMPILER_VERSION),
     val counts: Counts = Counts(),
-    val cache: Cache = Cache()
+    val cache: Cache = Cache(),
 ) {
     @JsonClass(generateAdapter = true)
     data class Versions(val jeed: String, val server: String, val compiler: String, val kompiler: String)
@@ -40,7 +40,7 @@ class Status(
         var misses: Int = 0,
         var hitRate: Double = 0.0,
         var evictionCount: Long = 0,
-        var averageLoadPenalty: Double = 0.0
+        var averageLoadPenalty: Double = 0.0,
     )
     fun update(): Status {
         compilationCache.stats().also {

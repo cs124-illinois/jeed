@@ -31,7 +31,7 @@ i = 1
 i += 1
 i++
 --j
-""".trim()
+""".trim(),
             ).features().check {
                 featureMap[FeatureName.LOCAL_VARIABLE_DECLARATIONS] shouldBe 3
                 featureList should haveFeatureAt(FeatureName.LOCAL_VARIABLE_DECLARATIONS, listOf(1, 2, 3))
@@ -77,7 +77,7 @@ val test = "arrayOf"
 for (value in first) {
   println(value)
 }
-"""
+""",
             ).features().check {
                 featureMap[FeatureName.FOR_LOOPS] shouldBe 2
                 featureList should haveFeatureAt(FeatureName.FOR_LOOPS, listOf(1, 8))
@@ -100,7 +100,7 @@ for (i in 0 until 10) {
         println(i + j)
     }
 }
-"""
+""",
             ).features().check {
                 featureMap[FeatureName.FOR_LOOPS] shouldBe 2
                 featureList should haveFeatureAt(FeatureName.FOR_LOOPS, listOf(1, 2))
@@ -117,7 +117,7 @@ if (true) {
         println(i + j)
     }
 }
-"""
+""",
             ).features().check {
                 featureMap[FeatureName.FOR_LOOPS] shouldBe 1
                 featureList should haveFeatureAt(FeatureName.FOR_LOOPS, listOf(2))
@@ -136,7 +136,7 @@ for (i in 0 until 10) {
         }
     }
 }
-"""
+""",
             ).features().check {
                 featureMap[FeatureName.FOR_LOOPS] shouldBe 2
                 featureList should haveFeatureAt(FeatureName.FOR_LOOPS, listOf(1, 3))
@@ -158,7 +158,7 @@ while (i < 32) {
   }
   i++
 }
-"""
+""",
             ).features().check {
                 featureMap[FeatureName.WHILE_LOOPS] shouldBe 2
                 featureList should haveFeatureAt(FeatureName.WHILE_LOOPS, listOf(2, 3))
@@ -185,7 +185,7 @@ do {
         j++
     } while (j < 10)
 } while (i < 10)
-"""
+""",
             ).features().check {
                 featureMap[FeatureName.DO_WHILE_LOOPS] shouldBe 2
                 featureList should haveFeatureAt(FeatureName.DO_WHILE_LOOPS, listOf(2, 6))
@@ -212,7 +212,7 @@ if (i < 5) {
 } else {
     i--
 }
-"""
+""",
             ).features().check {
                 featureMap[FeatureName.IF_STATEMENTS] shouldBe 1
                 featureList should haveFeatureAt(FeatureName.IF_STATEMENTS, listOf(2))
@@ -234,7 +234,7 @@ if (i < 5) {
 } else {
     i--
 }
-"""
+""",
             ).features().check {
                 featureMap[FeatureName.IF_STATEMENTS] shouldBe 1
                 featureList should haveFeatureAt(FeatureName.IF_STATEMENTS, listOf(2))
@@ -262,7 +262,7 @@ if (i < 15) {
         }
     }
 }
-"""
+""",
             ).features().check {
                 featureMap[FeatureName.IF_STATEMENTS] shouldBe 4
                 featureList should haveFeatureAt(FeatureName.IF_STATEMENTS, listOf(2, 3, 5, 9))
@@ -285,7 +285,7 @@ fun test() {
     }
   }
 }
-"""
+""",
             ).features().check("test()") {
                 featureMap[FeatureName.NESTED_METHOD] shouldBe 1
                 featureList should haveFeatureAt(FeatureName.NESTED_METHOD, listOf(4))
@@ -317,7 +317,7 @@ println(array.size)
 array.sort()
 val sorted = array.sorted()
 array.test.me().whatever.think()
-"""
+""",
             ).features().check {
                 featureMap[FeatureName.DOTTED_METHOD_CALL] shouldBe 4
                 featureList should haveFeatureAt(FeatureName.DOTTED_METHOD_CALL, listOf(3, 4, 5, 5))
@@ -346,7 +346,7 @@ if (i < 5) {
     i -= 5
 }
 j = j shl 2
-"""
+""",
             ).features().check {
                 featureMap[FeatureName.UNARY_OPERATORS] shouldBe 2
                 featureList should haveFeatureAt(FeatureName.UNARY_OPERATORS, listOf(7, 10))
@@ -370,7 +370,7 @@ print("Another")
 System.out.println("Hello, again")
 System.out.println("world".length)
 System.err.print("Whoa")
-"""
+""",
             ).features().check {
                 featureMap[FeatureName.DOTTED_METHOD_CALL] shouldBe 1
                 featureList should haveFeatureAt(FeatureName.DOTTED_METHOD_CALL, listOf(2))
@@ -395,7 +395,7 @@ assert(false)
 assert(it == true) { "Test me" }
 require(false)
 check(true) { "Here" }
-"""
+""",
             ).features().check {
                 featureMap[FeatureName.ASSERT] shouldBe 2
                 featureList should haveFeatureAt(FeatureName.ASSERT, listOf(1, 2))
@@ -417,7 +417,7 @@ if (i < 5 || i > 15) {
 } else {
     i--
 }
-"""
+""",
             ).features().check {
                 featureMap[FeatureName.COMPARISON_OPERATORS] shouldBe 5
                 featureList should haveFeatureAt(FeatureName.COMPARISON_OPERATORS, listOf(2, 2, 3, 6, 6))
@@ -435,7 +435,7 @@ import java.util.Map
 fun test() {
   println("Hello, world!")
 }
-"""
+""",
             ).features().check("") {
                 featureMap[FeatureName.IMPORT] shouldBe 2
                 featureList should haveFeatureAt(FeatureName.IMPORT, listOf(1, 2))
@@ -450,7 +450,7 @@ fun test(): Int {
   val test = 0
   return test
 }
-"""
+""",
             ).features().check("", "Main.kt") {
                 featureMap[FeatureName.VARIABLE_ASSIGNMENTS] shouldBe 1
                 featureList should haveFeatureAt(FeatureName.VARIABLE_ASSIGNMENTS, listOf(2))
@@ -462,7 +462,7 @@ fun test(): Int {
 val i = 0 as Int
 val j = 0.0.toDouble()
 val m = "test" as String
-"""
+""",
             ).features().check {
                 featureMap[FeatureName.PRIMITIVE_CASTING] shouldBe 2
                 featureList should haveFeatureAt(FeatureName.PRIMITIVE_CASTING, listOf(1, 2))
@@ -479,7 +479,7 @@ println("test" is Int)
 if (1 is Int) {
   println("Here")
 }
-"""
+""",
             ).features().check {
                 featureMap[FeatureName.INSTANCEOF] shouldBe 3
                 featureList should haveFeatureAt(FeatureName.INSTANCEOF, listOf(1, 2, 3))
@@ -495,7 +495,7 @@ class Test {
     }
   }
 }
-"""
+""",
             ).features().check("") {
                 featureMap[FeatureName.IF_STATEMENTS] shouldBe 1
                 featureList should haveFeatureAt(FeatureName.IF_STATEMENTS, listOf(3))
@@ -517,7 +517,7 @@ class Test {
     val test = 20
   }
 }
-"""
+""",
             ).features().check("Test.init") {
                 featureMap[FeatureName.IF_STATEMENTS] shouldBe 1
                 featureList should haveFeatureAt(FeatureName.IF_STATEMENTS, listOf(3))
@@ -538,7 +538,7 @@ class Test {
     }
   }
 }
-"""
+""",
             ).features().check("Test") {
                 featureMap[FeatureName.SECONDARY_CONSTRUCTOR] shouldBe 1
                 featureList should haveFeatureAt(FeatureName.SECONDARY_CONSTRUCTOR, listOf(3))
@@ -553,7 +553,7 @@ class Test {
 for (i in 0 until array.size step 2) {
   println(i)
 }
-"""
+""",
             ).features().check {
                 featureMap[FeatureName.FOR_LOOP_STEP] shouldBe 1
                 featureList should haveFeatureAt(FeatureName.FOR_LOOP_STEP, listOf(1))
@@ -566,7 +566,7 @@ for (i in 0..2) {
   println(i)
 }
 val t = 0..4
-"""
+""",
             ).features().check {
                 featureMap[FeatureName.FOR_LOOP_RANGE] shouldBe 1
                 featureList should haveFeatureAt(FeatureName.FOR_LOOP_RANGE, listOf(1))
@@ -576,7 +576,7 @@ val t = 0..4
             Source.fromKotlinSnippet(
                 """
 val t = s ?: 0
-"""
+""",
             ).features().check {
                 featureMap[FeatureName.ELVIS_OPERATOR] shouldBe 1
                 featureList should haveFeatureAt(FeatureName.ELVIS_OPERATOR, listOf(1))
@@ -589,7 +589,7 @@ class Test {
   var first = 0
   val second: String = "another"
 }
-"""
+""",
             ).features().check("Test") {
                 featureMap[FeatureName.CLASS_FIELD] shouldBe 2
                 featureList should haveFeatureAt(FeatureName.CLASS_FIELD, listOf(2, 3))
@@ -604,7 +604,7 @@ class Test {
 class Test(val first: Int) {
   var second: String = "another"
 }
-"""
+""",
             ).features().check("Test") {
                 featureMap[FeatureName.CONSTRUCTOR] shouldBe 1
                 featureList should haveFeatureAt(FeatureName.CONSTRUCTOR, listOf(1))
@@ -618,7 +618,7 @@ class Test(val first: Int) {
   
   var second: String = "another"
 }
-"""
+""",
             ).features().check("Test") {
                 featureMap[FeatureName.CONSTRUCTOR] shouldBe 2
                 featureList should haveFeatureAt(FeatureName.CONSTRUCTOR, listOf(1, 2))
@@ -638,7 +638,7 @@ println(second != first)
 println(second !== first)
 println(second.equals(first))
 println(!first.equals(second))
-"""
+""",
             ).features().check {
                 featureMap[FeatureName.EQUALITY] shouldBe 4
                 featureList should haveFeatureAt(FeatureName.EQUALITY, listOf(3, 5, 7, 8))
@@ -658,7 +658,7 @@ class Test {
     fun one() = 1
   }
 }
-"""
+""",
             ).features().check("Test") {
                 featureMap[FeatureName.COMPANION_OBJECT] shouldBe 1
                 featureList should haveFeatureAt(FeatureName.COMPANION_OBJECT, listOf(2))
@@ -677,7 +677,7 @@ for (i in 0 until 10) {
         break@for
     }
 }
-"""
+""",
             ).features().check {
                 featureMap[FeatureName.BREAK] shouldBe 1
                 featureList should haveFeatureAt(FeatureName.BREAK, listOf(5))
@@ -694,7 +694,7 @@ fun test(): Int {
 }
 class Test { }
 println("Hello, world!")
-"""
+""",
             ).features().check("") {
                 featureMap[FeatureName.METHOD] shouldBe 1
                 featureList should haveFeatureAt(FeatureName.METHOD, listOf(1))
@@ -716,7 +716,7 @@ var first = "Hello, world!"
 var second: String? = null
 var third = String("test")
 var another = String()
-"""
+""",
             ).features().check {
                 featureMap[FeatureName.STRING] shouldBe 5
                 featureList should haveFeatureAt(FeatureName.STRING, listOf(1, 2, 3, 3, 4))
@@ -739,7 +739,7 @@ when {
   true -> "0"
   false -> "1"
 }
-"""
+""",
             ).features().check {
                 featureMap[FeatureName.WHEN_STATEMENT] shouldBe 2
                 featureList should haveFeatureAt(FeatureName.WHEN_STATEMENT, listOf(1, 5))
@@ -757,8 +757,8 @@ enum class Test {
     SECOND,
     THIRD
 }
-""".trimStart()
-                )
+""".trimStart(),
+                ),
             ).features().check("", "Test.kt") {
                 featureMap[FeatureName.ENUM] shouldBe 1
                 featureList should haveFeatureAt(FeatureName.ENUM, listOf(1))
@@ -768,7 +768,7 @@ enum class Test {
             Source.fromKotlinSnippet(
                 """
 data class Test(val first: Int)
-"""
+""",
             ).features().check("") {
                 featureMap[FeatureName.DATA_CLASS] shouldBe 1
                 featureList should haveFeatureAt(FeatureName.DATA_CLASS, listOf(1))
@@ -787,7 +787,7 @@ class Calculator: Test {
     }
     fun subtract(x: Int, y: Int): Int = x - y
 }
-"""
+""",
             ).features().check("") {
                 featureMap[FeatureName.INTERFACE] shouldBe 1
                 featureList should haveFeatureAt(FeatureName.INTERFACE, listOf(1))
@@ -807,7 +807,7 @@ import java.util.Random
 class Test(var number: Int) {
     override fun toString(): String = "String"
 }
-"""
+""",
             ).features().check("Test") {
                 featureMap[FeatureName.OVERRIDE] shouldBe 1
                 featureList should haveFeatureAt(FeatureName.OVERRIDE, listOf(4))
@@ -830,7 +830,7 @@ class Adder() {
       field = value * 2.0
     }
 }
-"""
+""",
             ).features().check("Adder") {
                 featureMap[FeatureName.SETTER] shouldBe 2
                 featureList should haveFeatureAt(FeatureName.SETTER, listOf(6, 8))
@@ -849,7 +849,7 @@ open class Test {
   open fun test() = 2
 }
 class Another : Test()
-"""
+""",
             ).features().check("") {
                 featureMap[FeatureName.OPEN_CLASS] shouldBe 1
                 featureList should haveFeatureAt(FeatureName.OPEN_CLASS, listOf(1))
@@ -871,7 +871,7 @@ class Another : Test() {
   val mine = 2
   fun value() = super.value() + this.mine
 }
-"""
+""",
             ).features().check("Another") {
                 featureMap[FeatureName.SUPER] shouldBe 1
                 featureList should haveFeatureAt(FeatureName.SUPER, listOf(6))
@@ -886,7 +886,7 @@ class Another : Test() {
 class Test<T>
 class Another<T,V>
 val mine = mutableListOf<String>()
-"""
+""",
             ).features().check("") {
                 featureMap[FeatureName.GENERIC_CLASS] shouldBe 2
                 featureList should haveFeatureAt(FeatureName.GENERIC_CLASS, listOf(1, 2))
@@ -902,7 +902,7 @@ class Test: Comparable<Test> {
     override fun compareTo(other: Test): Int {
         return 0
     }
-}"""
+}""",
             ).features().check("Test") {
                 featureMap[FeatureName.COMPARABLE] shouldBe 1
                 featureList should haveFeatureAt(FeatureName.COMPARABLE, listOf(1))
@@ -920,7 +920,7 @@ class Test(private var number: Int) {
     }
     class InnerClass
 }
-"""
+""",
             ).features().check("") {
                 featureMap[FeatureName.CLASS] shouldBe 2
                 featureList should haveFeatureAt(FeatureName.CLASS, listOf(1, 5))
@@ -947,7 +947,7 @@ fun container(size: Int) {
     }
     values = new int[setSize];
 }
-"""
+""",
             ).features().check("") {
                 featureMap[FeatureName.THROW] shouldBe 1
                 featureList should haveFeatureAt(FeatureName.THROW, listOf(3))
@@ -962,7 +962,7 @@ try {
 } catch (e: Exception) {
     println("Oops")
 } finally { }
-"""
+""",
             ).features().check {
                 featureMap[FeatureName.TRY_BLOCK] shouldBe 1
                 featureList should haveFeatureAt(FeatureName.TRY_BLOCK, listOf(2))
@@ -980,7 +980,7 @@ abstract class Test {
 class Another : Test() {
   fun test() = 2
 }
-"""
+""",
             ).features().check("") {
                 featureMap[FeatureName.ABSTRACT_CLASS] shouldBe 1
                 featureList should haveFeatureAt(FeatureName.ABSTRACT_CLASS, listOf(1))
@@ -998,7 +998,7 @@ class Test {
     val another = 4
   }
 }
-"""
+""",
             ).features().check("") {
                 featureMap[FeatureName.COMPANION_OBJECT] shouldBe 1
                 featureList should haveFeatureAt(FeatureName.COMPANION_OBJECT, listOf(2))
@@ -1016,7 +1016,7 @@ class Test {
 abstract class Test {
   abstract var test: Int
 }
-"""
+""",
             ).features().check("") {
                 featureMap[FeatureName.ABSTRACT_CLASS] shouldBe 1
                 featureList should haveFeatureAt(FeatureName.ABSTRACT_CLASS, listOf(1))
@@ -1037,7 +1037,7 @@ interface Test {
 val test = object : Test {
   override fun test() = 2
 }
-"""
+""",
             ).features().check("") {
                 featureMap[FeatureName.SINGLETON] shouldBe 1
                 featureList should haveFeatureAt(FeatureName.SINGLETON, listOf(1))
@@ -1060,7 +1060,7 @@ fun interface Test {
 }
 val test = Test { 0 }
 val another = fun (x: Int): Int = x
-"""
+""",
             ).features().check {
                 featureMap[FeatureName.LAMBDA_EXPRESSIONS] shouldBe 1
                 featureList should haveFeatureAt(FeatureName.LAMBDA_EXPRESSIONS, listOf(4))
@@ -1081,7 +1081,7 @@ val second = mapOf("test" to 1, "me" to 2)
 println(second["test"])
 val third = mapOf("test" to mapOf("test" to "me"))
 println(third["test"]!!["test"])
-"""
+""",
             ).features().check {
                 featureMap[FeatureName.COLLECTION_INDEXING] shouldBe 3
                 featureList should haveFeatureAt(FeatureName.COLLECTION_INDEXING, listOf(2, 4, 6))
@@ -1101,7 +1101,7 @@ val test = if (another) {
 if (test > 1) {
   println("Here")
 }
-"""
+""",
             ).features().check {
                 featureMap[FeatureName.IF_STATEMENTS] shouldBe 2
                 featureList should haveFeatureAt(FeatureName.IF_STATEMENTS, listOf(1, 6))
@@ -1123,7 +1123,7 @@ try {
 } catch (e: Exception) {
   println("Here")
 }
-"""
+""",
             ).features().check {
                 featureMap[FeatureName.TRY_BLOCK] shouldBe 2
                 featureList should haveFeatureAt(FeatureName.TRY_BLOCK, listOf(1, 6))
@@ -1143,7 +1143,7 @@ when {
   true -> println("Here")
   false -> println("Oops")
 }
-"""
+""",
             ).features().check {
                 featureMap[FeatureName.WHEN_STATEMENT] shouldBe 2
                 featureList should haveFeatureAt(FeatureName.WHEN_STATEMENT, listOf(1, 5))
@@ -1159,7 +1159,7 @@ if (first) {
   println("Here")
   var i = 0
 }
-"""
+""",
             ).features().lookup(".").features
 
             val second = Source.fromKotlinSnippet(
@@ -1168,7 +1168,7 @@ if (first) {
   println("Here")
 }
 var i = 0
-"""
+""",
             ).features().lookup(".").features
 
             first.featureMap shouldBe second.featureMap
@@ -1178,7 +1178,7 @@ var i = 0
         "should count templates properly" {
             Source.fromTemplates(
                 mapOf(
-                    "Test.kt" to """println("Hello, world!")"""
+                    "Test.kt" to """println("Hello, world!")""",
                 ),
                 mapOf(
                     "Test.kt.hbs" to """
@@ -1188,8 +1188,8 @@ class Question {
             {{{ contents }}}
         }
     }
-}""".trim()
-                )
+}""".trim(),
+                ),
             ).features().check("", "Test.kt") {
                 featureMap[FeatureName.CLASS] shouldBe 0
                 featureList should haveFeatureAt(FeatureName.CLASS, listOf())

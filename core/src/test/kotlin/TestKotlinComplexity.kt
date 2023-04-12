@@ -11,7 +11,7 @@ class TestKotlinComplexity : StringSpec({
 fun main(first: Int, second: String, third: Blah?): Int {
   return
 }
-""".trim()
+""".trim(),
         ).complexity().also {
             it.lookup("main(Int,String,Blah?):Int", "Main.kt").complexity shouldBe 1
         }
@@ -20,7 +20,7 @@ fun main(first: Int, second: String, third: Blah?): Int {
         Source.fromKotlin(
             """
 fun isOdd(arg: Int) = arg % 2 != 0
-""".trim()
+""".trim(),
         ).complexity().also {
             it.lookup("isOdd(Int)", "Main.kt").complexity shouldBe 1
         }
@@ -35,7 +35,7 @@ listOf(Dog("Shadow"), Dog("Chuchu"), Dog("Lulu"))
   .sorted()
   .forEach { println(it) }
 """.trim(),
-            SnippetArguments(fileType = Source.FileType.KOTLIN)
+            SnippetArguments(fileType = Source.FileType.KOTLIN),
         ).complexity().also {
             it.lookup("", "").complexity shouldBe 1
         }
@@ -52,8 +52,8 @@ public class Test(var first: Int, var second: Int) {
     }
   }
 }
-                """.trim()
-            )
+                """.trim(),
+            ),
         ).complexity().also {
             it.lookup("Test.add(Int,Int):Int", "Test.kt").complexity shouldBe 2
             it.lookup("Test.Test(Int,Int)", "Test.kt").complexity shouldBe 1
@@ -69,8 +69,8 @@ public class Test(var first: Int, var second: Int) {
     return i + j
   }
 }
-                """.trim()
-            )
+                """.trim(),
+            ),
         ).complexity().also {
             it.lookup("Test.add(Int,Int):Int", "Test.kt").complexity shouldBe 1
             it.lookup("Test.Test(Int,Int)", "Test.kt").complexity shouldBe 1
@@ -89,8 +89,8 @@ public class Test() {
     }
   }
 }
-                """.trim()
-            )
+                """.trim(),
+            ),
         ).complexity().also {
             it.lookup("Test.conditional(Int):Int", "Test.kt").complexity shouldBe 2
         }
@@ -121,8 +121,8 @@ public class Test() {
     }
   }
 }
-                """.trim()
-            )
+                """.trim(),
+            ),
         ).complexity().also {
             it.lookup("Test.conditional(Int):Int", "Test.kt").complexity shouldBe 6
         }
@@ -143,8 +143,8 @@ public class Test() {
     }
   }
 }
-                """.trim()
-            )
+                """.trim(),
+            ),
         ).complexity().also {
             it.lookup("Test.conditional(Int):Int", "Test.kt").complexity shouldBe 5
         }
@@ -165,8 +165,8 @@ fun main() {
         else -> println("wrong age value")
     }
 }
-""".trim()
-            )
+""".trim(),
+            ),
         ).complexity().also {
             it.lookupFile("TestKt.kt") shouldBe 6
         }
@@ -183,8 +183,8 @@ public class Test(var first: Int, var second: Int) {
     }
   }
 }                   
-                """.trim()
-            )
+                """.trim(),
+            ),
         ).complexity().also {
             it.lookup("Test.Test(Int,Int)", "Test.kt").complexity shouldBe 1
         }
@@ -205,7 +205,7 @@ fun main() {
     val y = calculateSomething()
   } while (y != null)
 }
-""".trim()
+""".trim(),
         ).complexity().also {
             it.lookup("main()", "Main.kt").complexity shouldBe 4
         }
@@ -224,7 +224,7 @@ fun main() {
     }
     
 }
-""".trim()
+""".trim(),
         ).complexity().also {
             it.lookup("main()", "Main.kt").complexity shouldBe 3
         }
@@ -236,7 +236,7 @@ fun main() {
 class Test() {
   private val unused: Int = 1
 }
-""".trim()
+""".trim(),
         ).complexity().also {
             it.lookup("Test", "Main.kt").complexity shouldBe 1
         }
@@ -251,7 +251,7 @@ interface Testing {
 class Test : Testing {
   override fun toTest(a: Tester, b: Tester): Tester = a + b
 }
-""".trim()
+""".trim(),
         ).complexity().also {
             it.lookup("Test.toTest(Tester,Tester):Tester", "Main.kt").complexity shouldBe 1
         }
@@ -264,7 +264,7 @@ fun <T> main(j: T): List<T> {
   val list: MutableList<T> = mutableListOf()
   return list
 }
-""".trim()
+""".trim(),
         ).complexity().also {
             it.lookup("main(T):List<T>", "Main.kt").complexity shouldBe 1
         }
@@ -282,7 +282,7 @@ fun toTest(): Testing {
   }
 }
 
-""".trim()
+""".trim(),
         ).complexity().also {
             it.lookup("toTest():Testing", "Main.kt").complexity shouldBe 2
         }
@@ -298,8 +298,8 @@ class Test
         return i + j
     }
 }
-""".trim()
-                )
+""".trim(),
+                ),
             ).complexity()
         }
     }
@@ -314,8 +314,8 @@ class Test
         const val NOT_RATED = -1.0
     }
 }
-                """.trim()
-            )
+                """.trim(),
+            ),
         ).complexity().also {
             it.lookup("Rating.Rating(Double,String)", "Test.kt").complexity shouldBe 1
             it.lookup("Rating.Rating(String)", "Test.kt").complexity shouldBe 1
@@ -340,8 +340,8 @@ public class Test(var first: Int, var second: Int) {
     first = second ?: 100
   }
 }                   
-                """.trim()
-            )
+                """.trim(),
+            ),
         ).complexity().also {
             it.lookup("Test.init0", "Test.kt").complexity shouldBe 6
         }
@@ -368,8 +368,8 @@ class PingPonger constructor(private var state: String) {
     return true
   }
 }                 
-                """.trim()
-            )
+                """.trim(),
+            ),
         ).complexity().also {
             it.lookup("PingPonger", "Test.kt").complexity shouldBe 8
             it.lookup("PingPonger.pong():Boolean", "Test.kt").complexity shouldBe 2
@@ -383,7 +383,7 @@ class PingPonger constructor(private var state: String) {
 fun test(first: Int, second: String, third: Blah?): Int {
   return
 }""".trim(),
-            SnippetArguments(fileType = Source.FileType.KOTLIN)
+            SnippetArguments(fileType = Source.FileType.KOTLIN),
         ).complexity().also {
             it.lookup(".").complexity shouldBe 1
             it.lookup("").complexity shouldBe 2
@@ -399,7 +399,7 @@ fun test(first: Int, second: String, third: Blah?): Int {
     return
   }
 }""".trim(),
-            SnippetArguments(fileType = Source.FileType.KOTLIN)
+            SnippetArguments(fileType = Source.FileType.KOTLIN),
         ).complexity().also {
             it.lookup(".").complexity shouldBe 1
             it.lookup("").complexity shouldBe 3
@@ -416,8 +416,8 @@ fun me(first: Int, second: Int) = if (first > second) {
   "me"
 } else {
   "you"
-}""".trim()
-            )
+}""".trim(),
+            ),
         ).complexity().also {
             it.lookupFile("TestKt.kt") shouldBe 3
         }
@@ -433,7 +433,7 @@ fun test(first: Int, second: String, third: Blah?): Int {
     b
   }
 }""".trim(),
-            SnippetArguments(fileType = Source.FileType.KOTLIN)
+            SnippetArguments(fileType = Source.FileType.KOTLIN),
         ).complexity().also {
             it.lookup(".").complexity shouldBe 1
             it.lookup("").complexity shouldBe 3
@@ -456,8 +456,8 @@ fun main() {
         DayOfWeek.SUNDAY -> "It is sunday"
         else -> "Invalid day of week"
     }
-}""".trim()
-            )
+}""".trim(),
+            ),
         ).complexity().also {
             it.lookupFile("TestKt.kt") shouldBe 8
         }
@@ -475,8 +475,8 @@ fun main() {
     } catch (e: Exception) {
       "bad error"
     }
-}""".trim()
-            )
+}""".trim(),
+            ),
         ).complexity().also {
             it.lookupFile("TestKt.kt") shouldBe 3
         }
@@ -488,8 +488,8 @@ fun main() {
                 "TestKt.kt" to """
 fun main() {
   person?.department = managersPool.getRandomDepartment()
-}""".trim()
-            )
+}""".trim(),
+            ),
         ).complexity().also {
             it.lookupFile("TestKt.kt") shouldBe 2
         }
@@ -501,8 +501,8 @@ fun main() {
                 "TestKt.kt" to """
 fun main() {
   person?.department?.head = managersPool.getManager()
-}""".trim()
-            )
+}""".trim(),
+            ),
         ).complexity().also {
             it.lookupFile("TestKt.kt") shouldBe 3
         }
@@ -514,8 +514,8 @@ fun main() {
                 "TestKt.kt" to """
 fun main() {
   person!!.department = departments.getRandomDepartment()
-}""".trim()
-            )
+}""".trim(),
+            ),
         ).complexity().also {
             it.lookupFile("TestKt.kt") shouldBe 2
         }
@@ -527,8 +527,8 @@ fun main() {
                 "TestKt.kt" to """
 fun main() {
   person!!.department!!.head = managersPool.getManager()
-}""".trim()
-            )
+}""".trim(),
+            ),
         ).complexity().also {
             it.lookupFile("TestKt.kt") shouldBe 3
         }
@@ -546,7 +546,7 @@ fun main() {
         println("Less than 4")
     } 
 }
-            """.trim()
+            """.trim(),
         ).complexity().also {
             it.lookup("main()", "Main.kt").complexity shouldBe 2
         }
@@ -561,7 +561,7 @@ fun main() {
         .also { println("The list elements before adding new one: " + it) }
         .add("four")
 }
-            """.trim()
+            """.trim(),
         ).complexity().also {
             it.lookup("main()", "Main.kt").complexity shouldBe 1
         }
@@ -578,8 +578,8 @@ fun areSameLength(first: String?, second: String?): Boolean {
     first.length == second.length
   }
 }
-""".trim()
-            )
+""".trim(),
+            ),
         ).complexity().also {
             it.lookup("areSameLength(String?,String?):Boolean", "TestKt.kt").complexity shouldBe 3
             it.lookupFile("TestKt.kt") shouldBe 3
@@ -595,7 +595,7 @@ fun main(first: Int, second: String, third: Blah?): Int {
 fun main2(first: Int, second: String, third: Blah?): Int {
   return
 }
-""".trim()
+""".trim(),
         ).complexity().also {
             it.lookup("main(Int,String,Blah?):Int", "Main.kt").complexity shouldBe 1
             it.lookup("main2(Int,String,Blah?):Int", "Main.kt").complexity shouldBe 1
@@ -613,7 +613,7 @@ val addOne = object : Adder {
 }
 val addEight = object : Adder {
   override fun addTo(value: Int) = value + 8
-}""".trim()
+}""".trim(),
         ).complexity()
     }
     "should not overflow on deep nesting" {
@@ -660,7 +660,7 @@ val addEight = object : Adder {
     }
     return 1
 }
-"""
+""",
         ).complexity().also {
             it.lookupFile("Main.kt") shouldBe 20
         }
@@ -684,7 +684,7 @@ fun second(first: Int, second: Int): Int {
     else -> 0
   }
 }
-""".trim()
+""".trim(),
         ).complexity().also {
             it.lookup("first(Int,Int):Int", "Main.kt").complexity shouldBe 5
             it.lookup("second(Int,Int):Int", "Main.kt").complexity shouldBe 5
@@ -703,7 +703,7 @@ fun first(first: Int, second: Int): Int {
     0
   }
 }
-""".trim()
+""".trim(),
         ).complexity().also {
             it.lookup("first(Int,Int):Int", "Main.kt").complexity shouldBe 8
         }
@@ -718,7 +718,7 @@ class Main {
         }
     }
 }
-""".trim()
+""".trim(),
         ).complexity().also {
             it.lookup("Main", "Main.kt").complexity shouldBe 1
             it.lookupFile("Main.kt") shouldBe 1
@@ -737,7 +737,7 @@ class Main {
     val test = 20
   }
 }
-""".trim()
+""".trim(),
         ).complexity().also {
             it.lookupFile("Main.kt") shouldBe 2
         }
@@ -754,7 +754,7 @@ class Main {
     }
   }
 }
-""".trim()
+""".trim(),
         ).complexity().also {
             it.lookupFile("Main.kt") shouldBe 3
         }
@@ -768,7 +768,7 @@ fun interface Modify {
 class Modifier {
   val modify = Modify { value -> value + 1 }
 }
-""".trim()
+""".trim(),
         ).complexity()
     }
 })

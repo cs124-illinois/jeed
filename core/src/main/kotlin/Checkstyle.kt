@@ -24,7 +24,7 @@ data class CheckstyleArguments(
     val sources: Set<String>? = null,
     val failOnError: Boolean = false,
     val skipUnmapped: Boolean = true,
-    val suppressions: Set<String> = setOf()
+    val suppressions: Set<String> = setOf(),
 )
 
 @JsonClass(generateAdapter = true)
@@ -32,7 +32,7 @@ class CheckstyleError(
     val severity: String,
     val key: String?,
     location: SourceLocation,
-    message: String
+    message: String,
 ) : AlwaysLocatedSourceError(location, message)
 
 class CheckstyleFailed(errors: List<CheckstyleError>) : AlwaysLocatedJeedError(errors) {
@@ -56,7 +56,7 @@ class ConfiguredChecker(configurationString: String) {
         val configuration = ConfigurationLoader.loadConfiguration(
             InputSource(ByteArrayInputStream(configurationString.toByteArray(Charsets.UTF_8))),
             PropertiesExpander(System.getProperties()),
-            ConfigurationLoader.IgnoredModulesOptions.OMIT
+            ConfigurationLoader.IgnoredModulesOptions.OMIT,
         ) ?: error("could not create checkstyle configuration")
 
         val configurationDocument = DocumentBuilderFactory.newInstance().also {
@@ -69,14 +69,14 @@ class ConfiguredChecker(configurationString: String) {
             XPathFactory.newInstance().newXPath().evaluate(
                 INDENTATION_PATH,
                 configurationDocument,
-                XPathConstants.NODE
+                XPathConstants.NODE,
             ) as Node
             try {
                 (
                     XPathFactory.newInstance().newXPath().evaluate(
                         "$INDENTATION_PATH/property[@name='basicOffset']",
                         configurationDocument,
-                        XPathConstants.NODE
+                        XPathConstants.NODE,
                     ) as Node
                     ).attributes.getNamedItem("value").nodeValue.toInt()
             } catch (e: Exception) {
@@ -89,7 +89,7 @@ class ConfiguredChecker(configurationString: String) {
         val checkerClass = Checker::class.java
         checker = PackageObjectFactory(
             checkerClass.packageName,
-            checkerClass.classLoader
+            checkerClass.classLoader,
         ).createModule(configuration.name) as Checker
         checker.setModuleClassLoader(checkerClass.classLoader)
         checker.configure(configuration)
@@ -127,8 +127,8 @@ suspend fun Checker.processString(name: String, source: String): List<Checkstyle
                         it.severityLevel.toString(),
                         it.key!!,
                         SourceLocation(name, it.lineNo, it.columnNo),
-                        it.violation
-                    )
+                        it.violation,
+                    ),
                 )
             }
         } catch (e: Exception) {
@@ -137,8 +137,8 @@ suspend fun Checker.processString(name: String, source: String): List<Checkstyle
                     SeverityLevel.ERROR.toString(),
                     null,
                     SourceLocation(name, 1, 1),
-                    e.getStackTraceAsString()
-                )
+                    e.getStackTraceAsString(),
+                ),
             )
         }
         return results.toList()
@@ -155,7 +155,7 @@ private val expectedLevelRegex = """expected level should be (\d+)""".toRegex()
 @Throws(CheckstyleFailed::class)
 suspend fun Source.checkstyle(
     checkstyleArguments: CheckstyleArguments = CheckstyleArguments(),
-    checker: ConfiguredChecker? = defaultChecker
+    checker: ConfiguredChecker? = defaultChecker,
 ): CheckstyleResults {
     require(checker != null) { "Must pass a configured checker" }
     require(type == Source.FileType.JAVA) { "Can't run checkstyle on non-Java sources" }
@@ -164,7 +164,7 @@ suspend fun Source.checkstyle(
     val checkstyleResults = checker.check(
         sources.filter {
             names.contains(it.key)
-        }
+        },
     ).values.flatten().mapNotNull { error ->
         val mappedLocation = try {
             mapLocation(error.location)

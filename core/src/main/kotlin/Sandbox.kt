@@ -77,7 +77,7 @@ object Sandbox {
         unsafeExceptions: Set<String> = DEFAULT_UNSAFE_EXCEPTIONS,
         isolatedClasses: Set<String> = DEFAULT_ISOLATED_CLASSES,
         val blacklistedMethods: Set<MethodFilter> = DEFAULT_BLACKLISTED_METHODS,
-        val isWhiteList: Boolean? = null
+        val isWhiteList: Boolean? = null,
     ) {
         val blacklistedClasses = blacklistedClasses.union(PERMANENTLY_BLACKLISTED_CLASSES)
         val unsafeExceptions = unsafeExceptions.union(ALWAYS_UNSAFE_EXCEPTIONS)
@@ -96,9 +96,9 @@ object Sandbox {
                 !(
                     whitelistedClasses.isNotEmpty() &&
                         blacklistedClasses.minus(
-                            PERMANENTLY_BLACKLISTED_CLASSES.union(DEFAULT_BLACKLISTED_CLASSES)
+                            PERMANENTLY_BLACKLISTED_CLASSES.union(DEFAULT_BLACKLISTED_CLASSES),
                         ).isNotEmpty()
-                    )
+                    ),
             ) {
                 "can't set both a class whitelist and blacklist"
             }
@@ -122,14 +122,14 @@ object Sandbox {
                 MethodFilter("java.lang.ClassLoader", "", allowInReload = true),
                 MethodFilter("java.lang.ModuleLayer", "", allowInReload = true),
                 MethodFilter("java.lang.NoClassDefFoundError", "<init>", allowInReload = true),
-                MethodFilter("kotlin.reflect.", "", allowInReload = true)
+                MethodFilter("kotlin.reflect.", "", allowInReload = true),
             )
             val PERMANENTLY_BLACKLISTED_CLASSES = setOf(
                 "edu.illinois.cs.cs125.jeed.",
                 "org.objectweb.asm.",
                 "com.sun.",
                 "net.bytebuddy.agent.",
-                "java.lang.invoke.MethodHandles"
+                "java.lang.invoke.MethodHandles",
             )
             val ALWAYS_UNSAFE_EXCEPTIONS = setOf("java.lang.Error")
             val ALWAYS_ISOLATED_CLASSES = setOf("kotlin.coroutines.", "kotlinx.coroutines.")
@@ -149,7 +149,7 @@ object Sandbox {
         val classLoaderConfiguration: ClassLoaderConfiguration = ClassLoaderConfiguration(),
         val waitForShutdown: Boolean = DEFAULT_WAIT_FOR_SHUTDOWN,
         val returnTimeout: Int = DEFAULT_RETURN_TIMEOUT,
-        @Transient val systemInStream: InputStream? = null
+        @Transient val systemInStream: InputStream? = null,
     ) {
         companion object {
             const val DEFAULT_TIMEOUT = 100L
@@ -185,14 +185,14 @@ object Sandbox {
         @Deprecated("no-op, to be removed")
         val killedClassInitializers: List<String>,
         @Suppress("unused")
-        val totalSafetime: Long?
+        val totalSafetime: Long?,
     ) {
         @JsonClass(generateAdapter = true)
         data class OutputLine(
             val console: Console,
             val line: String,
             val timestamp: Instant,
-            val thread: Long? = null
+            val thread: Long? = null,
         ) {
             enum class Console { STDOUT, STDERR }
         }
@@ -200,7 +200,7 @@ object Sandbox {
         @JsonClass(generateAdapter = true)
         data class InputLine(
             val line: String,
-            val timestamp: Instant
+            val timestamp: Instant,
         )
 
         @JsonClass(generateAdapter = true)
@@ -275,13 +275,13 @@ object Sandbox {
         // These are particularly important to prevent untrusted code from escaping the sandbox
         // which is based on thread groups
         RuntimePermission("modifyThread"),
-        RuntimePermission("modifyThreadGroup")
+        RuntimePermission("modifyThreadGroup"),
     )
 
     suspend fun <T> execute(
         sandboxedClassLoader: SandboxedClassLoader,
         executionArguments: ExecutionArguments,
-        callable: SandboxCallableArguments<T>
+        callable: SandboxCallableArguments<T>,
     ): TaskResults<out T?> {
         require(executionArguments.permissions.intersect(BLACKLISTED_PERMISSIONS).isEmpty()) {
             "attempt to allow unsafe permissions"
@@ -306,7 +306,7 @@ object Sandbox {
         sandboxableClassLoader: SandboxableClassLoader = EmptyClassLoader,
         executionArguments: ExecutionArguments = ExecutionArguments(),
         configuredPlugins: List<ConfiguredSandboxPlugin<*, *>> = listOf(),
-        callable: SandboxCallableArguments<T>
+        callable: SandboxCallableArguments<T>,
     ): TaskResults<out T?> {
         val sandboxedClassLoader = try {
             SandboxedClassLoader(sandboxableClassLoader, executionArguments.classLoaderConfiguration, configuredPlugins)
@@ -325,7 +325,7 @@ object Sandbox {
         val callable: SandboxCallableArguments<T>,
         val sandboxedClassLoader: SandboxedClassLoader,
         val executionArguments: ExecutionArguments,
-        val resultChannel: Channel<ExecutorResult<T>>
+        val resultChannel: Channel<ExecutorResult<T>>,
     ) : Callable<Any> {
         private data class TaskResult<T>(val returned: T, val threw: Throwable? = null, val timeout: Boolean = false)
 
@@ -344,7 +344,7 @@ object Sandbox {
                     val (returnValue, threw) = try {
                         Pair(
                             confinedTask.task.get(executionArguments.returnTimeout.toLong(), TimeUnit.MILLISECONDS),
-                            null
+                            null,
                         )
                     } catch (e: TimeoutException) {
                         confinedTask.task.cancel(true)
@@ -434,7 +434,7 @@ object Sandbox {
                         plugin.id to plugin.createFinalData(workingData)
                     }.toMap(),
                     listOf(),
-                    totalSafetime
+                    totalSafetime,
                 )
                 @Suppress("ThrowingExceptionsWithoutMessageOrCause")
                 runBlocking { resultChannel.send(ExecutorResult(executionResult, Exception())) }
@@ -450,7 +450,7 @@ object Sandbox {
         val classLoader: SandboxedClassLoader,
         val task: FutureTask<T>,
         val thread: Thread,
-        executionArguments: ExecutionArguments
+        executionArguments: ExecutionArguments,
     ) {
         val threadGroup = thread.threadGroup ?: error("thread should be in thread group")
         val accessControlContext: AccessControlContext
@@ -512,7 +512,7 @@ object Sandbox {
         data class CurrentLine(
             var started: Instant = Instant.now(),
             val bytes: MutableList<Byte> = mutableListOf(),
-            val startedThread: Long = Thread.currentThread().id
+            val startedThread: Long = Thread.currentThread().id,
         ) {
             override fun toString() = bytes.toByteArray().decodeToString()
         }
@@ -536,7 +536,7 @@ object Sandbox {
         }
         val printStreams: Map<TaskResults.OutputLine.Console, PrintStream> = mapOf(
             TaskResults.OutputLine.Console.STDOUT to PrintStream(ourStdout),
-            TaskResults.OutputLine.Console.STDERR to PrintStream(ourStderr)
+            TaskResults.OutputLine.Console.STDERR to PrintStream(ourStderr),
         )
 
         val systemInStream = executionArguments.systemInStream ?: ByteArrayInputStream(byteArrayOf())
@@ -578,8 +578,8 @@ object Sandbox {
                                 console,
                                 currentLine.toString(),
                                 currentLine.started,
-                                currentLine.startedThread
-                            )
+                                currentLine.startedThread,
+                            ),
                         )
                     } else {
                         truncatedLines += 1
@@ -593,8 +593,8 @@ object Sandbox {
                                     console,
                                     currentRedirectingLine.toString() + "\n",
                                     currentRedirectingLine.started,
-                                    currentRedirectingLine.startedThread
-                                )
+                                    currentRedirectingLine.startedThread,
+                                ),
                             )
                         } else {
                             redirectingTruncatedLines += 1
@@ -644,7 +644,7 @@ object Sandbox {
     private fun <T> confine(
         callable: SandboxCallableArguments<T>,
         sandboxedClassLoader: SandboxedClassLoader,
-        executionArguments: ExecutionArguments
+        executionArguments: ExecutionArguments,
     ): ConfinedTask<T> {
         val threadGroup = object : ThreadGroup("Sandbox") {
             @Suppress("EmptyFunctionBlock")
@@ -721,8 +721,8 @@ object Sandbox {
                             console,
                             currentLine.toString(),
                             currentLine.started,
-                            currentLine.startedThread
-                        )
+                            currentLine.startedThread,
+                        ),
                     )
                 }
             }
@@ -732,8 +732,8 @@ object Sandbox {
             confinedTask.inputLines.add(
                 TaskResults.InputLine(
                     confinedTask.currentInputLine!!.toString(),
-                    confinedTask.currentInputLine!!.started
-                )
+                    confinedTask.currentInputLine!!.started,
+                ),
             )
         }
 
@@ -747,7 +747,7 @@ object Sandbox {
 
     private class SandboxedCallable<T>(
         val callable: SandboxCallableArguments<T>,
-        val sandboxedClassLoader: SandboxedClassLoader
+        val sandboxedClassLoader: SandboxedClassLoader,
     ) : Callable<T> {
         override fun call(): T {
             sandboxedClassLoader.pluginInstrumentationData.forEach { (plugin, _) ->
@@ -794,7 +794,7 @@ object Sandbox {
     class SandboxedClassLoader(
         private val sandboxableClassLoader: SandboxableClassLoader,
         classLoaderConfiguration: ClassLoaderConfiguration,
-        configuredPlugins: List<ConfiguredSandboxPlugin<*, *>>
+        configuredPlugins: List<ConfiguredSandboxPlugin<*, *>>,
     ) : ClassLoader(sandboxableClassLoader.classLoader.parent), EnumerableClassLoader {
         private val whitelistedClasses = classLoaderConfiguration.whitelistedClasses
         private val blacklistedClasses = classLoaderConfiguration.blacklistedClasses
@@ -842,7 +842,7 @@ object Sandbox {
                     unsafeExceptionClasses,
                     blacklistedMethods,
                     pluginInstrumentationData,
-                    RewritingContext.UNTRUSTED
+                    RewritingContext.UNTRUSTED,
                 )
             }
 
@@ -874,7 +874,7 @@ object Sandbox {
                     confinedTask.addPermissionRequest(
                         RuntimePermission("loadIsolatedClass $name"),
                         granted = false,
-                        throwException = false
+                        throwException = false,
                     )
 
                     throw ClassNotFoundException(name)
@@ -901,7 +901,7 @@ object Sandbox {
                     confinedTask.addPermissionRequest(
                         RuntimePermission("loadClass $name"),
                         granted = false,
-                        throwException = false
+                        throwException = false,
                     )
                     throw ClassNotFoundException(name)
                 }
@@ -919,7 +919,7 @@ object Sandbox {
                         confinedTask.addPermissionRequest(
                             RuntimePermission("loadClass $name"),
                             granted = false,
-                            throwException = false
+                            throwException = false,
                         )
                         throw ClassNotFoundException(name)
                     }
@@ -937,7 +937,7 @@ object Sandbox {
             private val ALWAYS_ALLOWED_CLASS_NAMES =
                 setOf(
                     RewriteBytecode::class.java.name,
-                    InvocationTargetException::class.java.name
+                    InvocationTargetException::class.java.name,
                 )
             private const val RELOAD_CACHE_SIZE_BYTES: Long = 256 * 1024 * 1024
             private val reloadedBytecodeCache: Cache<ReloadCacheKey, ByteArray> = Caffeine.newBuilder()
@@ -953,7 +953,7 @@ object Sandbox {
                     val key = ReloadCacheKey(
                         name,
                         unsafeExceptionClasses.map { it.name }.toSet(),
-                        blacklistedMethods
+                        blacklistedMethods,
                     )
                     reloadedBytecodeCache.get(key) { transformFromClasspath(name) }
                 } else {
@@ -973,7 +973,7 @@ object Sandbox {
                     unsafeExceptionClasses,
                     blacklistedMethods,
                     pluginInstrumentationData.filter { (plugin, _) -> plugin.transformsReloadedClasses },
-                    RewritingContext.RELOADED
+                    RewritingContext.RELOADED,
                 ).also { transformedReloadedClasses++ }
             }
         }
@@ -981,7 +981,7 @@ object Sandbox {
         private data class ReloadCacheKey(
             val className: String,
             val unsafeExceptionClasses: Set<String>,
-            val blacklistedMethods: Set<MethodFilter>
+            val blacklistedMethods: Set<MethodFilter>,
         )
     }
 
@@ -1011,7 +1011,7 @@ object Sandbox {
             "wait:(J)V" to RewriteBytecode::conditionWaitMs,
             "wait:(JI)V" to RewriteBytecode::conditionWaitMsNs,
             "notify:()V" to RewriteBytecode::conditionNotify,
-            "notifyAll:()V" to RewriteBytecode::conditionNotifyAll
+            "notifyAll:()V" to RewriteBytecode::conditionNotifyAll,
         )
         private const val NS_PER_MS = 1000000L
         private const val MAX_CLASS_FILE_SIZE = 1000000
@@ -1082,8 +1082,8 @@ object Sandbox {
             confinedTask.permissionRequests.add(
                 TaskResults.PermissionRequest(
                     RuntimePermission("useForbiddenMethod"),
-                    false
-                )
+                    false,
+                ),
             )
             throw SecurityException("use of forbidden method")
         }
@@ -1102,7 +1102,7 @@ object Sandbox {
             unsafeExceptionClasses: Set<Class<*>>,
             blacklistedMethods: Set<MethodFilter>,
             plugins: List<Pair<SandboxPlugin<*, *>, Any?>>,
-            context: RewritingContext
+            context: RewritingContext,
         ): ByteArray {
             require(originalByteArray.size <= MAX_CLASS_FILE_SIZE) { "bytecode is over 1 MB" }
             val pretransformed = plugins.fold(originalByteArray) { bytecode, (plugin, instrumentationData) ->
@@ -1121,7 +1121,7 @@ object Sandbox {
                     name: String,
                     signature: String?,
                     superName: String?,
-                    interfaces: Array<out String>?
+                    interfaces: Array<out String>?,
                 ) {
                     super.visit(version, access, name, signature, superName, interfaces)
                     className = name
@@ -1132,7 +1132,7 @@ object Sandbox {
                     name: String,
                     descriptor: String,
                     signature: String?,
-                    exceptions: Array<out String>?
+                    exceptions: Array<out String>?,
                 ): MethodVisitor? {
                     return if (name == "finalize" && descriptor == "()V") {
                         null // Drop the finalizer
@@ -1148,7 +1148,7 @@ object Sandbox {
                                 transformedNameOfOriginal,
                                 preinspection.parameters,
                                 access,
-                                descriptor
+                                descriptor,
                             )
                             transformedNameOfOriginal
                         } else {
@@ -1175,8 +1175,8 @@ object Sandbox {
                                 transformedMethodName,
                                 descriptor,
                                 signature,
-                                exceptions
-                            )
+                                exceptions,
+                            ),
                         )
                     }
                 }
@@ -1203,7 +1203,7 @@ object Sandbox {
                         wrapperName,
                         actualType.descriptor,
                         null,
-                        null
+                        null,
                     )
                     wrapperMv.visitCode()
                     wrapperMv.visitMethodInsn(
@@ -1211,7 +1211,7 @@ object Sandbox {
                         rewriterClassName,
                         enclosureMethodName,
                         enclosureMethodDescriptor,
-                        false
+                        false,
                     )
                     wrapperMv.visitLdcInsn(handle)
                     var parameterLocal = 0
@@ -1224,7 +1224,7 @@ object Sandbox {
                         "java/lang/invoke/MethodHandle",
                         "invokeExact",
                         actualType.descriptor,
-                        false
+                        false,
                     )
                     wrapperMv.visitInsn(actualReturn.getOpcode(Opcodes.IRETURN))
                     wrapperMv.visitMaxs(parameterLocal + 2, parameterLocal) // +2 in case of long return
@@ -1234,7 +1234,7 @@ object Sandbox {
                         className,
                         wrapperName,
                         actualType.descriptor,
-                        false
+                        false,
                     )
                 }
             }
@@ -1252,7 +1252,7 @@ object Sandbox {
             bridgeTo: String,
             parameters: List<VisitedParameter>,
             modifiers: Int,
-            descriptor: String
+            descriptor: String,
         ) {
             val methodVisitor = MonitorIsolatingMethodVisitor(template)
             fun loadSelf() {
@@ -1285,7 +1285,7 @@ object Sandbox {
                 className,
                 bridgeTo,
                 descriptor,
-                false
+                false,
             )
             methodVisitor.visitLabel(callEndLabel)
             loadSelf()
@@ -1303,7 +1303,7 @@ object Sandbox {
         }
 
         private open class MonitorIsolatingMethodVisitor(
-            downstream: MethodVisitor
+            downstream: MethodVisitor,
         ) : MethodVisitor(Opcodes.ASM8, downstream) {
             override fun visitInsn(opcode: Int) {
                 when (opcode) {
@@ -1313,7 +1313,7 @@ object Sandbox {
                             rewriterClassName,
                             RewriteBytecode::enterMonitor.javaMethod?.name ?: error("missing enter-monitor name"),
                             Type.getMethodDescriptor(RewriteBytecode::enterMonitor.javaMethod),
-                            false
+                            false,
                         )
                     }
 
@@ -1323,7 +1323,7 @@ object Sandbox {
                             rewriterClassName,
                             RewriteBytecode::exitMonitor.javaMethod?.name ?: error("missing exit-monitor name"),
                             Type.getMethodDescriptor(RewriteBytecode::exitMonitor.javaMethod),
-                            false
+                            false,
                         )
                     }
 
@@ -1338,7 +1338,7 @@ object Sandbox {
             val badTryCatchBlockPositions: Set<Int>,
             val rewritingContext: RewritingContext,
             val handleEncloser: (Handle) -> Handle,
-            methodVisitor: MethodVisitor
+            methodVisitor: MethodVisitor,
         ) : MonitorIsolatingMethodVisitor(methodVisitor) {
             private val labelsToRewrite: MutableSet<Label> = mutableSetOf()
             private var rewroteLabel = false
@@ -1351,7 +1351,7 @@ object Sandbox {
                     rewriterClassName,
                     enclosureMethodName,
                     enclosureMethodDescriptor,
-                    false
+                    false,
                 )
             }
 
@@ -1407,7 +1407,7 @@ object Sandbox {
                 numLocal: Int,
                 local: Array<out Any>?,
                 numStack: Int,
-                stack: Array<out Any>?
+                stack: Array<out Any>?,
             ) {
                 super.visitFrame(type, numLocal, local, numStack, stack)
                 if (nextLabel != null) {
@@ -1417,7 +1417,7 @@ object Sandbox {
                         rewriterClassName,
                         checkMethodName,
                         checkMethodDescription,
-                        false
+                        false,
                     )
                     rewroteLabel = true
                     labelsToRewrite.remove(nextLabel ?: error("nextLabel changed"))
@@ -1440,7 +1440,7 @@ object Sandbox {
                     rewriterClassName,
                     RewriteBytecode::forbiddenMethod.javaMethod?.name ?: error("need forbidden method name"),
                     Type.getMethodDescriptor(RewriteBytecode::forbiddenMethod.javaMethod),
-                    false
+                    false,
                 )
             }
 
@@ -1449,7 +1449,7 @@ object Sandbox {
                 owner: String,
                 name: String,
                 descriptor: String,
-                isInterface: Boolean
+                isInterface: Boolean,
             ) {
                 if (isBlacklistedMethod(owner, name)) {
                     // Adding an extra call instead of replacing the call avoids the need for fiddly stack manipulation
@@ -1470,7 +1470,7 @@ object Sandbox {
                         rewriterClassName,
                         rewriteTarget.javaMethod?.name ?: error("missing notification method name"),
                         Type.getMethodDescriptor(rewriteTarget.javaMethod),
-                        false
+                        false,
                     )
                 }
             }
@@ -1492,7 +1492,7 @@ object Sandbox {
                     condy.name,
                     condy.descriptor,
                     condy.bootstrapMethod,
-                    *sandboxBootstrapArguments(condy.bootstrapArguments)
+                    *sandboxBootstrapArguments(condy.bootstrapArguments),
                 )
             }
 
@@ -1513,7 +1513,7 @@ object Sandbox {
                 name: String?,
                 descriptor: String,
                 bootstrapMethodHandle: Handle,
-                vararg bootstrapMethodArguments: Any?
+                vararg bootstrapMethodArguments: Any?,
             ) {
                 val forbidden = isBlacklistedMethod(bootstrapMethodHandle.owner, bootstrapMethodHandle.name) ||
                     hasBlacklistedBootstrapRef(bootstrapMethodArguments)
@@ -1557,7 +1557,7 @@ object Sandbox {
                     name,
                     newDesc,
                     bootstrapMethodHandle,
-                    *arguments
+                    *arguments,
                 )
             }
 
@@ -1588,7 +1588,7 @@ object Sandbox {
         private data class VisitedParameter(val name: String?, val modifiers: Int)
         private data class MethodPreinspection(
             val badTryCatchBlockPositions: Set<Int>,
-            val parameters: List<VisitedParameter>
+            val parameters: List<VisitedParameter>,
         )
 
         private fun preInspectMethods(reader: ClassReader): Map<VisitedMethod, MethodPreinspection> {
@@ -1606,13 +1606,13 @@ object Sandbox {
                         name: String,
                         descriptor: String,
                         signature: String?,
-                        exceptions: Array<out String>?
+                        exceptions: Array<out String>?,
                     ): MethodVisitor {
                         return PreviewingMethodVisitor()
                             .also { methodVisitors[VisitedMethod(name, descriptor)] = it }
                     }
                 },
-                0
+                0,
             )
             return methodVisitors.mapValues {
                 MethodPreinspection(it.value.getBadTryCatchBlockPositions(), it.value.getParameters())
@@ -1746,8 +1746,8 @@ object Sandbox {
                 confinedTask.permissionRequests.add(
                     TaskResults.PermissionRequest(
                         RuntimePermission("createThreadAfterTimeout"),
-                        false
-                    )
+                        false,
+                    ),
                 )
                 throw SandboxDeath()
             }
@@ -1755,8 +1755,8 @@ object Sandbox {
                 confinedTask.permissionRequests.add(
                     TaskResults.PermissionRequest(
                         RuntimePermission("exceedThreadLimit"),
-                        false
-                    )
+                        false,
+                    ),
                 )
                 throw SecurityException()
             }
@@ -1833,7 +1833,7 @@ object Sandbox {
     fun redirectOutput(
         outputListener: OutputListener? = null,
         redirectingOutputLimit: Int? = null,
-        block: () -> Any?
+        block: () -> Any?,
     ): JeedOutputCapture {
         val confinedTask = confinedTaskByThreadGroup() ?: error("should only be used from a confined task")
         check(!confinedTask.redirectingOutput) { "can't nest calls to redirectOutput" }
@@ -1873,7 +1873,7 @@ object Sandbox {
                 .joinToString("") { it.line } + flushedStderr,
             confinedTask.redirectedInput.toString() + flushedStdin,
             confinedTask.redirectingIOBytes.toByteArray().decodeToString(),
-            confinedTask.redirectingTruncatedLines
+            confinedTask.redirectingTruncatedLines,
         ).also {
             confinedTask.currentRedirectedLines = null
             confinedTask.outputListener = null
@@ -2078,8 +2078,8 @@ object Sandbox {
                             inputLines.add(
                                 TaskResults.InputLine(
                                     currentInputLine!!.toString(),
-                                    currentInputLine!!.started
-                                )
+                                    currentInputLine!!.started,
+                                ),
                             )
                             currentInputLine = null
                             if (redirectingOutput && currentRedirectingInputLine!!.bytes.size > 0) {
@@ -2109,7 +2109,7 @@ object Sandbox {
     }
 
     class UnexpectedExtraThreadError : Error(
-        "An extra thread was detected by a feature not configured to support multiple threads"
+        "An extra thread was detected by a feature not configured to support multiple threads",
     )
 
     class SandboxStartFailed(message: String, cause: Throwable? = null) : RuntimeException(message, cause)
@@ -2164,7 +2164,7 @@ object Sandbox {
 
         originalPrintStreams = mapOf(
             TaskResults.OutputLine.Console.STDOUT to originalStdout,
-            TaskResults.OutputLine.Console.STDERR to originalStderr
+            TaskResults.OutputLine.Console.STDERR to originalStderr,
         )
 
         running = true
@@ -2210,7 +2210,7 @@ fun <T> withSandbox(run: () -> T): T {
 
 fun Sandbox.SandboxableClassLoader.sandbox(
     classLoaderConfiguration: Sandbox.ClassLoaderConfiguration,
-    configuredPlugins: List<ConfiguredSandboxPlugin<*, *>> = listOf()
+    configuredPlugins: List<ConfiguredSandboxPlugin<*, *>> = listOf(),
 ): Sandbox.SandboxedClassLoader {
     return Sandbox.SandboxedClassLoader(this, classLoaderConfiguration, configuredPlugins)
 }
@@ -2222,7 +2222,7 @@ data class JeedOutputCapture(
     val stderr: String,
     val stdin: String,
     val interleavedInputOutput: String,
-    val truncatedLines: Int
+    val truncatedLines: Int,
 )
 
 interface SandboxPlugin<A : Any, V : Any> {
@@ -2235,21 +2235,21 @@ interface SandboxPlugin<A : Any, V : Any> {
     fun createInstrumentationData(
         arguments: A,
         classLoaderConfiguration: Sandbox.ClassLoaderConfiguration,
-        allPlugins: List<ConfiguredSandboxPlugin<*, *>>
+        allPlugins: List<ConfiguredSandboxPlugin<*, *>>,
     ): Any? = null
 
     fun transformBeforeSandbox(
         bytecode: ByteArray,
         name: String,
         instrumentationData: Any?,
-        context: RewritingContext
+        context: RewritingContext,
     ): ByteArray = bytecode
 
     fun transformAfterSandbox(
         bytecode: ByteArray,
         name: String,
         instrumentationData: Any?,
-        context: RewritingContext
+        context: RewritingContext,
     ): ByteArray = bytecode
 
     fun createInitialData(instrumentationData: Any?, executionArguments: Sandbox.ExecutionArguments): Any?
@@ -2267,7 +2267,7 @@ interface SandboxPluginWithDefaultArguments<A : Any, V : Any> : SandboxPlugin<A,
 
 data class ConfiguredSandboxPlugin<A : Any, V : Any>(
     val plugin: SandboxPlugin<A, V>,
-    val arguments: A
+    val arguments: A,
 )
 
 enum class RewritingContext {

@@ -36,7 +36,7 @@ data class KtLintArguments(
     val failOnError: Boolean = false,
     val indent: Int = SnippetArguments.DEFAULT_SNIPPET_INDENT,
     val maxLineLength: Int = DEFAULT_MAX_LINE_LENGTH,
-    val script: Boolean = false
+    val script: Boolean = false,
 ) {
     companion object {
         const val DEFAULT_MAX_LINE_LENGTH = 100
@@ -47,7 +47,7 @@ data class KtLintArguments(
 class KtLintError(
     val ruleId: String,
     @Suppress("MemberVisibilityCanBePrivate") val detail: String,
-    location: SourceLocation
+    location: SourceLocation,
 ) : AlwaysLocatedSourceError(location, "$ruleId: $detail")
 
 class KtLintFailed(errors: List<KtLintError>) : AlwaysLocatedJeedError(errors) {
@@ -84,7 +84,7 @@ val jeedRuleProviders = setOf(
     RuleProvider { SpacingAroundOperatorsRule() },
     RuleProvider { SpacingAroundParensRule() },
     RuleProvider { SpacingAroundRangeOperatorRule() },
-    RuleProvider { StringTemplateRule() }
+    RuleProvider { StringTemplateRule() },
 )
 
 private val limiter = Semaphore(1)
@@ -108,7 +108,7 @@ suspend fun Source.ktFormat(ktLintArguments: KtLintArguments = KtLintArguments()
                     "MainKt.kt"
                 } else {
                     filename
-                }
+                },
             ] = KtLint.format(
                 KtLint.ExperimentalParams(
                     if (source is Snippet) {
@@ -127,18 +127,18 @@ suspend fun Source.ktFormat(ktLintArguments: KtLintArguments = KtLintArguments()
                                     KtLintError(
                                         e.ruleId,
                                         e.detail,
-                                        mapLocation(SourceLocation(filename, e.line, e.col))
-                                    )
-                                )
+                                        mapLocation(SourceLocation(filename, e.line, e.col)),
+                                    ),
+                                ),
                             )
                         }
                     },
                     editorConfigOverride = EditorConfigOverride.from(
                         DefaultEditorConfigProperties.maxLineLengthProperty to ktLintArguments.maxLineLength,
                         DefaultEditorConfigProperties.indentStyleProperty to "space",
-                        DefaultEditorConfigProperties.indentSizeProperty to ktLintArguments.indent
-                    )
-                )
+                        DefaultEditorConfigProperties.indentSizeProperty to ktLintArguments.indent,
+                    ),
+                ),
             )
         }
     }
@@ -195,11 +195,11 @@ suspend fun Source.ktLint(ktLintArguments: KtLintArguments = KtLintArguments()):
                                             e.detail
                                                 .replace(
                                                     incorrectMessage!!,
-                                                    "Unexpected indentation (${incorrectAmount!! - addedIndent})"
+                                                    "Unexpected indentation (${incorrectAmount!! - addedIndent})",
                                                 )
                                                 .replace(
                                                     expectedMessage!!,
-                                                    "should be ${expectedAmount!! - addedIndent}"
+                                                    "should be ${expectedAmount!! - addedIndent}",
                                                 )
                                         } catch (_: Exception) {
                                             e.detail
@@ -211,8 +211,8 @@ suspend fun Source.ktLint(ktLintArguments: KtLintArguments = KtLintArguments()):
                                         KtLintError(
                                             e.ruleId,
                                             detail,
-                                            mappedLocation
-                                        )
+                                            mappedLocation,
+                                        ),
                                     )
                                 } catch (_: Exception) {
                                 }
@@ -220,9 +220,9 @@ suspend fun Source.ktLint(ktLintArguments: KtLintArguments = KtLintArguments()):
                             editorConfigOverride = EditorConfigOverride.from(
                                 DefaultEditorConfigProperties.maxLineLengthProperty to ktLintArguments.maxLineLength,
                                 DefaultEditorConfigProperties.indentStyleProperty to "space",
-                                DefaultEditorConfigProperties.indentSizeProperty to ktLintArguments.indent
-                            )
-                        )
+                                DefaultEditorConfigProperties.indentSizeProperty to ktLintArguments.indent,
+                            ),
+                        ),
                     )
                 }
             }

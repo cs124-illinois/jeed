@@ -18,7 +18,7 @@ class TestCheckstyle : StringSpec({
         val checkstyleResult = Source.fromSnippet(
             """
 int i = 0;
-""".trim()
+""".trim(),
         ).checkstyle()
 
         checkstyleResult shouldNot haveCheckstyleErrors()
@@ -28,7 +28,7 @@ int i = 0;
             """
 int i = 0;
 int y =1;
-""".trim()
+""".trim(),
         ).checkstyle()
 
         checkstyleErrors should haveCheckstyleErrors()
@@ -43,7 +43,7 @@ int add(int a, int b) {
     return a+ b;
 }
 add(i, y);
-""".trim()
+""".trim(),
         ).checkstyle()
 
         checkstyleErrors should haveCheckstyleErrors()
@@ -58,7 +58,7 @@ static int add(int a, int b) {
     return a+ b;
 }
 add(i, y);
-""".trim()
+""".trim(),
         ).checkstyle()
 
         checkstyleErrors should haveCheckstyleErrors()
@@ -73,7 +73,7 @@ public int add(int a, int b) {
     return a+ b;
 }
 add(i, y);
-""".trim()
+""".trim(),
         ).checkstyle()
 
         checkstyleErrors should haveCheckstyleErrors()
@@ -89,8 +89,8 @@ public class First{
                 "Second.java" to """
 public class Second {
 }
-                """.trim()
-            )
+                """.trim(),
+            ),
         ).checkstyle()
 
         checkstyleErrors should haveCheckstyleErrors()
@@ -107,8 +107,8 @@ public class First{
                 "Second.java" to """
 public class Second {
 }
-                """.trim()
-            )
+                """.trim(),
+            ),
         ).checkstyle(CheckstyleArguments(sources = setOf("Second.java")))
 
         checkstyleErrors shouldNot haveCheckstyleErrors()
@@ -119,7 +119,7 @@ public class Second {
 public int add(int a, int b) {
    return a + b;
  }
-""".trim()
+""".trim(),
         ).checkstyle()
         checkstyleErrors should haveCheckstyleErrors()
         checkstyleErrors.errors shouldHaveSize 2
@@ -132,7 +132,7 @@ public int add(int a, int b) {
    return a + b;
  }
 """,
-            trim = false
+            trim = false,
         ).checkstyle()
         checkstyleErrors should haveCheckstyleErrors()
         checkstyleErrors.errors shouldHaveSize 3
@@ -155,15 +155,15 @@ public int add(int a, int b) {
     "should adjust indentation properly for templates" {
         val checkstyleErrors = Source.fromTemplates(
             mapOf(
-                "Test.java" to " int i = 0;"
+                "Test.java" to " int i = 0;",
             ),
             mapOf(
                 "Test.java.hbs" to """
 public class Question {
     {{{ contents }}}
 }
-"""
-            )
+""",
+            ),
         ).checkstyle()
         checkstyleErrors should haveCheckstyleErrors()
         checkstyleErrors.errors shouldHaveSize 1
@@ -180,7 +180,7 @@ public class Question {
 public int add(int a,int b) {
     return a+ b;
 }
-""".trim()
+""".trim(),
             ).checkstyle(CheckstyleArguments(failOnError = true))
         }
         checkstyleError.errors shouldHaveSize 2
@@ -203,8 +203,8 @@ public class Test {
         System.out.println(testYieldKeyword(1));
     }
 }
-                """.trim()
-            )
+                """.trim(),
+            ),
         ).checkstyle()
 
         checkstyleResult shouldNot haveCheckstyleErrors()
@@ -221,8 +221,8 @@ public class Test {
         }
     }
 }
-                """.trim()
-            )
+                """.trim(),
+            ),
         ).checkstyle()
 
         checkstyleResult shouldNot haveCheckstyleErrors()
@@ -243,8 +243,8 @@ public class Test {
         Object o = new Range(0, 10);
     }
 }
-                """.trim()
-            )
+                """.trim(),
+            ),
         ).checkstyle()
 
         checkstyleResult shouldNot haveCheckstyleErrors()
@@ -252,15 +252,15 @@ public class Test {
     "should ignore errors on unmapped lines when configured" {
         val templatedSource = Source.fromTemplates(
             mapOf(
-                "Test.java" to "    int i = 0;"
+                "Test.java" to "    int i = 0;",
             ),
             mapOf(
                 "Test.java.hbs" to """
   public class Question {
 {{{ contents }}}
 }
-"""
-            )
+""",
+            ),
         )
         val checkstyleResult = templatedSource.checkstyle()
         checkstyleResult shouldNot haveCheckstyleErrors()
@@ -280,7 +280,7 @@ public int add(int a, int b) {
   return a + b;
 }
 """.trim(),
-            SnippetArguments(indent = 2)
+            SnippetArguments(indent = 2),
         ).checkstyle(checker = otherChecker).also {
             it shouldNot haveCheckstyleErrors()
         }
@@ -289,7 +289,7 @@ public int add(int a, int b) {
         Source.fromSnippet(
             """
 for (int i = 0; i < 10; i++);
-""".trim()
+""".trim(),
         ).checkstyle(CheckstyleArguments(suppressions = setOf("empty.statement"))).also {
             it shouldNot haveCheckstyleErrors()
         }
@@ -301,7 +301,7 @@ fun haveCheckstyleErrors() = object : Matcher<CheckstyleResults> {
         return MatcherResult(
             value.errors.isNotEmpty(),
             { "should have checkstyle errors" },
-            { "should not have checkstyle errors" }
+            { "should not have checkstyle errors" },
         )
     }
 }
@@ -311,7 +311,7 @@ fun haveCheckstyleErrorAt(source: String = SNIPPET_SOURCE, line: Int) = object :
         return MatcherResult(
             value.errors.any { it.location.source == source && it.location.line == line },
             { "should have checkstyle error on line $line" },
-            { "should not have checkstyle error on line $line" }
+            { "should not have checkstyle error on line $line" },
         )
     }
 }

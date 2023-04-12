@@ -46,7 +46,7 @@ class CachedCompilationResults(
     val fileManager: JeedFileManager,
     val compilerName: String,
     val compilationArguments: CompilationArguments? = null,
-    val kompilationArguments: KompilationArguments? = null
+    val kompilationArguments: KompilationArguments? = null,
 )
 
 object MoreCacheStats {
@@ -58,7 +58,7 @@ object MoreCacheStats {
 fun Source.tryCache(
     compilationArguments: CompilationArguments,
     started: Instant,
-    compilerName: String
+    compilerName: String,
 ): CompiledSource? {
     val useCache = compilationArguments.useCache ?: useCompilationCache
     if (!useCache) {
@@ -72,7 +72,7 @@ fun Source.tryCache(
     MoreCacheStats.hits++
 
     val cachedCompilationArguments = cachedResult.compilationArguments ?: error(
-        "Cached compilation result missing arguments"
+        "Cached compilation result missing arguments",
     )
     if (cachedResult.compilerName != compilerName) {
         return null
@@ -90,7 +90,7 @@ fun Source.tryCache(
         JeedClassLoader(cachedResult.fileManager, parentClassLoader),
         cachedResult.fileManager,
         compilerName,
-        true
+        true,
     )
 }
 
@@ -108,8 +108,8 @@ fun CompiledSource.cache(compilationArguments: CompilationArguments) {
                 messages,
                 fileManager,
                 compilerName,
-                compilationArguments = compilationArguments
-            )
+                compilationArguments = compilationArguments,
+            ),
         )
     }.also {
         if (compilationArguments.waitForCache) {
@@ -122,7 +122,7 @@ fun CompiledSource.cache(compilationArguments: CompilationArguments) {
 fun Source.tryCache(
     kompilationArguments: KompilationArguments,
     started: Instant,
-    compilerName: String
+    compilerName: String,
 ): CompiledSource? {
     if (!kompilationArguments.useCache) {
         return null
@@ -134,7 +134,7 @@ fun Source.tryCache(
     }
     MoreCacheStats.hits++
     val cachedKompilationArguments = cachedResult.kompilationArguments ?: error(
-        "Cached kompilation result missing arguments"
+        "Cached kompilation result missing arguments",
     )
     if (cachedResult.compilerName != compilerName) {
         return null
@@ -150,7 +150,7 @@ fun Source.tryCache(
         JeedClassLoader(cachedResult.fileManager, kompilationArguments.parentClassLoader),
         cachedResult.fileManager,
         compilerName,
-        true
+        true,
     )
 }
 
@@ -166,8 +166,8 @@ fun CompiledSource.cache(kompilationArguments: KompilationArguments) {
                 messages,
                 fileManager,
                 compilerName,
-                kompilationArguments = kompilationArguments
-            )
+                kompilationArguments = kompilationArguments,
+            ),
         )
     }.also {
         if (kompilationArguments.waitForCache) {

@@ -31,7 +31,7 @@ class Snippet(
     val looseCodeMethodName: String,
     val fileType: FileType,
     @Transient private val remappedLineMapping: Map<Int, RemappedLine> = mapOf(),
-    @Transient val entryClassName: String = wrappedClassName
+    @Transient val entryClassName: String = wrappedClassName,
 ) : Source(
     sources,
     {
@@ -40,13 +40,13 @@ class Snippet(
         fileType
     },
     { mapLocation(it, remappedLineMapping) },
-    { leadingIndentation(it, remappedLineMapping) }
+    { leadingIndentation(it, remappedLineMapping) },
 ) {
     data class RemappedLine(
         val sourceLineNumber: Int,
         val rewrittenLineNumber: Int,
         val addedIndentation: Int = 0,
-        val leadingIndentation: Int = addedIndentation
+        val leadingIndentation: Int = addedIndentation,
     )
 
     fun originalSourceFromMap(): String {
@@ -66,15 +66,15 @@ class Snippet(
             val remappedLineInfo = remappedLineMapping[input.line]
                 ?: throw SourceMappingException(
                     "can't remap line ${input.line}: ${
-                    remappedLineMapping.values.joinToString(
-                        separator = ","
-                    )
-                    }"
+                        remappedLineMapping.values.joinToString(
+                            separator = ",",
+                        )
+                    }",
                 )
             return SourceLocation(
                 SNIPPET_SOURCE,
                 remappedLineInfo.sourceLineNumber,
-                input.column - remappedLineInfo.addedIndentation
+                input.column - remappedLineInfo.addedIndentation,
             )
         }
 
@@ -85,10 +85,10 @@ class Snippet(
             val remappedLineInfo = remappedLineMapping[input.line]
                 ?: throw SourceMappingException(
                     "can't remap line ${input.line}: ${
-                    remappedLineMapping.values.joinToString(
-                        separator = ","
-                    )
-                    }"
+                        remappedLineMapping.values.joinToString(
+                            separator = ",",
+                        )
+                    }",
                 )
             return remappedLineInfo.leadingIndentation
         }
@@ -98,7 +98,7 @@ class Snippet(
 class SnippetTransformationError(
     line: Int,
     column: Int,
-    message: String
+    message: String,
 ) : AlwaysLocatedSourceError(SourceLocation(SNIPPET_SOURCE, line, column), message) {
     constructor(location: SourceLocation, message: String) : this(location.line, location.column, message)
 }
@@ -107,7 +107,7 @@ class SnippetTransformationFailed(errors: List<SnippetTransformationError>) : Al
 
 class SnippetErrorListener(
     private val sourceLines: List<Int>,
-    private val decrement: Boolean = true
+    private val decrement: Boolean = true,
 ) : BaseErrorListener() {
     private val errors = mutableListOf<SnippetTransformationError>()
     override fun syntaxError(
@@ -116,7 +116,7 @@ class SnippetErrorListener(
         line: Int,
         charPositionInLine: Int,
         msg: String,
-        e: RecognitionException?
+        e: RecognitionException?,
     ) {
         // Decrement line number by 1 to account for added braces
         var actualLine = if (decrement) {
@@ -158,7 +158,7 @@ class SnippetErrorListener(
 data class SnippetArguments(
     val indent: Int = DEFAULT_SNIPPET_INDENT,
     var fileType: Source.FileType = Source.FileType.JAVA,
-    val noEmptyMain: Boolean = false
+    val noEmptyMain: Boolean = false,
 ) {
     companion object {
         const val DEFAULT_SNIPPET_INDENT = 4
@@ -170,7 +170,7 @@ data class SnippetArguments(
 fun Source.Companion.fromSnippet(
     originalSource: String,
     snippetArguments: SnippetArguments = SnippetArguments(),
-    trim: Boolean = true
+    trim: Boolean = true,
 ): Snippet {
     val actualSource = if (trim) {
         originalSource.trimStart()
@@ -187,7 +187,7 @@ fun Source.Companion.fromSnippet(
 fun Source.Companion.fromJavaSnippet(
     originalSource: String,
     snippetArguments: SnippetArguments = SnippetArguments(),
-    trim: Boolean = true
+    trim: Boolean = true,
 ): Snippet {
     val actualSource = if (trim) {
         originalSource.trimStart()
@@ -201,7 +201,7 @@ fun Source.Companion.fromJavaSnippet(
 fun Source.Companion.fromKotlinSnippet(
     originalSource: String,
     snippetArguments: SnippetArguments = SnippetArguments(),
-    trim: Boolean = true
+    trim: Boolean = true,
 ): Snippet {
     val actualSource = if (trim) {
         originalSource.trimStart()
@@ -245,7 +245,7 @@ private fun sourceFromKotlinSnippet(originalSource: String, snippetArguments: Sn
     val snippetRange = SourceRange(
         SNIPPET_SOURCE,
         Location(parseTree.start.line, 0),
-        Location(parseTree.stop.line - 1, 0)
+        Location(parseTree.stop.line - 1, 0),
     )
 
     val multilineLines = mutableSetOf<Int>()
@@ -267,9 +267,9 @@ private fun sourceFromKotlinSnippet(originalSource: String, snippetArguments: Sn
                 listOf(
                     SnippetTransformationError(
                         SourceLocation(SNIPPET_SOURCE, it.start.line, it.start.charPositionInLine),
-                        "package declarations not allowed in Kotlin snippets"
-                    )
-                )
+                        "package declarations not allowed in Kotlin snippets",
+                    ),
+                ),
             )
         }
     }
@@ -279,9 +279,9 @@ private fun sourceFromKotlinSnippet(originalSource: String, snippetArguments: Sn
                 listOf(
                     SnippetTransformationError(
                         SourceLocation(SNIPPET_SOURCE, it.first().start.line, it.first().start.charPositionInLine),
-                        "file annotations not allowed in Kotlin snippets"
-                    )
-                )
+                        "file annotations not allowed in Kotlin snippets",
+                    ),
+                ),
             )
         }
     }
@@ -380,7 +380,7 @@ ${" ".repeat(snippetArguments.indent * 2)}@JvmStatic fun main() {""".lines().let
 
     rewrittenSourceLines.addAll(
         """${" ".repeat(snippetArguments.indent)}}
-}""".lines()
+}""".lines(),
     )
     currentOutputLineNumber += 2
 
@@ -442,9 +442,9 @@ ${" ".repeat(snippetArguments.indent * 2)}@JvmStatic fun main() {""".lines().let
             SourceLocation(
                 SNIPPET_SOURCE,
                 looseCodeMapping[it.line] ?: error("Missing loose code mapping"),
-                it.charPositionInLine
+                it.charPositionInLine,
             ),
-            "return statements not allowed at top level in snippets"
+            "return statements not allowed at top level in snippets",
         )
     }.let {
         if (it.isNotEmpty()) {
@@ -461,11 +461,11 @@ ${" ".repeat(snippetArguments.indent * 2)}@JvmStatic fun main() {""".lines().let
                     SourceLocation(
                         SNIPPET_SOURCE,
                         it.start.line,
-                        it.start.charPositionInLine
+                        it.start.charPositionInLine,
                     ),
-                    "A class named MainKt cannot be declared at the top level in a snippet"
-                )
-            )
+                    "A class named MainKt cannot be declared at the top level in a snippet",
+                ),
+            ),
         )
     }
 
@@ -484,7 +484,7 @@ ${" ".repeat(snippetArguments.indent * 2)}@JvmStatic fun main() {""".lines().let
         "main()",
         Source.FileType.KOTLIN,
         remappedLineMapping,
-        "MainKt"
+        "MainKt",
     )
 }
 
@@ -519,9 +519,9 @@ private fun sourceFromJavaSnippet(originalSource: String, snippetArguments: Snip
                     SnippetTransformationError(
                         0,
                         0,
-                        "Stack overflow caused by overly-complicated code"
-                    )
-                )
+                        "Stack overflow caused by overly-complicated code",
+                    ),
+                ),
             )
         } finally {
             parser.interpreter.clearDFA()
@@ -551,8 +551,8 @@ private fun sourceFromJavaSnippet(originalSource: String, snippetArguments: Snip
                     SnippetTransformationError(
                         start - 1,
                         0,
-                        "import statements must be at the top of the snippet"
-                    )
+                        "import statements must be at the top of the snippet",
+                    ),
                 )
             }
 
@@ -567,8 +567,8 @@ private fun sourceFromJavaSnippet(originalSource: String, snippetArguments: Snip
                 SnippetTransformationError(
                     context.start.line - 1,
                     context.start.charPositionInLine,
-                    "Snippets may not contain package declarations"
-                )
+                    "Snippets may not contain package declarations",
+                ),
             )
         }
 
@@ -588,8 +588,8 @@ private fun sourceFromJavaSnippet(originalSource: String, snippetArguments: Snip
                     SnippetTransformationError(
                         context.start.line - 1,
                         context.start.charPositionInLine,
-                        "Snippets may not contain top-level return statements"
-                    )
+                        "Snippets may not contain top-level return statements",
+                    ),
                 )
             }
             check(statementDepth >= 0) { "Invalid statement depth" }
@@ -635,8 +635,8 @@ private fun sourceFromJavaSnippet(originalSource: String, snippetArguments: Snip
                     SnippetTransformationError(
                         context.start.line - 1,
                         context.start.charPositionInLine,
-                        "Interface declarations must be at the top level"
-                    )
+                        "Interface declarations must be at the top level",
+                    ),
                 )
                 return
             }
@@ -682,8 +682,8 @@ private fun sourceFromJavaSnippet(originalSource: String, snippetArguments: Snip
                     SnippetTransformationError(
                         context.start.line - 1,
                         context.start.charPositionInLine,
-                        "Imports must be at the top level"
-                    )
+                        "Imports must be at the top level",
+                    ),
                 )
                 return
             }
@@ -694,7 +694,7 @@ private fun sourceFromJavaSnippet(originalSource: String, snippetArguments: Snip
             snippetRange = SourceRange(
                 SNIPPET_SOURCE,
                 Location(1, 0),
-                Location(ctx.stop.line - 2, 0)
+                Location(ctx.stop.line - 2, 0),
             )
             ctx.children.forEach {
                 super.visit(it)
@@ -762,7 +762,7 @@ private fun sourceFromJavaSnippet(originalSource: String, snippetArguments: Snip
                     lineNumber,
                     currentOutputLineNumber,
                     snippetArguments.indent + extraIndentation,
-                    snippetArguments.indent
+                    snippetArguments.indent,
                 )
             currentOutputLineNumber++
         }
@@ -802,8 +802,8 @@ private fun sourceFromJavaSnippet(originalSource: String, snippetArguments: Snip
     }
 
     rewrittenSource += """${
-    " "
-        .repeat(snippetArguments.indent)
+        " "
+            .repeat(snippetArguments.indent)
     }public static void $snippetMainMethodName() throws Exception {""" + "\n"
     if (looseCode.size > 0) {
         rewrittenSource += looseCode.joinToString(separator = "\n", postfix = "\n")
@@ -828,7 +828,7 @@ private fun sourceFromJavaSnippet(originalSource: String, snippetArguments: Snip
         "$snippetMainMethodName()",
         Source.FileType.JAVA,
         remappedLineMapping,
-        entryClassName
+        entryClassName,
     )
 }
 
@@ -837,7 +837,7 @@ private fun sourceFromJavaSnippet(originalSource: String, snippetArguments: Snip
 private fun checkJavaLooseCode(
     looseCode: String,
     looseCodeStart: Int,
-    remappedLineMapping: Map<Int, Snippet.RemappedLine>
+    remappedLineMapping: Map<Int, Snippet.RemappedLine>,
 ) {
     val charStream = CharStreams.fromString(looseCode)
     val javaLexer = JavaLexer(charStream)
@@ -851,9 +851,9 @@ private fun checkJavaLooseCode(
         SnippetTransformationError(
             Snippet.mapLocation(
                 SourceLocation(SNIPPET_SOURCE, it.line + looseCodeStart, it.charPositionInLine),
-                remappedLineMapping
+                remappedLineMapping,
             ),
-            "return statements not allowed at top level in snippets"
+            "return statements not allowed at top level in snippets",
         )
     }
     if (validationErrors.isNotEmpty()) {

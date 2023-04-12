@@ -10,7 +10,7 @@ val isWindows = System.getProperty("os.name").lowercase().startsWith("windows")
 suspend fun warm(indent: Int = 4, failLint: Boolean = true, quiet: Boolean = false, useDocker: Boolean = true) {
     Source.fromSnippet(
         """System.out.println("javac initialized");""",
-        SnippetArguments(indent = indent)
+        SnippetArguments(indent = indent),
     ).also {
         it.checkstyle(CheckstyleArguments(failOnError = failLint))
         it.complexity()
@@ -21,7 +21,7 @@ suspend fun warm(indent: Int = 4, failLint: Boolean = true, quiet: Boolean = fal
     }
     Source.fromSnippet(
         """println("kotlinc initialized")""",
-        SnippetArguments(indent = indent, fileType = Source.FileType.KOTLIN)
+        SnippetArguments(indent = indent, fileType = Source.FileType.KOTLIN),
     ).also {
         it.ktLint(KtLintArguments(failOnError = failLint))
     }.kompile().execute().output.also {
@@ -36,7 +36,7 @@ suspend fun warm(indent: Int = 4, failLint: Boolean = true, quiet: Boolean = fal
              println("coroutine isolation initialized")
           }
         """.trimMargin(),
-        SnippetArguments(indent = indent, fileType = Source.FileType.KOTLIN)
+        SnippetArguments(indent = indent, fileType = Source.FileType.KOTLIN),
     ).kompile()
         .execute(SourceExecutionArguments(waitForShutdown = true, timeout = COROUTINE_INIT_TIMEOUT)).output.also {
             if (!quiet) {

@@ -21,7 +21,7 @@ class TestClassLoader : StringSpec({
 import edu.illinois.cs.cs125.jeed.core.*;
 
 System.out.println(Sandbox.class.getMethods().length);
-        """.trim()
+        """.trim(),
         ).compile().execute()
 
         executionResult shouldNot haveCompleted()
@@ -34,7 +34,7 @@ import java.lang.reflect.*;
 
 Method[] methods = Main.class.getMethods();
 System.out.println(methods[0].getName());
-        """.trim()
+        """.trim(),
         ).compile()
 
         val failedExecutionResult = compiledSource.execute()
@@ -45,8 +45,8 @@ System.out.println(methods[0].getName());
             compiledSource.execute(
                 SourceExecutionArguments(
                     classLoaderConfiguration = Sandbox
-                        .ClassLoaderConfiguration(blacklistedClasses = setOf())
-                )
+                        .ClassLoaderConfiguration(blacklistedClasses = setOf()),
+                ),
             )
 
         successfulExecutionResult should haveCompleted()
@@ -58,7 +58,7 @@ import java.util.List;
 import java.util.ArrayList;
 
 List list = new ArrayList<String>();
-        """.trim()
+        """.trim(),
         ).compile().execute()
 
         successfulExecutionResult should haveCompleted()
@@ -69,15 +69,15 @@ import java.util.List;
 import java.util.ArrayList;
 
 List list = new ArrayList<String>();
-        """.trim()
+        """.trim(),
         ).compile().execute(
             SourceExecutionArguments(
                 classLoaderConfiguration = Sandbox.ClassLoaderConfiguration(
                     blacklistedClasses = setOf(
-                        "java.util."
-                    )
-                )
-            )
+                        "java.util.",
+                    ),
+                ),
+            ),
         )
 
         failedExecutionResult shouldNot haveCompleted()
@@ -87,14 +87,14 @@ List list = new ArrayList<String>();
         val successfulExecutionResult = Source.fromSnippet(
             """
 String s = new String("test");
-        """.trim()
+        """.trim(),
         ).compile().execute(
             SourceExecutionArguments(
                 classLoaderConfiguration = Sandbox.ClassLoaderConfiguration(
                     whitelistedClasses = setOf("java.lang."),
-                    blacklistedClasses = setOf()
-                )
-            )
+                    blacklistedClasses = setOf(),
+                ),
+            ),
         )
 
         successfulExecutionResult should haveCompleted()
@@ -105,14 +105,14 @@ import java.util.List;
 import java.util.ArrayList;
 
 List list = new ArrayList<String>();
-        """.trim()
+        """.trim(),
         ).compile().execute(
             SourceExecutionArguments(
                 classLoaderConfiguration = Sandbox.ClassLoaderConfiguration(
                     whitelistedClasses = setOf("java.lang."),
-                    blacklistedClasses = setOf()
-                )
-            )
+                    blacklistedClasses = setOf(),
+                ),
+            ),
         )
 
         failedExecutionResult shouldNot haveCompleted()
@@ -123,26 +123,26 @@ List list = new ArrayList<String>();
             Source.fromSnippet(
                 """
 System.out.println("Here");
-            """.trim()
+            """.trim(),
             ).compile().execute(
                 SourceExecutionArguments(
                     classLoaderConfiguration = Sandbox.ClassLoaderConfiguration(
-                        whitelistedClasses = setOf("edu.illinois.cs.cs125.jeed.")
-                    )
-                )
+                        whitelistedClasses = setOf("edu.illinois.cs.cs125.jeed."),
+                    ),
+                ),
             )
         }
         shouldThrow<IllegalArgumentException> {
             Source.fromSnippet(
                 """
 System.out.println("Here");
-            """.trim()
+            """.trim(),
             ).compile().execute(
                 SourceExecutionArguments(
                     classLoaderConfiguration = Sandbox.ClassLoaderConfiguration(
-                        whitelistedClasses = setOf("edu.illinois.cs.cs125.jeed.core.Sandbox")
-                    )
-                )
+                        whitelistedClasses = setOf("edu.illinois.cs.cs125.jeed.core.Sandbox"),
+                    ),
+                ),
             )
         }
     }

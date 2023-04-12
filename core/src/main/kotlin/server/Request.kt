@@ -25,7 +25,7 @@ enum class Task {
     cexecute,
     features,
     mutations,
-    disassemble
+    disassemble,
 }
 
 @JsonClass(generateAdapter = true)
@@ -42,7 +42,7 @@ class TaskArguments(
     // val features: currently accepts no arguments
     val mutations: MutationsArguments = MutationsArguments(),
     // val disassemble: currently accepts no arguments,
-    val plugins: PluginArguments = PluginArguments()
+    val plugins: PluginArguments = PluginArguments(),
 )
 
 @JsonClass(generateAdapter = true)
@@ -54,7 +54,7 @@ data class ServerSourceExecutionArguments(
     var maxExtraThreads: Int? = null,
     var maxOutputLines: Int? = null,
     var maxIOBytes: Int? = null,
-    var classLoaderConfiguration: ServerClassLoaderConfiguration? = null
+    var classLoaderConfiguration: ServerClassLoaderConfiguration? = null,
 ) {
     fun setDefaults(
         defaultTimeout: Long,
@@ -65,7 +65,7 @@ data class ServerSourceExecutionArguments(
         defaultWhitelistedClasses: Set<String>,
         defaultBlacklistedClasses: Set<String>,
         defaultUnsafeExceptions: Set<String>,
-        defaultBlacklistedMethods: Set<Sandbox.MethodFilter>
+        defaultBlacklistedMethods: Set<Sandbox.MethodFilter>,
     ) {
         timeout = timeout ?: defaultTimeout
         permissions = permissions ?: defaultPermissions
@@ -77,7 +77,7 @@ data class ServerSourceExecutionArguments(
             defaultWhitelistedClasses,
             defaultBlacklistedClasses,
             defaultUnsafeExceptions,
-            defaultBlacklistedMethods
+            defaultBlacklistedMethods,
         )
     }
 
@@ -90,7 +90,7 @@ data class ServerSourceExecutionArguments(
             maxExtraThreads!!,
             maxOutputLines!!,
             maxIOBytes!!,
-            classLoaderConfiguration!!.toClassloaderConfiguration()
+            classLoaderConfiguration!!.toClassloaderConfiguration(),
         )
 }
 
@@ -99,13 +99,13 @@ data class ServerClassLoaderConfiguration(
     var whitelistedClasses: Set<String>? = null,
     var blacklistedClasses: Set<String>? = null,
     var unsafeExceptions: Set<String>? = null,
-    var blacklistedMethods: Set<Sandbox.MethodFilter>? = null
+    var blacklistedMethods: Set<Sandbox.MethodFilter>? = null,
 ) {
     fun setDefaults(
         defaultWhitelistedClasses: Set<String>,
         defaultBlacklistedClasses: Set<String>,
         defaultUnsafeExceptions: Set<String>,
-        defaultBlacklistedMethods: Set<Sandbox.MethodFilter>
+        defaultBlacklistedMethods: Set<Sandbox.MethodFilter>,
     ) {
         whitelistedClasses = whitelistedClasses ?: defaultWhitelistedClasses
         blacklistedClasses = blacklistedClasses ?: defaultBlacklistedClasses
@@ -117,7 +117,7 @@ data class ServerClassLoaderConfiguration(
         whitelistedClasses!!,
         blacklistedClasses!!,
         unsafeExceptions = unsafeExceptions!!,
-        blacklistedMethods = blacklistedMethods!!
+        blacklistedMethods = blacklistedMethods!!,
     )
 }
 
@@ -125,12 +125,12 @@ data class ServerClassLoaderConfiguration(
 data class PluginArguments(
     var lineCountLimit: Long? = null,
     var memoryTotalLimit: Long? = null,
-    var memoryAllocationLimit: Long? = null
+    var memoryAllocationLimit: Long? = null,
 ) {
     fun setDefaults(
         defaultLineCountLimit: Long,
         defaultMemoryTotalLimit: Long,
-        defaultMemoryAllocationLimit: Long
+        defaultMemoryAllocationLimit: Long,
     ) {
         lineCountLimit = lineCountLimit ?: defaultLineCountLimit
         memoryTotalLimit = memoryTotalLimit ?: defaultMemoryTotalLimit

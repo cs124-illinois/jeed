@@ -149,7 +149,7 @@ enum class FeatureName(val description: String) {
     ABSTRACT_FIELD("abstract fields"),
     IF_EXPRESSIONS("if expressions"),
     TRY_EXPRESSIONS("try expressions"),
-    WHEN_EXPRESSIONS("when expressions")
+    WHEN_EXPRESSIONS("when expressions"),
 }
 
 // Java features without Kotlin equivalents
@@ -165,7 +165,7 @@ val JAVA_ONLY_FEATURES = setOf(
     FeatureName.SWITCH,
     FeatureName.STREAM,
     FeatureName.RECORD,
-    FeatureName.BOXING_CLASSES
+    FeatureName.BOXING_CLASSES,
 )
 
 // Kotlin features without Java equivalents
@@ -194,7 +194,7 @@ val KOTLIN_ONLY_FEATURES = setOf(
     FeatureName.ABSTRACT_FIELD,
     FeatureName.IF_EXPRESSIONS,
     FeatureName.TRY_EXPRESSIONS,
-    FeatureName.WHEN_EXPRESSIONS
+    FeatureName.WHEN_EXPRESSIONS,
 )
 
 val STRUCTURAL_FEATURES =
@@ -315,7 +315,7 @@ val ORDERED_FEATURES = listOf(
     FeatureName.ANONYMOUS_FUNCTION,
     FeatureName.IF_EXPRESSIONS,
     FeatureName.TRY_EXPRESSIONS,
-    FeatureName.WHEN_EXPRESSIONS
+    FeatureName.WHEN_EXPRESSIONS,
 ).also {
     val doesExist = it.toSet()
     val shouldExist = FeatureName.values().toSet() - setOf(FeatureName.EMPTY)
@@ -356,7 +356,7 @@ data class Features(
     val importList: MutableSet<String> = mutableSetOf(),
     val typeList: MutableSet<String> = mutableSetOf(),
     val identifierList: MutableSet<String> = mutableSetOf(),
-    val dottedMethodList: MutableSet<String> = mutableSetOf()
+    val dottedMethodList: MutableSet<String> = mutableSetOf(),
 ) {
     operator fun plus(other: Features): Features {
         val map = FeatureMap()
@@ -369,7 +369,7 @@ data class Features(
             (importList + other.importList).toMutableSet(),
             (typeList + other.typeList).toMutableSet(),
             (identifierList + other.identifierList).toMutableSet(),
-            (dottedMethodList + other.dottedMethodList).toMutableSet()
+            (dottedMethodList + other.dottedMethodList).toMutableSet(),
         )
     }
 }
@@ -379,7 +379,7 @@ sealed class FeatureValue(
     range: SourceRange?,
     methods: MutableMap<String, LocatedClassOrMethod> = mutableMapOf(),
     classes: MutableMap<String, LocatedClassOrMethod> = mutableMapOf(),
-    var features: Features
+    var features: Features,
 ) : LocatedClassOrMethod(name, range, methods, classes) {
     fun lookup(name: String): FeatureValue {
         check(name.isNotEmpty())
@@ -395,8 +395,8 @@ sealed class FeatureValue(
             compareBy(
                 { it.location.line },
                 { it.location.column },
-                { ORDERED_FEATURES.indexOf(it.feature) }
-            )
+                { ORDERED_FEATURES.indexOf(it.feature) },
+            ),
         )
         return this
     }
@@ -408,7 +408,7 @@ class ClassFeatures(
     range: SourceRange?,
     methods: MutableMap<String, LocatedClassOrMethod> = mutableMapOf(),
     classes: MutableMap<String, LocatedClassOrMethod> = mutableMapOf(),
-    features: Features = Features()
+    features: Features = Features(),
 ) : FeatureValue(name, range, methods, classes, features)
 
 @JsonClass(generateAdapter = true)
@@ -417,7 +417,7 @@ class MethodFeatures(
     range: SourceRange?,
     methods: MutableMap<String, LocatedClassOrMethod> = mutableMapOf(),
     classes: MutableMap<String, LocatedClassOrMethod> = mutableMapOf(),
-    features: Features = Features()
+    features: Features = Features(),
 ) : FeatureValue(name, range, methods, classes, features)
 
 @JsonClass(generateAdapter = true)
@@ -426,7 +426,7 @@ class UnitFeatures(
     range: SourceRange,
     methods: MutableMap<String, LocatedClassOrMethod> = mutableMapOf(),
     classes: MutableMap<String, LocatedClassOrMethod> = mutableMapOf(),
-    features: Features = Features()
+    features: Features = Features(),
 ) : FeatureValue(name, range, methods, classes, features)
 
 class FeaturesFailed(errors: List<SourceError>) : JeedError(errors) {
@@ -491,7 +491,7 @@ fun Source.features(names: Set<String> = sources.keys.toSet()): FeaturesResults 
                     Source.FileType.JAVA -> JavaFeatureListener(this, it).results
                     Source.FileType.KOTLIN -> KotlinFeatureListener(this, it).results
                 }
-            }
+            },
         )
     } catch (e: JeedParsingException) {
         throw FeaturesFailed(e.errors)

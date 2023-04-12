@@ -15,8 +15,8 @@ class Person {
     age = 0.0
   }
 }
-""".trim()
-            )
+""".trim(),
+            ),
         ).getParsed("Main.kt").tree
     }
     "it should distinguish between different kinds of sources" {

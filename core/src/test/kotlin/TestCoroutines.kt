@@ -30,8 +30,8 @@ fun main() {
     }
     println(i)
 }
-                """.trimIndent()
-            )
+                """.trimIndent(),
+            ),
         ).kompile().execute(SourceExecutionArguments(timeout = 10000)) // cache rewritten isolated classes
         executionResult shouldNot haveTimedOut()
         executionResult should haveCompleted()
@@ -50,8 +50,8 @@ fun main() {
     Thread.sleep(50L)
     println("World!")
 }
-                """.trimIndent()
-            )
+                """.trimIndent(),
+            ),
         ).kompile().execute()
         executionResult shouldNot haveTimedOut()
         executionResult should haveOutput("Hello\nWorld!")
@@ -69,8 +69,8 @@ fun main() {
     job.join()
   }
 }
-                """.trimIndent()
-            )
+                """.trimIndent(),
+            ),
         ).kompile().execute()
         executionResult shouldNot haveTimedOut()
         executionResult should haveOutput("Here")
@@ -96,8 +96,8 @@ fun main() {
     }
   }
 }
-                """.trimIndent()
-            )
+                """.trimIndent(),
+            ),
         ).kompile().execute()
 
         executionResult should haveCompleted()
@@ -124,8 +124,8 @@ fun main() {
   }
   println("Last")
 }
-                """.trimIndent()
-            )
+                """.trimIndent(),
+            ),
         ).kompile().execute(SourceExecutionArguments(maxOutputLines = 1500))
 
         executionResult should haveCompleted()
@@ -150,8 +150,8 @@ fun main() {
         job.join()
     }
 }
-                """.trimIndent()
-            )
+                """.trimIndent(),
+            ),
         ).kompile().execute()
         assert(executionResult.permissionRequests.any { it.permission.name == "exitVM.-1" && !it.granted })
     }
@@ -168,8 +168,8 @@ fun main() {
     }
     println("Started")
 }
-                """.trimIndent()
-            )
+                """.trimIndent(),
+            ),
         ).kompile()
         val executionArguments = SourceExecutionArguments(waitForShutdown = true, timeout = 2000)
         repeat(16) { // Flaky
@@ -194,8 +194,8 @@ fun main() {
     }
     println("Started")
 }
-                """.trimIndent()
-            )
+                """.trimIndent(),
+            ),
         ).kompile()
         val executionArguments = SourceExecutionArguments(waitForShutdown = true)
         repeat(8) { // Flaky
@@ -217,8 +217,8 @@ fun main() {
         println("Finished")
     }
 }
-                """.trimIndent()
-            )
+                """.trimIndent(),
+            ),
         ).kompile().execute(SourceExecutionArguments(timeout = 9000L, waitForShutdown = true))
         executionResult should haveCompleted()
         executionResult should haveOutput("Finished")
@@ -236,8 +236,8 @@ fun main() {
         while (true) {}
     }
 }
-                """.trimIndent()
-            )
+                """.trimIndent(),
+            ),
         ).kompile().execute(SourceExecutionArguments(waitForShutdown = true))
         // execute will throw if the sandbox couldn't be shut down
         executionResult should haveOutput("Coroutine")
@@ -256,8 +256,8 @@ fun main() = runBlocking {
         }
     }
 }
-                """.trimIndent()
-            )
+                """.trimIndent(),
+            ),
         ).kompile().execute(SourceExecutionArguments(waitForShutdown = true))
         executionResult should haveTimedOut()
         executionResult.outputLines.size shouldBe 16
@@ -280,8 +280,8 @@ suspend fun main() = coroutineScope {
   println("Hello '$'{first.await()}")
   println("Hello '$'{second.await()}")
 }
-                """.trimIndent()
-            )
+                """.trimIndent(),
+            ),
         ).kompile().execute()
 
         executionResult shouldNot haveTimedOut()
@@ -315,8 +315,8 @@ fun main() {
   println(counter)
   println(atomicCounter)
 }
-                """.trimIndent()
-            )
+                """.trimIndent(),
+            ),
         ).kompile().execute()
 
         executionResult should haveCompleted()
@@ -339,8 +339,8 @@ fun main() = runBlocking {
     }
     delay(50)
 }
-                """.trimIndent()
-            )
+                """.trimIndent(),
+            ),
         ).kompile().execute()
 
         executionResult should haveCompleted()
@@ -356,8 +356,8 @@ fun main() {
         println("Coroutine")
     }
 }
-                """.trimIndent()
-            )
+                """.trimIndent(),
+            ),
         ).kompile().execute(SourceExecutionArguments(waitForShutdown = true))
         executionResult should haveOutput("Coroutine")
         val badExecutionResult = Source(
@@ -372,8 +372,8 @@ fun main() {
         }
     }
 }
-                """.trimIndent()
-            )
+                """.trimIndent(),
+            ),
         ).kompile().execute(SourceExecutionArguments(waitForShutdown = true))
         badExecutionResult.threw!!.javaClass shouldBe SecurityException::class.java
     }

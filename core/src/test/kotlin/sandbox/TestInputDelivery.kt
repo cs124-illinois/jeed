@@ -26,7 +26,7 @@ import java.util.Scanner;
 Scanner scanner = new Scanner(System.in);
 String nextLine = scanner.nextLine();
 System.out.println("Echo: " + nextLine);
-            """.trim()
+            """.trim(),
         ).compile().execute(SourceExecutionArguments(systemInStream = "Here\n".toSystemIn()))
 
         executionResult should haveCompleted()

@@ -12,7 +12,7 @@ class TestKtLint : StringSpec({
     "it should check simple kotlin sources" {
         repeat(8) {
             val results = Source.fromKotlinSnippet(
-                """println("Hello, world!")"""
+                """println("Hello, world!")""",
             ).ktLint()
             results.errors.isEmpty() shouldBe true
         }
@@ -21,7 +21,7 @@ class TestKtLint : StringSpec({
         @Suppress("MaxLineLength")
         val ktLintFailed = shouldThrow<KtLintFailed> {
             Source.fromKotlinSnippet(
-                """val test = "ttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt""""
+                """val test = "ttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt"""",
             ).ktLint(KtLintArguments(failOnError = true))
         }
 
@@ -30,7 +30,7 @@ class TestKtLint : StringSpec({
     "!it should fail when everything is on one line" {
         shouldThrow<KtLintFailed> {
             Source.fromKotlinSnippet(
-                """class Course(var number: String) { fun changeNumber(newNumber: String) { number = newNumber } }"""
+                """class Course(var number: String) { fun changeNumber(newNumber: String) { number = newNumber } }""",
             ).ktLint(KtLintArguments(failOnError = true))
         }
     }
@@ -38,7 +38,7 @@ class TestKtLint : StringSpec({
         val ktLintFailed = shouldThrow<KtLintFailed> {
             Source.fromSnippet(
                 """println("Hello, world!")""".trim(),
-                SnippetArguments(fileType = Source.FileType.KOTLIN, indent = 3)
+                SnippetArguments(fileType = Source.FileType.KOTLIN, indent = 3),
             ).ktLint(KtLintArguments(failOnError = true))
         }
 
@@ -49,7 +49,7 @@ class TestKtLint : StringSpec({
         val ktLintFailed = shouldThrow<KtLintFailed> {
             Source.fromSnippet(
                 """println("Hello, world!")""".trim(),
-                SnippetArguments(fileType = Source.FileType.KOTLIN, indent = 3)
+                SnippetArguments(fileType = Source.FileType.KOTLIN, indent = 3),
             ).ktLint(KtLintArguments(failOnError = true))
         }
 
@@ -64,7 +64,7 @@ class TestKtLint : StringSpec({
         val ktLintFailed = shouldThrow<KtLintFailed> {
             Source.fromKotlinSnippet(
                 """ println("Hello, world!")""",
-                trim = false
+                trim = false,
             ).ktLint(KtLintArguments(failOnError = true))
         }
 
@@ -77,7 +77,7 @@ class TestKtLint : StringSpec({
             """fun main() {
                 |println("Hello, world!");
                 |}
-            """.trimMargin()
+            """.trimMargin(),
         ).ktFormat().also {
             it.contents shouldBe """fun main() {
                 |    println("Hello, world!")
@@ -88,7 +88,7 @@ class TestKtLint : StringSpec({
     "it should check kotlin scripts" {
         repeat(8) {
             val results = Source.fromKotlin(
-                """println("Hello, world!")"""
+                """println("Hello, world!")""",
             ).ktLint(KtLintArguments(script = true))
             results.errors.isEmpty() shouldBe true
         }
@@ -99,7 +99,7 @@ class TestKtLint : StringSpec({
                 """if (true) {
                 |println("Hello, world!");
                 |}
-                """.trimMargin()
+                """.trimMargin(),
             ).ktFormat(KtLintArguments(script = true)).also {
                 it.contents shouldBe """if (true) {
                 |    println("Hello, world!")

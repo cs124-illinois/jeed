@@ -46,7 +46,7 @@ object ExecutionTrace : SandboxPluginWithDefaultArguments<ExecutionTraceArgument
             Opcodes.DASTORE to Type.DOUBLE_TYPE,
             Opcodes.AASTORE to Type.getType(Object::class.java),
             Opcodes.CASTORE to Type.CHAR_TYPE,
-            Opcodes.SASTORE to Type.SHORT_TYPE
+            Opcodes.SASTORE to Type.SHORT_TYPE,
         )
     private val PRIMITIVE_TYPES =
         mapOf(
@@ -57,7 +57,7 @@ object ExecutionTrace : SandboxPluginWithDefaultArguments<ExecutionTraceArgument
             Type.FLOAT_TYPE to ExecutionTraceResults.ValueType.FLOAT,
             Type.INT_TYPE to ExecutionTraceResults.ValueType.INT,
             Type.LONG_TYPE to ExecutionTraceResults.ValueType.LONG,
-            Type.SHORT_TYPE to ExecutionTraceResults.ValueType.SHORT
+            Type.SHORT_TYPE to ExecutionTraceResults.ValueType.SHORT,
         )
 
     private val threadData: ThreadLocal<ExecutionTraceWorkingData> = ThreadLocal.withInitial {
@@ -71,7 +71,7 @@ object ExecutionTrace : SandboxPluginWithDefaultArguments<ExecutionTraceArgument
     override fun createInstrumentationData(
         arguments: ExecutionTraceArguments,
         classLoaderConfiguration: Sandbox.ClassLoaderConfiguration,
-        allPlugins: List<ConfiguredSandboxPlugin<*, *>>
+        allPlugins: List<ConfiguredSandboxPlugin<*, *>>,
     ): Any {
         val hasLineTrace = allPlugins.any { it.plugin == LineTrace }
         return ExecutionTraceInstrumentationData(arguments, hasLineTrace)
@@ -81,7 +81,7 @@ object ExecutionTrace : SandboxPluginWithDefaultArguments<ExecutionTraceArgument
         bytecode: ByteArray,
         name: String,
         instrumentationData: Any?,
-        context: RewritingContext
+        context: RewritingContext,
     ): ByteArray {
         if (context != RewritingContext.UNTRUSTED) return bytecode
         instrumentationData as ExecutionTraceInstrumentationData
@@ -103,7 +103,7 @@ object ExecutionTrace : SandboxPluginWithDefaultArguments<ExecutionTraceArgument
         data: ExecutionTraceInstrumentationData,
         className: String,
         method: MethodNode,
-        constructorPreinspection: ConstructorPreinspection?
+        constructorPreinspection: ConstructorPreinspection?,
     ) {
         if (method.instructions.size() == 0) return // Can't instrument an abstract method
         val firstInsnIndex = method.instructions.indexOfFirst { it.opcode >= 0 }
@@ -126,7 +126,7 @@ object ExecutionTrace : SandboxPluginWithDefaultArguments<ExecutionTraceArgument
             method.name,
             methodDesc,
             passableArguments,
-            method.access.and(Opcodes.ACC_STATIC) == 0 && method.name != "<init>"
+            method.access.and(Opcodes.ACC_STATIC) == 0 && method.name != "<init>",
         )
         data.instrumentedMethods[methodKey] = methodInfo
         val chainInvokespecial = constructorPreinspection?.let {
@@ -187,7 +187,7 @@ object ExecutionTrace : SandboxPluginWithDefaultArguments<ExecutionTraceArgument
                     liveLocalIndexes[it.index] = ExecutionTraceInstrumentationData.LocalInfo(
                         it.index,
                         it.name,
-                        Type.getType(it.desc)
+                        Type.getType(it.desc),
                     )
                 }
                 if (insn in reachableLabels && insn.next?.opcode != Opcodes.NEW) {
@@ -296,7 +296,7 @@ object ExecutionTrace : SandboxPluginWithDefaultArguments<ExecutionTraceArgument
                 name: String,
                 signature: String?,
                 superName: String?,
-                interfaces: Array<out String>?
+                interfaces: Array<out String>?,
             ) {
                 className = name
             }
@@ -306,7 +306,7 @@ object ExecutionTrace : SandboxPluginWithDefaultArguments<ExecutionTraceArgument
                 name: String,
                 descriptor: String,
                 signature: String?,
-                exceptions: Array<out String>?
+                exceptions: Array<out String>?,
             ): MethodVisitor? {
                 if (name != "<init>") return null
                 var adapter: AnalyzerAdapter? = null
@@ -320,7 +320,7 @@ object ExecutionTrace : SandboxPluginWithDefaultArguments<ExecutionTraceArgument
                         owner: String?,
                         calledMethodName: String,
                         descriptor: String?,
-                        isInterface: Boolean
+                        isInterface: Boolean,
                     ) {
                         if (opcode != Opcodes.INVOKESPECIAL) return
                         currentInvokespecialIndex++
@@ -350,7 +350,7 @@ object ExecutionTrace : SandboxPluginWithDefaultArguments<ExecutionTraceArgument
                     override fun visitEnd() {
                         preinspections[descriptor] = ConstructorPreinspection(
                             chainCallInvokespecialIndex ?: error("should have found the chain call"),
-                            uninitializedPutfieldIndexes
+                            uninitializedPutfieldIndexes,
                         )
                     }
                 }
@@ -442,7 +442,7 @@ object ExecutionTrace : SandboxPluginWithDefaultArguments<ExecutionTraceArgument
         fun bootstrapExitMethodNormally(
             caller: MethodHandles.Lookup,
             methodKey: String,
-            callSignature: MethodType
+            callSignature: MethodType,
         ): CallSite {
             val handle = when (callSignature.parameterCount()) {
                 0 -> MethodHandles.insertArguments(exitMethodNormallyHandle, 0, methodKey, null)
@@ -468,7 +468,7 @@ object ExecutionTrace : SandboxPluginWithDefaultArguments<ExecutionTraceArgument
         fun bootstrapExitMethodExceptionally(
             caller: MethodHandles.Lookup,
             methodKey: String,
-            callSignature: MethodType
+            callSignature: MethodType,
         ): CallSite {
             val handle = exitMethodExceptionallyHandle.bindTo(methodKey)
             return ConstantCallSite(handle)
@@ -703,13 +703,13 @@ object ExecutionTrace : SandboxPluginWithDefaultArguments<ExecutionTraceArgument
 
     private class ConstructorPreinspection(
         val chainCallInvokespecialIndex: Int,
-        val uninitializedPutfieldIndexes: Set<Int>
+        val uninitializedPutfieldIndexes: Set<Int>,
     )
 }
 
 @JsonClass(generateAdapter = true)
 data class ExecutionTraceArguments(
-    val recordedStepLimit: Int = DEFAULT_RECORDED_STEP_LIMIT
+    val recordedStepLimit: Int = DEFAULT_RECORDED_STEP_LIMIT,
 ) {
     companion object {
         const val DEFAULT_RECORDED_STEP_LIMIT = 5000
@@ -720,7 +720,7 @@ private class ExecutionTraceInstrumentationData(
     val arguments: ExecutionTraceArguments,
     val hasLineTrace: Boolean,
     val instrumentedMethods: MutableMap<String, MethodInfo> = mutableMapOf(),
-    val scopeSites: MutableMap<String, ScopeSite> = mutableMapOf()
+    val scopeSites: MutableMap<String, ScopeSite> = mutableMapOf(),
 ) {
     private var nextIndex = 1
 
@@ -736,7 +736,7 @@ private class ExecutionTraceInstrumentationData(
         val name: String,
         val type: Type,
         val passableArguments: List<LocalInfo>,
-        val local0IsReceiver: Boolean
+        val local0IsReceiver: Boolean,
     ) {
         fun asPublishableInfo(): ExecutionTraceResults.MethodInfo {
             val arguments = passableArguments
@@ -753,7 +753,7 @@ private class ExecutionTraceWorkingData(
     val instrumentationData: ExecutionTraceInstrumentationData,
     val steps: MutableList<ExecutionStep> = mutableListOf(),
     val callStack: Stack<Frame> = Stack(),
-    val knownObjects: IdentityHashMap<Any, TrackedObject> = IdentityHashMap()
+    val knownObjects: IdentityHashMap<Any, TrackedObject> = IdentityHashMap(),
 ) {
     private var nextObjectId = 1
 
@@ -769,7 +769,7 @@ private class ExecutionTraceWorkingData(
         val method: ExecutionTraceInstrumentationData.MethodInfo,
         val receiver: TrackedObject?,
         val locals: MutableMap<String, ExecutionTraceResults.Value> = mutableMapOf(),
-        var chainingCtorInstance: TrackedObject? = null
+        var chainingCtorInstance: TrackedObject? = null,
     )
 
     class TrackedObject(
@@ -780,7 +780,7 @@ private class ExecutionTraceWorkingData(
         var primaryValue: ExecutionTraceResults.Value? = null,
         var namedComponents: MutableMap<String, ExecutionTraceResults.Value>? = null,
         var indexedComponents: MutableList<ExecutionTraceResults.Value>? = null,
-        var unorderedRowsValue: Set<List<ExecutionTraceResults.Value>>? = null
+        var unorderedRowsValue: Set<List<ExecutionTraceResults.Value>>? = null,
     ) {
         fun asPublishableState(): ExecutionTraceResults.ObjectState {
             return ExecutionTraceResults.ObjectState(
@@ -789,7 +789,7 @@ private class ExecutionTraceWorkingData(
                 primaryValue,
                 namedComponents?.toMap(),
                 indexedComponents?.toList(),
-                unorderedRowsValue
+                unorderedRowsValue,
             )
         }
     }
@@ -798,7 +798,7 @@ private class ExecutionTraceWorkingData(
 @JsonClass(generateAdapter = true)
 data class ExecutionTraceResults(
     val arguments: ExecutionTraceArguments,
-    val steps: List<ExecutionStep>
+    val steps: List<ExecutionStep>,
 ) {
     @JsonClass(generateAdapter = true)
     data class MethodInfo(val className: String, val method: String, val argumentTypes: List<String>)
@@ -814,7 +814,7 @@ data class ExecutionTraceResults(
         BOOLEAN,
         FLOAT,
         DOUBLE,
-        LONG
+        LONG,
     }
     /* ktlint-enable no-multi-spaces */
 
@@ -831,7 +831,7 @@ data class ExecutionTraceResults(
         val primaryValue: Value?,
         val namedComponents: Map<String, Value>?,
         val indexedComponents: List<Value>?,
-        val unorderedRowsValue: Set<List<Value>>?
+        val unorderedRowsValue: Set<List<Value>>?,
     )
 }
 
@@ -843,7 +843,7 @@ sealed class ExecutionStep {
     data class EnterMethod(
         val method: ExecutionTraceResults.MethodInfo,
         val receiverId: Int?,
-        val arguments: List<ExecutionTraceResults.PassedArgument>
+        val arguments: List<ExecutionTraceResults.PassedArgument>,
     ) : ExecutionStep()
 
     // Pop call stack
@@ -855,7 +855,7 @@ sealed class ExecutionStep {
     // Delete locals in deadLocals, create locals in newLocals
     data class ChangeScope(
         val newLocals: Map<String, ExecutionTraceResults.Value>,
-        val deadLocals: List<String>
+        val deadLocals: List<String>,
     ) : ExecutionStep()
 
     // Alter one existing local
@@ -871,7 +871,7 @@ sealed class ExecutionStep {
     data class SetIndexedComponent(
         val objectId: Int,
         val component: Int,
-        val value: ExecutionTraceResults.Value
+        val value: ExecutionTraceResults.Value,
     ) : ExecutionStep()
 
     // Replace an existing object's state and mark it initialized

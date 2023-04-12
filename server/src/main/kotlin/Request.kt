@@ -51,7 +51,7 @@ class Request(
     passedTasks: Set<Task>,
     arguments: TaskArguments?,
     val label: String,
-    val checkForSnippet: Boolean = false
+    val checkForSnippet: Boolean = false,
 ) {
     val tasks: Set<Task>
     val arguments = arguments ?: TaskArguments()
@@ -149,12 +149,12 @@ class Request(
                 configuration[Limits.Execution.ClassLoaderConfiguration.whitelistedClasses],
                 configuration[Limits.Execution.ClassLoaderConfiguration.blacklistedClasses],
                 configuration[Limits.Execution.ClassLoaderConfiguration.unsafeExceptions],
-                configuration[Limits.Execution.ClassLoaderConfiguration.blacklistedMethods]
+                configuration[Limits.Execution.ClassLoaderConfiguration.blacklistedMethods],
             )
             arguments.plugins.setDefaults(
                 configuration[Limits.Plugins.lineCountLimit],
                 configuration[Limits.Plugins.memoryTotalLimit],
-                configuration[Limits.Plugins.memoryAllocationLimit]
+                configuration[Limits.Plugins.memoryAllocationLimit],
             )
             require(arguments.execution.timeout!! <= configuration[Limits.Execution.timeout]) {
                 "job timeout of ${arguments.execution.timeout} too long (> ${configuration[Limits.Execution.timeout]})"
@@ -325,16 +325,16 @@ class Request(
                     LineTrace,
                     LineTraceArguments(
                         recordedLineLimit = 0,
-                        runLineLimit = arguments.plugins.lineCountLimit
-                    )
+                        runLineLimit = arguments.plugins.lineCountLimit,
+                    ),
                 )
                 executionArguments.addPlugin(
                     MemoryLimit,
                     MemoryLimitArguments(
                         maxTotalAllocation = arguments.plugins.memoryTotalLimit,
                         maxIndividualAllocation = arguments.plugins.memoryAllocationLimit,
-                        stopSingleThreadTasksByThrow = false
-                    )
+                        stopSingleThreadTasksByThrow = false,
+                    ),
                 )
                 val executionResult = compiledSource.execute(executionArguments)
                 response.completed.execution = SourceTaskResults(actualSource, executionResult, executionArguments)

@@ -18,7 +18,7 @@ class TestExecute : StringSpec({
 int i = 0;
 i++;
 System.out.println(i);
-            """.trim()
+            """.trim(),
         ).compile().execute()
         executeMainResult should haveCompleted()
         executeMainResult should haveOutput("1")
@@ -29,7 +29,7 @@ System.out.println(i);
 int i = 0;
 i++;
 System.out.println(i);
-            """.trim()
+            """.trim(),
         ).compile(CompilationArguments(useCache = true)).execute()
 
         val executeMainResult = Source.fromSnippet(
@@ -37,7 +37,7 @@ System.out.println(i);
 int i = 0;
 i++;
 System.out.println(i);
-            """.trim()
+            """.trim(),
         ).compile(CompilationArguments(useCache = true)).let {
             it.cached shouldBe true
             it.execute()
@@ -55,7 +55,7 @@ public class Foo {
 Foo foo = new Foo();
 foo.i = 4;
 System.out.println(foo.i);
-            """.trim()
+            """.trim(),
         ).compile().execute()
         executeMainResult should haveCompleted()
         executeMainResult should haveOutput("4")
@@ -74,7 +74,7 @@ public class Foo {
     }
 }
 System.out.println("Main");
-            """.trim()
+            """.trim(),
         ).compile()
 
         val executeBarResult = compiledSource.execute(SourceExecutionArguments(klass = "Bar"))
@@ -105,7 +105,7 @@ public static void bar() {
     System.out.println("bar");
 }
 System.out.println("main");
-            """.trim()
+            """.trim(),
         ).compile()
 
         val executeFooResult = compiledSource.execute(SourceExecutionArguments(method = "foo()"))
@@ -127,7 +127,7 @@ private static void foo() {
     System.out.println("foo");
 }
 System.out.println("main");
-            """.trim()
+            """.trim(),
         ).compile()
 
         val executionFailed = shouldThrow<ExecutionFailed> {
@@ -149,7 +149,7 @@ class Test {
     }
 }
 System.out.println("main");
-            """.trim()
+            """.trim(),
         ).compile()
 
         val executionFailed = shouldThrow<ExecutionFailed> {
@@ -169,7 +169,7 @@ public static void foo(int i) {
     System.out.println("foo");
 }
 System.out.println("main");
-            """.trim()
+            """.trim(),
         ).compile()
 
         val executionFailed = shouldThrow<ExecutionFailed> {
@@ -192,8 +192,8 @@ public class Main {
         System.out.println("Here");
     }
 }
-                """.trim()
-            )
+                """.trim(),
+            ),
         ).compile().execute()
         executionMainResult should haveCompleted()
         executionMainResult shouldNot haveTimedOut()
@@ -209,8 +209,8 @@ public class Main {
         System.out.println("Here");
     }
 }
-                """.trim()
-            )
+                """.trim(),
+            ),
         ).compile().execute(SourceExecutionArguments(method = "main(String[])"))
         executionMainResult should haveCompleted()
         executionMainResult shouldNot haveTimedOut()
@@ -233,8 +233,8 @@ public class Foo {
         System.out.println("Foo");
     }
 }
-                """.trim()
-            )
+                """.trim(),
+            ),
         ).compile().execute()
         executionMainResult should haveCompleted()
         executionMainResult shouldNot haveTimedOut()
@@ -247,7 +247,7 @@ public class Foo {
 int i = 0;
 i++;
 System.out.println(i);
-            """.trim()
+            """.trim(),
             ).compile().execute(SourceExecutionArguments(klass = "Test"))
         }
         executionFailed.classNotFound shouldNotBe null
@@ -260,7 +260,7 @@ System.out.println(i);
 int i = 0;
 i++;
 System.out.println(i);
-            """.trim()
+            """.trim(),
             ).compile().execute(SourceExecutionArguments(method = "test"))
         }
         executionFailed.methodNotFound shouldNotBe null
@@ -275,7 +275,7 @@ import java.util.ArrayList;
 List<Integer> list = new ArrayList<>();
 list.add(8);
 System.out.println(list.get(0));
-            """.trim()
+            """.trim(),
         ).compile().execute()
 
         executionResult should haveCompleted()
@@ -298,8 +298,8 @@ public class Main {
         Main main = new Main();
     }
 }
-                """.trim()
-            )
+                """.trim(),
+            ),
         ).compile().execute()
         executionResult should haveCompleted()
         executionResult should haveStdout("Inner")
@@ -322,8 +322,8 @@ public class Main {
         System.out.println(testYieldKeyword(1));
     }
 }
-                """.trim()
-                )
+                """.trim(),
+                ),
             ).compile().execute()
 
             executionResult should haveCompleted()
@@ -348,8 +348,8 @@ public class Main {
         System.out.println(testYieldKeyword(0));
     }
 }
-                """.trim()
-                )
+                """.trim(),
+                ),
             ).compile().execute()
 
             executionResult should haveCompleted()
@@ -361,7 +361,7 @@ public class Main {
             """
 println("Here")
                 """.trim(),
-            SnippetArguments(fileType = Source.FileType.KOTLIN)
+            SnippetArguments(fileType = Source.FileType.KOTLIN),
         ).kompile().execute()
         executionMainResult should haveCompleted()
         executionMainResult shouldNot haveTimedOut()
@@ -375,7 +375,7 @@ val foo = Foo(5);
 foo.i = 4;
 println(foo.i);
             """.trim(),
-            SnippetArguments(fileType = Source.FileType.KOTLIN)
+            SnippetArguments(fileType = Source.FileType.KOTLIN),
         ).kompile().execute()
         executeMainResult should haveCompleted()
         executeMainResult should haveOutput("4")
@@ -388,7 +388,7 @@ fun test(): String {
 }
 println(test())
             """.trim(),
-            SnippetArguments(fileType = Source.FileType.KOTLIN)
+            SnippetArguments(fileType = Source.FileType.KOTLIN),
         ).kompile().execute()
         executeMainResult should haveCompleted()
         executeMainResult should haveOutput("Hello, world!")
@@ -401,7 +401,7 @@ fun test(): String {
 }
 println(test())
             """.trim(),
-            SnippetArguments(fileType = Source.FileType.KOTLIN)
+            SnippetArguments(fileType = Source.FileType.KOTLIN),
         ).kompile(KompilationArguments(useCache = true)).execute()
         val executeMainResult = Source.fromSnippet(
             """
@@ -410,7 +410,7 @@ fun test(): String {
 }
 println(test())
             """.trim(),
-            SnippetArguments(fileType = Source.FileType.KOTLIN)
+            SnippetArguments(fileType = Source.FileType.KOTLIN),
         )
             .kompile(KompilationArguments(useCache = true)).let {
                 it.cached shouldBe true
@@ -431,7 +431,7 @@ print2("There")
 val print3: PrintStream.(String) -> Unit = PrintStream::println
 print3(System.out, "Elsewhere")
                 """.trim(),
-            SnippetArguments(fileType = Source.FileType.KOTLIN)
+            SnippetArguments(fileType = Source.FileType.KOTLIN),
         ).kompile().execute()
         executionMainResult should haveCompleted()
         executionMainResult shouldNot haveTimedOut()
@@ -444,8 +444,8 @@ print3(System.out, "Elsewhere")
 fun main() {
   println("Here")
 }
-                """.trim()
-            )
+                """.trim(),
+            ),
         ).kompile().execute()
         executionMainResult should haveCompleted()
         executionMainResult shouldNot haveTimedOut()
@@ -463,8 +463,8 @@ fun main() {
 fun test(): List<String> {
   return listOf("test", "me")
 }
-                """.trim()
-            )
+                """.trim(),
+            ),
         ).kompile().execute()
         executionMainResult should haveCompleted()
         executionMainResult shouldNot haveTimedOut()
@@ -475,7 +475,7 @@ fun test(): List<String> {
             """
 Object o = null;
 o.toString();
-        """.trim()
+        """.trim(),
         )
 
         val executionFailed = source.compile().execute()
@@ -489,7 +489,7 @@ void test() {
   o.toString();
 }
 test();
-        """.trim()
+        """.trim(),
         )
 
         val executionFailed = source.compile().execute()
@@ -507,7 +507,7 @@ class Test {
   }
 }
 Test.test();
-        """.trim()
+        """.trim(),
         )
 
         val executionFailed = source.compile().execute()
@@ -521,7 +521,7 @@ Test.test();
 var letters = CharArray(4)
 letters[-1] = 'X'
         """.trim(),
-            SnippetArguments(fileType = Source.FileType.KOTLIN)
+            SnippetArguments(fileType = Source.FileType.KOTLIN),
         )
 
         val executionFailed = source.kompile().execute()
@@ -549,8 +549,8 @@ public class Main {
         }
     }
 }
-                """.trim()
-                )
+                """.trim(),
+                ),
             ).compile().execute()
 
             executionResult should haveCompleted()
@@ -563,7 +563,7 @@ public class Main {
             val executeMainResult = Source.fromSnippet(
                 """
 System.out.println("➡️👤 are ❌️ alone");
-            """.trim()
+            """.trim(),
             ).compile().execute()
             executeMainResult should haveCompleted()
             executeMainResult should haveOutput("""➡️👤 are ❌️ alone""")
@@ -575,7 +575,7 @@ System.out.println("➡️👤 are ❌️ alone");
 import java.util.Date;
 long t = System.currentTimeMillis();
 System.out.println(new Date(t).toString());
-            """.trim()
+            """.trim(),
         ).compile().execute().also {
             it should haveCompleted()
         }
@@ -584,7 +584,7 @@ System.out.println(new Date(t).toString());
         Source.fromSnippet(
             """record Person(String name, int age) {}
                 |System.out.println(new Person("Geoffrey", 42));
-            """.trimMargin()
+            """.trimMargin(),
         ).compile().execute().also {
             it should haveCompleted()
         }
@@ -593,7 +593,7 @@ System.out.println(new Date(t).toString());
         Source.fromSnippet(
             """record Person(String name, int age) {}
                 |System.out.println(new Person("Geoffrey", 42));
-            """.trimMargin()
+            """.trimMargin(),
         ).compile().executeWith {
             return@executeWith 10
         }.also {
@@ -608,7 +608,7 @@ fun main() {
   println("Here")
 }
                 """.trim(),
-            SnippetArguments(fileType = Source.FileType.KOTLIN, noEmptyMain = true)
+            SnippetArguments(fileType = Source.FileType.KOTLIN, noEmptyMain = true),
         ).kompile().execute()
         executionMainResult should haveCompleted()
         executionMainResult shouldNot haveTimedOut()
@@ -627,7 +627,7 @@ fun haveCompleted() = object : Matcher<Sandbox.TaskResults<out Any?>> {
                     else -> "failed, but no timeout or exception reported"
                 }
             },
-            { "Code should not have run" }
+            { "Code should not have run" },
         )
     }
 }
@@ -637,7 +637,7 @@ fun haveTimedOut() = object : Matcher<Sandbox.TaskResults<out Any?>> {
         return MatcherResult(
             value.timeout,
             { "Code should have timed out" },
-            { "Code should not have timed out" }
+            { "Code should not have timed out" },
         )
     }
 }
@@ -647,7 +647,7 @@ fun haveBeenKilled() = object : Matcher<Sandbox.TaskResults<out Any?>> {
         return MatcherResult(
             value.killReason != null,
             { "Task should have been killed" },
-            { "Task should not have been killed" }
+            { "Task should not have been killed" },
         )
     }
 }
@@ -658,7 +658,7 @@ fun haveOutput(output: String = "") = object : Matcher<Sandbox.TaskResults<out A
         return MatcherResult(
             actualOutput == output,
             { "Expected output $output, found $actualOutput" },
-            { "Expected to not find output $actualOutput" }
+            { "Expected to not find output $actualOutput" },
         )
     }
 }
@@ -669,7 +669,7 @@ fun haveExactOutput(output: String = "") = object : Matcher<Sandbox.TaskResults<
         return MatcherResult(
             actualOutput == output,
             { "Expected output ->$output<-, found ->$actualOutput<-" },
-            { "Expected to not find output $actualOutput" }
+            { "Expected to not find output $actualOutput" },
         )
     }
 }
@@ -680,7 +680,7 @@ fun haveStdout(output: String) = object : Matcher<Sandbox.TaskResults<out Any?>>
         return MatcherResult(
             actualOutput == output,
             { "Expected stdout $output, found $actualOutput" },
-            { "Expected to not find stdout $actualOutput" }
+            { "Expected to not find stdout $actualOutput" },
         )
     }
 }
@@ -691,7 +691,7 @@ fun haveStderr(output: String) = object : Matcher<Sandbox.TaskResults<out Any?>>
         return MatcherResult(
             actualOutput == output,
             { "Expected stderr $output, found $actualOutput" },
-            { "Expected to not find stderr $actualOutput" }
+            { "Expected to not find stderr $actualOutput" },
         )
     }
 }
@@ -702,7 +702,7 @@ fun haveStdin(input: String) = object : Matcher<Sandbox.TaskResults<out Any?>> {
         return MatcherResult(
             actualInput == input,
             { "Expected stdin $input, found $actualInput" },
-            { "Expected to not find stdin $actualInput" }
+            { "Expected to not find stdin $actualInput" },
         )
     }
 }
@@ -713,7 +713,7 @@ fun haveCombinedInputOutput(io: String) = object : Matcher<Sandbox.TaskResults<o
         return MatcherResult(
             actualInputOutput == io,
             { "Expected combined input/output $io, found $actualInputOutput" },
-            { "Expected to not find combined input/output $actualInputOutput" }
+            { "Expected to not find combined input/output $actualInputOutput" },
         )
     }
 }

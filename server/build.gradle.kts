@@ -6,7 +6,7 @@ plugins {
     kotlin("jvm")
     application
     `maven-publish`
-    id("com.github.johnrengelman.shadow") version "8.0.0"
+    id("com.github.johnrengelman.shadow") version "8.1.1"
     id("org.jmailen.kotlinter")
     id("io.gitlab.arturbosch.detekt")
     id("com.google.devtools.ksp")
@@ -19,13 +19,13 @@ dependencies {
 
     implementation(project(":core"))
 
-    implementation("io.ktor:ktor-server-netty:2.2.3")
-    implementation("io.ktor:ktor-server-cors:2.2.3")
-    implementation("io.ktor:ktor-server-content-negotiation:2.2.3")
+    implementation("io.ktor:ktor-server-netty:2.2.4")
+    implementation("io.ktor:ktor-server-cors:2.2.4")
+    implementation("io.ktor:ktor-server-content-negotiation:2.2.4")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
     implementation("com.squareup.moshi:moshi-kotlin:1.14.0")
     implementation("com.github.cs125-illinois:ktor-moshi:2022.9.0")
-    implementation("ch.qos.logback:logback-classic:1.4.5")
+    implementation("ch.qos.logback:logback-classic:1.4.6")
     implementation("com.uchuhimo:konf-core:1.1.2")
     implementation("com.uchuhimo:konf-yaml:1.1.2")
     implementation("io.github.microutils:kotlin-logging:3.0.5")
@@ -35,7 +35,7 @@ dependencies {
 
     testImplementation("io.kotest:kotest-runner-junit5:5.5.5")
     testImplementation("io.kotest:kotest-assertions-ktor:4.4.3")
-    testImplementation("io.ktor:ktor-server-test-host:2.2.3")
+    testImplementation("io.ktor:ktor-server-test-host:2.2.4")
 }
 
 application {
@@ -118,9 +118,11 @@ tasks.shadowJar {
         attributes["Can-Retransform-Classes"] = "true"
     }
 }
+/*
 kotlinter {
     disabledRules = arrayOf("filename", "enum-entry-name-case")
 }
+ */
 afterEvaluate {
     tasks.named("formatKotlinGeneratedByKspKotlin") {
         enabled = false
