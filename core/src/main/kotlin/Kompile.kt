@@ -14,12 +14,10 @@ import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.cli.jvm.compiler.EnvironmentConfigFiles
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinToJVMBytecodeCompiler
+import org.jetbrains.kotlin.cli.jvm.config.VirtualJvmClasspathRoot
 import org.jetbrains.kotlin.cli.jvm.config.configureJdkClasspathRoots
 import org.jetbrains.kotlin.cli.jvm.configureContentRootsFromClassPath
 import org.jetbrains.kotlin.cli.jvm.configureJavaModulesContentRoots
-import org.jetbrains.kotlin.cli.jvm.index.JavaRoot
-import org.jetbrains.kotlin.cli.jvm.index.JvmDependenciesDynamicCompoundIndex
-import org.jetbrains.kotlin.cli.jvm.index.JvmDependenciesIndexImpl
 import org.jetbrains.kotlin.codegen.GeneratedClassLoader
 import org.jetbrains.kotlin.com.intellij.openapi.util.Disposer
 import org.jetbrains.kotlin.com.intellij.openapi.vfs.VirtualFile
@@ -200,12 +198,7 @@ private fun kompile(
             field.set(environment, psiFiles)
         }
         if (kompilationArguments.parentFileManager != null) {
-            environment::class.java.getDeclaredField("rootsIndex").also { field ->
-                field.isAccessible = true
-                val rootsIndex = field.get(environment) as JvmDependenciesDynamicCompoundIndex
-                val root = kompilationArguments.parentFileManager.toVirtualFile()
-                rootsIndex.addIndex(JvmDependenciesIndexImpl(listOf(JavaRoot(root, JavaRoot.RootType.BINARY))))
-            }
+            environment.updateClasspath(listOf(VirtualJvmClasspathRoot(kompilationArguments.parentFileManager.toVirtualFile())))
         }
 
         val state = try {
@@ -333,12 +326,13 @@ class SimpleVirtualFile(
         }
     }
 
+    override fun getPath() = name // FIXME to include directory
+    override fun getParent() = up
+
     override fun getTimeStamp() = TODO("getTimeStamp")
     override fun refresh(p0: Boolean, p1: Boolean, p2: Runnable?) = TODO("refresh")
     override fun getLength() = TODO("getLength")
-    override fun getPath() = TODO("getPath")
     override fun getInputStream() = TODO("getInputStream")
-    override fun getParent() = up
     override fun isWritable() = TODO("isWritable")
     override fun getOutputStream(p0: Any?, p1: Long, p2: Long) = TODO("getOutputStream")
 }

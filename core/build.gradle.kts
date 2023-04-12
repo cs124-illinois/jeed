@@ -17,7 +17,7 @@ dependencies {
 
     antlr("org.antlr:antlr4:4.12.0")
 
-    implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:1.8.20")
+    implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:1.8.10")
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
     implementation("com.puppycrawl.tools:checkstyle:10.9.3")
