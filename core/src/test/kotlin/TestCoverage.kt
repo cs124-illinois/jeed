@@ -102,6 +102,25 @@ fun main() {
             coverageResult should haveFileMissedCount(0)
         }
     }
+    "it should ignore Kotlin null-safe operator" {
+        val source = Source.fromKotlin(
+            """
+fun main() {
+  var i: String? = "test"
+
+  if (i != null && i?.length != 0) {
+    println(i)
+  }
+}
+""",
+        )
+        source.coverage().let { coverageResult ->
+            coverageResult should haveClassMissedCount(1)
+            coverageResult.adjustWithFeatures(source.features(), source.type)
+        }.also { coverageResult ->
+            coverageResult should haveFileMissedCount(0)
+        }
+    }
     "it should ignore Kotlin Elvis operator" {
         val source = Source.fromKotlin(
             """

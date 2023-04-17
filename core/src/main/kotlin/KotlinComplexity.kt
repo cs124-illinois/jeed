@@ -291,12 +291,11 @@ class KotlinComplexityListener(val source: Source, entry: Map.Entry<String, Stri
     }
 
     // !!.
-    override fun enterPostfixUnaryOperator(ctx: KotlinParser.PostfixUnaryOperatorContext) {
-        if (ctx.text != "!!") {
-            return
+    override fun exitMemberAccessOperator(ctx: KotlinParser.MemberAccessOperatorContext) {
+        ctx.BANGS_WITH_DOT()?.also {
+            require(complexityStack.isNotEmpty())
+            currentComplexity.complexity++
         }
-        require(complexityStack.isNotEmpty())
-        currentComplexity.complexity++
     }
 
     override fun enterObjectLiteral(ctx: KotlinParser.ObjectLiteralContext) {

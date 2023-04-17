@@ -777,28 +777,21 @@ prefixUnaryOperator
     | DECR
     | SUB
     | ADD
-    | excl
+    | EXCL_NO_WS
+    | EXCL_WS
     ;
 
 postfixUnaryOperator
     : INCR
     | DECR
-    | EXCL_NO_WS excl
-    ;
-
-excl
-    : EXCL_NO_WS
-    | EXCL_WS
+    | BANGS
     ;
 
 memberAccessOperator
     : NL* DOT
-    | NL* safeNav
+    | NL* SAFENAV
+    | NL* BANGS_WITH_DOT
     | COLONCOLON
-    ;
-
-safeNav
-    : QUEST_NO_WS DOT
     ;
 
 // SECTION: modifiers

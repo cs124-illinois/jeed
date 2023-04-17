@@ -74,6 +74,7 @@ data class KompilationArguments(
         val DEFAULT_JVM_TARGET = systemCompilerVersion.toCompilerVersion()
     }
 
+    @Suppress("RedundantIf")
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -172,6 +173,14 @@ private fun kompile(
             put(CommonConfigurationKeys.MODULE_NAME, JvmProtoBufUtil.DEFAULT_MODULE_NAME)
             put(JVMConfigurationKeys.PARAMETERS_METADATA, kompilationArguments.parameters)
             put(JVMConfigurationKeys.JVM_TARGET, kompilationArguments.jvmTarget.toJvmTarget())
+            put(JVMConfigurationKeys.JDK_HOME, java.io.File(System.getProperty("java.home")))
+
+            if (kompilationArguments.parentFileManager != null) {
+                add(
+                    CLIConfigurationKeys.CONTENT_ROOTS,
+                    VirtualJvmClasspathRoot(kompilationArguments.parentFileManager.toVirtualFile()),
+                )
+            }
             configureJavaModulesContentRoots(kompilationArguments.arguments)
             configureContentRootsFromClassPath(kompilationArguments.arguments)
             configureJdkClasspathRoots()
@@ -196,9 +205,6 @@ private fun kompile(
         environment::class.java.getDeclaredField("sourceFiles").also { field ->
             field.isAccessible = true
             field.set(environment, psiFiles)
-        }
-        if (kompilationArguments.parentFileManager != null) {
-            environment.updateClasspath(listOf(VirtualJvmClasspathRoot(kompilationArguments.parentFileManager.toVirtualFile())))
         }
 
         val state = try {
@@ -273,7 +279,7 @@ fun JeedFileManager.toVirtualFile(): VirtualFile {
 
 @Suppress("TooManyFunctions")
 object SimpleVirtualFileSystem : VirtualFileSystem() {
-    override fun getProtocol(): String = ""
+    override fun getProtocol() = ""
 
     override fun deleteFile(p0: Any?, p1: VirtualFile) = TODO("deleteFile")
     override fun createChildDirectory(p0: Any?, p1: VirtualFile, p2: String) = TODO("createChildDirectory")

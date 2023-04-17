@@ -56,6 +56,7 @@ private fun CoverageResult.adjustWithKotlinFeatures(sourceFeatures: FeaturesResu
                 features.contains(FeatureName.FOR_LOOP_RANGE) && coverage == LineCoverage.PARTLY_COVERED -> LineCoverage.IGNORED
                 features.contains(FeatureName.ELVIS_OPERATOR) && coverage == LineCoverage.PARTLY_COVERED -> LineCoverage.IGNORED
                 features.contains(FeatureName.HAS_COMPANION_OBJECT) && coverage == LineCoverage.NOT_COVERED -> LineCoverage.IGNORED
+                features.contains(FeatureName.SAFE_CALL_OPERATOR) && coverage == LineCoverage.PARTLY_COVERED -> LineCoverage.IGNORED
                 else -> coverage
             }
         }
@@ -79,6 +80,7 @@ private fun FileCoverage.adjustWithKotlinFeatures(fileFeatures: UnitFeatures): F
             features.contains(FeatureName.FOR_LOOP_RANGE) && coverage == LineCoverage.PARTLY_COVERED -> LineCoverage.IGNORED
             features.contains(FeatureName.ELVIS_OPERATOR) && coverage == LineCoverage.PARTLY_COVERED -> LineCoverage.IGNORED
             features.contains(FeatureName.HAS_COMPANION_OBJECT) && coverage == LineCoverage.NOT_COVERED -> LineCoverage.IGNORED
+            features.contains(FeatureName.SAFE_CALL_OPERATOR) && coverage == LineCoverage.PARTLY_COVERED -> LineCoverage.IGNORED
             else -> coverage
         }
     }

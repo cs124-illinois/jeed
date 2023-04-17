@@ -150,6 +150,8 @@ enum class FeatureName(val description: String) {
     IF_EXPRESSIONS("if expressions"),
     TRY_EXPRESSIONS("try expressions"),
     WHEN_EXPRESSIONS("when expressions"),
+    SAFE_CALL_OPERATOR("safe call operator"),
+    UNSAFE_CALL_OPERATOR("unsafe call operator"),
 }
 
 // Java features without Kotlin equivalents
@@ -195,6 +197,8 @@ val KOTLIN_ONLY_FEATURES = setOf(
     FeatureName.IF_EXPRESSIONS,
     FeatureName.TRY_EXPRESSIONS,
     FeatureName.WHEN_EXPRESSIONS,
+    FeatureName.SAFE_CALL_OPERATOR,
+    FeatureName.UNSAFE_CALL_OPERATOR,
 )
 
 val STRUCTURAL_FEATURES =
@@ -316,6 +320,8 @@ val ORDERED_FEATURES = listOf(
     FeatureName.IF_EXPRESSIONS,
     FeatureName.TRY_EXPRESSIONS,
     FeatureName.WHEN_EXPRESSIONS,
+    FeatureName.SAFE_CALL_OPERATOR,
+    FeatureName.UNSAFE_CALL_OPERATOR,
 ).also {
     val doesExist = it.toSet()
     val shouldExist = FeatureName.values().toSet() - setOf(FeatureName.EMPTY)

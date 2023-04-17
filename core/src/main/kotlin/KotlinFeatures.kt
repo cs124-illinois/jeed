@@ -510,8 +510,9 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
             if (ctx.INCR() != null || ctx.DECR() != null) {
                 count(FeatureName.VARIABLE_REASSIGNMENTS, (ctx.INCR() ?: ctx.DECR()).toLocation())
                 count(FeatureName.UNARY_OPERATORS, (ctx.INCR() ?: ctx.DECR()).toLocation())
-            } else if (ctx.excl() != null) {
-                count(FeatureName.LOGICAL_OPERATORS, ctx.excl().toLocation())
+            } else if (ctx.EXCL_WS() != null || ctx.EXCL_NO_WS() != null) {
+                val location = ctx.EXCL_WS()?.toLocation() ?: ctx.EXCL_NO_WS()?.toLocation()
+                count(FeatureName.LOGICAL_OPERATORS, location!!)
             }
         }
     }
@@ -669,6 +670,10 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
         count(FeatureName.COMPARISON_OPERATORS, ctx.toLocation())
     }
 
+    private enum class SeparatorType {
+        DOT, COLONCOLON, SAFENAV, UNSAFENAV
+    }
+
     override fun enterExpression(ctx: KotlinParser.ExpressionContext) {
         ctx.DISJ()?.also {
             count(FeatureName.LOGICAL_OPERATORS, ctx.DISJ().toLocation())
@@ -747,13 +752,28 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
                     } else {
                         ctx.postfixUnarySuffix(i + 1)
                     }
-                    if (current.navigationSuffix().memberAccessOperator()?.DOT() != null &&
-                        current.navigationSuffix().simpleIdentifier() != null
-                    ) {
-                        count(
-                            FeatureName.DOT_NOTATION,
-                            current.navigationSuffix().memberAccessOperator().DOT().toLocation(),
-                        )
+
+                    val currentSuffix = current.navigationSuffix()
+
+                    val separatorType = currentSuffix.memberAccessOperator()?.let {
+                        when {
+                            it.DOT() != null -> SeparatorType.DOT
+                            it.COLONCOLON() != null -> SeparatorType.COLONCOLON
+                            it.SAFENAV() != null -> SeparatorType.SAFENAV
+                            it.BANGS_WITH_DOT() != null -> SeparatorType.UNSAFENAV
+                            else -> error("Invalid separator")
+                        }
+                    }
+
+                    if (separatorType != null && currentSuffix.simpleIdentifier() != null) {
+                        val location = currentSuffix.memberAccessOperator().toLocation()
+                        when (separatorType) {
+                            SeparatorType.DOT -> count(FeatureName.DOT_NOTATION, location)
+                            SeparatorType.SAFENAV -> count(FeatureName.SAFE_CALL_OPERATOR, location)
+                            SeparatorType.UNSAFENAV -> count(FeatureName.UNSAFE_CALL_OPERATOR, location)
+                            // Not counting COLONCOLON yet
+                            else -> {}
+                        }
                         if (next?.callSuffix() != null) {
                             val identifier = current.navigationSuffix().simpleIdentifier().text
                             count(FeatureName.DOTTED_METHOD_CALL, next.callSuffix().toLocation())
@@ -765,10 +785,7 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
                                 )
                             }
                         } else {
-                            count(
-                                FeatureName.DOTTED_VARIABLE_ACCESS,
-                                current.navigationSuffix().memberAccessOperator().DOT().toLocation(),
-                            )
+                            count(FeatureName.DOTTED_VARIABLE_ACCESS, location)
                         }
                     }
                 }

@@ -490,7 +490,7 @@ ${" ".repeat(snippetArguments.indent * 2)}@JvmStatic fun main() {""".lines().let
 
 private val javaVisibilityPattern = """^\s*(public|private|protected)""".toRegex()
 
-@Suppress("LongMethod", "ComplexMethod", "SpellCheckingInspection")
+@Suppress("LongMethod", "ComplexMethod")
 private fun sourceFromJavaSnippet(originalSource: String, snippetArguments: SnippetArguments): Snippet {
     val sourceLines = originalSource.lines().map { it.trim().length }
     val errorListener = SnippetErrorListener(sourceLines)

@@ -881,6 +881,13 @@ println(second.modify(3))
             executionResult should haveOutput("11\n-7")
         }
     }
+    "should parse bangs" {
+        Source.fromKotlinSnippet(
+            """
+println(third["test"]!!["test"])
+            """.trim(),
+        )
+    }
 })
 
 fun haveParseErrorOnLine(line: Int) = object : Matcher<SnippetTransformationFailed> {

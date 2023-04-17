@@ -1152,6 +1152,28 @@ when {
                 featureList should haveFeatureAt(FeatureName.WHEN_EXPRESSIONS, listOf(1))
             }
         }
+        "should count various dots" {
+            Source.fromKotlinSnippet(
+                """
+val test = "test"
+var another: String? = null
+println(test.length)
+println(another?.length)
+another = "test"
+println(another!!.length)
+println(another?.length!!.toString())
+""",
+            ).features().check {
+                featureMap[FeatureName.DOT_NOTATION] shouldBe 1
+                featureList should haveFeatureAt(FeatureName.DOT_NOTATION, listOf(3))
+
+                featureMap[FeatureName.SAFE_CALL_OPERATOR] shouldBe 2
+                featureList should haveFeatureAt(FeatureName.SAFE_CALL_OPERATOR, listOf(4, 7))
+
+                featureMap[FeatureName.UNSAFE_CALL_OPERATOR] shouldBe 2
+                featureList should haveFeatureAt(FeatureName.UNSAFE_CALL_OPERATOR, listOf(6, 7))
+            }
+        }
         "should separate statements and blocks" {
             val first = Source.fromKotlinSnippet(
                 """

@@ -90,6 +90,10 @@ EQEQEQ: '===';
 SINGLE_QUOTE: '\'';
 AMP: '&';
 
+BANGS: '!!';
+BANGS_WITH_DOT: '!!.';
+SAFENAV: '?.';
+
 // SECTION: keywords
 
 RETURN_AT: 'return@' Identifier;
@@ -405,6 +409,9 @@ Inside_INCR: INCR  -> type(INCR);
 Inside_DECR: DECR  -> type(DECR);
 Inside_CONJ: CONJ  -> type(CONJ);
 Inside_DISJ: DISJ  -> type(DISJ);
+Inside_BANGS: BANGS -> type(BANGS);
+Inside_BANGS_WITH_DOT: BANGS_WITH_DOT -> type(BANGS_WITH_DOT);
+Inside_SAFENAV: SAFENAV -> type(SAFENAV);
 Inside_EXCL_WS: '!' (Hidden|NL) -> type(EXCL_WS);
 Inside_EXCL_NO_WS: EXCL_NO_WS  -> type(EXCL_NO_WS);
 Inside_COLON: COLON  -> type(COLON);
