@@ -1,7 +1,7 @@
 {
   "private": true,
   "name": "demo",
-  "version": "2023.2.2",
+  "version": "2023.5.0",
   "scripts": {
     "build": "next build",
     "checker": "npm run eslint && npm run tsc && npm run format && npm run depcheck",
@@ -17,27 +17,27 @@
     "tsc": "tsc --noEmit"
   },
   "dependencies": {
-    "@cs124/jeed-output": "2023.2.3",
-    "@cs124/jeed-react": "2023.2.3",
-    "@cs124/jeed-types": "2023.2.3",
+    "@cs124/jeed-output": "2023.5.0",
+    "@cs124/jeed-react": "2023.5.0",
+    "@cs124/jeed-types": "2023.5.0",
     "@cs124/react-google-login": "2022.10.0",
-    "next": "13.1.6",
+    "next": "13.4.1",
     "react": "18.2.0",
     "react-ace": "10.1.0",
     "react-dom": "18.2.0",
     "runtypes": "6.6.0"
   },
   "devDependencies": {
-    "@types/react": "18.0.28",
+    "@types/react": "18.2.6",
     "depcheck": "1.4.3",
-    "eslint": "8.34.0",
-    "eslint-config-next": "13.1.6",
+    "eslint": "8.40.0",
+    "eslint-config-next": "13.4.1",
     "gh-pages": "5.0.0",
-    "prettier": "2.8.4",
+    "prettier": "2.8.8",
     "prettier-package-json": "2.8.0",
     "prettier-plugin-organize-imports": "3.2.2",
     "prop-types": "15.8.1",
-    "sass": "1.58.3",
-    "typescript": "4.9.5"
+    "sass": "1.62.1",
+    "typescript": "5.0.4"
   }
 }

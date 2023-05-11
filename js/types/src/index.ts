@@ -408,7 +408,9 @@ export const Feature = Union(
   Literal("ABSTRACT_FIELD"),
   Literal("IF_EXPRESSIONS"),
   Literal("TRY_EXPRESSIONS"),
-  Literal("WHEN_EXPRESSIONS")
+  Literal("WHEN_EXPRESSIONS"),
+  Literal("SAFE_CALL_OPERATOR"),
+  Literal("UNSAFE_CALL_OPERATOR")
 )
 export type Feature = Static<typeof Feature>
 
@@ -456,6 +458,8 @@ export const KOTLIN_ONLY_FEATURES = new Set(
     "IF_EXPRESSIONS",
     "TRY_EXPRESSIONS",
     "WHEN_EXPRESSIONS",
+    "SAFE_CALL_OPERATOR",
+    "UNSAFE_CALL_OPERATOR",
   ])
 )
 
