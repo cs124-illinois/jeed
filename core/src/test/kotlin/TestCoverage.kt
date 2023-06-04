@@ -169,4 +169,29 @@ fun main() {
             fileCoverage should haveMissedCount(0)
         }
     }
+    "it should not fail when _Collection.kt is included" {
+        val source = Source.fromKotlin(
+            """
+fun countRepeatedWords(string: List<String>): Int {
+  if (string.isEmpty()) {
+    return 0
+  }
+  val count = string.groupingBy { it }.eachCount()
+  return count.count{ it.value > 1 }
+}
+fun main() {
+  countRepeatedWords(listOf("test", "test", "me"))
+}
+""",
+        )
+        val coverage = source.coverage()
+        val features = source.features()
+
+        coverage.let { coverageResult ->
+            coverageResult should haveFileMissedCount(2)
+            coverageResult.adjustWithFeatures(features, source.type)
+        }.also { coverageResult ->
+            coverageResult should haveFileMissedCount(2)
+        }
+    }
 })

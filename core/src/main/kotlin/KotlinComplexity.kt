@@ -187,7 +187,7 @@ class KotlinComplexityListener(val source: Source, entry: Map.Entry<String, Stri
             exitMethodOrConstructor()
         }
     }
-    */
+     */
 
     // ||, &&, ?:
     private var requireDepth = 0

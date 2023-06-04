@@ -13,17 +13,17 @@ plugins {
     id("com.ryandens.javaagent-test") version "0.5.0"
 }
 dependencies {
-    ksp("com.squareup.moshi:moshi-kotlin-codegen:1.14.0")
+    ksp("com.squareup.moshi:moshi-kotlin-codegen:1.15.0")
 
     testJavaagent("com.beyondgrader.resource-agent:agent:2023.4.0")
 
     implementation(project(":core"))
 
-    implementation("io.ktor:ktor-server-netty:2.3.0")
-    implementation("io.ktor:ktor-server-cors:2.3.0")
-    implementation("io.ktor:ktor-server-content-negotiation:2.3.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.0")
-    implementation("com.squareup.moshi:moshi-kotlin:1.14.0")
+    implementation("io.ktor:ktor-server-netty:2.3.1")
+    implementation("io.ktor:ktor-server-cors:2.3.1")
+    implementation("io.ktor:ktor-server-content-negotiation:2.3.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.1")
+    implementation("com.squareup.moshi:moshi-kotlin:1.15.0")
     implementation("com.github.cs125-illinois:ktor-moshi:2022.9.0")
     implementation("ch.qos.logback:logback-classic:1.4.7")
     implementation("com.uchuhimo:konf-core:1.1.2")
@@ -33,9 +33,9 @@ dependencies {
     implementation("com.beyondgrader.resource-agent:agent:2023.4.0")
     implementation("com.beyondgrader.resource-agent:jeedplugin:2023.4.0")
 
-    testImplementation("io.kotest:kotest-runner-junit5:5.6.1")
+    testImplementation("io.kotest:kotest-runner-junit5:5.6.2")
     testImplementation("io.kotest:kotest-assertions-ktor:4.4.3")
-    testImplementation("io.ktor:ktor-server-test-host:2.3.0")
+    testImplementation("io.ktor:ktor-server-test-host:2.3.1")
 }
 
 application {

@@ -131,7 +131,9 @@ data class CoverageResult(
 fun Source.processCoverage(
     coverage: CoverageBuilder,
 ): CoverageResult {
-    val byFile = coverage.sourceFiles.associate { fileCoverage ->
+    val byFile = coverage.sourceFiles.filter {
+        this.sources.keys.contains(it.name)
+    }.associate { fileCoverage ->
         fileCoverage.name!! to (fileCoverage.firstLine..fileCoverage.lastLine).toList().map { lineNumber ->
             lineNumber to fileCoverage.getLine(lineNumber).toLineCoverage()
         }.mapNotNull { (lineNumber, coverage) ->

@@ -288,7 +288,7 @@ fun haveFileCoverageAt(line: Int, expectedCoverage: LineCoverage, filename: Stri
 fun haveFileMissedCount(expectedCount: Int, filename: String? = null) = object : Matcher<CoverageResult> {
     override fun test(value: CoverageResult): MatcherResult {
         val toRetrieve = filename ?: value.byFile.keys.let {
-            check(it.size == 1) { "Must specify a key to retrieve multi-file coverage result" }
+            check(it.size == 1) { "Must specify a key to retrieve multi-file coverage result: ${it.joinToString(",")}" }
             it.first()
         }
         val actualCount =
