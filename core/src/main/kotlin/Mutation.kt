@@ -101,6 +101,7 @@ sealed class Mutation(
             modified!!.isBlank() -> original.lines().size
             originalLines.size == modifiedLines.size ->
                 originalLines.zip(modifiedLines).filter { (m, o) -> m != o }.size
+
             else -> abs(originalLines.size - modifiedLines.size)
         }
         require(linesChanged!! > 0) { "Line change count failed" }
@@ -551,6 +552,8 @@ class NumberLiteralTrim(
     override fun applyMutation(random: Random) = options.shuffled(random).first()
 
     companion object {
+        private val hexSet = setOf('a', 'b', 'c', 'd', 'e', 'f', 'A', 'B', 'C', 'D', 'E', 'F')
+
         private val exponentRegex = Regex("[eE][+-]?[0-9]+$")
 
         private val suffixes = setOf('f', 'F', 'd', 'D', 'l', 'L')
@@ -587,13 +590,30 @@ class NumberLiteralTrim(
             check(current.endsWith(exponent))
             current = current.removeSuffix(exponent)
 
-            return current.split(".", limit = 2).filter { it.length > 1 }.mapIndexed { index, s ->
-                when (index) {
-                    0 -> s.substring(1, s.length)
-                    1 -> s.substring(0, s.length - 1)
-                    else -> error("Invalid index")
+            return when {
+                current.length == 1 -> listOf()
+                current.contains(".") -> {
+                    current.split(".", limit = 2).filter { it.length > 1 }.mapIndexed { index, s ->
+                        when (index) {
+                            0 -> s.substring(1, s.length)
+                            1 -> s.substring(0, s.length - 1)
+                            else -> error("Invalid index")
+                        }
+                    }
                 }
-            }.map { "$prefix$it$exponent$suffix" }
+
+                else -> listOf(current.substring(1, current.length), current.substring(0, current.length - 1))
+            }
+                .filter { string ->
+                    string.length == 1 || !string.toCharArray().filter {
+                        if (base == 16) {
+                            it.isDigit() || hexSet.contains(it)
+                        } else {
+                            it.isDigit()
+                        }
+                    }.all { it == '0' }
+                }
+                .map { "$prefix$it$exponent$suffix" }
         }
 
         fun matches(contents: String, base: Int = 10) = contents.trims(base).isNotEmpty()
@@ -917,6 +937,7 @@ class NullReturn(
                 returnType == returnType.capitalize() ||
                     returnType.endsWith("[]")
                 )
+
             Source.FileType.KOTLIN -> contents != "null" && !kotlinPrimitiveTypes.contains(returnType)
         }
     }
@@ -972,6 +993,7 @@ class RemoveMethod(
                 "double" -> "return 0.0"
                 else -> "return null"
             }
+
             Source.FileType.KOTLIN -> when (returnType.removeSuffix("?")) {
                 "String" -> "return \"\""
                 "" -> "return"
@@ -1180,6 +1202,7 @@ class ChangeEquals(
                     else -> error("Unknown kotlin equals type: $originalEqualsType")
                 }
             }
+
             Source.FileType.JAVA -> {
                 return when (originalEqualsType) {
                     "==" -> "($firstValue.equals($secondValue))"
@@ -1217,6 +1240,7 @@ class ModifyArrayLiteral(
     init {
         check(parts.size > 1)
     }
+
     override val preservesLength = false
     override val estimatedCount = parts.size - 1
     override val mightNotCompile = false

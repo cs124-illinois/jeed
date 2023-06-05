@@ -196,6 +196,22 @@ public class Example {
             mutations[0].check(contents, "1234")
         }
     }
+    "it should not trim to zeroes" {
+        Source.fromJava(
+            """
+public class Example {
+  public static void example() {
+    int first = 1000;
+    int second = 1;
+    int third = 0;
+  }
+}""",
+        ).checkMutations<NumberLiteralTrim> { mutations, contents ->
+            mutations shouldHaveSize 1
+            mutations[0].check(contents, "1000", "100")
+            mutations[0].estimatedCount shouldBe 1
+        }
+    }
     "it should find increments and decrements to mutate" {
         Source.fromJava(
             """
@@ -963,10 +979,11 @@ public class Example {
                 mutater.apply()
                 mutater.size shouldBe 0
             }
-            source.allMutations(types = ALL - setOf(Mutation.Type.REMOVE_METHOD)).also { mutations ->
-                mutations shouldHaveSize 4
-                mutations.map { it.contents }.toSet() shouldHaveSize 3
-            }
+            source.allMutations(types = ALL - setOf(Mutation.Type.REMOVE_METHOD), random = Random(124))
+                .also { mutations ->
+                    mutations shouldHaveSize 4
+                    mutations.map { it.contents }.toSet() shouldHaveSize 3
+                }
         }
     }
     "it should return predictable mutations" {

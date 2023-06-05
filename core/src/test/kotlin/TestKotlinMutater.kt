@@ -814,7 +814,10 @@ fun testing(): Int {
                     mutater.apply()
                     mutater.size shouldBe 0
                 }
-            source.allMutations(types = ALL - setOf(Mutation.Type.REMOVE_METHOD, Mutation.Type.REMOVE_STATEMENT))
+            source.allMutations(
+                types = ALL - setOf(Mutation.Type.REMOVE_METHOD, Mutation.Type.REMOVE_STATEMENT),
+                random = Random(124),
+            )
                 .also { mutations ->
                     mutations shouldHaveSize 4
                     mutations.map { it.contents }.toSet() shouldHaveSize 3
