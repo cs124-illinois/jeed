@@ -4,6 +4,8 @@
 package edu.illinois.cs.cs125.jeed.core
 
 import edu.illinois.cs.cs125.jeed.core.antlr.JavaParser
+import edu.illinois.cs.cs125.jeed.core.antlr.JavaParser.ExpressionContext
+import edu.illinois.cs.cs125.jeed.core.antlr.JavaParser.PrimaryContext
 import edu.illinois.cs.cs125.jeed.core.antlr.JavaParserBaseListener
 import org.antlr.v4.runtime.ParserRuleContext
 import org.antlr.v4.runtime.Token
@@ -90,31 +92,62 @@ class JavaMutationListener(private val parsedSource: Source.ParsedSource) : Java
                 mutations.addStringMutations(location, contents, Source.FileType.JAVA)
             }
         }
+
+        val isNegative = try {
+            (((ctx.parent as PrimaryContext).parent as ExpressionContext).parent as ExpressionContext).prefix.text == "-"
+        } catch (e: Exception) {
+            false
+        }
+
         ctx.integerLiteral()?.also { integerLiteral ->
             integerLiteral.DECIMAL_LITERAL()?.also {
                 ctx.toLocation().also { location ->
                     val contents = parsedSource.contents(location)
-                    mutations.add(NumberLiteral(location, contents, Source.FileType.JAVA))
+                    mutations.add(NumberLiteral(location, contents, Source.FileType.JAVA, isNegative))
                     if (NumberLiteralTrim.matches(contents)) {
-                        mutations.add(NumberLiteralTrim(location, contents, Source.FileType.JAVA))
+                        mutations.add(
+                            NumberLiteralTrim(
+                                location,
+                                contents,
+                                Source.FileType.JAVA,
+                                base = 10,
+                                isNegative = isNegative,
+                            ),
+                        )
                     }
                 }
             }
             integerLiteral.BINARY_LITERAL()?.also {
                 ctx.toLocation().also { location ->
                     val contents = parsedSource.contents(location)
-                    mutations.add(NumberLiteral(location, contents, Source.FileType.JAVA, 2))
+                    mutations.add(NumberLiteral(location, contents, Source.FileType.JAVA, isNegative, 2))
                     if (NumberLiteralTrim.matches(contents, 2)) {
-                        mutations.add(NumberLiteralTrim(location, contents, Source.FileType.JAVA, 2))
+                        mutations.add(
+                            NumberLiteralTrim(
+                                location,
+                                contents,
+                                Source.FileType.JAVA,
+                                base = 2,
+                                isNegative = isNegative,
+                            ),
+                        )
                     }
                 }
             }
             integerLiteral.HEX_LITERAL()?.also {
                 ctx.toLocation().also { location ->
                     val contents = parsedSource.contents(location)
-                    mutations.add(NumberLiteral(location, contents, Source.FileType.JAVA, 16))
+                    mutations.add(NumberLiteral(location, contents, Source.FileType.JAVA, isNegative, 16))
                     if (NumberLiteralTrim.matches(contents, 16)) {
-                        mutations.add(NumberLiteralTrim(location, contents, Source.FileType.JAVA, 16))
+                        mutations.add(
+                            NumberLiteralTrim(
+                                location,
+                                contents,
+                                Source.FileType.JAVA,
+                                base = 16,
+                                isNegative = isNegative,
+                            ),
+                        )
                     }
                 }
             }
@@ -123,16 +156,23 @@ class JavaMutationListener(private val parsedSource: Source.ParsedSource) : Java
             floatLiteral.FLOAT_LITERAL()?.also {
                 ctx.toLocation().also { location ->
                     val contents = parsedSource.contents(location)
-                    mutations.add(NumberLiteral(location, contents, Source.FileType.JAVA))
+                    mutations.add(NumberLiteral(location, contents, Source.FileType.JAVA, isNegative = isNegative))
                     if (NumberLiteralTrim.matches(contents)) {
-                        mutations.add(NumberLiteralTrim(location, contents, Source.FileType.JAVA))
+                        mutations.add(
+                            NumberLiteralTrim(
+                                location,
+                                contents,
+                                Source.FileType.JAVA,
+                                isNegative = isNegative,
+                            ),
+                        )
                     }
                 }
             }
         }
     }
 
-    private fun JavaParser.ExpressionContext.locationPair(): Pair<Mutation.Location, Mutation.Location> {
+    private fun ExpressionContext.locationPair(): Pair<Mutation.Location, Mutation.Location> {
         check(expression().size == 2)
         val front = expression(0)
         val back = expression(1)
@@ -161,7 +201,7 @@ class JavaMutationListener(private val parsedSource: Source.ParsedSource) : Java
         return Pair(frontLocation, backLocation)
     }
 
-    override fun enterExpression(ctx: JavaParser.ExpressionContext) {
+    override fun enterExpression(ctx: ExpressionContext) {
         ctx.prefix?.toLocation()?.also { location ->
             val contents = parsedSource.contents(location)
             if (IncrementDecrement.matches(contents)) {

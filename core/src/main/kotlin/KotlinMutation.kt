@@ -5,6 +5,7 @@ package edu.illinois.cs.cs125.jeed.core
 
 import edu.illinois.cs.cs125.jeed.core.antlr.KotlinParser
 import edu.illinois.cs.cs125.jeed.core.antlr.KotlinParser.ExpressionContext
+import edu.illinois.cs.cs125.jeed.core.antlr.KotlinParser.PrimaryExpressionContext
 import edu.illinois.cs.cs125.jeed.core.antlr.KotlinParserBaseListener
 import org.antlr.v4.runtime.ParserRuleContext
 import org.antlr.v4.runtime.tree.ParseTreeWalker
@@ -208,12 +209,35 @@ class KotlinMutationListener(private val parsedSource: Source.ParsedSource) : Ko
                 mutations.add(BooleanLiteral(location, parsedSource.contents(location), Source.FileType.KOTLIN))
             }
         }
+        val isNegative = try {
+            ((((ctx.parent as PrimaryExpressionContext).parent as ExpressionContext)).parent as ExpressionContext).unaryPrefix(
+                0,
+            ).text == "-"
+        } catch (e: Exception) {
+            false
+        }
         ctx.IntegerLiteral()?.also {
             ctx.toLocation().also { location ->
                 val content = parsedSource.contents(location)
-                mutations.add(NumberLiteral(location, content, Source.FileType.KOTLIN))
+                mutations.add(
+                    NumberLiteral(
+                        location,
+                        content,
+                        Source.FileType.KOTLIN,
+                        base = 10,
+                        isNegative = isNegative,
+                    ),
+                )
                 if (NumberLiteralTrim.matches(content)) {
-                    mutations.add(NumberLiteralTrim(location, content, Source.FileType.KOTLIN))
+                    mutations.add(
+                        NumberLiteralTrim(
+                            location,
+                            content,
+                            Source.FileType.KOTLIN,
+                            base = 10,
+                            isNegative = isNegative,
+                        ),
+                    )
                 }
             }
         }
@@ -221,18 +245,50 @@ class KotlinMutationListener(private val parsedSource: Source.ParsedSource) : Ko
         ctx.HexLiteral()?.also {
             ctx.toLocation().also { location ->
                 val content = parsedSource.contents(location)
-                mutations.add(NumberLiteral(location, content, Source.FileType.KOTLIN))
+                mutations.add(
+                    NumberLiteral(
+                        location,
+                        content,
+                        Source.FileType.KOTLIN,
+                        base = 16,
+                        isNegative = isNegative,
+                    ),
+                )
                 if (NumberLiteralTrim.matches(content, 16)) {
-                    mutations.add(NumberLiteralTrim(location, content, Source.FileType.KOTLIN, 16))
+                    mutations.add(
+                        NumberLiteralTrim(
+                            location,
+                            content,
+                            Source.FileType.KOTLIN,
+                            base = 16,
+                            isNegative = isNegative,
+                        ),
+                    )
                 }
             }
         }
         ctx.BinLiteral()?.also {
             ctx.toLocation().also { location ->
                 val content = parsedSource.contents(location)
-                mutations.add(NumberLiteral(location, content, Source.FileType.KOTLIN))
+                mutations.add(
+                    NumberLiteral(
+                        location,
+                        content,
+                        Source.FileType.KOTLIN,
+                        base = 2,
+                        isNegative = isNegative,
+                    ),
+                )
                 if (NumberLiteralTrim.matches(content, 2)) {
-                    mutations.add(NumberLiteralTrim(location, content, Source.FileType.KOTLIN, 2))
+                    mutations.add(
+                        NumberLiteralTrim(
+                            location,
+                            content,
+                            Source.FileType.KOTLIN,
+                            base = 2,
+                            isNegative = isNegative,
+                        ),
+                    )
                 }
             }
         }
@@ -254,9 +310,25 @@ class KotlinMutationListener(private val parsedSource: Source.ParsedSource) : Ko
         ctx.LongLiteral()?.also {
             ctx.toLocation().also { location ->
                 val content = parsedSource.contents(location)
-                mutations.add(NumberLiteral(location, content, Source.FileType.KOTLIN))
+                mutations.add(
+                    NumberLiteral(
+                        location,
+                        content,
+                        Source.FileType.KOTLIN,
+                        base = 10,
+                        isNegative = isNegative,
+                    ),
+                )
                 if (NumberLiteralTrim.matches(content)) {
-                    mutations.add(NumberLiteralTrim(location, content, Source.FileType.KOTLIN))
+                    mutations.add(
+                        NumberLiteralTrim(
+                            location,
+                            content,
+                            Source.FileType.KOTLIN,
+                            base = 10,
+                            isNegative = isNegative,
+                        ),
+                    )
                 }
             }
         }

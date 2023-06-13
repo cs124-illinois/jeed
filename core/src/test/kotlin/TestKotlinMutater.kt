@@ -144,6 +144,37 @@ fun example() {
             mutations[3].check(contents, "0b1001011")
         }
     }
+    "it should not trim to zeroes" {
+        Source.fromKotlin(
+            """
+fun example() {
+    val first = 1000
+    val second = 1
+    val third = 0
+    val fourth = -10
+}
+""".trim(),
+        ).checkMutations<NumberLiteralTrim> { mutations, contents ->
+            mutations shouldHaveSize 2
+            mutations[0].shouldNotBe(contents, "1000", "000")
+            mutations[0].estimatedCount shouldBe 1
+            mutations[1].shouldNotBe(contents, "10", "0")
+            mutations[1].estimatedCount shouldBe 1
+        }
+    }
+    "it should not mutate negatives to zeroes" {
+        Source.fromKotlin(
+            """
+fun example() {
+    val first = -1
+}
+""".trim(),
+        ).checkMutations<NumberLiteral> { mutations, contents ->
+            mutations shouldHaveSize 1
+            mutations[0].shouldNotBe(contents, "1", "0")
+            mutations[0].estimatedCount shouldBe 1
+        }
+    }
     "it should find number literals to trim" {
         Source.fromKotlin(
             """

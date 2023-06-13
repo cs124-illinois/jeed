@@ -487,6 +487,7 @@ class NumberLiteral(
     location: Location,
     original: String,
     fileType: Source.FileType,
+    private val isNegative: Boolean = false,
     private val base: Int = 10,
 ) : Mutation(Type.NUMBER_LITERAL, location, original, fileType) {
     override val preservesLength = true
@@ -499,7 +500,13 @@ class NumberLiteral(
         .map { it.first }.also {
             check(it.isNotEmpty()) { "No numeric characters in numeric literal" }
         }
-    override val estimatedCount = numberPositions.size * 2
+    override val estimatedCount = if (original == "0") {
+        1
+    } else if (isNegative && (original == "1" || original == (base - 1).toString())) {
+        1
+    } else {
+        numberPositions.size * 2
+    }
 
     override fun applyMutation(random: Random): String {
         // Special case since 0 -> 9 is a bit too obvious
@@ -508,13 +515,17 @@ class NumberLiteral(
         }
         val position = numberPositions.shuffled(random).first()
         return original.toCharArray().also { characters ->
-            val direction = random.nextBoolean()
+            var direction = random.nextBoolean()
+            if (original == "1" && isNegative) {
+                direction = true
+            } else if (original == (base - 1).toString() && isNegative) {
+                direction = false
+            }
             val randomValue = if (direction) {
                 Math.floorMod(characters[position].toString().toInt() + 1, base)
             } else {
                 Math.floorMod(characters[position].toString().toInt() - 1 + base, base)
             }.let {
-                @Suppress("MagicNumber")
                 // Avoid adding leading zeros
                 if (position == 0 && original.length > 1 && it == 0) {
                     if (direction) {
@@ -541,12 +552,13 @@ class NumberLiteralTrim(
     } else {
         10
     },
+    isNegative: Boolean = false,
 ) : Mutation(Type.NUMBER_LITERAL_TRIM, location, original, fileType) {
     override val preservesLength = false
     override val mightNotCompile = false
     override val fixedCount = true
 
-    private val options = original.trims(base)
+    private val options = original.trims(base, isNegative)
     override val estimatedCount = options.size
 
     override fun applyMutation(random: Random) = options.shuffled(random).first()
@@ -558,7 +570,7 @@ class NumberLiteralTrim(
 
         private val suffixes = setOf('f', 'F', 'd', 'D', 'l', 'L')
 
-        private fun String.trims(base: Int = 10): List<String> {
+        private fun String.trims(base: Int = 10, isNegative: Boolean = false): List<String> {
             var current = this
 
             val prefix = when (base) {
@@ -613,6 +625,7 @@ class NumberLiteralTrim(
                         }
                     }.all { it == '0' }
                 }
+                .filter { !(isNegative && it == "0") }
                 .map { "$prefix$it$exponent$suffix" }
         }
 

@@ -204,11 +204,28 @@ public class Example {
     int first = 1000;
     int second = 1;
     int third = 0;
+    int fourth = -10;
   }
 }""",
         ).checkMutations<NumberLiteralTrim> { mutations, contents ->
+            mutations shouldHaveSize 2
+            mutations[0].shouldNotBe(contents, "1000", "000")
+            mutations[0].estimatedCount shouldBe 1
+            mutations[1].shouldNotBe(contents, "10", "0")
+            mutations[1].estimatedCount shouldBe 1
+        }
+    }
+    "it should not mutate negatives to zeroes" {
+        Source.fromJava(
+            """
+public class Example {
+  public static void example() {
+    int first = -1;
+  }
+}""",
+        ).checkMutations<NumberLiteral> { mutations, contents ->
             mutations shouldHaveSize 1
-            mutations[0].check(contents, "1000", "100")
+            mutations[0].shouldNotBe(contents, "1", "0")
             mutations[0].estimatedCount shouldBe 1
         }
     }
@@ -1247,15 +1264,25 @@ inline fun <reified T : Mutation> Source.checkMutations(
     checker(Mutation.find<T>(parsedSource, type), contents)
 }
 
-fun Mutation.check(contents: String, original: String, modified: String? = null): String {
+fun Mutation.check(contents: String, original: String, modified: String? = null, seed: Int = 124): String {
     original shouldNotBe modified
     applied shouldBe false
     this.original shouldBe original
     this.modified shouldBe null
-    val toReturn = apply(contents, Random(seed = 124))
+    val toReturn = apply(contents, Random(seed))
     applied shouldBe true
     this.original shouldBe original
     this.modified shouldNotBe original
     modified?.also { this.modified shouldBe modified }
     return toReturn
+}
+
+fun Mutation.shouldNotBe(contents: String, original: String, shouldNotBe: String) {
+    repeat(32) {
+        apply(contents, Random)
+        this.original shouldBe original
+        this.modified shouldNotBe original
+        this.modified shouldNotBe shouldNotBe
+        this.reset()
+    }
 }
