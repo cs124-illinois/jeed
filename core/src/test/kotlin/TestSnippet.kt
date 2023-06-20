@@ -27,7 +27,8 @@ int testing() {
 }
 class AnotherTest { }
 int i = 0;
-i++;""".trim(),
+i++;
+""",
         ).snippetProperties.apply {
             importCount shouldBe 1
             looseCount shouldBe 2
@@ -49,8 +50,14 @@ fun testing(): Int {
 }
 class AnotherTest
 var i = 0
-i++""".trim(),
-        )
+i++
+""",
+        ).snippetProperties.apply {
+            importCount shouldBe 1
+            looseCount shouldBe 2
+            methodCount shouldBe 1
+            classCount shouldBe 2
+        }
     }
     "should not fail with new switch statements in snippets" {
         Source.fromJavaSnippet(
@@ -61,8 +68,16 @@ public boolean shouldMakeCoffee(String situation) {
           case "Midnight" -> true;
           default -> false;
         };
-}""".trim(),
-        )
+}
+
+// Testing
+""",
+        ).snippetProperties.apply {
+            importCount shouldBe 0
+            looseCount shouldBe 0
+            methodCount shouldBe 1
+            classCount shouldBe 0
+        }
     }
     "should identify a parse errors in a broken snippet" {
         val exception = shouldThrow<SnippetTransformationFailed> {
@@ -79,8 +94,7 @@ int testing() {
     return 10;
 }
 int i = 0;
-i++
-""".trim(),
+i++""",
             )
         }
         exception.errors shouldHaveSize 1
@@ -101,7 +115,7 @@ int testing() {
     return 10;
 }
 return;
-""".trim(),
+""",
             )
         }
         exception.errors shouldHaveSize 1
@@ -114,7 +128,7 @@ return;
 package test.me;
 int i = 0;
 System.out.println(i);
-""".trim(),
+""",
             )
         }
         exception.errors shouldHaveSize 1
@@ -137,7 +151,7 @@ int testing() {
 }
 int i = 0;
 i++
-""".trim(),
+""",
             )
         }
         exception.errors shouldHaveSize 3
@@ -152,8 +166,7 @@ i++;
 public class Test {}
 int adder(int first, int second) {
     return first + second;
-}
-        """.trim()
+}""".trim()
         val source = Source.fromJavaSnippet(snippet)
 
         source.originalSource shouldBe (snippet)
@@ -168,8 +181,7 @@ data class Test(val first: Int)
 fun second(): Test {
   return first()
 }
-println(second())
-        """.trim()
+println(second())""".trim()
         val source = Source.fromKotlinSnippet(snippet)
 
         source.originalSource shouldBe (snippet)
@@ -178,11 +190,7 @@ println(second())
     }
     "should not allow return statements in loose code" {
         shouldThrow<SnippetTransformationFailed> {
-            Source.fromJavaSnippet(
-                """
-return;
-        """.trim(),
-            )
+            Source.fromJavaSnippet("""return;""")
         }
     }
     "should not allow return statements in loose code even under if statements" {
@@ -192,8 +200,7 @@ return;
 int i = 0;
 if (i > 2) {
     return;
-}
-        """.trim(),
+}""",
             )
         }
     }
@@ -214,9 +221,15 @@ protected void test3() {
 }
   public void test4() {
   System.out.println("Hello, world!");
-}
-        """.trim(),
-        ).compile()
+}""",
+        ).also {
+            it.snippetProperties.apply {
+                importCount shouldBe 0
+                looseCount shouldBe 0
+                methodCount shouldBe 5
+                classCount shouldBe 0
+            }
+        }.compile()
     }
     "should parse Java 13 constructs in snippets" {
         val executionResult = Source.fromJavaSnippet(
@@ -232,7 +245,14 @@ static String test(int arg) {
 }
 System.out.println(test(0));
         """.trim(),
-        ).compile().execute()
+        ).also {
+            it.snippetProperties.apply {
+                importCount shouldBe 0
+                looseCount shouldBe 1
+                methodCount shouldBe 1
+                classCount shouldBe 0
+            }
+        }.compile().execute()
         executionResult should haveCompleted()
         executionResult should haveOutput("test")
     }
@@ -243,7 +263,7 @@ System.out.println(test(0));
 public class Foo { }
 System.out.println("Hello, world!");
 import java.util.List;
-        """.trim(),
+        """,
             )
         }
         exception.errors shouldHaveSize 1
@@ -256,9 +276,16 @@ boolean value = true;
 if (value) {
   class Foo { }
 }
-System.out.println("Hello, world!");
-        """.trim(),
-        ).compile()
+System.out.println("Hello, world!");""",
+        )
+            .also {
+                it.snippetProperties.apply {
+                    importCount shouldBe 0
+                    looseCount shouldBe 5
+                    methodCount shouldBe 0
+                    classCount shouldBe 0
+                }
+            }.compile()
     }
     "should allow top-level lambda expression returns" {
         Source.fromJavaSnippet(
@@ -271,9 +298,15 @@ void tester(Test test) {
 }
 tester(() -> {
   return 0;
-});
-        """.trim(),
-        ).compile()
+});""",
+        ).also {
+            it.snippetProperties.apply {
+                importCount shouldBe 0
+                looseCount shouldBe 3
+                methodCount shouldBe 1
+                classCount shouldBe 1
+            }
+        }.compile()
     }
     "should allow method declarations in anonymous classes in snippets" {
         Source.fromJavaSnippet(
@@ -297,17 +330,30 @@ System.out.println(countArray(array, new IncludeValue() {
   public boolean include(int value) {
     return value < 5 && value > 10;
   }
-}));
-        """.trim(),
-        ).compile()
+}));""",
+        ).also {
+            it.snippetProperties.apply {
+                importCount shouldBe 0
+                looseCount shouldBe 7
+                methodCount shouldBe 1
+                classCount shouldBe 1
+            }
+        }.compile()
     }
     "should handle warnings from outside the snippet" {
         Source.fromJavaSnippet(
             """
 import net.bytebuddy.agent.ByteBuddyAgent;
 ByteBuddyAgent.install(ByteBuddyAgent.AttachmentProvider.ForEmulatedAttachment.INSTANCE);
-        """.trim(),
-        ).compile()
+        """,
+        ).also {
+            it.snippetProperties.apply {
+                importCount shouldBe 1
+                looseCount shouldBe 1
+                methodCount shouldBe 0
+                classCount shouldBe 0
+            }
+        }.compile()
     }
     "should parse kotlin snippets" {
         Source.fromKotlinSnippet(
@@ -321,7 +367,7 @@ fun test() {
 val i = 0
 println(i)
 test()
-""".trim(),
+""",
         ).snippetProperties.apply {
             importCount shouldBe 1
             looseCount shouldBe 3
@@ -333,8 +379,13 @@ test()
         Source.fromKotlinSnippet(
             """
 // Test me
-""".trim(),
-        )
+""",
+        ).snippetProperties.apply {
+            importCount shouldBe 0
+            looseCount shouldBe 0
+            methodCount shouldBe 0
+            classCount shouldBe 0
+        }
     }
     "should identify parse errors in broken kotlin snippets" {
         val exception = shouldThrow<SnippetTransformationFailed> {
@@ -349,7 +400,7 @@ fun test() {
 val i = 0
 println(i)
 test()
-""".trim(),
+""",
             )
         }
         exception.errors shouldHaveSize 1
@@ -376,11 +427,7 @@ test()
     }
     "should not allow return statements in loose kotlin code" {
         val exception = shouldThrow<SnippetTransformationFailed> {
-            Source.fromKotlinSnippet(
-                """
-return
-        """.trim(),
-            )
+            Source.fromKotlinSnippet("""return""")
         }
         exception.errors shouldHaveSize 1
         exception should haveParseErrorOnLine(1)
@@ -392,8 +439,7 @@ return
 val i = 0
 if (i < 1) {
     return
-}
-        """.trim(),
+}""",
             )
         }
         exception.errors shouldHaveSize 1
@@ -407,8 +453,13 @@ fun add(a: Int, b: Int): Int {
   return a + b
 }
 println(add(2, 3))
-        """.trim(),
-        )
+        """,
+        ).snippetProperties.apply {
+            importCount shouldBe 0
+            looseCount shouldBe 2
+            methodCount shouldBe 1
+            classCount shouldBe 0
+        }
     }
     "should not allow package declarations in kotlin snippets" {
         val exception = shouldThrow<SnippetTransformationFailed> {
@@ -416,8 +467,7 @@ println(add(2, 3))
                 """
 package test.me
 
-println("Hello, world!")
-        """.trim(),
+println("Hello, world!")""",
             )
         }
         exception.errors shouldHaveSize 1
@@ -429,8 +479,7 @@ println("Hello, world!")
                 """
 class MainKt() { }
 
-println("Hello, world!")
-        """.trim(),
+println("Hello, world!")""",
             )
         }
         exception.errors shouldHaveSize 1
@@ -441,8 +490,7 @@ println("Hello, world!")
             Source.fromKotlinSnippet(
                 """
 data class Person(name: String)
-println("Hello, world!")
-        """.trim(),
+println("Hello, world!")""",
             ).kompile()
         }
         exception.errors shouldHaveSize 1
@@ -454,9 +502,15 @@ println("Hello, world!")
 Object o = new String("");
 if (o instanceof String s) {
   System.out.println(s.length());
-}
-            """.trim(),
-        ).compile()
+}""",
+        ).also {
+            it.snippetProperties.apply {
+                importCount shouldBe 0
+                looseCount shouldBe 4
+                methodCount shouldBe 0
+                classCount shouldBe 0
+            }
+        }.compile()
     }
     "should parse records properly" {
         Source.fromJavaSnippet(
@@ -467,8 +521,15 @@ record Range(int lo, int hi) {
             throw new IllegalArgumentException(String.format("(%d,%d)", lo, hi));
         }
     }
-}            """.trim(),
-        ).compile()
+}""",
+        ).also {
+            it.snippetProperties.apply {
+                importCount shouldBe 0
+                looseCount shouldBe 0
+                methodCount shouldBe 0
+                classCount shouldBe 1
+            }
+        }.compile()
     }
     "should parse text blocks properly" {
         val input = "String data = \"\"\"\nHere\n\"\"\";\n" + "System.out.println(data);".trim()
@@ -482,18 +543,6 @@ record Range(int lo, int hi) {
             it should haveExactOutput("Here\nMe")
         }
     }
-    "!should not fail on unmapped compiler errors" {
-        // Now caught by ANTLR4
-        shouldThrow<CompilationFailed> {
-            Source.fromJavaSnippet(
-                """
-int count(int[] v) {
-  return 0;
-}}
-            """.trim(),
-            ).compile()
-        }
-    }
     "should allow interfaces in snippets" {
         Source.fromJavaSnippet(
             """
@@ -502,9 +551,15 @@ interface Test {
 }
 class Tester implements Test {
   public void test() { }
-}
-            """.trim(),
-        ).compile()
+}""",
+        ).also {
+            it.snippetProperties.apply {
+                importCount shouldBe 0
+                looseCount shouldBe 0
+                methodCount shouldBe 0
+                classCount shouldBe 2
+            }
+        }.compile()
     }
     "should allow generic methods in Java snippets" {
         Source.fromJavaSnippet(
