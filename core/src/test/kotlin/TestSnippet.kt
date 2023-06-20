@@ -10,7 +10,7 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 
 class TestSnippet : StringSpec({
-    "f: should parse snippets" {
+    "should parse snippets" {
         Source.fromJavaSnippet(
             """
 import java.util.List;
@@ -32,10 +32,11 @@ i++;""".trim(),
             importCount shouldBe 1
             looseCount shouldBe 2
             methodCount shouldBe 1
+            classCount shouldBe 2
         }
     }
     "should parse Kotlin snippets" {
-        Source.fromJavaSnippet(
+        Source.fromKotlinSnippet(
             """
 import java.util.List
 
@@ -49,11 +50,10 @@ fun testing(): Int {
 class AnotherTest
 var i = 0
 i++""".trim(),
-            SnippetArguments(fileType = Source.FileType.KOTLIN),
         )
     }
     "should not fail with new switch statements in snippets" {
-        Source.fromSnippet(
+        Source.fromJavaSnippet(
             """
 public boolean shouldMakeCoffee(String situation) {
         return switch (situation) {
@@ -66,7 +66,7 @@ public boolean shouldMakeCoffee(String situation) {
     }
     "should identify a parse errors in a broken snippet" {
         val exception = shouldThrow<SnippetTransformationFailed> {
-            Source.fromSnippet(
+            Source.fromJavaSnippet(
                 """
 class Test {
     int me = 0;
@@ -88,7 +88,7 @@ i++
     }
     "should not allow top-level return in snippet" {
         val exception = shouldThrow<SnippetTransformationFailed> {
-            Source.fromSnippet(
+            Source.fromJavaSnippet(
                 """
 class Test {
     int me = 0;
@@ -109,7 +109,7 @@ return;
     }
     "should not allow package declarations in snippets" {
         val exception = shouldThrow<SnippetTransformationFailed> {
-            Source.fromSnippet(
+            Source.fromJavaSnippet(
                 """
 package test.me;
 int i = 0;
@@ -122,7 +122,7 @@ System.out.println(i);
     }
     "should identify multiple parse errors in a broken snippet" {
         val exception = shouldThrow<SnippetTransformationFailed> {
-            Source.fromSnippet(
+            Source.fromJavaSnippet(
                 """
 class;
 class Test {
@@ -154,7 +154,7 @@ int adder(int first, int second) {
     return first + second;
 }
         """.trim()
-        val source = Source.fromSnippet(snippet)
+        val source = Source.fromJavaSnippet(snippet)
 
         source.originalSource shouldBe (snippet)
         source.rewrittenSource shouldNotBe (snippet)
@@ -170,7 +170,7 @@ fun second(): Test {
 }
 println(second())
         """.trim()
-        val source = Source.fromSnippet(snippet, SnippetArguments(fileType = Source.FileType.KOTLIN))
+        val source = Source.fromKotlinSnippet(snippet)
 
         source.originalSource shouldBe (snippet)
         source.rewrittenSource shouldNotBe (snippet)
@@ -178,7 +178,7 @@ println(second())
     }
     "should not allow return statements in loose code" {
         shouldThrow<SnippetTransformationFailed> {
-            Source.fromSnippet(
+            Source.fromJavaSnippet(
                 """
 return;
         """.trim(),
@@ -187,7 +187,7 @@ return;
     }
     "should not allow return statements in loose code even under if statements" {
         shouldThrow<SnippetTransformationFailed> {
-            Source.fromSnippet(
+            Source.fromJavaSnippet(
                 """
 int i = 0;
 if (i > 2) {
@@ -198,7 +198,7 @@ if (i > 2) {
         }
     }
     "should add static to methods that lack static" {
-        Source.fromSnippet(
+        Source.fromJavaSnippet(
             """
 void test0() {
   System.out.println("Hello, world!");
@@ -219,7 +219,7 @@ protected void test3() {
         ).compile()
     }
     "should parse Java 13 constructs in snippets" {
-        val executionResult = Source.fromSnippet(
+        val executionResult = Source.fromJavaSnippet(
             """
 static String test(int arg) {
   return switch (arg) {
@@ -238,7 +238,7 @@ System.out.println(test(0));
     }
     "should reject imports not at top of snippet" {
         val exception = shouldThrow<SnippetTransformationFailed> {
-            Source.fromSnippet(
+            Source.fromJavaSnippet(
                 """
 public class Foo { }
 System.out.println("Hello, world!");
@@ -250,7 +250,7 @@ import java.util.List;
         exception should haveParseErrorOnLine(3)
     }
     "should allow class declarations in blocks" {
-        Source.fromSnippet(
+        Source.fromJavaSnippet(
             """
 boolean value = true;
 if (value) {
@@ -261,7 +261,7 @@ System.out.println("Hello, world!");
         ).compile()
     }
     "should allow top-level lambda expression returns" {
-        Source.fromSnippet(
+        Source.fromJavaSnippet(
             """
 interface Test {
   int test();
@@ -276,7 +276,7 @@ tester(() -> {
         ).compile()
     }
     "should allow method declarations in anonymous classes in snippets" {
-        Source.fromSnippet(
+        Source.fromJavaSnippet(
             """
 interface IncludeValue {
   boolean include(int value);
@@ -302,14 +302,14 @@ System.out.println(countArray(array, new IncludeValue() {
         ).compile()
     }
     "should handle warnings from outside the snippet" {
-        Source.fromSnippet(
+        Source.fromJavaSnippet(
             """
 import net.bytebuddy.agent.ByteBuddyAgent;
 ByteBuddyAgent.install(ByteBuddyAgent.AttachmentProvider.ForEmulatedAttachment.INSTANCE);
         """.trim(),
         ).compile()
     }
-    "f: should parse kotlin snippets" {
+    "should parse kotlin snippets" {
         Source.fromKotlinSnippet(
             """
 import java.util.List
@@ -326,19 +326,19 @@ test()
             importCount shouldBe 1
             looseCount shouldBe 3
             methodCount shouldBe 1
+            classCount shouldBe 1
         }
     }
     "should parse kotlin snippets containing only comments" {
-        Source.fromSnippet(
+        Source.fromKotlinSnippet(
             """
 // Test me
 """.trim(),
-            SnippetArguments(fileType = Source.FileType.KOTLIN),
         )
     }
     "should identify parse errors in broken kotlin snippets" {
         val exception = shouldThrow<SnippetTransformationFailed> {
-            Source.fromSnippet(
+            Source.fromKotlinSnippet(
                 """
 import kotlinx.coroutines.*
 
@@ -350,7 +350,6 @@ val i = 0
 println(i)
 test()
 """.trim(),
-                SnippetArguments(fileType = Source.FileType.KOTLIN),
             )
         }
         exception.errors shouldHaveSize 1
@@ -369,7 +368,7 @@ i = 0
 println(i)
 test()
 """.trim()
-        val source = Source.fromSnippet(snippet, SnippetArguments(fileType = Source.FileType.KOTLIN))
+        val source = Source.fromKotlinSnippet(snippet)
 
         source.originalSource shouldBe (snippet)
         source.rewrittenSource shouldNotBe (snippet)
@@ -377,11 +376,10 @@ test()
     }
     "should not allow return statements in loose kotlin code" {
         val exception = shouldThrow<SnippetTransformationFailed> {
-            Source.fromSnippet(
+            Source.fromKotlinSnippet(
                 """
 return
         """.trim(),
-                SnippetArguments(fileType = Source.FileType.KOTLIN),
             )
         }
         exception.errors shouldHaveSize 1
@@ -389,21 +387,20 @@ return
     }
     "should not allow return statements in loose kotlin code even under if statements" {
         val exception = shouldThrow<SnippetTransformationFailed> {
-            Source.fromSnippet(
+            Source.fromKotlinSnippet(
                 """
 val i = 0
 if (i < 1) {
     return
 }
         """.trim(),
-                SnippetArguments(fileType = Source.FileType.KOTLIN),
             )
         }
         exception.errors shouldHaveSize 1
         exception should haveParseErrorOnLine(3)
     }
     "should allow return statements in loose kotlin code in methods" {
-        Source.fromSnippet(
+        Source.fromKotlinSnippet(
             """
 println("Here")
 fun add(a: Int, b: Int): Int {
@@ -411,18 +408,16 @@ fun add(a: Int, b: Int): Int {
 }
 println(add(2, 3))
         """.trim(),
-            SnippetArguments(fileType = Source.FileType.KOTLIN),
         )
     }
     "should not allow package declarations in kotlin snippets" {
         val exception = shouldThrow<SnippetTransformationFailed> {
-            Source.fromSnippet(
+            Source.fromKotlinSnippet(
                 """
 package test.me
 
 println("Hello, world!")
         """.trim(),
-                SnippetArguments(fileType = Source.FileType.KOTLIN),
             )
         }
         exception.errors shouldHaveSize 1
@@ -430,13 +425,12 @@ println("Hello, world!")
     }
     "should not allow a class named MainKt in kotlin snippets" {
         val exception = shouldThrow<SnippetTransformationFailed> {
-            Source.fromSnippet(
+            Source.fromKotlinSnippet(
                 """
 class MainKt() { }
 
 println("Hello, world!")
         """.trim(),
-                SnippetArguments(fileType = Source.FileType.KOTLIN),
             )
         }
         exception.errors shouldHaveSize 1
@@ -444,19 +438,18 @@ println("Hello, world!")
     }
     "should remap errors properly in kotlin snippets" {
         val exception = shouldThrow<CompilationFailed> {
-            Source.fromSnippet(
+            Source.fromKotlinSnippet(
                 """
 data class Person(name: String)
 println("Hello, world!")
         """.trim(),
-                SnippetArguments(fileType = Source.FileType.KOTLIN),
             ).kompile()
         }
         exception.errors shouldHaveSize 1
         exception.errors[0].location?.line shouldBe 1
     }
     "should parse instanceof pattern matching properly" {
-        Source.fromSnippet(
+        Source.fromJavaSnippet(
             """
 Object o = new String("");
 if (o instanceof String s) {
@@ -466,7 +459,7 @@ if (o instanceof String s) {
         ).compile()
     }
     "should parse records properly" {
-        Source.fromSnippet(
+        Source.fromJavaSnippet(
             """
 record Range(int lo, int hi) {
     public Range {
@@ -479,20 +472,20 @@ record Range(int lo, int hi) {
     }
     "should parse text blocks properly" {
         val input = "String data = \"\"\"\nHere\n\"\"\";\n" + "System.out.println(data);".trim()
-        Source.fromSnippet(input).compile().execute().also {
+        Source.fromJavaSnippet(input).compile().execute().also {
             it should haveOutput("Here")
         }
     }
     "should parse text blocks properly in Kotlin snippets" {
         val input = "val data = \"\"\"Here\nMe\"\"\"\n" + "println(data)".trim()
-        Source.fromSnippet(input, SnippetArguments(fileType = Source.FileType.KOTLIN)).kompile().execute().also {
+        Source.fromKotlinSnippet(input).kompile().execute().also {
             it should haveExactOutput("Here\nMe")
         }
     }
     "!should not fail on unmapped compiler errors" {
         // Now caught by ANTLR4
         shouldThrow<CompilationFailed> {
-            Source.fromSnippet(
+            Source.fromJavaSnippet(
                 """
 int count(int[] v) {
   return 0;
@@ -502,7 +495,7 @@ int count(int[] v) {
         }
     }
     "should allow interfaces in snippets" {
-        Source.fromSnippet(
+        Source.fromJavaSnippet(
             """
 interface Test {
   void test();
@@ -514,7 +507,7 @@ class Tester implements Test {
         ).compile()
     }
     "should allow generic methods in Java snippets" {
-        Source.fromSnippet(
+        Source.fromJavaSnippet(
             """
 <T> T max(T[] array) {
   return null;
@@ -523,16 +516,15 @@ class Tester implements Test {
         ).compile()
     }
     "should allow generic methods in Kotlin snippets" {
-        Source.fromSnippet(
+        Source.fromKotlinSnippet(
             """
 class Test<T>
 fun <T> Test<T>.requireIndexIsNotNegative(index: Int): Unit = require(index >= 0)
             """.trim(),
-            SnippetArguments(fileType = Source.FileType.KOTLIN),
         ).kompile()
     }
     "should allow anonymous classes in snippets" {
-        Source.fromSnippet(
+        Source.fromJavaSnippet(
             """
 interface Adder {
   int addTo(int value);
@@ -547,7 +539,7 @@ Adder addOne = new Adder() {
         ).compile()
     }
     "should allow anonymous classes in Kotlin snippets" {
-        Source.fromSnippet(
+        Source.fromKotlinSnippet(
             """
 open class Person {
   open fun getType(): String {
@@ -560,11 +552,10 @@ val student = object : Person() {
   }
 }
 """.trim(),
-            SnippetArguments(fileType = Source.FileType.KOTLIN),
         ).kompile()
     }
     "should hoist functions in Kotlin snippets" {
-        Source.fromSnippet(
+        Source.fromKotlinSnippet(
             """
 fun first() = Test(3)
 data class Test(val first: Int)
@@ -573,7 +564,7 @@ fun second(): Test {
 }
 println(second())
             """.trim(),
-            SnippetArguments(fileType = Source.FileType.KOTLIN, indent = 4),
+            SnippetArguments(indent = 4),
         ).also {
             it.ktLint(KtLintArguments(failOnError = true))
         }.kompile().execute().also {
@@ -581,7 +572,7 @@ println(second())
         }
     }
     "should rewrite stack traces for Kotlin snippets" {
-        val source = Source.fromSnippet(
+        val source = Source.fromKotlinSnippet(
             """
 fun first(test: Int) {
   require(test % 2 == 0) { "Test is not even" }
@@ -591,7 +582,6 @@ fun second(test: Int) {
 }
 second(3)
             """.trim(),
-            SnippetArguments(fileType = Source.FileType.KOTLIN),
         )
         source.kompile().execute().also { results ->
             results.threw!!.getStackTraceForSource(source).lines().also {
@@ -603,7 +593,7 @@ second(3)
     }
     "should rewrite compilation errors for Kotlin snippets" {
         val exception = shouldThrow<CompilationFailed> {
-            Source.fromSnippet(
+            Source.fromKotlinSnippet(
                 """
 fun reversePrint(values: CharArray): Int {
   var tempsize = values.size
@@ -614,13 +604,12 @@ fun reversePrint(values: CharArray): Int {
   return temp.size
 }
             """.trim(),
-                SnippetArguments(fileType = Source.FileType.KOTLIN),
             ).kompile()
         }
         exception.errors.first().location!!.line shouldBe 3
     }
     "should parse Kotlin property getters and setters" {
-        Source.fromSnippet(
+        Source.fromKotlinSnippet(
             """
 class Dog(val name: String?) {
   var age: Double
@@ -630,9 +619,8 @@ class Dog(val name: String?) {
     get() = field
 }
             """.trim(),
-            SnippetArguments(fileType = Source.FileType.KOTLIN),
         )
-        Source.fromSnippet(
+        Source.fromKotlinSnippet(
             """
 class Dog(val name: String?) {
   var age: Double
@@ -642,11 +630,10 @@ class Dog(val name: String?) {
     }
 }
             """.trim(),
-            SnippetArguments(fileType = Source.FileType.KOTLIN),
         )
     }
     "should parse Kotlin secondary constructors" {
-        Source.fromSnippet(
+        Source.fromKotlinSnippet(
             """
 class Person(val name: String, var age: Double) {
   constructor(name: String) : this(name, 0.0)
@@ -655,23 +642,21 @@ class Person(val name: String, var age: Double) {
   }
 }
             """.trim(),
-            SnippetArguments(fileType = Source.FileType.KOTLIN),
         )
     }
     "should parse Kotlin functional interfaces" {
-        Source.fromSnippet(
+        Source.fromKotlinSnippet(
             """
 fun interface It {
   fun it(value: Int): Boolean
 }
 val first = It { value -> value % 2 == 0 }
             """.trim(),
-            SnippetArguments(fileType = Source.FileType.KOTLIN),
         )
     }
     "should parse Java 15 case syntax" {
         if (systemCompilerVersion >= 14) {
-            Source.fromSnippet(
+            Source.fromJavaSnippet(
                 """
 int foo = 3;
 boolean boo = switch (foo) {
@@ -685,7 +670,7 @@ System.out.println(boo);
     }
     "should parse another Java 15 case syntax" {
         if (systemCompilerVersion >= 14) {
-            Source.fromSnippet(
+            Source.fromJavaSnippet(
                 """
 int foo = 3;
 boolean boo = switch (foo) {
@@ -701,7 +686,7 @@ boolean boo = switch (foo) {
         }
     }
     "should use Example.main when no loose code is provided" {
-        Source.fromSnippet(
+        Source.fromJavaSnippet(
             """
 class Another {}
 public class Example {
@@ -713,7 +698,7 @@ public class Example {
             executionResult should haveCompleted()
             executionResult should haveOutput("Here")
         }
-        Source.fromSnippet(
+        Source.fromJavaSnippet(
             """
 public class Example {
   public static void main() {
@@ -727,7 +712,7 @@ public class Example {
         }
     }
     "should use Example.main even with comments" {
-        Source.fromSnippet(
+        Source.fromJavaSnippet(
             """
 // Test
 public class Example {
@@ -741,7 +726,7 @@ public class Example {
         }
     }
     "should not use Example.main when a top-level method exists" {
-        Source.fromSnippet(
+        Source.fromJavaSnippet(
             """
 int another() {
  return 0;
@@ -757,7 +742,7 @@ public class Example {
         }
     }
     "should not use Example.main when Example is not public" {
-        Source.fromSnippet(
+        Source.fromJavaSnippet(
             """
 class Example {
   public static void main(String[] unused) {
@@ -770,13 +755,12 @@ class Example {
         }
     }
     "should parse kotlin snippets without empty main when requested" {
-        Source.fromSnippet(
+        Source.fromKotlinSnippet(
             """
 fun test() {
   i = 0
 }
 """.trim(),
-            SnippetArguments(fileType = Source.FileType.KOTLIN),
         ).also {
             it.rewrittenSource.lines() shouldHaveSize 9
             val compilerError = shouldThrow<CompilationFailed> {
@@ -785,13 +769,13 @@ fun test() {
             compilerError.errors shouldHaveSize 1
             compilerError.errors[0].location?.line shouldBe 2
         }
-        Source.fromSnippet(
+        Source.fromKotlinSnippet(
             """
 fun test() {
   i = 0
 }
 """.trim(),
-            SnippetArguments(fileType = Source.FileType.KOTLIN, noEmptyMain = true),
+            SnippetArguments(noEmptyMain = true),
         ).also {
             it.rewrittenSource.lines() shouldHaveSize 7
             val compilerError = shouldThrow<CompilationFailed> {
@@ -802,22 +786,21 @@ fun test() {
         }
     }
     "should snippet Kotlin code with main method" {
-        Source.fromSnippet(
+        Source.fromKotlinSnippet(
             """
 fun main() {
   println("Here")
 }
                 """.trim(),
-            SnippetArguments(fileType = Source.FileType.KOTLIN, noEmptyMain = true),
+            SnippetArguments(noEmptyMain = true),
         ).kompile()
     }
     "should not include snippet errors past the end" {
         shouldThrow<SnippetTransformationFailed> {
-            Source.fromSnippet(
+            Source.fromJavaSnippet(
                 """
 System.out.println("He
                 """.trim(),
-                SnippetArguments(),
             )
         }.also {
             it.errors.size shouldBe 1
@@ -825,48 +808,44 @@ System.out.println("He
     }
     "should clean nasty ANTLR4 messages" {
         shouldThrow<SnippetTransformationFailed> {
-            Source.fromSnippet(
+            Source.fromJavaSnippet(
                 """if (true) {
   System.out.println("Here");
 
                 """.trim(),
-                SnippetArguments(),
             )
         }.also {
             it.errors.size shouldBe 1
             it.errors.first().message shouldBe "reached end of file while parsing"
         }
         shouldThrow<SnippetTransformationFailed> {
-            Source.fromSnippet(
+            Source.fromJavaSnippet(
                 """if (true) {
   System.out.println("Here");
 }}
                 """.trim(),
-                SnippetArguments(),
             )
         }.also {
             it.errors.size shouldBe 1
             it.errors.first().message shouldBe "extraneous input '}'"
         }
         shouldThrow<SnippetTransformationFailed> {
-            Source.fromSnippet(
+            Source.fromJavaSnippet(
                 """
 /*
 comment
                 """.trim(),
-                SnippetArguments(),
             )
         }.also {
             it.errors.size shouldBe 1
             it.errors.first().message shouldBe "mismatched input '/'"
         }
         shouldThrow<SnippetTransformationFailed> {
-            Source.fromSnippet(
+            Source.fromKotlinSnippet(
                 """
 /*
 comment
                 """.trim(),
-                SnippetArguments(fileType = Source.FileType.KOTLIN),
             )
         }.also {
             it.errors.size shouldBe 1

@@ -26,6 +26,7 @@ data class SnippetProperties(
     val importCount: Int,
     val looseCount: Int,
     val methodCount: Int,
+    val classCount: Int,
 )
 
 @Suppress("LongParameterList")
@@ -315,7 +316,10 @@ ${" ".repeat(snippetArguments.indent * 2)}@JvmStatic fun main() {""".lines().let
     var mainMethodLine = -1
     val methodLines = mutableSetOf<IntRange>()
     val klassLines = mutableSetOf<IntRange>()
+
     var methodCount = 0
+    var classCount = 0
+
     parseTree.statement().mapNotNull { it.declaration()?.functionDeclaration() }.forEach {
         if (it.simpleIdentifier().text == "main" && it.functionValueParameters().functionValueParameter().isEmpty()) {
             sawMainMethod = true
@@ -325,12 +329,15 @@ ${" ".repeat(snippetArguments.indent * 2)}@JvmStatic fun main() {""".lines().let
         methodLines.add(it.start.line..it.stop.line)
     }
     parseTree.statement().mapNotNull { it.declaration()?.classDeclaration() }.forEach {
+        classCount++
         klassLines.add(it.start.line..it.stop.line)
     }
     parseTree.statement().mapNotNull { it.declaration()?.interfaceDeclaration() }.forEach {
+        classCount++
         klassLines.add(it.start.line..it.stop.line)
     }
     parseTree.statement().mapNotNull { it.declaration()?.objectDeclaration() }.forEach {
+        classCount++
         klassLines.add(it.start.line..it.stop.line)
     }
 
@@ -498,7 +505,7 @@ ${" ".repeat(snippetArguments.indent * 2)}@JvmStatic fun main() {""".lines().let
         "MainKt",
         "main()",
         Source.FileType.KOTLIN,
-        SnippetProperties(importCount, looseCount, methodCount),
+        SnippetProperties(importCount, looseCount, methodCount, classCount),
         remappedLineMapping,
         "MainKt",
     )
@@ -552,6 +559,7 @@ private fun sourceFromJavaSnippet(originalSource: String, snippetArguments: Snip
     val methodNames = mutableSetOf<String>()
 
     var methodCount = 0
+    var classCount = 0
 
     val visitorResults = object : SnippetParserBaseVisitor<Unit>() {
         val errors = mutableListOf<SnippetTransformationError>()
@@ -622,6 +630,7 @@ private fun sourceFromJavaSnippet(originalSource: String, snippetArguments: Snip
                 return
             }
             val parent = context.parent as SnippetParser.LocalTypeDeclarationContext
+            classCount++
             markAs(parent.start.line, parent.stop.line, "class")
             val className = context.identifier().text
             classNames.add(className)
@@ -659,6 +668,7 @@ private fun sourceFromJavaSnippet(originalSource: String, snippetArguments: Snip
                 return
             }
             val parent = context.parent as SnippetParser.LocalTypeDeclarationContext
+            classCount++
             markAs(parent.start.line, parent.stop.line, "class")
             val className = context.identifier().text
             classNames.add(className)
@@ -669,6 +679,7 @@ private fun sourceFromJavaSnippet(originalSource: String, snippetArguments: Snip
                 return
             }
             val parent = context.parent as SnippetParser.LocalTypeDeclarationContext
+            classCount++
             markAs(parent.start.line, parent.stop.line, "record")
             val className = context.identifier().text
             classNames.add(className)
@@ -849,7 +860,7 @@ private fun sourceFromJavaSnippet(originalSource: String, snippetArguments: Snip
         snippetClassName,
         "$snippetMainMethodName()",
         Source.FileType.JAVA,
-        SnippetProperties(importCount, looseCount, methodCount),
+        SnippetProperties(importCount, looseCount, methodCount, classCount),
         remappedLineMapping,
         entryClassName,
     )
