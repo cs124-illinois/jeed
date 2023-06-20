@@ -7,7 +7,7 @@ plugins {
 dependencies {
     implementation(project(":core"))
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.1")
-    implementation("ch.qos.logback:logback-classic:1.4.7")
+    implementation("ch.qos.logback:logback-classic:1.4.8")
     implementation("io.github.microutils:kotlin-logging:3.0.5")
 }
 application {

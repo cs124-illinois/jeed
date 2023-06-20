@@ -22,6 +22,7 @@ import edu.illinois.cs.cs125.jeed.core.KtLintFailed
 import edu.illinois.cs.cs125.jeed.core.MutationsFailed
 import edu.illinois.cs.cs125.jeed.core.Sandbox
 import edu.illinois.cs.cs125.jeed.core.Snippet
+import edu.illinois.cs.cs125.jeed.core.SnippetProperties
 import edu.illinois.cs.cs125.jeed.core.SnippetTransformationError
 import edu.illinois.cs.cs125.jeed.core.SnippetTransformationFailed
 import edu.illinois.cs.cs125.jeed.core.Source
@@ -128,7 +129,6 @@ class ComplexityFailedAdapter {
         return ComplexityFailed(complexityFailedJson.errors)
     }
 
-    @Suppress("UNCHECKED_CAST")
     @ToJson
     fun complexityFailedToJson(complexityFailed: ComplexityFailed): ComplexityFailedJson {
         return ComplexityFailedJson(complexityFailed.errors)
@@ -248,6 +248,7 @@ data class SnippetJson(
     val wrappedClassName: String,
     val looseCodeMethodName: String,
     val fileType: String,
+    val snippetProperties: SnippetProperties,
 )
 
 class SnippetAdapter {
@@ -261,6 +262,7 @@ class SnippetAdapter {
             snippetJson.wrappedClassName,
             snippetJson.looseCodeMethodName,
             Source.FileType.valueOf(snippetJson.fileType),
+            snippetJson.snippetProperties,
         )
     }
 
@@ -274,6 +276,7 @@ class SnippetAdapter {
             snippet.wrappedClassName,
             snippet.looseCodeMethodName,
             snippet.fileType.name,
+            snippet.snippetProperties,
         )
     }
 }
@@ -421,7 +424,6 @@ class FeaturesFailedAdapter {
         return FeaturesFailed(featuresFailedJson.errors)
     }
 
-    @Suppress("UNCHECKED_CAST")
     @ToJson
     fun featuresFailedToJson(featuresFailed: FeaturesFailed): FeaturesFailedJson {
         return FeaturesFailedJson(featuresFailed.errors)
@@ -437,7 +439,6 @@ class MutationsFailedAdapter {
         return MutationsFailed(mutationsFailedJson.errors)
     }
 
-    @Suppress("UNCHECKED_CAST")
     @ToJson
     fun mutationsFailedToJson(mutationsFailed: MutationsFailed): MutationsFailedJson {
         return MutationsFailedJson(mutationsFailed.errors)

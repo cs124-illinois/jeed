@@ -21,6 +21,13 @@ import org.jetbrains.kotlin.backend.common.pop
 
 const val SNIPPET_SOURCE = ""
 
+@JsonClass(generateAdapter = true)
+data class SnippetProperties(
+    val importCount: Int,
+    val looseCount: Int,
+    val methodCount: Int,
+)
+
 @Suppress("LongParameterList")
 class Snippet(
     sources: Sources,
@@ -30,6 +37,7 @@ class Snippet(
     val wrappedClassName: String,
     val looseCodeMethodName: String,
     val fileType: FileType,
+    val snippetProperties: SnippetProperties,
     @Transient private val remappedLineMapping: Map<Int, RemappedLine> = mapOf(),
     @Transient val entryClassName: String = wrappedClassName,
 ) : Source(
@@ -286,6 +294,8 @@ private fun sourceFromKotlinSnippet(originalSource: String, snippetArguments: Sn
         }
     }
 
+    val importCount = parseTree.importList()?.importHeader()?.size ?: 0
+
     val preambleStart = parseTree.importList().importHeader().firstOrNull()?.start?.line ?: 0
     val preambleStop = parseTree.importList().importHeader()?.lastOrNull()?.stop?.line?.inc() ?: 0
     for (lineNumber in preambleStart until preambleStop) {
@@ -305,11 +315,13 @@ ${" ".repeat(snippetArguments.indent * 2)}@JvmStatic fun main() {""".lines().let
     var mainMethodLine = -1
     val methodLines = mutableSetOf<IntRange>()
     val klassLines = mutableSetOf<IntRange>()
+    var methodCount = 0
     parseTree.statement().mapNotNull { it.declaration()?.functionDeclaration() }.forEach {
         if (it.simpleIdentifier().text == "main" && it.functionValueParameters().functionValueParameter().isEmpty()) {
             sawMainMethod = true
             mainMethodLine = it.start.line
         }
+        methodCount++
         methodLines.add(it.start.line..it.stop.line)
     }
     parseTree.statement().mapNotNull { it.declaration()?.classDeclaration() }.forEach {
@@ -475,6 +487,9 @@ ${" ".repeat(snippetArguments.indent * 2)}@JvmStatic fun main() {""".lines().let
             else -> it
         }
     }
+
+    val looseCount = looseLines.joinToString("\n").countLines(Source.FileType.KOTLIN).source
+
     return Snippet(
         Sources(hashMapOf(SNIPPET_SOURCE to rewrittenSource)),
         originalSource,
@@ -483,6 +498,7 @@ ${" ".repeat(snippetArguments.indent * 2)}@JvmStatic fun main() {""".lines().let
         "MainKt",
         "main()",
         Source.FileType.KOTLIN,
+        SnippetProperties(importCount, looseCount, methodCount),
         remappedLineMapping,
         "MainKt",
     )
@@ -534,6 +550,8 @@ private fun sourceFromJavaSnippet(originalSource: String, snippetArguments: Snip
     val contentMapping = mutableMapOf<Int, String>()
     val classNames = mutableSetOf<String>()
     val methodNames = mutableSetOf<String>()
+
+    var methodCount = 0
 
     val visitorResults = object : SnippetParserBaseVisitor<Unit>() {
         val errors = mutableListOf<SnippetTransformationError>()
@@ -662,6 +680,7 @@ private fun sourceFromJavaSnippet(originalSource: String, snippetArguments: Snip
             }
             markAs(context.start.line, context.stop.line, "method")
             contentMapping[context.start.line - 1] = "method:start"
+            methodCount++
             val methodName = context.identifier().text
             methodNames.add(methodName)
         }
@@ -672,6 +691,7 @@ private fun sourceFromJavaSnippet(originalSource: String, snippetArguments: Snip
             }
             markAs(context.start.line, context.stop.line, "method")
             contentMapping[context.start.line - 1] = "method:start"
+            methodCount++
             val methodName = context.methodDeclaration().identifier().text
             methodNames.add(methodName)
         }
@@ -785,9 +805,11 @@ private fun sourceFromJavaSnippet(originalSource: String, snippetArguments: Snip
         }
     }
 
-    val hasLooseCode =
-        methodDeclarations.isNotEmpty() || looseCode.joinToString("\n").countLines(Source.FileType.JAVA).source > 0
+    val looseCount = looseCode.joinToString("\n").countLines(Source.FileType.JAVA).source
+    val hasLooseCode = methodDeclarations.isNotEmpty() || looseCount > 0
     assert(originalSource.lines().size == remappedLineMapping.keys.size)
+
+    val importCount = contentMapping.values.filter { it == "import" }.size
 
     var rewrittenSource = ""
     if (importStatements.size > 0) {
@@ -827,6 +849,7 @@ private fun sourceFromJavaSnippet(originalSource: String, snippetArguments: Snip
         snippetClassName,
         "$snippetMainMethodName()",
         Source.FileType.JAVA,
+        SnippetProperties(importCount, looseCount, methodCount),
         remappedLineMapping,
         entryClassName,
     )

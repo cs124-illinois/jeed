@@ -10,8 +10,8 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 
 class TestSnippet : StringSpec({
-    "should parse snippets" {
-        Source.fromSnippet(
+    "f: should parse snippets" {
+        Source.fromJavaSnippet(
             """
 import java.util.List;
 
@@ -28,10 +28,14 @@ int testing() {
 class AnotherTest { }
 int i = 0;
 i++;""".trim(),
-        )
+        ).snippetProperties.apply {
+            importCount shouldBe 1
+            looseCount shouldBe 2
+            methodCount shouldBe 1
+        }
     }
     "should parse Kotlin snippets" {
-        Source.fromSnippet(
+        Source.fromJavaSnippet(
             """
 import java.util.List
 
@@ -305,9 +309,11 @@ ByteBuddyAgent.install(ByteBuddyAgent.AttachmentProvider.ForEmulatedAttachment.I
         """.trim(),
         ).compile()
     }
-    "should parse kotlin snippets" {
-        Source.fromSnippet(
+    "f: should parse kotlin snippets" {
+        Source.fromKotlinSnippet(
             """
+import java.util.List
+
 data class Person(val name: String)
 fun test() {
   println("Here")
@@ -316,8 +322,11 @@ val i = 0
 println(i)
 test()
 """.trim(),
-            SnippetArguments(fileType = Source.FileType.KOTLIN),
-        )
+        ).snippetProperties.apply {
+            importCount shouldBe 1
+            looseCount shouldBe 3
+            methodCount shouldBe 1
+        }
     }
     "should parse kotlin snippets containing only comments" {
         Source.fromSnippet(
