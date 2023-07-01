@@ -66,16 +66,18 @@ fun Source.parseJavaFile(entry: Map.Entry<String, String>): Source.ParsedSource 
     }
     val (parseTree, parser) = tokenStream.let {
         val parser = JavaParser(it)
+        /*
         parser.interpreter.decisionToDFA.also { dfa ->
             parser.interpreter = ParserATNSimulator(parser, parser.atn, dfa, PredictionContextCache())
         }
+         */
         parser.removeErrorListeners()
         parser.addErrorListener(errorListener)
         parser.trimParseTree = true
         try {
             Pair(parser.compilationUnit(), parser)
         } finally {
-            parser.interpreter.clearDFA()
+            // parser.interpreter.clearDFA()
         }
     }.also {
         errorListener.check()
@@ -83,6 +85,8 @@ fun Source.parseJavaFile(entry: Map.Entry<String, String>): Source.ParsedSource 
 
     return Source.ParsedSource(parseTree, charStream, entry.value, parser, tokenStream)
 }
+
+// private val cache = PredictionContextCache()
 
 fun Source.parseKotlinFile(entry: Map.Entry<String, String>): Source.ParsedSource {
     check(sourceFilenameToFileType(entry.key) == Source.FileType.KOTLIN) { "Must be called on a Kotlin file" }
@@ -97,9 +101,12 @@ fun Source.parseKotlinFile(entry: Map.Entry<String, String>): Source.ParsedSourc
     }
     val (parseTree, parser) = tokenStream.let {
         val parser = KotlinParser(it)
+
+        /*
         parser.interpreter.decisionToDFA.also { dfa ->
-            parser.interpreter = ParserATNSimulator(parser, parser.atn, dfa, PredictionContextCache())
+            parser.interpreter = ParserATNSimulator(parser, parser.atn, dfa, cache)
         }
+         */
 
         parser.trimParseTree = true
 
@@ -110,7 +117,7 @@ fun Source.parseKotlinFile(entry: Map.Entry<String, String>): Source.ParsedSourc
         } catch (e: StackOverflowError) {
             throw JeedParsingException(listOf(SourceError(null, "Code is too complicated to determine complexity")))
         } finally {
-            parser.interpreter.clearDFA()
+            // parser.interpreter.clearDFA()
         }
     }.also {
         errorListener.check()

@@ -2,7 +2,10 @@ package edu.illinois.cs.cs125.jeed.core
 
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import kotlin.time.ExperimentalTime
+import kotlin.time.measureTime
 
+@OptIn(ExperimentalTime::class)
 class TestParser : StringSpec({
     "it should parse kotlin code" {
         Source(
@@ -65,5 +68,58 @@ record State(int value) {
   }
 }
 """.trim().distinguish("java") shouldBe SourceType.JAVA_SOURCE
+    }
+    "it should parse long if statements" {
+        val source = """fun mystery(a: Int): Int {
+    if (a == -1) {
+      return 0
+    } else if (a == 0) {
+      return 0
+    } else if (a == 1) {
+      return 0
+    } else if (a == -2147483648) {
+      return 2
+    } else if (a == 889510) {
+      return 2
+    } else if (a == 598806) {
+      return 2
+    } else if (a == 974889) {
+      return 2
+    } else if (a == 485818) {
+      return 3
+    } else if (a == 858845) {
+      return 3
+    } else if (a == 887182) {
+      return 3
+    } else if (a == 668881) {
+      return 3
+    } else if (a == 668881) {
+      return 3
+    } else if (a == 668881) {
+      return 3
+    } else if (a == 668881) {
+      return 3
+    } else if (a == 668881) {
+      return 3
+    } else if (a == 668881) {
+      return 3
+    } else if (a == 668881) {
+      return 3
+    } else if (a == 668881) {
+      return 3
+    } else if (a == 668881) {
+      return 3
+    }
+    return 1
+}
+"""
+        measureTime {
+            Source.fromKotlin(source).getParsed("Main.kt").tree
+        }
+        measureTime {
+            repeat(8) {
+                Source.fromKotlin(source).getParsed("Main.kt").tree
+            }
+        }
     }
 })
