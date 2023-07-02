@@ -312,6 +312,8 @@ class KotlinComplexityListener(val source: Source, entry: Map.Entry<String, Stri
     }
 
     init {
-        ParseTreeWalker.DEFAULT.walk(this, source.getParsed(filename).tree)
+        val parsedSource = source.getParsed(filename)
+        // println(parsedSource.tree.format(parsedSource.parser))
+        ParseTreeWalker.DEFAULT.walk(this, parsedSource.tree)
     }
 }

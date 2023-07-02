@@ -8,7 +8,10 @@ import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.string.shouldMatch
 import io.kotest.matchers.string.shouldNotContain
 import kotlin.random.Random
+import kotlin.time.ExperimentalTime
+import kotlin.time.measureTime
 
+@OptIn(ExperimentalTime::class)
 class TestKotlinMutater : StringSpec({
     "it should mutate equals" {
         Source.fromKotlin(
@@ -1065,5 +1068,106 @@ fun test() {
 }
 """,
         ).allMutations()
+    }
+    "!it should generate a lot of mutations" {
+        val originalSource = Source.fromKotlin(
+            """
+fun getPronunciation(input: String): String {
+  var characters = input.lowercase().toCharArray()
+  var i = 0
+  var pronunciation = ""
+  while (i < characters.size) {
+    var current = characters[i]
+    var next = ' '
+    if (i < characters.size - 1) {
+      next = characters[i + 1]
+    }
+    var previous = ' '
+    if (i > 0) {
+      previous = characters[i - 1]
+    }
+    if (current == 'w') {
+      if (previous == 'i' || previous == 'e') {
+        pronunciation += "v"
+      } else {
+        pronunciation += "w"
+      }
+    } else if (current == 'a') {
+      if (next == 'i' || next == 'e') {
+        pronunciation += "eye-"
+        i++
+      } else if (next == 'o' || next == 'u') {
+        pronunciation += "ow-"
+          i++
+        } else {
+          pronunciation += "ah-"
+        }
+      } else if (current == 'e') {
+        if (next == 'i') {
+          pronunciation += "ay-"
+          i++
+        } else if (next == 'u') {
+          pronunciation += "eh-oo-"
+          i++
+        } else {
+          pronunciation += "eh-"
+        }
+      } else if (current == 'i') {
+        if (next == 'u') {
+
+        }
+      } else if (current == 'o') {
+        if (next == 'i') {
+          pronunciation += "oy-"
+          i++
+        } else if (next == 'u') {
+          pronunciation += "ow-"
+          i++
+        } else {
+          pronunciation += "oh-"
+        }
+      } else if (current == 'u') {
+        if (next == 'i') {
+          pronunciation += "ooey-"
+          i++
+        } else {
+          pronunciation += "oo-"
+        }
+        //p,k,h,l,m,n
+        } else if (current == 'p') {
+          pronunciation += "p"
+        } else if (current == 'k') {
+          pronunciation += "k"
+        } else if (current == 'h') {
+          pronunciation += "h"
+        } else if (current == 'l') {
+          pronunciation += "l"
+        } else if (current == 'm') {
+          pronunciation += "m"
+        } else if (current == 'n') {
+          pronunciation += "n"
+      } else {
+       throw IllegalArgumentException()
+      }
+      i++
+    }
+    if (pronunciation.endsWith("-")) {
+      return pronunciation.substring(0, pronunciation.length - 1)
+  } else {
+    return pronunciation
+  }
+}""",
+        )
+        val sourceTime = measureTime {
+            originalSource.complexity()
+        }
+        println("Source: $sourceTime")
+
+        originalSource.allFixedMutations().forEachIndexed { _, mutatedSource ->
+            val mutationTime = measureTime {
+                Source.fromKotlin(mutatedSource.contents).complexity()
+            }
+            println(mutationTime)
+        }
     }
 })
