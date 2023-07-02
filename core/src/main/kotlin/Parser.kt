@@ -88,7 +88,7 @@ fun Source.parseJavaFile(entry: Map.Entry<String, String>): Source.ParsedSource 
         val parser = JavaParser(it)
 
         parser.interpreter.decisionToDFA.also { dfa ->
-            parser.interpreter = ParserATNSimulator(parser, parser.atn, dfa, cache)
+            parser.interpreter = ParserATNSimulator(parser, parser.atn, dfa, PredictionContextCache())
         }
 
         parser.removeErrorListeners()
@@ -122,7 +122,7 @@ fun Source.parseKotlinFile(entry: Map.Entry<String, String>): Source.ParsedSourc
         val parser = KotlinParser(it)
 
         parser.interpreter.decisionToDFA.also { dfa ->
-            parser.interpreter = ParserATNSimulator(parser, parser.atn, dfa, cache)
+            parser.interpreter = ParserATNSimulator(parser, parser.atn, dfa, PredictionContextCache())
         }
 
         parser.trimParseTree = true
