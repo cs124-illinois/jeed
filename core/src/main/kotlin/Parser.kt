@@ -24,24 +24,65 @@ import org.antlr.v4.runtime.tree.Trees
 class JeedParseError(location: SourceLocation?, message: String) : SourceError(location, message)
 class JeedParsingException(errors: List<SourceError>) : JeedError(errors)
 
-/*
-internal val parserCache = object : PredictionContextCache() {
-    private val map = ConcurrentHashMap<PredictionContext, PredictionContext>()
-
-    override fun add(ctx: PredictionContext): PredictionContext {
-        if (ctx === EmptyPredictionContext.Instance) {
-            return EmptyPredictionContext.Instance
+private data class ANTLR4Cache(
+    val thread: Thread,
+    val cache: PredictionContextCache = PredictionContextCache(),
+    var javaDFA: Array<DFA>? = null,
+    var kotlinDFA: Array<DFA>? = null,
+    var snippetDFA: Array<DFA>? = null,
+) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) {
+            return true
         }
-        return map.getOrPut(ctx) { ctx }
+        if (javaClass != other?.javaClass) {
+            return false
+        }
+
+        other as ANTLR4Cache
+        return thread == other.thread
     }
 
-    override fun get(ctx: PredictionContext): PredictionContext? {
-        return map[ctx]
+    override fun hashCode(): Int {
+        return thread.hashCode()
     }
-
-    override fun size() = map.size
 }
-*/
+
+private val threadCacheMap = mutableMapOf<Thread, ANTLR4Cache>()
+fun Parser.makeThreadSafe() {
+    val threadCache = threadCacheMap.getOrPut(Thread.currentThread()) {
+        ANTLR4Cache(Thread.currentThread())
+    }
+
+    val dfa = when (this) {
+        is JavaParser -> {
+            if (threadCache.javaDFA == null) {
+                threadCache.javaDFA = interpreter.decisionToDFA.mapIndexed { i, _ -> DFA(atn.getDecisionState(i), i) }.toTypedArray()
+            }
+            threadCache.javaDFA
+        }
+        is KotlinParser -> {
+            if (threadCache.kotlinDFA == null) {
+                threadCache.kotlinDFA = interpreter.decisionToDFA.mapIndexed { i, _ -> DFA(atn.getDecisionState(i), i) }.toTypedArray()
+            }
+            threadCache.kotlinDFA
+        }
+        is SnippetParser -> {
+            if (threadCache.snippetDFA == null) {
+                threadCache.snippetDFA = interpreter.decisionToDFA.mapIndexed { i, _ -> DFA(atn.getDecisionState(i), i) }.toTypedArray()
+            }
+            threadCache.snippetDFA
+        }
+        else -> error("No DFA configured for $this")
+    }
+
+    interpreter = ParserATNSimulator(
+        this,
+        this.atn,
+        dfa,
+        threadCache.cache,
+    )
+}
 
 class JeedErrorListener(val source: Source, entry: Map.Entry<String, String>) : BaseErrorListener() {
     private val name = entry.key
@@ -85,16 +126,7 @@ fun Source.parseJavaFile(entry: Map.Entry<String, String>): Source.ParsedSource 
         errorListener.check()
     }
     val (parseTree, parser) = tokenStream.let {
-        val parser = JavaParser(it)
-
-        parser.interpreter.decisionToDFA.also { dfa ->
-            parser.interpreter = ParserATNSimulator(
-                parser,
-                parser.atn,
-                dfa.mapIndexed { i, _ -> DFA(parser.atn.getDecisionState(i), i) }.toTypedArray(),
-                PredictionContextCache()
-            )
-        }
+        val parser = JavaParser(it).apply { makeThreadSafe() }
 
         parser.removeErrorListeners()
         parser.addErrorListener(errorListener)
@@ -102,7 +134,7 @@ fun Source.parseJavaFile(entry: Map.Entry<String, String>): Source.ParsedSource 
         try {
             Pair(parser.compilationUnit(), parser)
         } finally {
-            parser.interpreter.clearDFA()
+            // parser.interpreter.clearDFA()
         }
     }.also {
         errorListener.check()
@@ -123,16 +155,7 @@ fun Source.parseKotlinFile(entry: Map.Entry<String, String>): Source.ParsedSourc
         errorListener.check()
     }
     val (parseTree, parser) = tokenStream.let {
-        val parser = KotlinParser(it)
-
-        parser.interpreter.decisionToDFA.also { dfa ->
-            parser.interpreter = ParserATNSimulator(
-                parser,
-                parser.atn,
-                dfa.mapIndexed { i, _ -> DFA(parser.atn.getDecisionState(i), i) }.toTypedArray(),
-                PredictionContextCache()
-            )
-        }
+        val parser = KotlinParser(it).apply { makeThreadSafe() }
 
         parser.trimParseTree = true
 
@@ -143,7 +166,7 @@ fun Source.parseKotlinFile(entry: Map.Entry<String, String>): Source.ParsedSourc
         } catch (e: StackOverflowError) {
             throw JeedParsingException(listOf(SourceError(null, "Code is too complicated to determine complexity")))
         } finally {
-            parser.interpreter.clearDFA()
+            // parser.interpreter.clearDFA()
         }
     }.also {
         errorListener.check()
@@ -199,15 +222,7 @@ fun String.isJavaSource(): Boolean {
                 CommonTokenStream(lexer)
             }
         }.also { tokenStream ->
-            JavaParser(tokenStream).let { parser ->
-                parser.interpreter.decisionToDFA.also { dfa ->
-                    parser.interpreter = ParserATNSimulator(
-                        parser,
-                        parser.atn,
-                        dfa.mapIndexed { i, _ -> DFA(parser.atn.getDecisionState(i), i) }.toTypedArray(),
-                        PredictionContextCache()
-                    )
-                }
+            JavaParser(tokenStream).apply { makeThreadSafe() }.let { parser ->
                 parser.removeErrorListeners()
                 parser.addErrorListener(errorListener)
                 parser.compilationUnit()
@@ -230,15 +245,7 @@ fun String.isJavaSnippet(): Boolean {
                 CommonTokenStream(lexer)
             }
         }.also { tokenStream ->
-            SnippetParser(tokenStream).let { parser ->
-                parser.interpreter.decisionToDFA.also { dfa ->
-                    parser.interpreter = ParserATNSimulator(
-                        parser,
-                        parser.atn,
-                        dfa.mapIndexed { i, _ -> DFA(parser.atn.getDecisionState(i), i) }.toTypedArray(),
-                        PredictionContextCache()
-                    )
-                }
+            SnippetParser(tokenStream).apply { makeThreadSafe() }.let { parser ->
                 parser.removeErrorListeners()
                 parser.addErrorListener(errorListener)
                 parser.block()
@@ -261,15 +268,7 @@ fun String.isKotlinSource(): Boolean {
                 CommonTokenStream(lexer)
             }
         }.also { tokenStream ->
-            KotlinParser(tokenStream).let { parser ->
-                parser.interpreter.decisionToDFA.also { dfa ->
-                    parser.interpreter = ParserATNSimulator(
-                        parser,
-                        parser.atn,
-                        dfa.mapIndexed { i, _ -> DFA(parser.atn.getDecisionState(i), i) }.toTypedArray(),
-                        PredictionContextCache()
-                    )
-                }
+            KotlinParser(tokenStream).apply { makeThreadSafe() }.let { parser ->
                 parser.removeErrorListeners()
                 parser.addErrorListener(errorListener)
                 parser.kotlinFile()
@@ -292,15 +291,7 @@ fun String.isKotlinSnippet(): Boolean {
                 CommonTokenStream(lexer)
             }
         }.also { tokenStream ->
-            KotlinParser(tokenStream).let { parser ->
-                parser.interpreter.decisionToDFA.also { dfa ->
-                    parser.interpreter = ParserATNSimulator(
-                        parser,
-                        parser.atn,
-                        dfa.mapIndexed { i, _ -> DFA(parser.atn.getDecisionState(i), i) }.toTypedArray(),
-                        PredictionContextCache()
-                    )
-                }
+            KotlinParser(tokenStream).apply { makeThreadSafe() }.let { parser ->
                 parser.removeErrorListeners()
                 parser.addErrorListener(errorListener)
                 parser.script()

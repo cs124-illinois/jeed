@@ -113,13 +113,17 @@ record State(int value) {
     return 1
 }
 """
-        println(measureTime {
-            Source.fromKotlin(source).getParsed("Main.kt").tree
-        })
-        repeat(8) {
-            println(measureTime {
+        println(
+            measureTime {
                 Source.fromKotlin(source).getParsed("Main.kt").tree
-            })
+            },
+        )
+        repeat(8) {
+            println(
+                measureTime {
+                    Source.fromKotlin(source).getParsed("Main.kt").tree
+                },
+            )
         }
     }
 })
