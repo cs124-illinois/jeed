@@ -69,7 +69,7 @@ record State(int value) {
 }
 """.trim().distinguish("java") shouldBe SourceType.JAVA_SOURCE
     }
-    "it should parse long if statements" {
+    "f: it should parse long if statements" {
         val source = """fun mystery(a: Int): Int {
     if (a == -1) {
       return 0
