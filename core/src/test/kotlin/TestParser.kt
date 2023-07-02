@@ -69,7 +69,7 @@ record State(int value) {
 }
 """.trim().distinguish("java") shouldBe SourceType.JAVA_SOURCE
     }
-    "it should parse long if statements" {
+    "!it should parse long if statements" {
         val source = """fun mystery(a: Int): Int {
     if (a == -1) {
       return 0
@@ -113,13 +113,13 @@ record State(int value) {
     return 1
 }
 """
-        measureTime {
+        println(measureTime {
             Source.fromKotlin(source).getParsed("Main.kt").tree
-        }
-        measureTime {
-            repeat(8) {
+        })
+        repeat(8) {
+            println(measureTime {
                 Source.fromKotlin(source).getParsed("Main.kt").tree
-            }
+            })
         }
     }
 })

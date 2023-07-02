@@ -14,14 +14,34 @@ import org.antlr.v4.runtime.CommonTokenStream
 import org.antlr.v4.runtime.Parser
 import org.antlr.v4.runtime.RecognitionException
 import org.antlr.v4.runtime.Recognizer
+import org.antlr.v4.runtime.atn.EmptyPredictionContext
 import org.antlr.v4.runtime.atn.ParserATNSimulator
+import org.antlr.v4.runtime.atn.PredictionContext
 import org.antlr.v4.runtime.atn.PredictionContextCache
 import org.antlr.v4.runtime.misc.Utils
 import org.antlr.v4.runtime.tree.Tree
 import org.antlr.v4.runtime.tree.Trees
+import java.util.concurrent.ConcurrentHashMap
 
 class JeedParseError(location: SourceLocation?, message: String) : SourceError(location, message)
 class JeedParsingException(errors: List<SourceError>) : JeedError(errors)
+
+private val cache = object : PredictionContextCache() {
+    private val map = ConcurrentHashMap<PredictionContext, PredictionContext>()
+
+    override fun add(ctx: PredictionContext): PredictionContext {
+        if (ctx === EmptyPredictionContext.Instance) {
+            return EmptyPredictionContext.Instance
+        }
+        return map.getOrPut(ctx) { ctx }
+    }
+
+    override fun get(ctx: PredictionContext): PredictionContext? {
+        return map[ctx]
+    }
+
+    override fun size() = map.size
+}
 
 class JeedErrorListener(val source: Source, entry: Map.Entry<String, String>) : BaseErrorListener() {
     private val name = entry.key
@@ -66,11 +86,11 @@ fun Source.parseJavaFile(entry: Map.Entry<String, String>): Source.ParsedSource 
     }
     val (parseTree, parser) = tokenStream.let {
         val parser = JavaParser(it)
-        /*
+
         parser.interpreter.decisionToDFA.also { dfa ->
-            parser.interpreter = ParserATNSimulator(parser, parser.atn, dfa, PredictionContextCache())
+            parser.interpreter = ParserATNSimulator(parser, parser.atn, dfa, cache)
         }
-         */
+
         parser.removeErrorListeners()
         parser.addErrorListener(errorListener)
         parser.trimParseTree = true
@@ -86,7 +106,6 @@ fun Source.parseJavaFile(entry: Map.Entry<String, String>): Source.ParsedSource 
     return Source.ParsedSource(parseTree, charStream, entry.value, parser, tokenStream)
 }
 
-// private val cache = PredictionContextCache()
 
 fun Source.parseKotlinFile(entry: Map.Entry<String, String>): Source.ParsedSource {
     check(sourceFilenameToFileType(entry.key) == Source.FileType.KOTLIN) { "Must be called on a Kotlin file" }
@@ -102,11 +121,9 @@ fun Source.parseKotlinFile(entry: Map.Entry<String, String>): Source.ParsedSourc
     val (parseTree, parser) = tokenStream.let {
         val parser = KotlinParser(it)
 
-        /*
         parser.interpreter.decisionToDFA.also { dfa ->
             parser.interpreter = ParserATNSimulator(parser, parser.atn, dfa, cache)
         }
-         */
 
         parser.trimParseTree = true
 
