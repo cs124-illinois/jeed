@@ -18,6 +18,7 @@ import org.antlr.v4.runtime.atn.EmptyPredictionContext
 import org.antlr.v4.runtime.atn.ParserATNSimulator
 import org.antlr.v4.runtime.atn.PredictionContext
 import org.antlr.v4.runtime.atn.PredictionContextCache
+import org.antlr.v4.runtime.dfa.DFA
 import org.antlr.v4.runtime.misc.Utils
 import org.antlr.v4.runtime.tree.Tree
 import org.antlr.v4.runtime.tree.Trees
@@ -88,7 +89,12 @@ fun Source.parseJavaFile(entry: Map.Entry<String, String>): Source.ParsedSource 
         val parser = JavaParser(it)
 
         parser.interpreter.decisionToDFA.also { dfa ->
-            parser.interpreter = ParserATNSimulator(parser, parser.atn, dfa, PredictionContextCache())
+            parser.interpreter = ParserATNSimulator(
+                parser,
+                parser.atn,
+                dfa.mapIndexed { i, _ -> DFA(parser.atn.getDecisionState(i), i) }.toTypedArray(),
+                PredictionContextCache()
+            )
         }
 
         parser.removeErrorListeners()
@@ -106,7 +112,6 @@ fun Source.parseJavaFile(entry: Map.Entry<String, String>): Source.ParsedSource 
     return Source.ParsedSource(parseTree, charStream, entry.value, parser, tokenStream)
 }
 
-
 fun Source.parseKotlinFile(entry: Map.Entry<String, String>): Source.ParsedSource {
     check(sourceFilenameToFileType(entry.key) == Source.FileType.KOTLIN) { "Must be called on a Kotlin file" }
     val errorListener = JeedErrorListener(this, entry)
@@ -122,7 +127,12 @@ fun Source.parseKotlinFile(entry: Map.Entry<String, String>): Source.ParsedSourc
         val parser = KotlinParser(it)
 
         parser.interpreter.decisionToDFA.also { dfa ->
-            parser.interpreter = ParserATNSimulator(parser, parser.atn, dfa, PredictionContextCache())
+            parser.interpreter = ParserATNSimulator(
+                parser,
+                parser.atn,
+                dfa.mapIndexed { i, _ -> DFA(parser.atn.getDecisionState(i), i) }.toTypedArray(),
+                PredictionContextCache()
+            )
         }
 
         parser.trimParseTree = true
