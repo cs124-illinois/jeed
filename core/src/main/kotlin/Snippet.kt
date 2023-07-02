@@ -240,7 +240,7 @@ private fun sourceFromKotlinSnippet(originalSource: String, snippetArguments: Sn
                 parser,
                 parser.atn,
                 dfa.mapIndexed { i, _ -> DFA(parser.atn.getDecisionState(i), i) }.toTypedArray(),
-                parserCache
+                PredictionContextCache()
             )
         }
         parser.trimParseTree = true
@@ -533,7 +533,12 @@ private fun sourceFromJavaSnippet(originalSource: String, snippetArguments: Snip
     }.let {
         val parser = SnippetParser(it)
         parser.interpreter.decisionToDFA.also { dfa ->
-            parser.interpreter = ParserATNSimulator(parser, parser.atn, dfa, PredictionContextCache())
+            parser.interpreter = ParserATNSimulator(
+                parser,
+                parser.atn,
+                dfa.mapIndexed { i, _ -> DFA(parser.atn.getDecisionState(i), i) }.toTypedArray(),
+                PredictionContextCache()
+            )
         }
         parser.trimParseTree = true
         parser

@@ -14,19 +14,17 @@ import org.antlr.v4.runtime.CommonTokenStream
 import org.antlr.v4.runtime.Parser
 import org.antlr.v4.runtime.RecognitionException
 import org.antlr.v4.runtime.Recognizer
-import org.antlr.v4.runtime.atn.EmptyPredictionContext
 import org.antlr.v4.runtime.atn.ParserATNSimulator
-import org.antlr.v4.runtime.atn.PredictionContext
 import org.antlr.v4.runtime.atn.PredictionContextCache
 import org.antlr.v4.runtime.dfa.DFA
 import org.antlr.v4.runtime.misc.Utils
 import org.antlr.v4.runtime.tree.Tree
 import org.antlr.v4.runtime.tree.Trees
-import java.util.concurrent.ConcurrentHashMap
 
 class JeedParseError(location: SourceLocation?, message: String) : SourceError(location, message)
 class JeedParsingException(errors: List<SourceError>) : JeedError(errors)
 
+/*
 internal val parserCache = object : PredictionContextCache() {
     private val map = ConcurrentHashMap<PredictionContext, PredictionContext>()
 
@@ -43,6 +41,7 @@ internal val parserCache = object : PredictionContextCache() {
 
     override fun size() = map.size
 }
+*/
 
 class JeedErrorListener(val source: Source, entry: Map.Entry<String, String>) : BaseErrorListener() {
     private val name = entry.key
@@ -93,7 +92,7 @@ fun Source.parseJavaFile(entry: Map.Entry<String, String>): Source.ParsedSource 
                 parser,
                 parser.atn,
                 dfa.mapIndexed { i, _ -> DFA(parser.atn.getDecisionState(i), i) }.toTypedArray(),
-                parserCache
+                PredictionContextCache()
             )
         }
 
@@ -131,7 +130,7 @@ fun Source.parseKotlinFile(entry: Map.Entry<String, String>): Source.ParsedSourc
                 parser,
                 parser.atn,
                 dfa.mapIndexed { i, _ -> DFA(parser.atn.getDecisionState(i), i) }.toTypedArray(),
-                parserCache
+                PredictionContextCache()
             )
         }
 
@@ -206,7 +205,7 @@ fun String.isJavaSource(): Boolean {
                         parser,
                         parser.atn,
                         dfa.mapIndexed { i, _ -> DFA(parser.atn.getDecisionState(i), i) }.toTypedArray(),
-                        parserCache
+                        PredictionContextCache()
                     )
                 }
                 parser.removeErrorListeners()
@@ -233,7 +232,12 @@ fun String.isJavaSnippet(): Boolean {
         }.also { tokenStream ->
             SnippetParser(tokenStream).let { parser ->
                 parser.interpreter.decisionToDFA.also { dfa ->
-                    parser.interpreter = ParserATNSimulator(parser, parser.atn, dfa, parserCache)
+                    parser.interpreter = ParserATNSimulator(
+                        parser,
+                        parser.atn,
+                        dfa.mapIndexed { i, _ -> DFA(parser.atn.getDecisionState(i), i) }.toTypedArray(),
+                        PredictionContextCache()
+                    )
                 }
                 parser.removeErrorListeners()
                 parser.addErrorListener(errorListener)
@@ -263,7 +267,7 @@ fun String.isKotlinSource(): Boolean {
                         parser,
                         parser.atn,
                         dfa.mapIndexed { i, _ -> DFA(parser.atn.getDecisionState(i), i) }.toTypedArray(),
-                        parserCache
+                        PredictionContextCache()
                     )
                 }
                 parser.removeErrorListeners()
@@ -294,7 +298,7 @@ fun String.isKotlinSnippet(): Boolean {
                         parser,
                         parser.atn,
                         dfa.mapIndexed { i, _ -> DFA(parser.atn.getDecisionState(i), i) }.toTypedArray(),
-                        parserCache
+                        PredictionContextCache()
                     )
                 }
                 parser.removeErrorListeners()
