@@ -27,7 +27,7 @@ import java.util.concurrent.ConcurrentHashMap
 class JeedParseError(location: SourceLocation?, message: String) : SourceError(location, message)
 class JeedParsingException(errors: List<SourceError>) : JeedError(errors)
 
-private val cache = object : PredictionContextCache() {
+internal val parserCache = object : PredictionContextCache() {
     private val map = ConcurrentHashMap<PredictionContext, PredictionContext>()
 
     override fun add(ctx: PredictionContext): PredictionContext {
@@ -93,7 +93,7 @@ fun Source.parseJavaFile(entry: Map.Entry<String, String>): Source.ParsedSource 
                 parser,
                 parser.atn,
                 dfa.mapIndexed { i, _ -> DFA(parser.atn.getDecisionState(i), i) }.toTypedArray(),
-                PredictionContextCache()
+                parserCache
             )
         }
 
@@ -131,7 +131,7 @@ fun Source.parseKotlinFile(entry: Map.Entry<String, String>): Source.ParsedSourc
                 parser,
                 parser.atn,
                 dfa.mapIndexed { i, _ -> DFA(parser.atn.getDecisionState(i), i) }.toTypedArray(),
-                PredictionContextCache()
+                parserCache
             )
         }
 
@@ -202,7 +202,12 @@ fun String.isJavaSource(): Boolean {
         }.also { tokenStream ->
             JavaParser(tokenStream).let { parser ->
                 parser.interpreter.decisionToDFA.also { dfa ->
-                    parser.interpreter = ParserATNSimulator(parser, parser.atn, dfa, PredictionContextCache())
+                    parser.interpreter = ParserATNSimulator(
+                        parser,
+                        parser.atn,
+                        dfa.mapIndexed { i, _ -> DFA(parser.atn.getDecisionState(i), i) }.toTypedArray(),
+                        parserCache
+                    )
                 }
                 parser.removeErrorListeners()
                 parser.addErrorListener(errorListener)
@@ -228,7 +233,7 @@ fun String.isJavaSnippet(): Boolean {
         }.also { tokenStream ->
             SnippetParser(tokenStream).let { parser ->
                 parser.interpreter.decisionToDFA.also { dfa ->
-                    parser.interpreter = ParserATNSimulator(parser, parser.atn, dfa, PredictionContextCache())
+                    parser.interpreter = ParserATNSimulator(parser, parser.atn, dfa, parserCache)
                 }
                 parser.removeErrorListeners()
                 parser.addErrorListener(errorListener)
@@ -254,7 +259,12 @@ fun String.isKotlinSource(): Boolean {
         }.also { tokenStream ->
             KotlinParser(tokenStream).let { parser ->
                 parser.interpreter.decisionToDFA.also { dfa ->
-                    parser.interpreter = ParserATNSimulator(parser, parser.atn, dfa, PredictionContextCache())
+                    parser.interpreter = ParserATNSimulator(
+                        parser,
+                        parser.atn,
+                        dfa.mapIndexed { i, _ -> DFA(parser.atn.getDecisionState(i), i) }.toTypedArray(),
+                        parserCache
+                    )
                 }
                 parser.removeErrorListeners()
                 parser.addErrorListener(errorListener)
@@ -280,7 +290,12 @@ fun String.isKotlinSnippet(): Boolean {
         }.also { tokenStream ->
             KotlinParser(tokenStream).let { parser ->
                 parser.interpreter.decisionToDFA.also { dfa ->
-                    parser.interpreter = ParserATNSimulator(parser, parser.atn, dfa, PredictionContextCache())
+                    parser.interpreter = ParserATNSimulator(
+                        parser,
+                        parser.atn,
+                        dfa.mapIndexed { i, _ -> DFA(parser.atn.getDecisionState(i), i) }.toTypedArray(),
+                        parserCache
+                    )
                 }
                 parser.removeErrorListeners()
                 parser.addErrorListener(errorListener)

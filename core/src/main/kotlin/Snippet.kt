@@ -16,6 +16,7 @@ import org.antlr.v4.runtime.RecognitionException
 import org.antlr.v4.runtime.Recognizer
 import org.antlr.v4.runtime.atn.ParserATNSimulator
 import org.antlr.v4.runtime.atn.PredictionContextCache
+import org.antlr.v4.runtime.dfa.DFA
 import org.antlr.v4.runtime.tree.ParseTreeWalker
 import org.jetbrains.kotlin.backend.common.pop
 
@@ -235,7 +236,12 @@ private fun sourceFromKotlinSnippet(originalSource: String, snippetArguments: Sn
     }.let {
         val parser = KotlinParser(it)
         parser.interpreter.decisionToDFA.also { dfa ->
-            parser.interpreter = ParserATNSimulator(parser, parser.atn, dfa, PredictionContextCache())
+            parser.interpreter = ParserATNSimulator(
+                parser,
+                parser.atn,
+                dfa.mapIndexed { i, _ -> DFA(parser.atn.getDecisionState(i), i) }.toTypedArray(),
+                parserCache
+            )
         }
         parser.trimParseTree = true
         parser
