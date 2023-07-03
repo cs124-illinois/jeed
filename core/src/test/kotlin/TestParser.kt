@@ -2,8 +2,13 @@ package edu.illinois.cs.cs125.jeed.core
 
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import java.io.BufferedReader
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
+
+val testFile =
+    object{}::class.java.getResource("/Test.kt")?.readText()
+        ?: error("Couldn't load Test.kt")
 
 @OptIn(ExperimentalTime::class)
 class TestParser : StringSpec({
@@ -125,5 +130,8 @@ record State(int value) {
                 },
             )
         }
+    }
+    "f: it should parse all of Kotlin" {
+        Source.fromKotlin(testFile).parse()
     }
 })
