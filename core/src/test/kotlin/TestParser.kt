@@ -131,7 +131,7 @@ record State(int value) {
             )
         }
     }
-    "f: it should parse all of Kotlin" {
+    "!it should parse all of Kotlin" {
         Source.fromKotlin(testFile).parse()
     }
 })

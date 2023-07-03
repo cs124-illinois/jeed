@@ -721,7 +721,7 @@ jumpExpression
     ;
 
 callableReference
-    : receiverType? COLONCOLON NL* (simpleIdentifier | CLASS)
+    : (receiverType (quest NL*)?)? COLONCOLON NL* (simpleIdentifier | CLASS)
     ;
 
 assignmentAndOperator
@@ -791,7 +791,7 @@ memberAccessOperator
     : NL* DOT
     | NL* SAFENAV
     | NL* BANGS_WITH_DOT
-    | COLONCOLON
+    | NL* COLONCOLON
     ;
 
 // SECTION: modifiers
