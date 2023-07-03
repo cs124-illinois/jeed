@@ -921,10 +921,20 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
 
     override fun enterSetter(ctx: KotlinParser.SetterContext) {
         count(FeatureName.SETTER, ctx.toLocation())
+        ifDepths += 0
+    }
+
+    override fun exitSetter(ctx: KotlinParser.SetterContext) {
+        ifDepths.pop()
     }
 
     override fun enterGetter(ctx: KotlinParser.GetterContext) {
         count(FeatureName.GETTER, ctx.toLocation())
+        ifDepths += 0
+    }
+
+    override fun exitGetter(ctx: KotlinParser.GetterContext?) {
+        ifDepths.pop()
     }
 
     override fun enterThisExpression(ctx: KotlinParser.ThisExpressionContext) {

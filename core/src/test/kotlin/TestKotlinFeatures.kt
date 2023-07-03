@@ -1152,6 +1152,34 @@ when {
                 featureList should haveFeatureAt(FeatureName.WHEN_EXPRESSIONS, listOf(1))
             }
         }
+        "should handle if in setter or getter" {
+            Source.fromKotlin(
+                """
+class CountRepeats {
+  var count = 0
+    private set
+
+  var value = 0
+    set(value) {
+      if (value == field) {
+        count++
+      }
+      field = value
+    }
+    get() {
+      if (field != 0) {
+        return field * 2
+      } else {
+        return field
+      }
+    }
+}
+""",
+            ).features().check("", filename = "Main.kt") {
+                featureMap[FeatureName.IF_STATEMENTS] shouldBe 2
+                featureList should haveFeatureAt(FeatureName.IF_STATEMENTS, listOf(7, 13))
+            }
+        }
         "should count various dots" {
             Source.fromKotlinSnippet(
                 """
