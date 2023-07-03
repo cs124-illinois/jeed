@@ -57,22 +57,28 @@ fun Parser.makeThreadSafe() {
     val dfa = when (this) {
         is JavaParser -> {
             if (threadCache.javaDFA == null) {
-                threadCache.javaDFA = interpreter.decisionToDFA.mapIndexed { i, _ -> DFA(atn.getDecisionState(i), i) }.toTypedArray()
+                threadCache.javaDFA =
+                    interpreter.decisionToDFA.mapIndexed { i, _ -> DFA(atn.getDecisionState(i), i) }.toTypedArray()
             }
             threadCache.javaDFA
         }
+
         is KotlinParser -> {
             if (threadCache.kotlinDFA == null) {
-                threadCache.kotlinDFA = interpreter.decisionToDFA.mapIndexed { i, _ -> DFA(atn.getDecisionState(i), i) }.toTypedArray()
+                threadCache.kotlinDFA =
+                    interpreter.decisionToDFA.mapIndexed { i, _ -> DFA(atn.getDecisionState(i), i) }.toTypedArray()
             }
             threadCache.kotlinDFA
         }
+
         is SnippetParser -> {
             if (threadCache.snippetDFA == null) {
-                threadCache.snippetDFA = interpreter.decisionToDFA.mapIndexed { i, _ -> DFA(atn.getDecisionState(i), i) }.toTypedArray()
+                threadCache.snippetDFA =
+                    interpreter.decisionToDFA.mapIndexed { i, _ -> DFA(atn.getDecisionState(i), i) }.toTypedArray()
             }
             threadCache.snippetDFA
         }
+
         else -> error("No DFA configured for $this")
     }
 
