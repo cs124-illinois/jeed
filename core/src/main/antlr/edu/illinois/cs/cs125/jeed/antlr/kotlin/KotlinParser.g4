@@ -53,7 +53,6 @@ declaration
     | interfaceDeclaration
     | objectDeclaration
     | functionDeclaration
-    | abstractFunctionDeclaration
     | propertyDeclaration
     | typeAlias
     ;
@@ -144,6 +143,7 @@ classMemberDeclarations
 
 classMemberDeclaration
     : declaration
+    | emptyFunctionDeclaration
     | companionObject
     | anonymousInitializer
     | secondaryConstructor
@@ -197,14 +197,6 @@ emptyFunctionDeclaration
       (NL* typeConstraints)?
     ;
 
-abstractFunctionDeclaration
-    : modifiers? ABSTRACT modifiers?
-      FUN (NL* typeParameters)? (NL* receiverType NL* DOT)? NL* simpleIdentifier
-      NL* functionValueParameters
-      (NL* COLON NL* type)?
-      (NL* typeConstraints)?
-    ;
-
 functionBody
     : block
     | ASSIGNMENT NL* expression
@@ -224,8 +216,8 @@ propertyDeclaration
       (NL* receiverType NL* DOT)?
       (NL* (multiVariableDeclaration | variableDeclaration))
       (NL* typeConstraints)?
-      (NL* (ASSIGNMENT NL* expression | propertyDelegate))?
-      (NL+ SEMICOLON)? NL* (getter? (NL* semi? setter)? | setter? (NL* semi? getter)?)
+      (NL* (ASSIGNMENT NL* fullExpression | propertyDelegate))?
+      (NL* (getter (NL* semi? setter)? | setter (NL* semi? getter)?))?
     ;
 
 propertyDelegate
@@ -356,11 +348,15 @@ definitelyNonNullableType
 // SECTION: statements
 
 statements
-    : (statement (semis statement)*)? semis?
+    : (fullStatement (semis fullStatement)*)? semis?
     ;
 
 statement
     : (label | annotation)* (declaration | assignment | loopStatement | expression)
+    ;
+
+fullStatement
+    : statement | (label | annotation)* lambdaLiteral
     ;
 
 label
@@ -477,6 +473,11 @@ expression
     | expression NL* elvis NL* expression
     | expression isOperator NL* type
     | expression NL* (inOperator | comparisonOperator | equalityOperator | CONJ | DISJ) NL* expression
+    ;
+
+fullExpression
+    : expression
+    | lambdaLiteral
     ;
 
 unaryPrefix
@@ -647,8 +648,7 @@ anonymousFunction
     ;
 
 functionLiteral
-    : lambdaLiteral
-    | anonymousFunction
+    : anonymousFunction
     ;
 
 objectLiteral
@@ -666,10 +666,7 @@ superExpression
     ;
 
 ifExpression
-    : IF NL* LPAREN NL* expression NL* RPAREN NL*
-      ( controlStructureBody
-      | controlStructureBody? NL* SEMICOLON? NL* ELSE NL* (controlStructureBody | SEMICOLON)
-      | SEMICOLON)
+    : IF NL* LPAREN NL* expression NL* RPAREN NL* controlStructureBody SEMICOLON? (NL* ELSE NL* controlStructureBody)?
     ;
 
 whenSubject

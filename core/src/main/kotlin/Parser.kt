@@ -178,7 +178,9 @@ fun Source.parseKotlinFile(entry: Map.Entry<String, String>): Source.ParsedSourc
         errorListener.check()
     }
 
-    return Source.ParsedSource(parseTree, charStream, entry.value, parser, tokenStream)
+    return Source.ParsedSource(parseTree, charStream, entry.value, parser, tokenStream).also { parsedSource ->
+        // println(parsedSource.tree.format(parsedSource.parser))
+    }
 }
 
 fun Parser.profile() {

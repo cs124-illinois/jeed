@@ -4,7 +4,6 @@
 package edu.illinois.cs.cs125.jeed.core
 
 import edu.illinois.cs.cs125.jeed.core.antlr.KotlinParser
-import edu.illinois.cs.cs125.jeed.core.antlr.KotlinParser.AbstractFunctionDeclarationContext
 import edu.illinois.cs.cs125.jeed.core.antlr.KotlinParser.AnonymousInitializerContext
 import edu.illinois.cs.cs125.jeed.core.antlr.KotlinParser.ClassBodyContext
 import edu.illinois.cs.cs125.jeed.core.antlr.KotlinParser.ControlStructureBodyContext
@@ -189,21 +188,6 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
         }
     }
 
-    private fun AbstractFunctionDeclarationContext.fullName(): String {
-        val name = simpleIdentifier().text
-        val parameters = functionValueParameters().functionValueParameter()?.joinToString(",") {
-            it.parameter().type().text
-        }
-        val returnType = type()?.text
-        return ("$name($parameters)${returnType?.let { ":$returnType" } ?: ""}").let {
-            if (anonymousClassDepth > 0) {
-                "${it}${"$"}$objectLiteralCounter"
-            } else {
-                it
-            }
-        }
-    }
-
     override fun enterClassDeclaration(ctx: KotlinParser.ClassDeclarationContext) {
         if (!ctx.isSnippetClass()) {
             count(FeatureName.CLASS, ctx.toLocation())
@@ -341,7 +325,11 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
     }
 
     override fun enterEmptyFunctionDeclaration(ctx: EmptyFunctionDeclarationContext) {
-        count(FeatureName.METHOD, ctx.toLocation())
+        if (ctx.modifiers()?.modifier()?.any { it.inheritanceModifier()?.ABSTRACT() != null } == true) {
+            count(FeatureName.ABSTRACT_METHOD, ctx.toLocation())
+        } else {
+            count(FeatureName.METHOD, ctx.toLocation())
+        }
         enterMethodOrConstructor(
             ctx.fullName(),
             Location(ctx.start.line, ctx.start.charPositionInLine),
@@ -350,19 +338,6 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
     }
 
     override fun exitEmptyFunctionDeclaration(ctx: EmptyFunctionDeclarationContext?) {
-        exitMethodOrConstructor()
-    }
-
-    override fun enterAbstractFunctionDeclaration(ctx: AbstractFunctionDeclarationContext) {
-        count(FeatureName.ABSTRACT_METHOD, ctx.toLocation())
-        enterMethodOrConstructor(
-            ctx.fullName(),
-            Location(ctx.start.line, ctx.start.charPositionInLine),
-            Location(ctx.stop.line, ctx.stop.charPositionInLine),
-        )
-    }
-
-    override fun exitAbstractFunctionDeclaration(ctx: AbstractFunctionDeclarationContext?) {
         exitMethodOrConstructor()
     }
 
