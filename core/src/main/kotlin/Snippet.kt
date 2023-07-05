@@ -237,11 +237,7 @@ private fun sourceFromKotlinSnippet(originalSource: String, snippetArguments: Sn
     }.let { parser ->
         parser.removeErrorListeners()
         parser.addErrorListener(errorListener)
-        try {
-            parser.script()
-        } finally {
-            parser.interpreter.clearDFA()
-        }
+        parser.script()
     }.also {
         errorListener.check()
     }
@@ -324,6 +320,14 @@ ${" ".repeat(snippetArguments.indent * 2)}@JvmStatic fun main() {""".lines().let
         methodLines.add(it.start.line..it.stop.line)
     }
     parseTree.statement().mapNotNull { it.declaration()?.classDeclaration() }.forEach {
+        classCount++
+        klassLines.add(it.start.line..it.stop.line)
+    }
+    parseTree.emptyClassDeclaration().forEach {
+        classCount++
+        klassLines.add(it.start.line..it.stop.line)
+    }
+    parseTree.statement().mapNotNull { it.declaration()?.emptyClassDeclaration() }.forEach {
         classCount++
         klassLines.add(it.start.line..it.stop.line)
     }
@@ -411,7 +415,11 @@ ${" ".repeat(snippetArguments.indent * 2)}@JvmStatic fun main() {""".lines().let
     val looseCodeMapping = mutableMapOf<Int, Int>()
 
     parseTree.statement()
-        ?.filter { it.declaration()?.functionDeclaration() == null && it.declaration()?.classDeclaration() == null }
+        ?.filter {
+            it.declaration()?.functionDeclaration() == null &&
+                it.declaration()?.classDeclaration() == null &&
+                it.declaration()?.emptyClassDeclaration() == null
+        }
         ?.forEach {
             val looseStart = it.start!!.line
             val looseEnd = it.stop!!.line
@@ -538,8 +546,6 @@ private fun sourceFromJavaSnippet(originalSource: String, snippetArguments: Snip
                     ),
                 ),
             )
-        } finally {
-            parser.interpreter.clearDFA()
         }
     }.also {
         errorListener.check()

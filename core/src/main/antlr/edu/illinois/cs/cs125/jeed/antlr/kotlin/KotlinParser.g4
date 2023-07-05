@@ -13,7 +13,7 @@ kotlinFile
     ;
 
 script
-    : shebangLine? NL* fileAnnotation* packageHeader importList (statement semi)* EOF
+    : shebangLine? NL* fileAnnotation* packageHeader importList ((statement semi) | emptyClassDeclaration)* EOF
     ;
 
 shebangLine
@@ -50,6 +50,7 @@ typeAlias
 
 declaration
     : classDeclaration
+    | emptyClassDeclaration
     | interfaceDeclaration
     | objectDeclaration
     | functionDeclaration
@@ -64,7 +65,15 @@ classDeclaration
       (NL* typeParameters)? (NL* primaryConstructor)?
       (NL* COLON NL* delegationSpecifiers)?
       (NL* typeConstraints)?
-      (NL* classBody | NL* enumClassBody)?
+      (classBody | enumClassBody)
+    ;
+
+emptyClassDeclaration
+    : modifiers? CLASS NL* simpleIdentifier
+      (NL* typeParameters)? (NL* primaryConstructor)?
+      (NL* COLON NL* delegationSpecifiers)?
+      (NL* typeConstraints)?
+      (NL+ | EOF)
     ;
 
 interfaceDeclaration
@@ -348,15 +357,11 @@ definitelyNonNullableType
 // SECTION: statements
 
 statements
-    : (fullStatement (semis fullStatement)*)? semis?
+    : (((statement | (label | annotation)* lambdaLiteral) semis?) | emptyClassDeclaration)*
     ;
 
 statement
     : (label | annotation)* (declaration | assignment | loopStatement | expression)
-    ;
-
-fullStatement
-    : statement | (label | annotation)* lambdaLiteral
     ;
 
 label

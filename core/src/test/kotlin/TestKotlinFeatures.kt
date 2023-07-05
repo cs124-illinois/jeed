@@ -20,6 +20,7 @@ class TestKotlinFeatures : StringSpec() {
             seenKotlinFeatures shouldBe KOTLIN_FEATURES
         }
     }
+
     init {
         "should count variable declarations" {
             Source.fromKotlinSnippet(
@@ -769,7 +770,7 @@ enum class Test {
                 """
 data class Test(val first: Int)
 """,
-            ).features().check("") {
+            ).also { println("---\n" + it.contents + "---") }.features().check("") {
                 featureMap[FeatureName.DATA_CLASS] shouldBe 1
                 featureList should haveFeatureAt(FeatureName.DATA_CLASS, listOf(1))
             }
@@ -887,7 +888,12 @@ class Test<T>
 class Another<T,V>
 val mine = mutableListOf<String>()
 """,
-            ).features().check("") {
+            ).also {
+                println(it.contents)
+            }.features().check("") {
+                featureMap[FeatureName.CLASS] shouldBe 2
+                featureList should haveFeatureAt(FeatureName.CLASS, listOf(1, 2))
+
                 featureMap[FeatureName.GENERIC_CLASS] shouldBe 2
                 featureList should haveFeatureAt(FeatureName.GENERIC_CLASS, listOf(1, 2))
 

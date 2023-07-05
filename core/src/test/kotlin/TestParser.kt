@@ -70,54 +70,47 @@ record State(int value) {
 """.trim().distinguish("java") shouldBe SourceType.JAVA_SOURCE
     }
     "it should parse long if statements" {
-        val source = """fun mystery(a: Int): Int {
-    if (a == -1) {
-      return 0
-    } else if (a == 0) {
-      return 0
-    } else if (a == 1) {
-      return 0
-    } else if (a == 0) {
-      return 0
-    } else if (a == 1) {
-      return 0
-    } else if (a == 0) {
-      return 0
-    } else if (a == 1) {
-      return 0
-    } else if (a == 0) {
-      return 0
-    } else if (a == 1) {
-      return 0
-    } else if (a == 0) {
-      return 0
-    } else if (a == 1) {
-      return 0
-    } else if (a == 0) {
-      return 0
-    } else if (a == 1) {
-      return 0
-    } else if (a == 0) {
-      return 0
-    } else if (a == 1) {
-      return 0
-    } else if (a == 0) {
-      return 0
-    } else if (a == 1) {
-      return 0
-    }
+        fun makeSource(repeats: Int) = """fun mystery(a: Int): Int {
+  if (a == -1) {
+    return 0
+  }""" + (0..repeats).map {
+            """ else if (a == 0) {
     return 1
+  }"""
+        }.joinToString("") + """
+  return 0
 }
-"""
+  """
+
+        val sourceBaseline = 16
+        println("As source:")
         println(
-            measureTime {
-                Source.fromKotlin(source).getParsed("Main.kt").tree
+            "Original: " + measureTime {
+                Source.fromKotlin(makeSource(sourceBaseline)).getParsed("Main.kt").tree
             },
         )
+
+        println("After warmup:")
         repeat(8) {
             println(
                 measureTime {
-                    Source.fromKotlin(source).getParsed("Main.kt").tree
+                    Source.fromKotlin(makeSource(sourceBaseline + it)).getParsed("Main.kt").tree
+                },
+            )
+        }
+
+        val snippetBaseline = 12
+        println("As snippet:")
+        println(
+            "Original: " + measureTime {
+                Source.fromKotlinSnippet(makeSource(snippetBaseline)).parse()
+            },
+        )
+        println("After warmup:")
+        repeat(8) {
+            println(
+                measureTime {
+                    Source.fromKotlinSnippet(makeSource(snippetBaseline + it)).parse()
                 },
             )
         }

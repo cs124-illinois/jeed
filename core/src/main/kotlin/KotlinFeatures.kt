@@ -237,6 +237,50 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
         )
     }
 
+    override fun enterEmptyClassDeclaration(ctx: KotlinParser.EmptyClassDeclarationContext) {
+        count(FeatureName.CLASS, ctx.toLocation())
+        ctx.modifiers()?.modifier(0)?.classModifier()?.DATA()?.also {
+            count(FeatureName.DATA_CLASS, ctx.toLocation())
+        }
+        ctx.modifiers()?.modifier(0)?.inheritanceModifier()?.OPEN()?.also {
+            count(FeatureName.OPEN_CLASS, ctx.toLocation())
+        }
+        ctx.modifiers()?.modifier(0)?.inheritanceModifier()?.ABSTRACT()?.also {
+            count(FeatureName.ABSTRACT_CLASS, ctx.toLocation())
+        }
+
+        enterClassOrInterface(
+            ctx.simpleIdentifier().text,
+            Location(ctx.start.line, ctx.start.charPositionInLine),
+            Location(ctx.stop.line, ctx.stop.charPositionInLine),
+        )
+        ctx.delegationSpecifiers()?.annotatedDelegationSpecifier()?.map { it.delegationSpecifier() }
+            ?.forEach { delegationSpecifier ->
+                val specifier = delegationSpecifier.text.trim()
+                if (specifier.contains("(") && specifier.endsWith(")")) {
+                    count(FeatureName.EXTENDS, delegationSpecifier.toLocation())
+                } else {
+                    count(FeatureName.IMPLEMENTS, delegationSpecifier.toLocation())
+                }
+                delegationSpecifier.userType()?.simpleUserType()?.firstOrNull()?.simpleIdentifier()?.also {
+                    if (it.text == "Comparable") {
+                        count(FeatureName.COMPARABLE, it.toLocation())
+                    }
+                }
+            }
+        ctx.typeParameters()?.also {
+            count(FeatureName.GENERIC_CLASS, ctx.typeParameters().toLocation())
+        }
+    }
+
+    override fun exitEmptyClassDeclaration(ctx: KotlinParser.EmptyClassDeclarationContext) {
+        exitClassOrInterface(
+            ctx.simpleIdentifier().text,
+            Location(ctx.start.line, ctx.start.charPositionInLine),
+            Location(ctx.stop.line, ctx.stop.charPositionInLine),
+        )
+    }
+
     override fun enterInterfaceDeclaration(ctx: KotlinParser.InterfaceDeclarationContext) {
         count(FeatureName.INTERFACE, ctx.toLocation())
         ctx.FUN()?.also {
@@ -938,6 +982,9 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
 
     override fun enterClassMemberDeclaration(ctx: KotlinParser.ClassMemberDeclarationContext) {
         ctx.declaration()?.classDeclaration()?.also {
+            count(FeatureName.NESTED_CLASS, it.toLocation())
+        }
+        ctx.declaration()?.emptyClassDeclaration()?.also {
             count(FeatureName.NESTED_CLASS, it.toLocation())
         }
     }

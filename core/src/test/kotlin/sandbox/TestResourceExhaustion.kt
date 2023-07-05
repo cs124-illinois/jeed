@@ -359,7 +359,7 @@ try {
     Thread.sleep(Long.MAX_VALUE);
 } catch (Throwable e) { }
         """.trim(),
-        ).compile().execute(SourceExecutionArguments(maxExtraThreads = 256, timeout = 1000L))
+        ).compile().execute(SourceExecutionArguments(maxExtraThreads = 128, timeout = 1000L))
 
         executionResult shouldNot haveCompleted()
         executionResult should haveTimedOut()

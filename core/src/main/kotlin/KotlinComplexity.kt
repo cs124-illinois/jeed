@@ -97,6 +97,19 @@ class KotlinComplexityListener(val source: Source, entry: Map.Entry<String, Stri
         exitClassOrInterface()
     }
 
+    override fun enterEmptyClassDeclaration(ctx: KotlinParser.EmptyClassDeclarationContext) {
+        currentClass = ctx.simpleIdentifier().text
+        enterClassOrInterface(
+            currentClass,
+            Location(ctx.start.line, ctx.start.charPositionInLine),
+            Location(ctx.stop.line, ctx.stop.charPositionInLine),
+        )
+    }
+
+    override fun exitEmptyClassDeclaration(ctx: KotlinParser.EmptyClassDeclarationContext) {
+        exitClassOrInterface()
+    }
+
     override fun enterPrimaryConstructor(ctx: KotlinParser.PrimaryConstructorContext) {
         val parameters = ctx.classParameters().classParameter().joinToString(",") { it.type().text }
         val fullName = "$currentClass($parameters)"
