@@ -183,8 +183,8 @@ public class Main {
     test.test();
   }
 }""",
-        ).checkCoverage().also { testCoverage ->
-            testCoverage.printLines()
+        ).coverage().also { testCoverage ->
+            testCoverage should haveFileCoverageAt(3, LineCoverage.PARTLY_COVERED)
         }
     }
     "checking file arguments" {
@@ -260,13 +260,6 @@ suspend fun Source.coverage(): CoverageResult = if (type == Source.FileType.JAVA
     taskResults.completed shouldBe true
     taskResults.permissionDenied shouldBe false
 }.let { taskResult -> processCoverage(taskResult.pluginResult(Jacoco)) }
-
-private suspend fun Source.checkCoverage(klass: String = "Test"): IClassCoverage {
-    return compile().execute(SourceExecutionArguments().addPlugin(Jacoco)).also { taskResults ->
-        taskResults.completed shouldBe true
-        taskResults.permissionDenied shouldBe false
-    }.let { taskResult -> taskResult.pluginResult(Jacoco).classes.find { it.name == klass }!! }
-}
 
 fun haveFileCoverageAt(line: Int, expectedCoverage: LineCoverage, filename: String? = null) =
     object : Matcher<CoverageResult> {
