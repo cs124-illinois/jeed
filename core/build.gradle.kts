@@ -17,7 +17,7 @@ dependencies {
 
     antlr("org.antlr:antlr4:4.13.0")
 
-    implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:1.8.22")
+    implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:1.9.0")
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.2")
     implementation("com.puppycrawl.tools:checkstyle:10.12.1")
@@ -31,7 +31,7 @@ dependencies {
     implementation("org.slf4j:slf4j-api:2.0.7")
     implementation("ch.qos.logback:logback-classic:1.4.8")
     implementation("io.github.microutils:kotlin-logging:3.0.5")
-    implementation("io.github.classgraph:classgraph:4.8.160")
+    implementation("io.github.classgraph:classgraph:4.8.161")
     implementation("net.java.dev.jna:jna:5.13.0")
     implementation("io.github.java-diff-utils:java-diff-utils:4.12")
     implementation("com.google.googlejavaformat:google-java-format:1.17.0")

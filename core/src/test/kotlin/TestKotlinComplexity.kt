@@ -28,7 +28,7 @@ fun isOdd(arg: Int) = arg % 2 != 0
             it.lookup("isOdd(Int)", "Main.kt").complexity shouldBe 1
         }
     }
-    "f: should compute complexity for Kotlin snippet" {
+    "should compute complexity for Kotlin snippet" {
         Source.fromSnippet(
             """
 class Dog(val name: String)
