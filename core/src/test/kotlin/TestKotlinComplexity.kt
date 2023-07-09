@@ -39,7 +39,7 @@ listOf(Dog("Shadow"), Dog("Chuchu"), Dog("Lulu"))
   .forEach { println(it) }
 """.trim(),
             SnippetArguments(fileType = Source.FileType.KOTLIN),
-        ).also { println(it.contents) }.complexity().also {
+        ).complexity().also {
             it.lookup("", "").complexity shouldBe 1
         }
     }

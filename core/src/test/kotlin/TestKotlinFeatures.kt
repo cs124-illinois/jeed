@@ -770,7 +770,7 @@ enum class Test {
                 """
 data class Test(val first: Int)
 """,
-            ).also { println("---\n" + it.contents + "---") }.features().check("") {
+            ).features().check("") {
                 featureMap[FeatureName.DATA_CLASS] shouldBe 1
                 featureList should haveFeatureAt(FeatureName.DATA_CLASS, listOf(1))
             }
