@@ -102,7 +102,9 @@ class ConfiguredChecker(configurationString: String) {
     }
 }
 
-private val limiter = Semaphore(1)
+private val limiter = Semaphore(System.getenv("JEED_LOCK_CHECKSTYLE")?.let {
+    1
+} ?: 1024)
 
 suspend fun Checker.processString(name: String, source: String): List<CheckstyleError> {
     val file = File(if (name.endsWith(".java")) name else "$name.java")

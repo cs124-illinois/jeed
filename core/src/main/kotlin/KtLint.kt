@@ -91,7 +91,10 @@ val jeedRuleProviders = setOf(
     RuleProvider { StringTemplateRule() },
 )
 
-private val limiter = Semaphore(1)
+private val limiter = Semaphore(System.getenv("JEED_LOCK_KTLINT")?.let {
+    1
+} ?: 1024)
+
 val defaultRuleEngine = KtLintRuleEngine(
     ruleProviders = jeedRuleProviders,
     editorConfigOverride = EditorConfigOverride.from(
