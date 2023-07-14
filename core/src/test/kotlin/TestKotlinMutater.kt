@@ -990,7 +990,7 @@ fun startWord(input: String, word: String): String {
         ).allMutations().onEach { mutatedSource ->
             mutatedSource.marked().ktLint().also { errors ->
                 errors.errors.filter {
-                    it.ruleId != "indent" && it.ruleId != "no-trailing-spaces" && it.ruleId != "no-multi-spaces"
+                    it.ruleId != KTLINT_INDENTATION_RULE_NAME && it.ruleId != "standard:no-trailing-spaces" && it.ruleId != "standard:no-multi-spaces"
                 } shouldHaveSize 0
             }
         }
@@ -1024,7 +1024,7 @@ class Question {
 """,
         ).allMutations().onEach { mutatedSource ->
             mutatedSource.marked().ktLint().also { errors ->
-                errors.errors.filter { it.ruleId != "indent" && it.ruleId != "no-trailing-spaces" } shouldHaveSize 0
+                errors.errors.filter { it.ruleId != KTLINT_INDENTATION_RULE_NAME && it.ruleId != "standard:no-trailing-spaces" } shouldHaveSize 0
             }
         }
     }

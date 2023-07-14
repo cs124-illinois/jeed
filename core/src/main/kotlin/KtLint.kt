@@ -1,31 +1,34 @@
 package edu.illinois.cs.cs125.jeed.core
 
-import com.pinterest.ktlint.core.KtLint
-import com.pinterest.ktlint.core.RuleProvider
-import com.pinterest.ktlint.core.api.DefaultEditorConfigProperties
-import com.pinterest.ktlint.core.api.EditorConfigOverride
-import com.pinterest.ktlint.ruleset.standard.ChainWrappingRule
-import com.pinterest.ktlint.ruleset.standard.CommentSpacingRule
-import com.pinterest.ktlint.ruleset.standard.IndentationRule
-import com.pinterest.ktlint.ruleset.standard.MaxLineLengthRule
-import com.pinterest.ktlint.ruleset.standard.ModifierOrderRule
-import com.pinterest.ktlint.ruleset.standard.NoEmptyClassBodyRule
-import com.pinterest.ktlint.ruleset.standard.NoLineBreakAfterElseRule
-import com.pinterest.ktlint.ruleset.standard.NoLineBreakBeforeAssignmentRule
-import com.pinterest.ktlint.ruleset.standard.NoMultipleSpacesRule
-import com.pinterest.ktlint.ruleset.standard.NoSemicolonsRule
-import com.pinterest.ktlint.ruleset.standard.NoTrailingSpacesRule
-import com.pinterest.ktlint.ruleset.standard.NoUnitReturnRule
-import com.pinterest.ktlint.ruleset.standard.ParameterListWrappingRule
-import com.pinterest.ktlint.ruleset.standard.SpacingAroundColonRule
-import com.pinterest.ktlint.ruleset.standard.SpacingAroundCommaRule
-import com.pinterest.ktlint.ruleset.standard.SpacingAroundCurlyRule
-import com.pinterest.ktlint.ruleset.standard.SpacingAroundDotRule
-import com.pinterest.ktlint.ruleset.standard.SpacingAroundKeywordRule
-import com.pinterest.ktlint.ruleset.standard.SpacingAroundOperatorsRule
-import com.pinterest.ktlint.ruleset.standard.SpacingAroundParensRule
-import com.pinterest.ktlint.ruleset.standard.SpacingAroundRangeOperatorRule
-import com.pinterest.ktlint.ruleset.standard.StringTemplateRule
+import com.pinterest.ktlint.rule.engine.api.Code
+import com.pinterest.ktlint.rule.engine.api.EditorConfigOverride
+import com.pinterest.ktlint.rule.engine.api.KtLintRuleEngine
+import com.pinterest.ktlint.rule.engine.core.api.RuleProvider
+import com.pinterest.ktlint.rule.engine.core.api.editorconfig.INDENT_SIZE_PROPERTY
+import com.pinterest.ktlint.rule.engine.core.api.editorconfig.INDENT_STYLE_PROPERTY
+import com.pinterest.ktlint.rule.engine.core.api.editorconfig.MAX_LINE_LENGTH_PROPERTY
+import com.pinterest.ktlint.ruleset.standard.rules.ChainWrappingRule
+import com.pinterest.ktlint.ruleset.standard.rules.CommentSpacingRule
+import com.pinterest.ktlint.ruleset.standard.rules.IndentationRule
+import com.pinterest.ktlint.ruleset.standard.rules.MaxLineLengthRule
+import com.pinterest.ktlint.ruleset.standard.rules.ModifierOrderRule
+import com.pinterest.ktlint.ruleset.standard.rules.NoEmptyClassBodyRule
+import com.pinterest.ktlint.ruleset.standard.rules.NoLineBreakAfterElseRule
+import com.pinterest.ktlint.ruleset.standard.rules.NoLineBreakBeforeAssignmentRule
+import com.pinterest.ktlint.ruleset.standard.rules.NoMultipleSpacesRule
+import com.pinterest.ktlint.ruleset.standard.rules.NoSemicolonsRule
+import com.pinterest.ktlint.ruleset.standard.rules.NoTrailingSpacesRule
+import com.pinterest.ktlint.ruleset.standard.rules.NoUnitReturnRule
+import com.pinterest.ktlint.ruleset.standard.rules.ParameterListWrappingRule
+import com.pinterest.ktlint.ruleset.standard.rules.SpacingAroundColonRule
+import com.pinterest.ktlint.ruleset.standard.rules.SpacingAroundCommaRule
+import com.pinterest.ktlint.ruleset.standard.rules.SpacingAroundCurlyRule
+import com.pinterest.ktlint.ruleset.standard.rules.SpacingAroundDotRule
+import com.pinterest.ktlint.ruleset.standard.rules.SpacingAroundKeywordRule
+import com.pinterest.ktlint.ruleset.standard.rules.SpacingAroundOperatorsRule
+import com.pinterest.ktlint.ruleset.standard.rules.SpacingAroundParensRule
+import com.pinterest.ktlint.ruleset.standard.rules.SpacingAroundRangeOperatorRule
+import com.pinterest.ktlint.ruleset.standard.rules.StringTemplateRule
 import com.squareup.moshi.JsonClass
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
@@ -42,6 +45,8 @@ data class KtLintArguments(
         const val DEFAULT_MAX_LINE_LENGTH = 100
     }
 }
+
+internal const val KTLINT_INDENTATION_RULE_NAME = "standard:indent"
 
 @JsonClass(generateAdapter = true)
 class KtLintError(
@@ -87,6 +92,14 @@ val jeedRuleProviders = setOf(
 )
 
 private val limiter = Semaphore(1)
+val defaultRuleEngine = KtLintRuleEngine(
+    ruleProviders = jeedRuleProviders,
+    editorConfigOverride = EditorConfigOverride.from(
+        MAX_LINE_LENGTH_PROPERTY to KtLintArguments.DEFAULT_MAX_LINE_LENGTH,
+        INDENT_STYLE_PROPERTY to "space",
+        INDENT_SIZE_PROPERTY to SnippetArguments.DEFAULT_SNIPPET_INDENT,
+    ),
+)
 
 suspend fun Source.ktFormat(ktLintArguments: KtLintArguments = KtLintArguments()): Source {
     require(type == Source.FileType.KOTLIN) { "Can't run ktlint on non-Kotlin sources" }
@@ -98,47 +111,44 @@ suspend fun Source.ktFormat(ktLintArguments: KtLintArguments = KtLintArguments()
         .map { (filename, contents) -> filename to contents }
         .toMap().toMutableMap()
 
+    val ktlintRuleEngine =
+        if (ktLintArguments.maxLineLength == KtLintArguments.DEFAULT_MAX_LINE_LENGTH && ktLintArguments.indent == SnippetArguments.DEFAULT_SNIPPET_INDENT) {
+            defaultRuleEngine
+        } else {
+            KtLintRuleEngine(
+                ruleProviders = jeedRuleProviders,
+                editorConfigOverride = EditorConfigOverride.from(
+                    MAX_LINE_LENGTH_PROPERTY to ktLintArguments.maxLineLength,
+                    INDENT_STYLE_PROPERTY to "space",
+                    INDENT_SIZE_PROPERTY to ktLintArguments.indent,
+                ),
+            )
+        }
+
     sources.filter { (filename, _) ->
         filename in names
     }.forEach { (filename, contents) ->
         limiter.withPermit {
+            val code = Code.fromSnippet(contents, script = ktLintArguments.script)
             formattedSources[
                 if (source is Snippet) {
                     "MainKt.kt"
                 } else {
                     filename
                 },
-            ] = KtLint.format(
-                KtLint.ExperimentalParams(
-                    if (source is Snippet) {
-                        "MainKt.kt"
-                    } else {
-                        filename
-                    },
-                    contents,
-                    // ruleSets = listOf(jeedRuleSet),
-                    ruleProviders = jeedRuleProviders,
-                    script = ktLintArguments.script,
-                    cb = { e, corrected ->
-                        if (!corrected && ktLintArguments.failOnError) {
-                            throw KtLintFailed(
-                                listOf(
-                                    KtLintError(
-                                        e.ruleId,
-                                        e.detail,
-                                        mapLocation(SourceLocation(filename, e.line, e.col)),
-                                    ),
-                                ),
-                            )
-                        }
-                    },
-                    editorConfigOverride = EditorConfigOverride.from(
-                        DefaultEditorConfigProperties.maxLineLengthProperty to ktLintArguments.maxLineLength,
-                        DefaultEditorConfigProperties.indentStyleProperty to "space",
-                        DefaultEditorConfigProperties.indentSizeProperty to ktLintArguments.indent,
-                    ),
-                ),
-            )
+            ] = ktlintRuleEngine.format(code) { e, corrected ->
+                if (!corrected && ktLintArguments.failOnError) {
+                    throw KtLintFailed(
+                        listOf(
+                            KtLintError(
+                                e.ruleId.value,
+                                e.detail,
+                                mapLocation(SourceLocation(filename, e.line, e.col)),
+                            ),
+                        ),
+                    )
+                }
+            }
         }
     }
 
@@ -153,77 +163,72 @@ suspend fun Source.ktLint(ktLintArguments: KtLintArguments = KtLintArguments()):
     require(type == Source.FileType.KOTLIN) { "Can't run ktlint on non-Kotlin sources" }
 
     val names = ktLintArguments.sources ?: sources.keys
-    val source = this
-
     val errors = mutableListOf<KtLintError>()
+
+    val ktlintRuleEngine =
+        if (ktLintArguments.maxLineLength == KtLintArguments.DEFAULT_MAX_LINE_LENGTH && ktLintArguments.indent == SnippetArguments.DEFAULT_SNIPPET_INDENT) {
+            defaultRuleEngine
+        } else {
+            KtLintRuleEngine(
+                ruleProviders = jeedRuleProviders,
+                editorConfigOverride = EditorConfigOverride.from(
+                    MAX_LINE_LENGTH_PROPERTY to ktLintArguments.maxLineLength,
+                    INDENT_STYLE_PROPERTY to "space",
+                    INDENT_SIZE_PROPERTY to ktLintArguments.indent,
+                ),
+            )
+        }
 
     try {
         sources.filter { (filename, _) ->
             filename in names
         }.forEach { (filename, contents) ->
             limiter.withPermit {
-                KtLint.lint(
-                    KtLint.ExperimentalParams(
-                        if (source is Snippet) {
-                            "MainKt.kt"
-                        } else {
-                            filename
-                        },
-                        contents,
-                        // ruleSets = listOf(jeedRuleSet),
-                        ruleProviders = jeedRuleProviders,
-                        script = ktLintArguments.script,
-                        cb = { e, _ ->
-                            @Suppress("EmptyCatchBlock")
+                val code = Code.fromSnippet(contents, script = ktLintArguments.script)
+                ktlintRuleEngine.lint(code) { e ->
+                    @Suppress("EmptyCatchBlock")
+                    try {
+                        val originalLocation = SourceLocation(filename, e.line, e.col)
+                        val mappedLocation = mapLocation(originalLocation)
+
+                        val detail = if (e.ruleId.value == KTLINT_INDENTATION_RULE_NAME) {
+                            @Suppress("TooGenericExceptionCaught")
                             try {
-                                val originalLocation = SourceLocation(filename, e.line, e.col)
-                                val mappedLocation = mapLocation(originalLocation)
+                                val addedIndent = leadingIndentation(originalLocation)
+                                val (incorrectMessage, incorrectAmount) =
+                                    unexpectedRegex.find(e.detail)?.groups?.let { match ->
+                                        Pair(match[0]?.value, match[1]?.value?.toInt())
+                                    } ?: error("Couldn't parse indentation error")
+                                val (expectedMessage, expectedAmount) =
+                                    shouldBeRegex.find(e.detail)?.groups?.let { match ->
+                                        Pair(match[0]?.value, match[1]?.value?.toInt())
+                                    } ?: error("Couldn't parse indentation error")
 
-                                val detail = if (e.ruleId == "indent") {
-                                    @Suppress("TooGenericExceptionCaught")
-                                    try {
-                                        val addedIndent = leadingIndentation(originalLocation)
-                                        val (incorrectMessage, incorrectAmount) =
-                                            unexpectedRegex.find(e.detail)?.groups?.let { match ->
-                                                Pair(match[0]?.value, match[1]?.value?.toInt())
-                                            } ?: error("Couldn't parse indentation error")
-                                        val (expectedMessage, expectedAmount) =
-                                            shouldBeRegex.find(e.detail)?.groups?.let { match ->
-                                                Pair(match[0]?.value, match[1]?.value?.toInt())
-                                            } ?: error("Couldn't parse indentation error")
-
-                                        e.detail
-                                            .replace(
-                                                incorrectMessage!!,
-                                                "Unexpected indentation (${incorrectAmount!! - addedIndent})",
-                                            )
-                                            .replace(
-                                                expectedMessage!!,
-                                                "should be ${expectedAmount!! - addedIndent}",
-                                            )
-                                    } catch (_: Exception) {
-                                        e.detail
-                                    }
-                                } else {
-                                    e.detail
-                                }
-                                errors.add(
-                                    KtLintError(
-                                        e.ruleId,
-                                        detail,
-                                        mappedLocation,
-                                    ),
-                                )
+                                e.detail
+                                    .replace(
+                                        incorrectMessage!!,
+                                        "Unexpected indentation (${incorrectAmount!! - addedIndent})",
+                                    )
+                                    .replace(
+                                        expectedMessage!!,
+                                        "should be ${expectedAmount!! - addedIndent}",
+                                    )
                             } catch (_: Exception) {
+                                e.detail
                             }
-                        },
-                        editorConfigOverride = EditorConfigOverride.from(
-                            DefaultEditorConfigProperties.maxLineLengthProperty to ktLintArguments.maxLineLength,
-                            DefaultEditorConfigProperties.indentStyleProperty to "space",
-                            DefaultEditorConfigProperties.indentSizeProperty to ktLintArguments.indent,
-                        ),
-                    ),
-                )
+                        } else {
+                            e.detail
+                        }
+                        errors.add(
+                            KtLintError(
+                                e.ruleId.value,
+                                detail,
+                                mappedLocation,
+                            ),
+                        )
+                    } catch (_: Exception) {
+                    }
+                }
             }
         }
     } catch (e: Exception) {

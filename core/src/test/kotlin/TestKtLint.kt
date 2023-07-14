@@ -25,7 +25,7 @@ class TestKtLint : StringSpec({
             ).ktLint(KtLintArguments(failOnError = true))
         }
 
-        ktLintFailed.errors.filterIsInstance<KtLintError>().filter { it.ruleId == "max-line-length" } shouldHaveSize 1
+        ktLintFailed.errors.filterIsInstance<KtLintError>().filter { it.ruleId == "standard:max-line-length" } shouldHaveSize 1
     }
     "!it should fail when everything is on one line" {
         shouldThrow<KtLintFailed> {
@@ -43,7 +43,8 @@ class TestKtLint : StringSpec({
         }
 
         ktLintFailed.errors shouldHaveSize 1
-        ktLintFailed.errors.filterIsInstance<KtLintError>().filter { it.ruleId == "indent" } shouldHaveSize 1
+        println(ktLintFailed.errors)
+        ktLintFailed.errors.filterIsInstance<KtLintError>().filter { it.ruleId == KTLINT_INDENTATION_RULE_NAME } shouldHaveSize 1
     }
     "it should adjust indent for indentation errors" {
         val ktLintFailed = shouldThrow<KtLintFailed> {
@@ -54,7 +55,7 @@ class TestKtLint : StringSpec({
         }
 
         ktLintFailed.errors shouldHaveSize 1
-        ktLintFailed.errors.filterIsInstance<KtLintError>().filter { it.ruleId == "indent" } shouldHaveSize 1
+        ktLintFailed.errors.filterIsInstance<KtLintError>().filter { it.ruleId == KTLINT_INDENTATION_RULE_NAME } shouldHaveSize 1
         ktLintFailed.errors.first().let {
             it.message shouldContain "Unexpected indentation (0)"
             it.message shouldContain "(should be 3)"
@@ -69,7 +70,7 @@ class TestKtLint : StringSpec({
         }
 
         ktLintFailed.errors shouldHaveSize 1
-        ktLintFailed.errors.filterIsInstance<KtLintError>().filter { it.ruleId == "indent" } shouldHaveSize 1
+        ktLintFailed.errors.filterIsInstance<KtLintError>().filter { it.ruleId == KTLINT_INDENTATION_RULE_NAME } shouldHaveSize 1
         ktLintFailed.errors.first().location.line shouldBe 1
     }
     "it should reformat Kotlin sources" {

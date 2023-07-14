@@ -8,7 +8,6 @@ import io.kotest.matchers.collections.beEmpty
 import io.kotest.matchers.collections.shouldHaveAtLeastSize
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
-import org.jacoco.core.analysis.IClassCoverage
 import org.junit.jupiter.api.assertThrows
 import java.io.IOException
 import java.lang.IllegalStateException
