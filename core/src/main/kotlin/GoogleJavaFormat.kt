@@ -6,5 +6,6 @@ fun String.googleFormat(): String = Formatter().formatSource(this)
 
 fun Source.googleFormat(): Source {
     check(type == Source.FileType.JAVA) { "Can only google format Java sources" }
+    check(this !is Snippet) { "Can't reformat snippets" }
     return Source(sources.mapValues { (_, contents) -> contents.googleFormat() })
 }

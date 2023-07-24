@@ -41,7 +41,7 @@ dependencies {
     implementation("com.beyondgrader.resource-agent:agent:2023.4.0")
 
     api("org.jacoco:org.jacoco.core:0.8.10")
-    api("com.github.ben-manes.caffeine:caffeine:3.1.6")
+    api("com.github.ben-manes.caffeine:caffeine:3.1.7")
 
     testImplementation("io.kotest:kotest-runner-junit5:5.6.2")
 }
