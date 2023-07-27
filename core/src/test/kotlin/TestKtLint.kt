@@ -11,67 +11,73 @@ import io.kotest.matchers.string.shouldContain
 class TestKtLint : StringSpec({
     "it should check simple kotlin sources" {
         repeat(8) {
-            val results = Source.fromKotlinSnippet(
+            Source.fromKotlinSnippet(
                 """println("Hello, world!")""",
-            ).ktLint()
-            results.errors.isEmpty() shouldBe true
+            ).ktLint(KtLintArguments(failOnError = true))
         }
     }
     "it should check kotlin sources with too long lines" {
         @Suppress("MaxLineLength")
-        val ktLintFailed = shouldThrow<KtLintFailed> {
+        shouldThrow<KtLintFailed> {
             Source.fromKotlinSnippet(
                 """val test = "ttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt"""",
             ).ktLint(KtLintArguments(failOnError = true))
-        }
-
-        ktLintFailed.errors.filterIsInstance<KtLintError>().filter { it.ruleId == "standard:max-line-length" } shouldHaveSize 1
+        }.shouldHaveError("max-line-length")
     }
-    "!it should fail when everything is on one line" {
+    "it should fail when everything is on one line" {
         shouldThrow<KtLintFailed> {
-            Source.fromKotlinSnippet(
+            Source.fromKotlin(
                 """class Course(var number: String) { fun changeNumber(newNumber: String) { number = newNumber } }""",
             ).ktLint(KtLintArguments(failOnError = true))
-        }
+        }.shouldHaveOnlyError("statement-wrapping")
+    }
+    "it should fail when everything is on one line per documentation" {
+        shouldThrow<KtLintFailed> {
+            Source.fromKotlin(
+                """fun foo1() { if (true) {
+    val i = 0
+}
+}""",
+            ).ktLint(KtLintArguments(failOnError = true))
+        }.shouldHaveOnlyError("statement-wrapping")
+    }
+    "it should allow empty single-line classes" {
+        Source.fromKotlin(
+            """class Test""",
+        ).ktLint(KtLintArguments(failOnError = true))
     }
     "it should check simple kotlin sources with indentation errors" {
-        val ktLintFailed = shouldThrow<KtLintFailed> {
+        shouldThrow<KtLintFailed> {
             Source.fromSnippet(
                 """println("Hello, world!")""".trim(),
                 SnippetArguments(fileType = Source.FileType.KOTLIN, indent = 3),
             ).ktLint(KtLintArguments(failOnError = true))
-        }
-
-        ktLintFailed.errors shouldHaveSize 1
-        println(ktLintFailed.errors)
-        ktLintFailed.errors.filterIsInstance<KtLintError>().filter { it.ruleId == KTLINT_INDENTATION_RULE_NAME } shouldHaveSize 1
+        }.shouldHaveError("indent")
     }
     "it should adjust indent for indentation errors" {
-        val ktLintFailed = shouldThrow<KtLintFailed> {
+        shouldThrow<KtLintFailed> {
             Source.fromSnippet(
                 """println("Hello, world!")""".trim(),
                 SnippetArguments(fileType = Source.FileType.KOTLIN, indent = 3),
             ).ktLint(KtLintArguments(failOnError = true))
-        }
-
-        ktLintFailed.errors shouldHaveSize 1
-        ktLintFailed.errors.filterIsInstance<KtLintError>().filter { it.ruleId == KTLINT_INDENTATION_RULE_NAME } shouldHaveSize 1
-        ktLintFailed.errors.first().let {
-            it.message shouldContain "Unexpected indentation (0)"
-            it.message shouldContain "(should be 3)"
+        }.apply {
+            shouldHaveError("indent")
+            errors.first().let {
+                it.message shouldContain "Unexpected indentation (0)"
+                it.message shouldContain "(should be 3)"
+            }
         }
     }
     "it should check kotlin snippets and get the line numbers right" {
-        val ktLintFailed = shouldThrow<KtLintFailed> {
+        shouldThrow<KtLintFailed> {
             Source.fromKotlinSnippet(
                 """ println("Hello, world!")""",
                 trim = false,
             ).ktLint(KtLintArguments(failOnError = true))
+        }.apply {
+            shouldHaveError("indent")
+            errors.first().location.line shouldBe 1
         }
-
-        ktLintFailed.errors shouldHaveSize 1
-        ktLintFailed.errors.filterIsInstance<KtLintError>().filter { it.ruleId == KTLINT_INDENTATION_RULE_NAME } shouldHaveSize 1
-        ktLintFailed.errors.first().location.line shouldBe 1
     }
     "it should reformat Kotlin sources" {
         Source.fromKotlin(
@@ -110,3 +116,14 @@ class TestKtLint : StringSpec({
         }
     }
 })
+
+fun KtLintFailed.shouldHaveError(ruleId: String, prefix: String = "standard") =
+    errors.filterIsInstance<KtLintError>().also { ktlintErrors ->
+        ktlintErrors shouldHaveSize 1
+        ktlintErrors.filter { it.ruleId == "$prefix:$ruleId" } shouldHaveSize 1
+    }
+
+fun KtLintFailed.shouldHaveOnlyError(ruleId: String, prefix: String = "standard") =
+    errors.filterIsInstance<KtLintError>().also { ktlintErrors ->
+        ktlintErrors.all { it.ruleId == "$prefix:$ruleId" } shouldBe true
+    }

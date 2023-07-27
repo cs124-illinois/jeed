@@ -4,11 +4,15 @@ import com.pinterest.ktlint.rule.engine.api.Code
 import com.pinterest.ktlint.rule.engine.api.EditorConfigOverride
 import com.pinterest.ktlint.rule.engine.api.KtLintRuleEngine
 import com.pinterest.ktlint.rule.engine.core.api.RuleProvider
+import com.pinterest.ktlint.rule.engine.core.api.editorconfig.EXPERIMENTAL_RULES_EXECUTION_PROPERTY
 import com.pinterest.ktlint.rule.engine.core.api.editorconfig.INDENT_SIZE_PROPERTY
 import com.pinterest.ktlint.rule.engine.core.api.editorconfig.INDENT_STYLE_PROPERTY
 import com.pinterest.ktlint.rule.engine.core.api.editorconfig.MAX_LINE_LENGTH_PROPERTY
+import com.pinterest.ktlint.rule.engine.core.api.editorconfig.RuleExecution
 import com.pinterest.ktlint.ruleset.standard.rules.ChainWrappingRule
 import com.pinterest.ktlint.ruleset.standard.rules.CommentSpacingRule
+import com.pinterest.ktlint.ruleset.standard.rules.IfElseBracingRule
+import com.pinterest.ktlint.ruleset.standard.rules.IfElseWrappingRule
 import com.pinterest.ktlint.ruleset.standard.rules.IndentationRule
 import com.pinterest.ktlint.ruleset.standard.rules.MaxLineLengthRule
 import com.pinterest.ktlint.ruleset.standard.rules.ModifierOrderRule
@@ -28,6 +32,7 @@ import com.pinterest.ktlint.ruleset.standard.rules.SpacingAroundKeywordRule
 import com.pinterest.ktlint.ruleset.standard.rules.SpacingAroundOperatorsRule
 import com.pinterest.ktlint.ruleset.standard.rules.SpacingAroundParensRule
 import com.pinterest.ktlint.ruleset.standard.rules.SpacingAroundRangeOperatorRule
+import com.pinterest.ktlint.ruleset.standard.rules.StatementWrapping
 import com.pinterest.ktlint.ruleset.standard.rules.StringTemplateRule
 import com.squareup.moshi.JsonClass
 import kotlinx.coroutines.sync.Semaphore
@@ -89,6 +94,9 @@ val jeedRuleProviders = setOf(
     RuleProvider { SpacingAroundParensRule() },
     RuleProvider { SpacingAroundRangeOperatorRule() },
     RuleProvider { StringTemplateRule() },
+    RuleProvider { StatementWrapping() },
+    RuleProvider { IfElseBracingRule() },
+    RuleProvider { IfElseWrappingRule() },
 )
 
 private val limiter = Semaphore(
@@ -103,6 +111,7 @@ val defaultRuleEngine = KtLintRuleEngine(
         MAX_LINE_LENGTH_PROPERTY to KtLintArguments.DEFAULT_MAX_LINE_LENGTH,
         INDENT_STYLE_PROPERTY to "space",
         INDENT_SIZE_PROPERTY to SnippetArguments.DEFAULT_SNIPPET_INDENT,
+        EXPERIMENTAL_RULES_EXECUTION_PROPERTY to RuleExecution.enabled,
     ),
 )
 

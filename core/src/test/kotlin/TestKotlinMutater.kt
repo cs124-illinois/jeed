@@ -1023,8 +1023,8 @@ class Question {
 }
 """,
         ).allMutations().onEach { mutatedSource ->
-            mutatedSource.marked().ktLint().also { errors ->
-                errors.errors.filter { it.ruleId != KTLINT_INDENTATION_RULE_NAME && it.ruleId != "standard:no-trailing-spaces" } shouldHaveSize 0
+            mutatedSource.marked().ktFormat().ktLint().also { errors ->
+                errors.errors shouldHaveSize 0
             }
         }
     }

@@ -22,7 +22,7 @@ dependencies {
     implementation("io.ktor:ktor-server-netty:2.3.2")
     implementation("io.ktor:ktor-server-cors:2.3.2")
     implementation("io.ktor:ktor-server-content-negotiation:2.3.2")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.2")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
     implementation("com.squareup.moshi:moshi-kotlin:1.15.0")
     implementation("com.github.cs125-illinois:ktor-moshi:2022.9.0")
     implementation("ch.qos.logback:logback-classic:1.4.8")
