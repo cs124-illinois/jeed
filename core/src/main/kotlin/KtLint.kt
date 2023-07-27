@@ -135,6 +135,7 @@ suspend fun Source.ktFormat(ktLintArguments: KtLintArguments = KtLintArguments()
                     MAX_LINE_LENGTH_PROPERTY to ktLintArguments.maxLineLength,
                     INDENT_STYLE_PROPERTY to "space",
                     INDENT_SIZE_PROPERTY to ktLintArguments.indent,
+                    EXPERIMENTAL_RULES_EXECUTION_PROPERTY to RuleExecution.enabled
                 ),
             )
         }
@@ -189,6 +190,7 @@ suspend fun Source.ktLint(ktLintArguments: KtLintArguments = KtLintArguments()):
                     MAX_LINE_LENGTH_PROPERTY to ktLintArguments.maxLineLength,
                     INDENT_STYLE_PROPERTY to "space",
                     INDENT_SIZE_PROPERTY to ktLintArguments.indent,
+                    EXPERIMENTAL_RULES_EXECUTION_PROPERTY to RuleExecution.enabled
                 ),
             )
         }
