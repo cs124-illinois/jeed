@@ -1460,6 +1460,35 @@ public class Question {
             mutations[0].apply(contents).googleFormat()
         }
     }
+    "it should work on negative numbers" {
+        Source.fromJava(
+            """
+public class Question {
+  public static void conditional(double latitude, double longitude) {
+    if (longitude == -122.076817) {
+      System.out.println("Center of the Universe");
+    } else {
+      System.out.println("Somewhere else");
+    }
+    double test = 0.1;
+    double there = 1.1;
+    double wow = 1.0;
+    double another = .1;
+    double finalTest = 6.;
+    double oneMoreTest = 1.00;
+    double additionalTest = 1.01;
+  }
+}
+            """.trimMargin(),
+        ).checkMutations<NumberLiteralTrim> { mutations, contents ->
+            mutations shouldHaveSize 3
+            mutations.forEach { mutation ->
+                mutation.apply(contents, Random(124)).also {
+                    it.googleFormat()
+                }
+            }
+        }
+    }
 })
 
 inline fun <reified T : Mutation> Source.checkMutations(

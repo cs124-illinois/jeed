@@ -548,11 +548,7 @@ class NumberLiteralTrim(
     location: Location,
     original: String,
     fileType: Source.FileType,
-    base: Int = if (original.startsWith("0")) {
-        8
-    } else {
-        10
-    },
+    base: Int,
     isNegative: Boolean = false,
 ) : Mutation(Type.NUMBER_LITERAL_TRIM, location, original, fileType) {
     override val preservesLength = false
@@ -571,7 +567,13 @@ class NumberLiteralTrim(
 
         private val suffixes = setOf('f', 'F', 'd', 'D', 'l', 'L')
 
-        private fun String.trims(base: Int = 10, isNegative: Boolean = false): List<String> {
+        private fun String.trims(passedBase: Int, isNegative: Boolean): List<String> {
+            val base = if (length >= 2 && startsWith("0") && this[1].isDigit()) {
+                8
+            } else {
+                passedBase
+            }
+
             var current = this
 
             val prefix = when (base) {
@@ -603,15 +605,25 @@ class NumberLiteralTrim(
             check(current.endsWith(exponent))
             current = current.removeSuffix(exponent)
 
+            check(current.isNotEmpty())
+
             return when {
                 current.length == 1 -> listOf()
                 current.contains(".") -> {
-                    current.split(".", limit = 2).filter { it.length > 1 }.mapIndexed { index, s ->
-                        when (index) {
-                            0 -> s.substring(1, s.length)
-                            1 -> s.substring(0, s.length - 1)
-                            else -> error("Invalid index")
-                        }
+                    val parts = current.split(".")
+                    check(parts.size == 2)
+
+                    val (front, back) = parts
+                    val frontTrimmed = if (front.isNotEmpty()) front.substring(1) else front
+                    val backTrimmed = if (back.isNotEmpty()) back.substring(0, back.length - 1) else back
+                    listOf("$front.$backTrimmed", "$frontTrimmed.$back").filter {
+                        !it.endsWith(".")
+                    }.filter {
+                        it != current && it != "."
+                    }.filter {
+                        !(front == "0" && it.startsWith(".")) &&
+                            !(back == "0" && it.endsWith(".")) &&
+                            !(back.endsWith("0") && it.endsWith("0"))
                     }
                 }
 
@@ -630,7 +642,8 @@ class NumberLiteralTrim(
                 .map { "$prefix$it$exponent$suffix" }
         }
 
-        fun matches(contents: String, base: Int = 10) = contents.trims(base).isNotEmpty()
+        fun matches(contents: String, base: Int, isNegative: Boolean) =
+            contents.trims(base, isNegative = isNegative).isNotEmpty()
     }
 }
 

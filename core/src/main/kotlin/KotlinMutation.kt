@@ -115,7 +115,7 @@ class KotlinMutationListener(private val parsedSource: Source.ParsedSource) : Ko
         }
     }
 
-    override fun enterStatement(ctx: KotlinParser.StatementContext) {
+    override fun enterStatement(ctx: StatementContext) {
         val statementLocation = ctx.toLocation()
         if (ctx.start.text == "assert" ||
             ctx.start.text == "check" ||
@@ -230,7 +230,7 @@ class KotlinMutationListener(private val parsedSource: Source.ParsedSource) : Ko
                         isNegative = isNegative,
                     ),
                 )
-                if (NumberLiteralTrim.matches(content)) {
+                if (NumberLiteralTrim.matches(content, base = 10, isNegative = isNegative)) {
                     mutations.add(
                         NumberLiteralTrim(
                             location,
@@ -256,7 +256,7 @@ class KotlinMutationListener(private val parsedSource: Source.ParsedSource) : Ko
                         isNegative = isNegative,
                     ),
                 )
-                if (NumberLiteralTrim.matches(content, 16)) {
+                if (NumberLiteralTrim.matches(content, 16, isNegative)) {
                     mutations.add(
                         NumberLiteralTrim(
                             location,
@@ -281,7 +281,7 @@ class KotlinMutationListener(private val parsedSource: Source.ParsedSource) : Ko
                         isNegative = isNegative,
                     ),
                 )
-                if (NumberLiteralTrim.matches(content, 2)) {
+                if (NumberLiteralTrim.matches(content, 2, isNegative)) {
                     mutations.add(
                         NumberLiteralTrim(
                             location,
@@ -304,8 +304,8 @@ class KotlinMutationListener(private val parsedSource: Source.ParsedSource) : Ko
             ctx.toLocation().also { location ->
                 val content = parsedSource.contents(location)
                 mutations.add(NumberLiteral(location, content, Source.FileType.KOTLIN))
-                if (NumberLiteralTrim.matches(content)) {
-                    mutations.add(NumberLiteralTrim(location, content, Source.FileType.KOTLIN))
+                if (NumberLiteralTrim.matches(content, base = 10, isNegative = isNegative)) {
+                    mutations.add(NumberLiteralTrim(location, content, Source.FileType.KOTLIN, base = 10))
                 }
             }
         }
@@ -321,7 +321,7 @@ class KotlinMutationListener(private val parsedSource: Source.ParsedSource) : Ko
                         isNegative = isNegative,
                     ),
                 )
-                if (NumberLiteralTrim.matches(content)) {
+                if (NumberLiteralTrim.matches(content, base = 10, isNegative = isNegative)) {
                     mutations.add(
                         NumberLiteralTrim(
                             location,
@@ -381,11 +381,11 @@ class KotlinMutationListener(private val parsedSource: Source.ParsedSource) : Ko
     private val loopBlockDepths = mutableListOf<Int>()
     private var continueUntil = 0
 
-    private fun StatementContext.isContinue() = expression()?.primaryExpression()?.jumpExpression()?.CONTINUE() != null
-        || expression()?.primaryExpression()?.jumpExpression()?.CONTINUE_AT() != null
+    private fun StatementContext.isContinue() = expression()?.primaryExpression()?.jumpExpression()?.CONTINUE() != null ||
+        expression()?.primaryExpression()?.jumpExpression()?.CONTINUE_AT() != null
 
-    private fun StatementContext.isIfTry() = expression()?.primaryExpression()?.ifExpression() != null
-        || expression()?.primaryExpression()?.tryExpression() != null
+    private fun StatementContext.isIfTry() = expression()?.primaryExpression()?.ifExpression() != null ||
+        expression()?.primaryExpression()?.tryExpression() != null
 
     private fun ControlStructureBodyContext.setContinueUntil() {
         continueUntil = 0

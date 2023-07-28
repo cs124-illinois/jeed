@@ -106,7 +106,7 @@ class JavaMutationListener(private val parsedSource: Source.ParsedSource) : Java
                 ctx.toLocation().also { location ->
                     val contents = parsedSource.contents(location)
                     mutations.add(NumberLiteral(location, contents, Source.FileType.JAVA, isNegative))
-                    if (NumberLiteralTrim.matches(contents)) {
+                    if (NumberLiteralTrim.matches(contents, base = 10, isNegative = isNegative)) {
                         mutations.add(
                             NumberLiteralTrim(
                                 location,
@@ -123,7 +123,7 @@ class JavaMutationListener(private val parsedSource: Source.ParsedSource) : Java
                 ctx.toLocation().also { location ->
                     val contents = parsedSource.contents(location)
                     mutations.add(NumberLiteral(location, contents, Source.FileType.JAVA, isNegative, 2))
-                    if (NumberLiteralTrim.matches(contents, 2)) {
+                    if (NumberLiteralTrim.matches(contents, 2, isNegative)) {
                         mutations.add(
                             NumberLiteralTrim(
                                 location,
@@ -140,7 +140,7 @@ class JavaMutationListener(private val parsedSource: Source.ParsedSource) : Java
                 ctx.toLocation().also { location ->
                     val contents = parsedSource.contents(location)
                     mutations.add(NumberLiteral(location, contents, Source.FileType.JAVA, isNegative, 16))
-                    if (NumberLiteralTrim.matches(contents, 16)) {
+                    if (NumberLiteralTrim.matches(contents, 16, isNegative)) {
                         mutations.add(
                             NumberLiteralTrim(
                                 location,
@@ -159,12 +159,13 @@ class JavaMutationListener(private val parsedSource: Source.ParsedSource) : Java
                 ctx.toLocation().also { location ->
                     val contents = parsedSource.contents(location)
                     mutations.add(NumberLiteral(location, contents, Source.FileType.JAVA, isNegative = isNegative))
-                    if (NumberLiteralTrim.matches(contents)) {
+                    if (NumberLiteralTrim.matches(contents, base = 10, isNegative = isNegative)) {
                         mutations.add(
                             NumberLiteralTrim(
                                 location,
                                 contents,
                                 Source.FileType.JAVA,
+                                base = 10,
                                 isNegative = isNegative,
                             ),
                         )
