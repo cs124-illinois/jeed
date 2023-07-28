@@ -7,6 +7,7 @@ import edu.illinois.cs.cs125.jeed.core.antlr.JavaParser
 import edu.illinois.cs.cs125.jeed.core.antlr.JavaParser.BlockContext
 import edu.illinois.cs.cs125.jeed.core.antlr.JavaParser.ExpressionContext
 import edu.illinois.cs.cs125.jeed.core.antlr.JavaParser.PrimaryContext
+import edu.illinois.cs.cs125.jeed.core.antlr.JavaParser.StatementContext
 import edu.illinois.cs.cs125.jeed.core.antlr.JavaParserBaseListener
 import org.antlr.v4.runtime.ParserRuleContext
 import org.antlr.v4.runtime.Token
@@ -382,19 +383,44 @@ class JavaMutationListener(private val parsedSource: Source.ParsedSource) : Java
     private var loopBlockDepths = mutableListOf<Int>()
     private var continueUntil = 0
 
-    private fun BlockContext.setContinueUntil() {
-        continueUntil = 0
-        if (blockStatement().size > 1) {
-            val lastStatement = blockStatement().last()
-            if (parsedSource.contents(lastStatement.toLocation()).trim() != "continue;") {
-                continueUntil = lastStatement.toLocation().end
-            } else if (blockStatement().size > 2) {
-                val nextLastStatement = blockStatement()[blockStatement().size - 2]
-                continueUntil = nextLastStatement.toLocation().end
+    @Suppress("unused")
+    private fun StatementContext.hasElse(): Boolean {
+        check(IF() != null)
+        var currentIf = this
+        while (true) {
+            if (currentIf.IF() == null) {
+                check(currentIf.block() != null)
+                return true
             }
+            if (currentIf.ELSE() == null || currentIf.statement(1) == null) {
+                return false
+            }
+            currentIf = currentIf.statement(1)
         }
     }
-    override fun enterStatement(ctx: JavaParser.StatementContext) {
+    private fun BlockContext.setContinueUntil() {
+        continueUntil = 0
+        if (blockStatement().isEmpty()) {
+            return
+        }
+        var sawIf = false
+        blockStatement().reversed().find {
+            val result = if (it.localVariableDeclaration() != null || it.localTypeDeclaration() != null) {
+                true
+            } else if (sawIf && (it.statement().IF() != null || it.statement().TRY() != null)) {
+                true
+            } else {
+                it.statement().CONTINUE() == null && it.statement().IF() == null && it.statement().TRY() == null
+            }
+            if (it.statement()?.IF() != null || it.statement()?.TRY() != null) {
+                sawIf = true
+            }
+            result
+        }?.also {
+            continueUntil = it.toLocation().end
+        }
+    }
+    override fun enterStatement(ctx: StatementContext) {
         ctx.IF()?.also {
             val outerLocation = ctx.toLocation()
             if (outerLocation.start !in seenIfStarts) {
@@ -538,12 +564,12 @@ class JavaMutationListener(private val parsedSource: Source.ParsedSource) : Java
         }
     }
 
-    override fun enterBlock(ctx: JavaParser.BlockContext?) {
+    override fun enterBlock(ctx: BlockContext?) {
         if (loopDepth > 0) {
             loopBlockDepths[0]++
         }
     }
-    override fun exitBlock(ctx: JavaParser.BlockContext) {
+    override fun exitBlock(ctx: BlockContext) {
         if (loopDepth > 0 && !insideLambda) {
             val rbrace = ctx.RBRACE()
             val endBraceLocation = listOf(rbrace, rbrace).toLocation()
@@ -559,7 +585,7 @@ class JavaMutationListener(private val parsedSource: Source.ParsedSource) : Java
                     ),
                 )
             }
-            if (loopBlockDepths[0] > 1 && previousLine != "continue;" && location.start < continueUntil) {
+            if (loopBlockDepths[0] > 1 && previousLine != "continue;" && location.start <= continueUntil) {
                 mutations.add(
                     AddContinue(
                         endBraceLocation,
@@ -574,7 +600,7 @@ class JavaMutationListener(private val parsedSource: Source.ParsedSource) : Java
         }
     }
 
-    override fun exitStatement(ctx: JavaParser.StatementContext) {
+    override fun exitStatement(ctx: StatementContext) {
         (ctx.WHILE() ?: ctx.DO() ?: ctx.FOR())?.also {
             loopDepth--
             check(loopBlockDepths.removeAt(0) == 0)

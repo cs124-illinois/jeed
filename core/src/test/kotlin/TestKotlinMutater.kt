@@ -653,7 +653,7 @@ fun test(first: Int) {
             }
         }
     }
-    "it should add continue to for loops with nesting correctly and avoid double break" {
+    "it should add continue to for loops with nesting correctly and avoid double continue" {
         Source.fromKotlin(
             """
 fun test(first: Int) {
@@ -666,6 +666,32 @@ fun test(first: Int) {
         i += 0
     }
     i += 1
+  }
+  for (item: Int in intArrayOf(1, 2, 4)) { }
+}""",
+        ).checkMutations<AddContinue> { mutations, contents ->
+            mutations shouldHaveSize 1
+            mutations.forEach {
+                it.check(contents, "}", "continue }")
+            }
+        }
+    }
+    "f: it should not add continue in last statement in for loop" {
+        Source.fromKotlin(
+            """
+fun test(first: Int) {
+  for (i in 0..first) {
+    if (i > 2) {
+        i += 2
+        continue
+    }
+    if (i < 1) {
+        i += 0
+    }
+    if (i > 3) {
+        i += 1
+    }
+    continue
   }
   for (item: Int in intArrayOf(1, 2, 4)) { }
 }""",
