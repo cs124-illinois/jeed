@@ -326,7 +326,7 @@ class JavaMutationListener(private val parsedSource: Source.ParsedSource) : Java
                         Source.FileType.JAVA,
                         ".equals",
                         parsedSource.contents(ctx.expression(0).toLocation()),
-                        parsedSource.contents(ctx.methodCall().expressionList().expression(0).toLocation())
+                        parsedSource.contents(ctx.methodCall().expressionList().expression(0).toLocation()),
                     ),
                 )
             }
