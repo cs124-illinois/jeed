@@ -777,6 +777,26 @@ public class Example {
             mutations[1].check(contents, "}", "break; }")
         }
     }
+    "it should mutate nested loops correctly" {
+        Source.fromJava(
+            """
+public class Question {
+  boolean arrayContainsDuplicate(int[] values) {
+    if (values == null) {
+      return false;
+    }
+    for (int i = 0; i < values.length - 1; i++) {
+      for (int j = i + 1; j < values.length; j++) {
+        if (values[i] == values[j]) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+}""",
+        ).allMutations()
+    }
     "it should remove and-ors correctly" {
         Source.fromJava(
             """

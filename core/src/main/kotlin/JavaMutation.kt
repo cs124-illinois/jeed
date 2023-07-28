@@ -378,7 +378,7 @@ class JavaMutationListener(private val parsedSource: Source.ParsedSource) : Java
     private val seenIfStarts = mutableSetOf<Int>()
 
     private var loopDepth = 0
-    private var loopBlockDepth = 0
+    private var loopBlockDepths = mutableListOf<Int>()
 
     override fun enterStatement(ctx: JavaParser.StatementContext) {
         ctx.IF()?.also {
@@ -468,7 +468,7 @@ class JavaMutationListener(private val parsedSource: Source.ParsedSource) : Java
         }
         ctx.WHILE()?.also {
             loopDepth++
-            loopBlockDepth = 0
+            loopBlockDepths.add(0, 0)
             ctx.parExpression().toLocation().also { location ->
                 mutations.add(NegateWhile(location, parsedSource.contents(location), Source.FileType.JAVA))
             }
@@ -484,13 +484,13 @@ class JavaMutationListener(private val parsedSource: Source.ParsedSource) : Java
         }
         ctx.FOR()?.also {
             loopDepth++
-            loopBlockDepth = 0
+            loopBlockDepths.add(0, 0)
             mutations.add(RemoveLoop(ctx.toLocation(), parsedSource.contents(ctx.toLocation()), Source.FileType.JAVA))
         }
         ctx.DO()?.also {
             if (ctx.WHILE() == null) {
                 loopDepth++
-                loopBlockDepth = 0
+                loopBlockDepths.add(0, 0)
             }
             mutations.add(RemoveLoop(ctx.toLocation(), parsedSource.contents(ctx.toLocation()), Source.FileType.JAVA))
         }
@@ -528,7 +528,7 @@ class JavaMutationListener(private val parsedSource: Source.ParsedSource) : Java
 
     override fun enterBlock(ctx: JavaParser.BlockContext?) {
         if (loopDepth > 0) {
-            loopBlockDepth++
+            loopBlockDepths[0]++
         }
     }
     override fun exitBlock(ctx: JavaParser.BlockContext) {
@@ -547,7 +547,7 @@ class JavaMutationListener(private val parsedSource: Source.ParsedSource) : Java
                     ),
                 )
             }
-            if (loopBlockDepth > 1 && previousLine != "continue;") {
+            if (loopBlockDepths[0] > 1 && previousLine != "continue;") {
                 mutations.add(
                     AddContinue(
                         endBraceLocation,
@@ -558,14 +558,14 @@ class JavaMutationListener(private val parsedSource: Source.ParsedSource) : Java
             }
         }
         if (loopDepth > 0) {
-            loopBlockDepth--
+            loopBlockDepths[0]--
         }
     }
 
     override fun exitStatement(ctx: JavaParser.StatementContext) {
         (ctx.WHILE() ?: ctx.DO() ?: ctx.FOR())?.also {
             loopDepth--
-            check(loopBlockDepth == 0)
+            check(loopBlockDepths.removeAt(0) == 0)
         }
     }
 
@@ -594,6 +594,6 @@ class JavaMutationListener(private val parsedSource: Source.ParsedSource) : Java
         // println(parsedSource.tree.format(parsedSource.parser))
         ParseTreeWalker.DEFAULT.walk(this, parsedSource.tree)
         check(loopDepth == 0)
-        check(loopBlockDepth == 0)
+        check(loopBlockDepths.size == 0)
     }
 }

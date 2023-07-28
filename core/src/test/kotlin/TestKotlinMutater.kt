@@ -1121,6 +1121,19 @@ fun listSum(list: List<Int>): Int {
 """,
         ).allMutations()
     }
+    "it should handle nested loops" {
+        Source.fromKotlin(
+            """
+fun test() {
+  for (i in 0..10) {
+    while (true) {
+      println("Here")
+    }
+  }
+}
+            """,
+        ).allMutations()
+    }
     "!it should handle braceless statements" {
         // BROKEN WITH NEW GRAMMAR
         // Not a huge price to pay. (Why does this even work?)

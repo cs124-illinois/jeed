@@ -375,21 +375,22 @@ class KotlinMutationListener(private val parsedSource: Source.ParsedSource) : Ko
         }
     }
 
-    var loopDepth = 0
-    var loopBlockDepth = 0
+    private var loopDepth = 0
+    private val loopBlockDepths = mutableListOf<Int>()
+
     override fun enterLoopStatement(ctx: KotlinParser.LoopStatementContext) {
         val location = ctx.toLocation()
         ctx.doWhileStatement()?.also {
             loopDepth++
-            loopBlockDepth = 0
+            loopBlockDepths.add(0, 0)
         }
         ctx.forStatement()?.also {
             loopDepth++
-            loopBlockDepth = 0
+            loopBlockDepths.add(0, 0)
         }
         ctx.whileStatement()?.also {
             loopDepth++
-            loopBlockDepth = 0
+            loopBlockDepths.add(0, 0)
         }
         mutations.add(RemoveLoop(location, parsedSource.contents(location), Source.FileType.KOTLIN))
     }
@@ -397,21 +398,21 @@ class KotlinMutationListener(private val parsedSource: Source.ParsedSource) : Ko
     override fun exitLoopStatement(ctx: KotlinParser.LoopStatementContext) {
         ctx.doWhileStatement()?.also {
             loopDepth--
-            check(loopBlockDepth == 0)
+            check(loopBlockDepths.removeAt(0) == 0)
         }
         ctx.forStatement()?.also {
             loopDepth--
-            check(loopBlockDepth == 0)
+            check(loopBlockDepths.removeAt(0) == 0)
         }
         ctx.whileStatement()?.also {
             loopDepth--
-            check(loopBlockDepth == 0)
+            check(loopBlockDepths.removeAt(0) == 0)
         }
     }
 
     override fun enterBlock(ctx: KotlinParser.BlockContext?) {
         if (loopDepth > 0) {
-            loopBlockDepth++
+            loopBlockDepths[0]++
         }
     }
     override fun exitBlock(ctx: KotlinParser.BlockContext) {
@@ -430,7 +431,7 @@ class KotlinMutationListener(private val parsedSource: Source.ParsedSource) : Ko
                     ),
                 )
             }
-            if (loopBlockDepth > 1 && previousLine != "continue") {
+            if (loopBlockDepths[0] > 1 && previousLine != "continue") {
                 mutations.add(
                     AddContinue(
                         rightCurlLocation,
@@ -441,7 +442,7 @@ class KotlinMutationListener(private val parsedSource: Source.ParsedSource) : Ko
             }
         }
         if (loopDepth > 0) {
-            loopBlockDepth--
+            loopBlockDepths[0]--
         }
     }
 
@@ -637,6 +638,6 @@ class KotlinMutationListener(private val parsedSource: Source.ParsedSource) : Ko
         // println(parsedSource.tree.format(parsedSource.parser))
         ParseTreeWalker.DEFAULT.walk(this, parsedSource.tree)
         check(loopDepth == 0)
-        check(loopBlockDepth == 0)
+        check(loopBlockDepths.size == 0)
     }
 }
