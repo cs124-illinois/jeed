@@ -203,6 +203,7 @@ val OTHER = setOf(
     Mutation.Type.SWAP_BREAK_CONTINUE,
     Mutation.Type.PLUS_OR_MINUS_ONE_TO_ZERO,
     Mutation.Type.ADD_BREAK,
+    Mutation.Type.ADD_CONTINUE,
     Mutation.Type.STRING_LITERAL_TRIM,
     Mutation.Type.NUMBER_LITERAL_TRIM,
     Mutation.Type.MODIFY_LENGTH_AND_SIZE,
@@ -1259,7 +1260,6 @@ class AddContinue(
     }
 }
 
-// TODO: Finish
 class ModifyArrayLiteral(
     location: Location,
     original: String,

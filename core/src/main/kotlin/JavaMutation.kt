@@ -4,6 +4,7 @@
 package edu.illinois.cs.cs125.jeed.core
 
 import edu.illinois.cs.cs125.jeed.core.antlr.JavaParser
+import edu.illinois.cs.cs125.jeed.core.antlr.JavaParser.BlockContext
 import edu.illinois.cs.cs125.jeed.core.antlr.JavaParser.ExpressionContext
 import edu.illinois.cs.cs125.jeed.core.antlr.JavaParser.PrimaryContext
 import edu.illinois.cs.cs125.jeed.core.antlr.JavaParserBaseListener
@@ -379,7 +380,20 @@ class JavaMutationListener(private val parsedSource: Source.ParsedSource) : Java
 
     private var loopDepth = 0
     private var loopBlockDepths = mutableListOf<Int>()
+    private var continueUntil = 0
 
+    private fun BlockContext.setContinueUntil() {
+        continueUntil = 0
+        if (blockStatement().size > 1) {
+            val lastStatement = blockStatement().last()
+            if (parsedSource.contents(lastStatement.toLocation()).trim() != "continue;") {
+                continueUntil = lastStatement.toLocation().end
+            } else if (blockStatement().size > 2) {
+                val nextLastStatement = blockStatement()[blockStatement().size - 2]
+                continueUntil = nextLastStatement.toLocation().end
+            }
+        }
+    }
     override fun enterStatement(ctx: JavaParser.StatementContext) {
         ctx.IF()?.also {
             val outerLocation = ctx.toLocation()
@@ -469,6 +483,7 @@ class JavaMutationListener(private val parsedSource: Source.ParsedSource) : Java
         ctx.WHILE()?.also {
             loopDepth++
             loopBlockDepths.add(0, 0)
+            ctx.statement(0).block()?.setContinueUntil()
             ctx.parExpression().toLocation().also { location ->
                 mutations.add(NegateWhile(location, parsedSource.contents(location), Source.FileType.JAVA))
             }
@@ -485,13 +500,10 @@ class JavaMutationListener(private val parsedSource: Source.ParsedSource) : Java
         ctx.FOR()?.also {
             loopDepth++
             loopBlockDepths.add(0, 0)
+            ctx.statement(0).block()?.setContinueUntil()
             mutations.add(RemoveLoop(ctx.toLocation(), parsedSource.contents(ctx.toLocation()), Source.FileType.JAVA))
         }
         ctx.DO()?.also {
-            if (ctx.WHILE() == null) {
-                loopDepth++
-                loopBlockDepths.add(0, 0)
-            }
             mutations.add(RemoveLoop(ctx.toLocation(), parsedSource.contents(ctx.toLocation()), Source.FileType.JAVA))
         }
         ctx.TRY()?.also {
@@ -547,7 +559,7 @@ class JavaMutationListener(private val parsedSource: Source.ParsedSource) : Java
                     ),
                 )
             }
-            if (loopBlockDepths[0] > 1 && previousLine != "continue;") {
+            if (loopBlockDepths[0] > 1 && previousLine != "continue;" && location.start < continueUntil) {
                 mutations.add(
                     AddContinue(
                         endBraceLocation,

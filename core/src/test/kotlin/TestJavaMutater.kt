@@ -757,6 +757,62 @@ public class Example {
             }
         }
     }
+    "it should not add continue in last statement in for loop" {
+        Source.fromJava(
+            """
+public class Example {
+  public static int test(int first) {
+    for (int i = 0; i < first; i++) {
+        if (i > 2) {
+            i += 2;
+            continue;
+        }
+        if (i < 1) {
+            i += 0;
+        }
+        if (i > 3) {
+            i += 1;
+        }
+        continue;
+    }
+    for (int i : new int[] {1, 2, 4}) { }
+  }
+}""",
+        ).checkMutations<AddContinue> { mutations, contents ->
+            mutations shouldHaveSize 1
+            mutations.forEach {
+                it.check(contents, "}", "continue; }")
+            }
+        }
+    }
+    "it should not add continue in last statement in while loop" {
+        Source.fromJava(
+            """
+public class Example {
+  public static int test(int first) {
+    while (i < 10) {
+        if (i > 2) {
+            i += 2;
+            continue;
+        }
+        if (i < 1) {
+            i += 0;
+        }
+        if (i > 3) {
+            i += 1;
+        }
+        continue;
+    }
+    for (int i : new int[] {1, 2, 4}) { }
+  }
+}""",
+        ).checkMutations<AddContinue> { mutations, contents ->
+            mutations shouldHaveSize 1
+            mutations.forEach {
+                it.check(contents, "}", "continue; }")
+            }
+        }
+    }
     "it should add breaks to while loops correctly" {
         Source.fromJava(
             """
