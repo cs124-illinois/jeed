@@ -41,8 +41,16 @@ class MutatedSource(
 ) : Source(sources) {
     fun cleaned() = Source(sources.mapValues { removeMutationSuppressions(it.value) })
 
+    suspend fun formatted(): MutatedSource {
+        val formattedSources = when (type) {
+            FileType.JAVA -> googleFormat()
+            FileType.KOTLIN -> ktFormat()
+        }
+        return MutatedSource(formattedSources.sources, originalSources, mutations, appliedMutations, unappliedMutations)
+    }
+
     @Suppress("LongMethod")
-    fun marked(): Source {
+    fun oldMarked(): Source {
         require(mutations.size == 1) { "Can only mark sources that have been mutated once" }
         val mutation = mutations.first()
         return Source(
@@ -79,6 +87,7 @@ class MutatedSource(
                             i++
                             line
                         }
+
                         activeDelta.type == DeltaType.CHANGE -> {
                             val originalContent = sourceLines!!.joinToString("\n") {
                                 if (it.length < indentAmount) {
@@ -95,13 +104,14 @@ class MutatedSource(
                     |${targetLines!!.joinToString("\n")}
                             """.trimMargin()
                         }
+
                         activeDelta.type == DeltaType.DELETE -> {
-                            val originalContent = sourceLines!!.joinToString("\n") {
-                                if (it.length < indentAmount) {
-                                    "$currentIndent//"
-                                } else {
-                                    currentIndent + "// " + it.substring(indentAmount)
-                                }
+                            val sourceIndent = sourceLines!!.minOfOrNull {
+                                it.length - it.trimStart().length
+                            }!!
+                            val originalContent = sourceLines.joinToString("\n") {
+                                assert(it.length >= sourceIndent)
+                                currentIndent + "// " + it.substring(sourceIndent).trimEnd()
                             }
                             i += sourceLines.size
                             """
@@ -109,9 +119,100 @@ class MutatedSource(
                     |$originalContent
                             """.trimMargin()
                         }
+
                         else -> error("Invalid delta type: ${activeDelta.type}")
                     }
                     output += nextLine
+                }
+                output.joinToString("\n")
+            },
+        )
+    }
+
+    fun marked(): Source {
+        require(mutations.size == 1) { "Can only mark sources that have been mutated once" }
+        val mutation = mutations.first()
+        return Source(
+            sources.mapValues { (name, modified) ->
+                if (name != mutation.name) {
+                    return@mapValues modified
+                }
+                val original = originalSources[name] ?: error("Didn't find original sources")
+                check(original != modified) { "Didn't find mutation" }
+
+                val originalLines = original.lines()
+                val modifiedLines = modified.lines()
+                val deltas =
+                    DiffUtils.diff(originalLines, modifiedLines).deltas.sortedBy { it.source.position }.toMutableList()
+                check(deltas.size >= 1) { "Didn't find a delta" }
+
+                var currentOriginalLine = 0
+                val output = mutableListOf<String>()
+
+                for (delta in deltas) {
+                    check(currentOriginalLine <= delta.source.position)
+                    while (currentOriginalLine < delta.source.position) {
+                        output.add(originalLines[currentOriginalLine])
+                        currentOriginalLine++
+                    }
+
+                    val nextIndentAmount = delta.source.lines?.firstOrNull()?.let {
+                        it.length - it.trimStart().length
+                    } ?: delta.target.lines?.firstOrNull()!!.let {
+                        it.length - it.trimStart().length
+                    }
+                    val nextIndent = " ".repeat(nextIndentAmount)
+
+                    val deltaAmount = delta.source.lines?.minOfOrNull {
+                        it.length - it.trimStart().length
+                    } ?: delta.target.lines?.minOfOrNull {
+                        it.length - it.trimStart().length
+                    }!!
+
+                    val originalContent = delta.source.lines!!.joinToString("\n") {
+                        assert(it.length >= deltaAmount)
+                        nextIndent + "// " + it.substring(deltaAmount).trimEnd()
+                    }
+
+                    when (delta.type) {
+                        DeltaType.CHANGE -> {
+                            output.add(
+                                """
+                    |$nextIndent// Modified by ${mutation.mutation.mutationType.mutationName()}. Originally:
+                    |$originalContent
+                                """.trimMargin(),
+                            )
+                            output.addAll(delta.target.lines)
+                        }
+
+                        DeltaType.INSERT -> {
+                            output.add(
+                                """
+                    |$nextIndent// Inserted by ${mutation.mutation.mutationType.mutationName()}.
+                                """.trimMargin(),
+                            )
+                            output.addAll(delta.target.lines)
+                        }
+
+                        DeltaType.DELETE -> {
+                            output.add(
+                                """|$nextIndent// Removed by ${mutation.mutation.mutationType.mutationName()}. Originally:
+                            |$originalContent
+                                """.trimMargin(),
+                            )
+                        }
+
+                        else -> error("Bad delta type ${delta.type}")
+                    }
+
+                    if (delta.type == DeltaType.CHANGE || delta.type == DeltaType.DELETE) {
+                        currentOriginalLine += delta.source.lines.size
+                    } else {
+                        check(delta.type == DeltaType.INSERT)
+                    }
+                }
+                for (i in currentOriginalLine until originalLines.size) {
+                    output.add(originalLines[i])
                 }
                 output.joinToString("\n")
             },

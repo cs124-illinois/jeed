@@ -1003,18 +1003,18 @@ class Question {
         for (i in 0..3) {
             if (
                 board[i][0] != ' ' &&
-                    board[i][0] == board[i][1] &&
-                    board[i][0] == board[i][2]
-                ) {
+                board[i][0] == board[i][1] &&
+                board[i][0] == board[i][2]
+            ) {
                 return board[i][0]
             }
         }
         for (i in 0..3) {
             if (
                 board[0][i] != ' ' &&
-                    board[0][i] == board[1][i] &&
-                    board[0][i] == board[2][i]
-                ) {
+                board[0][i] == board[1][i] &&
+                board[0][i] == board[2][i]
+            ) {
                 return board[0][i]
             }
         }
@@ -1022,9 +1022,9 @@ class Question {
     }
 }
 """,
-        ).allMutations().onEach { mutatedSource ->
-            mutatedSource.marked().ktFormat().ktLint().also { errors ->
-                errors.errors shouldHaveSize 0
+        ).ktFormat().allMutations().map { it.formatted() }.onEach { mutatedSource ->
+            mutatedSource.marked().also {
+                it.ktLint().errors shouldHaveSize 0
             }
         }
     }
