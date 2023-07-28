@@ -4,8 +4,10 @@
 package edu.illinois.cs.cs125.jeed.core
 
 import edu.illinois.cs.cs125.jeed.core.antlr.KotlinParser
+import edu.illinois.cs.cs125.jeed.core.antlr.KotlinParser.ControlStructureBodyContext
 import edu.illinois.cs.cs125.jeed.core.antlr.KotlinParser.ExpressionContext
 import edu.illinois.cs.cs125.jeed.core.antlr.KotlinParser.PrimaryExpressionContext
+import edu.illinois.cs.cs125.jeed.core.antlr.KotlinParser.StatementContext
 import edu.illinois.cs.cs125.jeed.core.antlr.KotlinParserBaseListener
 import org.antlr.v4.runtime.ParserRuleContext
 import org.antlr.v4.runtime.tree.ParseTreeWalker
@@ -377,20 +379,55 @@ class KotlinMutationListener(private val parsedSource: Source.ParsedSource) : Ko
 
     private var loopDepth = 0
     private val loopBlockDepths = mutableListOf<Int>()
+    private var continueUntil = 0
+
+    private fun StatementContext.isContinue() = expression()?.primaryExpression()?.jumpExpression()?.CONTINUE() != null
+        || expression()?.primaryExpression()?.jumpExpression()?.CONTINUE_AT() != null
+
+    private fun StatementContext.isIfTry() = expression()?.primaryExpression()?.ifExpression() != null
+        || expression()?.primaryExpression()?.tryExpression() != null
+
+    private fun ControlStructureBodyContext.setContinueUntil() {
+        continueUntil = 0
+        if (block()?.statements()?.isEmpty != false) {
+            return
+        }
+        var sawIf = false
+        block().statements().statement().reversed().filter {
+            it.declaration() != null || it.assignment() != null || it.expression() != null
+        }.find {
+            val result = if (it.declaration() != null || it.assignment() != null) {
+                true
+            } else if (sawIf && it.isIfTry()) {
+                true
+            } else {
+                !it.isContinue() && !it.isIfTry()
+            }
+            if (it.isIfTry()) {
+                sawIf = true
+            }
+            result
+        }?.also {
+            continueUntil = it.toLocation().end
+        }
+    }
 
     override fun enterLoopStatement(ctx: KotlinParser.LoopStatementContext) {
         val location = ctx.toLocation()
         ctx.doWhileStatement()?.also {
             loopDepth++
             loopBlockDepths.add(0, 0)
+            ctx.doWhileStatement().controlStructureBody()?.setContinueUntil()
         }
         ctx.forStatement()?.also {
             loopDepth++
             loopBlockDepths.add(0, 0)
+            ctx.forStatement().controlStructureBody()?.setContinueUntil()
         }
         ctx.whileStatement()?.also {
             loopDepth++
             loopBlockDepths.add(0, 0)
+            ctx.whileStatement().controlStructureBody()?.setContinueUntil()
         }
         mutations.add(RemoveLoop(location, parsedSource.contents(location), Source.FileType.KOTLIN))
     }
@@ -415,6 +452,7 @@ class KotlinMutationListener(private val parsedSource: Source.ParsedSource) : Ko
             loopBlockDepths[0]++
         }
     }
+
     override fun exitBlock(ctx: KotlinParser.BlockContext) {
         if (loopDepth > 0) {
             val rightCurl = ctx.RCURL()
@@ -431,7 +469,7 @@ class KotlinMutationListener(private val parsedSource: Source.ParsedSource) : Ko
                     ),
                 )
             }
-            if (loopBlockDepths[0] > 1 && previousLine != "continue") {
+            if (loopBlockDepths[0] > 1 && previousLine != "continue" && location.start <= continueUntil) {
                 mutations.add(
                     AddContinue(
                         rightCurlLocation,

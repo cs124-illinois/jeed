@@ -676,7 +676,7 @@ fun test(first: Int) {
             }
         }
     }
-    "f: it should not add continue in last statement in for loop" {
+    "it should not add continue in last statement in for loop" {
         Source.fromKotlin(
             """
 fun test(first: Int) {
@@ -691,6 +691,32 @@ fun test(first: Int) {
     if (i > 3) {
         i += 1
     }
+    continue
+  }
+  for (item: Int in intArrayOf(1, 2, 4)) { }
+}""",
+        ).checkMutations<AddContinue> { mutations, contents ->
+            mutations shouldHaveSize 1
+            mutations.forEach {
+                it.check(contents, "}", "continue }")
+            }
+        }
+    }
+    "it should not add continue in last try statement in for loop" {
+        Source.fromKotlin(
+            """
+fun test(first: Int) {
+  for (i in 0..first) {
+    if (i > 2) {
+        i += 2
+        continue
+    }
+    if (i > 3) {
+        i += 1
+    }
+    try {
+      i = 0
+    } catch (e: Exception) {}
     continue
   }
   for (item: Int in intArrayOf(1, 2, 4)) { }
