@@ -675,8 +675,86 @@ public class Example {
 }""",
         ).checkMutations<AddBreak> { mutations, contents ->
             mutations shouldHaveSize 2
-            mutations[0].check(contents, "}", "break; }")
-            mutations[1].check(contents, "}", "break; }")
+            mutations.forEach {
+                it.check(contents, "}", "break; }")
+            }
+        }
+    }
+    "it should add breaks to for loops with nesting correctly" {
+        Source.fromJava(
+            """
+public class Example {
+  public static int test(int first) {
+    for (int i = 0; i < first; i++) {
+        if (i > 2) {
+            i += 2;
+        }
+        i += 1;
+    }
+    for (int i : new int[] {1, 2, 4}) { }
+  }
+}""",
+        ).checkMutations<AddBreak> { mutations, contents ->
+            mutations shouldHaveSize 3
+            mutations.forEach {
+                it.check(contents, "}", "break; }")
+            }
+        }
+    }
+    "it should add breaks to for loops with nesting correctly and avoid double break" {
+        Source.fromJava(
+            """
+public class Example {
+  public static int test(int first) {
+    for (int i = 0; i < first; i++) {
+        if (i > 2) {
+            i += 2;
+            break;
+        }
+        if (i < 1) {
+            i += 0;
+        }
+        Modify first = (value) -> {
+          value + 1;
+        };
+        i += 1;
+    }
+    for (int i : new int[] {1, 2, 4}) { }
+  }
+}""",
+        ).checkMutations<AddBreak> { mutations, contents ->
+            mutations shouldHaveSize 3
+            mutations.forEach {
+                it.check(contents, "}", "break; }")
+            }
+        }
+    }
+    "it should add continue to for loops with nesting correctly and avoid double continue" {
+        Source.fromJava(
+            """
+public class Example {
+  public static int test(int first) {
+    for (int i = 0; i < first; i++) {
+        if (i > 2) {
+            i += 2;
+            continue;
+        }
+        if (i < 1) {
+            i += 0;
+        }
+        Modify first = (value) -> {
+          value + 1;
+        };
+        i += 1;
+    }
+    for (int i : new int[] {1, 2, 4}) { }
+  }
+}""",
+        ).checkMutations<AddContinue> { mutations, contents ->
+            mutations shouldHaveSize 1
+            mutations.forEach {
+                it.check(contents, "}", "continue; }")
+            }
         }
     }
     "it should add breaks to while loops correctly" {
@@ -800,8 +878,8 @@ public class Example {
 """.trim(),
         ).checkMutations<ChangeEquals> { mutations, contents ->
             mutations shouldHaveSize 2
-            mutations[0].check(contents, "example1 == example3", "(example1.equals(example3))")
-            mutations[1].check(contents, "example2.equals(example3)", "(example2 == example3)")
+            mutations[0].check(contents, "example1 == example3", "(example1).equals(example3)")
+            mutations[1].check(contents, "example2.equals(example3)", "(example2) == (example3)")
         }
     }
     "it should change length and size" {
@@ -1208,10 +1286,10 @@ public class Question {
     }
 }
 """,
-        ).allMutations().onEach { mutatedSource ->
-            mutatedSource.marked().checkstyle().also { errors ->
+        ).allMutations().forEach { mutatedSource ->
+            mutatedSource.marked().checkstyle(CheckstyleArguments()).also { errors ->
                 errors.errors.filter {
-                    it.key != "block.noStatement" && it.key != "indentation.child.error"
+                    it.key != "block.noStatement" && it.key != "indentation.child.error" && it.key != "line.break.before"
                 } shouldHaveSize 0
             }
         }
@@ -1255,6 +1333,24 @@ public class Question {
 }
             """.trimMargin(),
         ).also { it.compile() }.allMutations()
+    }
+    "it should work on equals v dot-equals" {
+        Source.fromJava(
+            """
+public class Question {
+  public static int whatever(int value) {
+    if (value % 2 == 0) {
+      return value * 2;
+    }
+    assert false;
+    return -1;
+  }
+}
+            """.trimMargin(),
+        ).checkMutations<ChangeEquals> { mutations, contents ->
+            mutations shouldHaveSize 1
+            mutations[0].apply(contents).googleFormat()
+        }
     }
 })
 

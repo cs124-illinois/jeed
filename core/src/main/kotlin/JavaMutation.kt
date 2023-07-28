@@ -201,7 +201,14 @@ class JavaMutationListener(private val parsedSource: Source.ParsedSource) : Java
         return Pair(frontLocation, backLocation)
     }
 
+    private var insideLambda = false
     override fun enterExpression(ctx: ExpressionContext) {
+        ctx.creator()?.classCreatorRest()?.classBody()?.also {
+            insideLambda = true
+        }
+        ctx.lambdaExpression()?.also {
+            insideLambda = true
+        }
         ctx.prefix?.toLocation()?.also { location ->
             val contents = parsedSource.contents(location)
             if (IncrementDecrement.matches(contents)) {
@@ -302,8 +309,8 @@ class JavaMutationListener(private val parsedSource: Source.ParsedSource) : Java
                         parsedSource.contents(ctx.toLocation()),
                         Source.FileType.JAVA,
                         "==",
-                        ctx.expression(0).text,
-                        ctx.expression(1).text,
+                        parsedSource.contents(ctx.expression(0).toLocation()),
+                        parsedSource.contents(ctx.expression(1).toLocation()),
                     ),
                 )
             }
@@ -318,8 +325,8 @@ class JavaMutationListener(private val parsedSource: Source.ParsedSource) : Java
                         parsedSource.contents(ctx.toLocation()),
                         Source.FileType.JAVA,
                         ".equals",
-                        ctx.expression(0).text,
-                        ctx.methodCall().expressionList().expression(0).text,
+                        parsedSource.contents(ctx.expression(0).toLocation()),
+                        parsedSource.contents(ctx.methodCall().expressionList().expression(0).toLocation())
                     ),
                 )
             }
@@ -359,7 +366,19 @@ class JavaMutationListener(private val parsedSource: Source.ParsedSource) : Java
         }
     }
 
+    override fun exitExpression(ctx: ExpressionContext) {
+        ctx.creator()?.classCreatorRest()?.classBody()?.also {
+            insideLambda = false
+        }
+        ctx.lambdaExpression()?.also {
+            insideLambda = false
+        }
+    }
+
     private val seenIfStarts = mutableSetOf<Int>()
+
+    private var loopDepth = 0
+    private var loopBlockDepth = 0
 
     override fun enterStatement(ctx: JavaParser.StatementContext) {
         ctx.IF()?.also {
@@ -448,19 +467,10 @@ class JavaMutationListener(private val parsedSource: Source.ParsedSource) : Java
             }
         }
         ctx.WHILE()?.also {
+            loopDepth++
+            loopBlockDepth = 0
             ctx.parExpression().toLocation().also { location ->
                 mutations.add(NegateWhile(location, parsedSource.contents(location), Source.FileType.JAVA))
-                val rbrace = ctx.statement().last()?.block()?.RBRACE()
-                if (rbrace != null) {
-                    val endBraceLocation = listOf(rbrace, rbrace).toLocation()
-                    mutations.add(
-                        AddBreak(
-                            endBraceLocation,
-                            parsedSource.contents(endBraceLocation),
-                            Source.FileType.JAVA,
-                        ),
-                    )
-                }
             }
             if (ctx.DO() == null) {
                 mutations.add(
@@ -473,14 +483,15 @@ class JavaMutationListener(private val parsedSource: Source.ParsedSource) : Java
             }
         }
         ctx.FOR()?.also {
+            loopDepth++
+            loopBlockDepth = 0
             mutations.add(RemoveLoop(ctx.toLocation(), parsedSource.contents(ctx.toLocation()), Source.FileType.JAVA))
-            val rbrace = ctx.statement().last()?.block()?.RBRACE()
-            if (rbrace != null) {
-                val endBraceLocation = listOf(rbrace, rbrace).toLocation()
-                mutations.add(AddBreak(endBraceLocation, parsedSource.contents(endBraceLocation), Source.FileType.JAVA))
-            }
         }
         ctx.DO()?.also {
+            if (ctx.WHILE() == null) {
+                loopDepth++
+                loopBlockDepth = 0
+            }
             mutations.add(RemoveLoop(ctx.toLocation(), parsedSource.contents(ctx.toLocation()), Source.FileType.JAVA))
         }
         ctx.TRY()?.also {
@@ -515,6 +526,49 @@ class JavaMutationListener(private val parsedSource: Source.ParsedSource) : Java
         }
     }
 
+    override fun enterBlock(ctx: JavaParser.BlockContext?) {
+        if (loopDepth > 0) {
+            loopBlockDepth++
+        }
+    }
+    override fun exitBlock(ctx: JavaParser.BlockContext) {
+        if (loopDepth > 0 && !insideLambda) {
+            val rbrace = ctx.RBRACE()
+            val endBraceLocation = listOf(rbrace, rbrace).toLocation()
+            val location = rbrace.symbol.toLocation()
+            check(location.startLine == location.endLine)
+            val previousLine = lines[location.startLine - 2].trim()
+            if (previousLine != "break;") {
+                mutations.add(
+                    AddBreak(
+                        endBraceLocation,
+                        parsedSource.contents(endBraceLocation),
+                        Source.FileType.JAVA,
+                    ),
+                )
+            }
+            if (loopBlockDepth > 1 && previousLine != "continue;") {
+                mutations.add(
+                    AddContinue(
+                        endBraceLocation,
+                        parsedSource.contents(endBraceLocation),
+                        Source.FileType.JAVA,
+                    ),
+                )
+            }
+        }
+        if (loopDepth > 0) {
+            loopBlockDepth--
+        }
+    }
+
+    override fun exitStatement(ctx: JavaParser.StatementContext) {
+        (ctx.WHILE() ?: ctx.DO() ?: ctx.FOR())?.also {
+            loopDepth--
+            check(loopBlockDepth == 0)
+        }
+    }
+
     override fun enterArrayInitializer(ctx: JavaParser.ArrayInitializerContext) {
         if ((ctx.variableInitializer()?.size ?: 0) < 2) {
             return
@@ -539,5 +593,7 @@ class JavaMutationListener(private val parsedSource: Source.ParsedSource) : Java
     init {
         // println(parsedSource.tree.format(parsedSource.parser))
         ParseTreeWalker.DEFAULT.walk(this, parsedSource.tree)
+        check(loopDepth == 0)
+        check(loopBlockDepth == 0)
     }
 }

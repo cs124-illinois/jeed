@@ -375,38 +375,53 @@ class KotlinMutationListener(private val parsedSource: Source.ParsedSource) : Ko
         }
     }
 
+    var loopDepth = 0
+    var loopBlockDepth = 0
     override fun enterLoopStatement(ctx: KotlinParser.LoopStatementContext) {
         val location = ctx.toLocation()
         ctx.doWhileStatement()?.also {
-            val rightCurl = it.controlStructureBody().block()?.RCURL()
-            if (rightCurl != null) {
-                val rightCurlLocation = listOf(rightCurl, rightCurl).toLocation()
-                mutations.add(
-                    AddBreak(
-                        rightCurlLocation,
-                        parsedSource.contents(rightCurlLocation),
-                        Source.FileType.KOTLIN,
-                    ),
-                )
-            }
+            loopDepth++
+            loopBlockDepth = 0
         }
         ctx.forStatement()?.also {
-            val rightCurl = it.controlStructureBody().block()?.RCURL()
-            if (rightCurl != null) {
-                val rightCurlLocation = listOf(rightCurl, rightCurl).toLocation()
-                mutations.add(
-                    AddBreak(
-                        rightCurlLocation,
-                        parsedSource.contents(rightCurlLocation),
-                        Source.FileType.KOTLIN,
-                    ),
-                )
-            }
+            loopDepth++
+            loopBlockDepth = 0
         }
         ctx.whileStatement()?.also {
-            val rightCurl = it.controlStructureBody().block()?.RCURL()
-            if (rightCurl != null) {
-                val rightCurlLocation = listOf(rightCurl, rightCurl).toLocation()
+            loopDepth++
+            loopBlockDepth = 0
+        }
+        mutations.add(RemoveLoop(location, parsedSource.contents(location), Source.FileType.KOTLIN))
+    }
+
+    override fun exitLoopStatement(ctx: KotlinParser.LoopStatementContext) {
+        ctx.doWhileStatement()?.also {
+            loopDepth--
+            check(loopBlockDepth == 0)
+        }
+        ctx.forStatement()?.also {
+            loopDepth--
+            check(loopBlockDepth == 0)
+        }
+        ctx.whileStatement()?.also {
+            loopDepth--
+            check(loopBlockDepth == 0)
+        }
+    }
+
+    override fun enterBlock(ctx: KotlinParser.BlockContext?) {
+        if (loopDepth > 0) {
+            loopBlockDepth++
+        }
+    }
+    override fun exitBlock(ctx: KotlinParser.BlockContext) {
+        if (loopDepth > 0) {
+            val rightCurl = ctx.RCURL()
+            val rightCurlLocation = listOf(rightCurl, rightCurl).toLocation()
+            val location = rightCurl.toLocation()
+            check(location.startLine == location.endLine)
+            val previousLine = lines[location.startLine - 2].trim()
+            if (previousLine != "break") {
                 mutations.add(
                     AddBreak(
                         rightCurlLocation,
@@ -415,8 +430,19 @@ class KotlinMutationListener(private val parsedSource: Source.ParsedSource) : Ko
                     ),
                 )
             }
+            if (loopBlockDepth > 1 && previousLine != "continue") {
+                mutations.add(
+                    AddContinue(
+                        rightCurlLocation,
+                        parsedSource.contents(rightCurlLocation),
+                        Source.FileType.KOTLIN,
+                    ),
+                )
+            }
         }
-        mutations.add(RemoveLoop(location, parsedSource.contents(location), Source.FileType.KOTLIN))
+        if (loopDepth > 0) {
+            loopBlockDepth--
+        }
     }
 
     override fun enterDoWhileStatement(ctx: KotlinParser.DoWhileStatementContext) {
@@ -610,5 +636,7 @@ class KotlinMutationListener(private val parsedSource: Source.ParsedSource) : Ko
     init {
         // println(parsedSource.tree.format(parsedSource.parser))
         ParseTreeWalker.DEFAULT.walk(this, parsedSource.tree)
+        check(loopDepth == 0)
+        check(loopBlockDepth == 0)
     }
 }

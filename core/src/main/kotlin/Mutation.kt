@@ -66,7 +66,7 @@ sealed class Mutation(
         NEGATE_IF, NEGATE_WHILE, REMOVE_IF, REMOVE_LOOP, REMOVE_AND_OR, REMOVE_TRY, REMOVE_STATEMENT,
         REMOVE_PLUS, REMOVE_BINARY, CHANGE_EQUALS,
         SWAP_BREAK_CONTINUE, PLUS_OR_MINUS_ONE_TO_ZERO, ADD_BREAK,
-        STRING_LITERAL_TRIM, NUMBER_LITERAL_TRIM,
+        STRING_LITERAL_TRIM, NUMBER_LITERAL_TRIM, ADD_CONTINUE,
 
         // TODO: Finish
         MODIFY_ARRAY_LITERAL, MODIFY_LENGTH_AND_SIZE
@@ -1218,8 +1218,8 @@ class ChangeEquals(
 
             Source.FileType.JAVA -> {
                 return when (originalEqualsType) {
-                    "==" -> "($firstValue.equals($secondValue))"
-                    ".equals" -> "($firstValue == $secondValue)"
+                    "==" -> "($firstValue).equals($secondValue)"
+                    ".equals" -> "($firstValue) == ($secondValue)"
                     else -> error("Unknown java equals type: $originalEqualsType")
                 }
             }
@@ -1240,6 +1240,22 @@ class AddBreak(
     override fun applyMutation(random: Random): String = when (fileType) {
         Source.FileType.JAVA -> "break; }"
         Source.FileType.KOTLIN -> "break }"
+    }
+}
+
+class AddContinue(
+    location: Location,
+    original: String,
+    fileType: Source.FileType,
+) : Mutation(Type.ADD_CONTINUE, location, original, fileType) {
+    override val preservesLength = false
+    override val estimatedCount = 1
+    override val mightNotCompile = false
+    override val fixedCount = false
+
+    override fun applyMutation(random: Random): String = when (fileType) {
+        Source.FileType.JAVA -> "continue; }"
+        Source.FileType.KOTLIN -> "continue }"
     }
 }
 

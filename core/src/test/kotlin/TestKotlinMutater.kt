@@ -606,8 +606,74 @@ fun test(first: Int) {
 """.trim(),
         ).checkMutations<AddBreak> { mutations, contents ->
             mutations shouldHaveSize 2
-            mutations[0].check(contents, "}", "break }")
-            mutations[1].check(contents, "}", "break }")
+            mutations.forEach {
+                it.check(contents, "}", "break }")
+            }
+        }
+    }
+    "it should add breaks to for loops with nesting correctly" {
+        Source.fromKotlin(
+            """
+fun test(first: Int) {
+  for (i in 0..first) { 
+    if (i > 2) {
+      i += 2
+    }
+    i += 1
+  }
+  for (item: Int in intArrayOf(1, 2, 4)) { }
+}""",
+        ).checkMutations<AddBreak> { mutations, contents ->
+            mutations shouldHaveSize 3
+            mutations.forEach {
+                it.check(contents, "}", "break }")
+            }
+        }
+    }
+    "it should add breaks to for loops with nesting correctly and avoid double break" {
+        Source.fromKotlin(
+            """
+fun test(first: Int) {
+  for (i in 0..first) {
+    if (i > 2) {
+        i += 2
+        break
+    }
+    if (i < 1) {
+        i += 0
+    }
+    i += 1
+  }
+  for (item: Int in intArrayOf(1, 2, 4)) { }
+}""",
+        ).checkMutations<AddBreak> { mutations, contents ->
+            mutations shouldHaveSize 3
+            mutations.forEach {
+                it.check(contents, "}", "break }")
+            }
+        }
+    }
+    "it should add continue to for loops with nesting correctly and avoid double break" {
+        Source.fromKotlin(
+            """
+fun test(first: Int) {
+  for (i in 0..first) {
+    if (i > 2) {
+        i += 2
+        continue
+    }
+    if (i < 1) {
+        i += 0
+    }
+    i += 1
+  }
+  for (item: Int in intArrayOf(1, 2, 4)) { }
+}""",
+        ).checkMutations<AddContinue> { mutations, contents ->
+            mutations shouldHaveSize 1
+            mutations.forEach {
+                it.check(contents, "}", "continue }")
+            }
         }
     }
     "it should remove and-ors in while loops" {
