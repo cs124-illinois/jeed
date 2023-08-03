@@ -35,7 +35,7 @@ dependencies {
     implementation("net.java.dev.jna:jna:5.13.0")
     implementation("io.github.java-diff-utils:java-diff-utils:4.12")
     implementation("com.google.googlejavaformat:google-java-format:1.17.0")
-    implementation("com.google.guava:guava:32.0.0-jre")
+    implementation("com.google.guava:guava:32.0.1-jre")
     implementation("net.sf.extjwnl:extjwnl:2.0.5")
     implementation("net.sf.extjwnl:extjwnl-data-wn31:1.2")
     implementation("com.beyondgrader.resource-agent:agent:2023.4.0")
