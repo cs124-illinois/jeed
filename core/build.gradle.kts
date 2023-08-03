@@ -20,7 +20,7 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:1.9.0")
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
-    implementation("com.puppycrawl.tools:checkstyle:10.12.1")
+    implementation("com.puppycrawl.tools:checkstyle:10.12.2")
     implementation("com.pinterest.ktlint:ktlint-rule-engine:0.50.0")
     implementation("com.pinterest.ktlint:ktlint-ruleset-standard:0.50.0")
     implementation("com.github.jknack:handlebars:4.3.1")

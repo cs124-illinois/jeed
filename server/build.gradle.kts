@@ -19,9 +19,9 @@ dependencies {
 
     implementation(project(":core"))
 
-    implementation("io.ktor:ktor-server-netty:2.3.2")
-    implementation("io.ktor:ktor-server-cors:2.3.2")
-    implementation("io.ktor:ktor-server-content-negotiation:2.3.2")
+    implementation("io.ktor:ktor-server-netty:2.3.3")
+    implementation("io.ktor:ktor-server-cors:2.3.3")
+    implementation("io.ktor:ktor-server-content-negotiation:2.3.3")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
     implementation("com.squareup.moshi:moshi-kotlin:1.15.0")
     implementation("com.github.cs125-illinois:ktor-moshi:2022.9.0")
@@ -35,7 +35,7 @@ dependencies {
 
     testImplementation("io.kotest:kotest-runner-junit5:5.6.2")
     testImplementation("io.kotest:kotest-assertions-ktor:4.4.3")
-    testImplementation("io.ktor:ktor-server-test-host:2.3.2")
+    testImplementation("io.ktor:ktor-server-test-host:2.3.3")
 }
 
 application {

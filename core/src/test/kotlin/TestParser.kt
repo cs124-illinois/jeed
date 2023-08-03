@@ -208,4 +208,14 @@ val t = {
 """,
         ).parse()
     }
+    "it should parse lambda passed with enclosing parentheses" {
+        Source.fromKotlin(
+            """
+fun invert(swap: Map<String, Int>): Map<Int, String> {
+  var reverse = swap.entries.associateBy({ it.value }) { it.key }
+  return reverse
+}
+""",
+        ).parse()
+    }
 })

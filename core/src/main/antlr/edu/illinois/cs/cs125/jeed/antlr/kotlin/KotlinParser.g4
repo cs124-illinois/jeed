@@ -557,7 +557,7 @@ valueArguments
     ;
 
 valueArgument
-    : annotation? NL* (simpleIdentifier NL* ASSIGNMENT NL*)? MULT? NL* expression
+    : annotation? NL* (simpleIdentifier NL* ASSIGNMENT NL*)? MULT? NL* fullExpression
     ;
 
 primaryExpression
