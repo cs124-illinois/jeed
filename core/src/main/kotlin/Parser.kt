@@ -25,13 +25,15 @@ import kotlin.concurrent.getOrSet
 class JeedParseError(location: SourceLocation?, message: String) : SourceError(location, message)
 class JeedParsingException(errors: List<SourceError>) : JeedError(errors)
 
+private val JEED_PARSER_MAX_CONTEXT_SIZE = System.getenv("JEED_PARSER_MAX_CONTEXT_SIZE")?.toInt() ?: 1024
+private val JEED_PARSER_MAX_DFA_SIZE = System.getenv("JEED_PARSER_MAX_DFA_SIZE")?.toInt() ?: 1024
+
 @Suppress("ArrayInDataClass")
 private data class ANTLR4Cache(
-    val cache: PredictionContextCache = PredictionContextCache(),
+    var cache: PredictionContextCache = PredictionContextCache(),
     var javaDFA: Array<DFA>? = null,
     var kotlinDFA: Array<DFA>? = null,
     var snippetDFA: Array<DFA>? = null,
-    val resetCount: Int = 1024,
 ) {
     var javaCount = 0
     var kotlinCount = 0
@@ -44,7 +46,7 @@ fun Parser.makeThreadSafe() {
 
     val dfa = when (this) {
         is JavaParser -> {
-            if (threadCache.javaDFA == null || ++threadCache.javaCount > threadCache.resetCount) {
+            if (threadCache.javaDFA == null || ++threadCache.javaCount > JEED_PARSER_MAX_DFA_SIZE) {
                 threadCache.javaDFA =
                     interpreter.decisionToDFA.mapIndexed { i, _ -> DFA(atn.getDecisionState(i), i) }.toTypedArray()
                 threadCache.javaCount = 0
@@ -53,7 +55,7 @@ fun Parser.makeThreadSafe() {
         }
 
         is KotlinParser -> {
-            if (threadCache.kotlinDFA == null || ++threadCache.kotlinCount > threadCache.resetCount) {
+            if (threadCache.kotlinDFA == null || ++threadCache.kotlinCount > JEED_PARSER_MAX_DFA_SIZE) {
                 threadCache.kotlinDFA =
                     interpreter.decisionToDFA.mapIndexed { i, _ -> DFA(atn.getDecisionState(i), i) }.toTypedArray()
                 threadCache.kotlinCount = 0
@@ -62,7 +64,7 @@ fun Parser.makeThreadSafe() {
         }
 
         is SnippetParser -> {
-            if (threadCache.snippetDFA == null || ++threadCache.snippetCount > threadCache.resetCount) {
+            if (threadCache.snippetDFA == null || ++threadCache.snippetCount > JEED_PARSER_MAX_DFA_SIZE) {
                 threadCache.snippetDFA =
                     interpreter.decisionToDFA.mapIndexed { i, _ -> DFA(atn.getDecisionState(i), i) }.toTypedArray()
                 threadCache.snippetCount = 0
@@ -71,6 +73,10 @@ fun Parser.makeThreadSafe() {
         }
 
         else -> error("No DFA configured for $this")
+    }
+
+    if (threadCache.cache.size() > JEED_PARSER_MAX_CONTEXT_SIZE) {
+        threadCache.cache = PredictionContextCache()
     }
 
     interpreter = ParserATNSimulator(
