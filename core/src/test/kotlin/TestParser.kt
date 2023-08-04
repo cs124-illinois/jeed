@@ -229,4 +229,19 @@ class Test(
 """,
         ).parse()
     }
+    "it should parse lambda assignment to function" {
+        Source.fromKotlin(
+            """
+fun test() = {
+    try {
+        1
+    } catch (e: IllegalArgumentException) {
+        1
+    } catch (e: Exception) {
+        2
+    }
+}
+""",
+        ).parse()
+    }
 })

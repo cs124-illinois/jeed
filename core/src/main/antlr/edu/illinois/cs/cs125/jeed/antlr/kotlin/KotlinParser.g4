@@ -186,7 +186,7 @@ functionValueParameters
     ;
 
 functionValueParameter
-    : parameterModifiers? parameter (NL* ASSIGNMENT NL* expression)?
+    : parameterModifiers? parameter (NL* ASSIGNMENT NL* fullExpression)?
     ;
 
 functionDeclaration
@@ -208,7 +208,7 @@ emptyFunctionDeclaration
 
 functionBody
     : block
-    | ASSIGNMENT NL* expression
+    | ASSIGNMENT NL* fullExpression
     ;
 
 variableDeclaration
@@ -230,7 +230,7 @@ propertyDeclaration
     ;
 
 propertyDelegate
-    : BY NL* expression
+    : BY NL* fullExpression
     ;
 
 getter
@@ -248,7 +248,7 @@ parametersWithOptionalType
     ;
 
 functionValueParameterWithOptionalType
-    : parameterModifiers? parameterWithOptionalType (NL* ASSIGNMENT NL* expression)?
+    : parameterModifiers? parameterWithOptionalType (NL* ASSIGNMENT NL* fullExpression)?
     ;
 
 parameterWithOptionalType
@@ -397,7 +397,7 @@ doWhileStatement
     ;
 
 assignment
-    : (directlyAssignableExpression ASSIGNMENT | assignableExpression assignmentAndOperator) NL* expression
+    : (directlyAssignableExpression ASSIGNMENT | assignableExpression assignmentAndOperator) NL* fullExpression
     ;
 
 semi
