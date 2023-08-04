@@ -65,7 +65,7 @@ classDeclaration
       (NL* typeParameters)? (NL* primaryConstructor)?
       (NL* COLON NL* delegationSpecifiers)?
       (NL* typeConstraints)?
-      (classBody | enumClassBody)
+      NL? (classBody | enumClassBody)
     ;
 
 emptyClassDeclaration

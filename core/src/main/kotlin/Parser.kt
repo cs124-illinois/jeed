@@ -20,61 +20,52 @@ import org.antlr.v4.runtime.dfa.DFA
 import org.antlr.v4.runtime.misc.Utils
 import org.antlr.v4.runtime.tree.Tree
 import org.antlr.v4.runtime.tree.Trees
+import kotlin.concurrent.getOrSet
 
 class JeedParseError(location: SourceLocation?, message: String) : SourceError(location, message)
 class JeedParsingException(errors: List<SourceError>) : JeedError(errors)
 
+@Suppress("ArrayInDataClass")
 private data class ANTLR4Cache(
-    val thread: Thread,
     val cache: PredictionContextCache = PredictionContextCache(),
     var javaDFA: Array<DFA>? = null,
     var kotlinDFA: Array<DFA>? = null,
     var snippetDFA: Array<DFA>? = null,
+    val resetCount: Int = 1024,
 ) {
-    override fun equals(other: Any?): Boolean {
-        if (this === other) {
-            return true
-        }
-        if (javaClass != other?.javaClass) {
-            return false
-        }
-
-        other as ANTLR4Cache
-        return thread == other.thread
-    }
-
-    override fun hashCode(): Int {
-        return thread.hashCode()
-    }
+    var javaCount = 0
+    var kotlinCount = 0
+    var snippetCount = 0
 }
 
-private val threadCacheMap = mutableMapOf<Thread, ANTLR4Cache>()
+private val threadLocalANTLR4Cache = ThreadLocal<ANTLR4Cache>()
 fun Parser.makeThreadSafe() {
-    val threadCache = threadCacheMap.getOrPut(Thread.currentThread()) {
-        ANTLR4Cache(Thread.currentThread())
-    }
+    val threadCache = threadLocalANTLR4Cache.getOrSet { ANTLR4Cache() }
 
     val dfa = when (this) {
         is JavaParser -> {
-            if (threadCache.javaDFA == null) {
+            if (threadCache.javaDFA == null || ++threadCache.javaCount > threadCache.resetCount) {
                 threadCache.javaDFA =
                     interpreter.decisionToDFA.mapIndexed { i, _ -> DFA(atn.getDecisionState(i), i) }.toTypedArray()
+                threadCache.javaCount = 0
             }
             threadCache.javaDFA
         }
 
         is KotlinParser -> {
-            if (threadCache.kotlinDFA == null) {
+            if (threadCache.kotlinDFA == null || ++threadCache.kotlinCount > threadCache.resetCount) {
                 threadCache.kotlinDFA =
                     interpreter.decisionToDFA.mapIndexed { i, _ -> DFA(atn.getDecisionState(i), i) }.toTypedArray()
+                threadCache.kotlinCount = 0
             }
             threadCache.kotlinDFA
         }
 
         is SnippetParser -> {
-            if (threadCache.snippetDFA == null) {
+            if (threadCache.snippetDFA == null || ++threadCache.snippetCount > threadCache.resetCount) {
                 threadCache.snippetDFA =
                     interpreter.decisionToDFA.mapIndexed { i, _ -> DFA(atn.getDecisionState(i), i) }.toTypedArray()
+                threadCache.snippetCount = 0
             }
             threadCache.snippetDFA
         }

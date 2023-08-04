@@ -2,10 +2,8 @@ package edu.illinois.cs.cs125.jeed.core
 
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
-import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 
-@OptIn(ExperimentalTime::class)
 class TestParser : StringSpec({
     "it should parse kotlin code" {
         Source(
@@ -73,11 +71,11 @@ record State(int value) {
         fun makeSource(repeats: Int) = """fun mystery(a: Int): Int {
   if (a == -1) {
     return 0
-  }""" + (0..repeats).map {
+  }""" + (0..repeats).joinToString("") {
             """ else if (a == 0) {
     return 1
   }"""
-        }.joinToString("") + """
+        } + """
   return 0
 }
   """
@@ -94,12 +92,12 @@ record State(int value) {
         repeat(8) {
             println(
                 measureTime {
-                    Source.fromKotlin(makeSource(sourceBaseline + it)).getParsed("Main.kt").tree
+                    Source.fromKotlin(makeSource(sourceBaseline)).getParsed("Main.kt").tree
                 },
             )
         }
 
-        val snippetBaseline = 12
+        val snippetBaseline = 16
         println("As snippet:")
         println(
             "Original: " + measureTime {
@@ -110,7 +108,7 @@ record State(int value) {
         repeat(8) {
             println(
                 measureTime {
-                    Source.fromKotlinSnippet(makeSource(snippetBaseline + it)).parse()
+                    Source.fromKotlinSnippet(makeSource(snippetBaseline)).parse()
                 },
             )
         }
@@ -187,10 +185,11 @@ fun getPronunciation(word: String): String {
 }
 """
         println(
-            measureTime {
+            "Original: " + measureTime {
                 Source.fromKotlin(source).getParsed("Main.kt").tree
             },
         )
+        println("After warmup:")
         repeat(8) {
             println(
                 measureTime {
@@ -214,6 +213,18 @@ val t = {
 fun invert(swap: Map<String, Int>): Map<Int, String> {
   var reverse = swap.entries.associateBy({ it.value }) { it.key }
   return reverse
+}
+""",
+        ).parse()
+    }
+    "it should parse class with blank line after declaration" {
+        Source.fromKotlin(
+            """
+class Test(
+  val input: Int
+)
+{
+  fun test(): Int = 1
 }
 """,
         ).parse()
