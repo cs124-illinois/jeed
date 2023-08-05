@@ -32,7 +32,7 @@ export const JeedProvider: React.FC<JeedProviderProps> = ({ googleToken, server,
         body: JSON.stringify(request),
         headers: Object.assign(
           { "Content-Type": "application/json" },
-          googleToken ? { "google-token": googleToken } : null
+          googleToken ? { "google-token": googleToken } : null,
         ),
         credentials: "include",
       })
@@ -51,7 +51,7 @@ export const JeedProvider: React.FC<JeedProviderProps> = ({ googleToken, server,
         })
       return validate ? Response.check(response) : (response as Response)
     },
-    [googleToken, server]
+    [googleToken, server],
   )
 
   return (

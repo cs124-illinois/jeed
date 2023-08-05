@@ -37,7 +37,7 @@ const STATUS = Object.assign(
     port: PORT,
   },
   audience ? { audience } : null,
-  { mongoDB: client !== undefined }
+  { mongoDB: client !== undefined },
 )
 const getStatus = async (retries = 0) => {
   try {
@@ -47,7 +47,7 @@ const getStatus = async (retries = 0) => {
         await fetch(BACKEND, {
           retries,
           retryOn: (attempt, _, response) => (response?.status === 200 ? false : attempt < retries),
-        }).then((r) => r.json())
+        }).then((r) => r.json()),
       ),
     }
   } catch (err) {
@@ -157,7 +157,7 @@ const server = new Koa({ proxy: true })
       },
       maxAge: 86400,
       credentials: true,
-    })
+    }),
   )
   .use(
     ratelimit({
@@ -171,7 +171,7 @@ const server = new Koa({ proxy: true })
       },
       max: 1,
       whitelist: (ctx) => ctx.request.method === "GET",
-    })
+    }),
   )
   .use(audience ? googleLogin({ audience, required: false }) : (_, next) => next())
   .use(decryptToken)

@@ -12,7 +12,7 @@ export const Task = Union(
   Literal("cexecute"),
   Literal("features"),
   Literal("mutations"),
-  Literal("disassemble")
+  Literal("disassemble"),
 )
 export type Task = Static<typeof Task>
 
@@ -28,7 +28,7 @@ export const Permission = Record({
 }).And(
   Partial({
     actions: String,
-  })
+  }),
 )
 export type Permission = Static<typeof Permission>
 
@@ -44,7 +44,7 @@ export const SourceRange = Record({
 }).And(
   Partial({
     source: String,
-  })
+  }),
 )
 export type SourceRange = Static<typeof SourceRange>
 
@@ -91,7 +91,7 @@ export const ServerStatus = Record({
 }).And(
   Partial({
     lastRequest: String.withConstraint((s) => !isNaN(Date.parse(s))),
-  })
+  }),
 )
 export type ServerStatus = Static<typeof ServerStatus>
 
@@ -193,7 +193,7 @@ export const Request = Record({
     snippet: String,
     arguments: TaskArguments,
     checkForSnippet: Boolean,
-  })
+  }),
 )
 export type Request = Static<typeof Request>
 
@@ -220,7 +220,7 @@ export const CompilationMessage = Record({
 }).And(
   Partial({
     location: SourceLocation,
-  })
+  }),
 )
 export type CompilationMessage = Static<typeof CompilationMessage>
 
@@ -410,7 +410,7 @@ export const Feature = Union(
   Literal("TRY_EXPRESSIONS"),
   Literal("WHEN_EXPRESSIONS"),
   Literal("SAFE_CALL_OPERATOR"),
-  Literal("UNSAFE_CALL_OPERATOR")
+  Literal("UNSAFE_CALL_OPERATOR"),
 )
 export type Feature = Static<typeof Feature>
 
@@ -428,7 +428,7 @@ export const JAVA_ONLY_FEATURES = new Set(
     "STREAM",
     "RECORD",
     "BOXING_CLASSES",
-  ])
+  ]),
 )
 
 export const KOTLIN_ONLY_FEATURES = new Set(
@@ -460,7 +460,7 @@ export const KOTLIN_ONLY_FEATURES = new Set(
     "WHEN_EXPRESSIONS",
     "SAFE_CALL_OPERATOR",
     "UNSAFE_CALL_OPERATOR",
-  ])
+  ]),
 )
 
 export const STRUCTURAL_FEATURES = new Set(["BLOCK_START", "BLOCK_END", "STATEMENT_START", "STATEMENT_END"])
@@ -468,11 +468,11 @@ export const STRUCTURAL_FEATURES = new Set(["BLOCK_START", "BLOCK_END", "STATEME
 export const ALL_FEATURES = new Set(Feature.alternatives.map((literal) => literal.value))
 
 export const JAVA_FEATURES = new Set(
-  [...ALL_FEATURES].filter((f) => f !== "EMPTY" && !KOTLIN_ONLY_FEATURES.has(f) && !STRUCTURAL_FEATURES.has(f))
+  [...ALL_FEATURES].filter((f) => f !== "EMPTY" && !KOTLIN_ONLY_FEATURES.has(f) && !STRUCTURAL_FEATURES.has(f)),
 )
 
 export const KOTLIN_FEATURES = new Set(
-  [...ALL_FEATURES].filter((f) => f !== "EMPTY" && !JAVA_ONLY_FEATURES.has(f) && !STRUCTURAL_FEATURES.has(f))
+  [...ALL_FEATURES].filter((f) => f !== "EMPTY" && !JAVA_ONLY_FEATURES.has(f) && !STRUCTURAL_FEATURES.has(f)),
 )
 
 export const ORDERED_FEATURES = Array(Feature).check([
@@ -609,7 +609,7 @@ export const FlatClassFeatures = Record({
 }).And(
   Partial({
     range: SourceRange,
-  })
+  }),
 )
 export type FlatClassFeatures = Static<typeof FlatClassFeatures>
 
@@ -680,7 +680,7 @@ export const ThrownException = Record({
 }).And(
   Partial({
     message: String,
-  })
+  }),
 )
 export type ThrownException = Static<typeof ThrownException>
 
@@ -694,7 +694,7 @@ export const OutputLine = Record({
 }).And(
   Partial({
     thread: Number,
-  })
+  }),
 )
 export type OutputLine = Static<typeof OutputLine>
 
@@ -724,7 +724,7 @@ export const SourceTaskResults = Record({
     returned: String,
     threw: ThrownException,
     killReason: String,
-  })
+  }),
 )
 export type SourceTaskResults = Static<typeof SourceTaskResults>
 
@@ -739,7 +739,7 @@ export const ContainerExecutionResults = Record({
 }).And(
   Partial({
     exitcode: Number,
-  })
+  }),
 )
 export type ContainerExecutionResults = Static<typeof ContainerExecutionResults>
 
@@ -789,7 +789,7 @@ export const CompilationError = Record({
 }).And(
   Partial({
     location: SourceLocation,
-  })
+  }),
 )
 export type CompilationError = Static<typeof CompilationError>
 
@@ -813,7 +813,7 @@ export const SourceError = Record({
 }).And(
   Partial({
     location: SourceLocation,
-  })
+  }),
 )
 export type SourceError = Static<typeof SourceError>
 
@@ -871,6 +871,6 @@ export const Response = Record({
   Partial({
     email: String,
     audience: Array(String),
-  })
+  }),
 )
 export type Response = Static<typeof Response>

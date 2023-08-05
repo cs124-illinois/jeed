@@ -146,7 +146,7 @@ ${originalLine ? originalLine + "\n" + new Array(column).join(" ") + "^" : ""}${
         output.push(
           `Execution did not complete: ${
             KILL_REASONS[response.completed.execution.killReason] ?? response.completed.execution.killReason
-          }.`
+          }.`,
         )
       } else if (response.completed.execution?.threw) {
         level = "error"
@@ -205,7 +205,7 @@ ${originalLine ? originalLine + "\n" + new Array(column).join(" ") + "^" : ""}${
         output.push(
           `${name} uses features ${Object.keys(fileFeatures)
             .map((feature) => allFeatures[feature])
-            .sort()}`
+            .sort()}`,
         )
       }
       return { output: output.join("\n"), level: "success" }
