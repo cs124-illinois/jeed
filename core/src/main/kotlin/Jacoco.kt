@@ -173,6 +173,7 @@ fun IClassCoverage.allMissedLines() = (firstLine..lastLine).toList().filter {
     getLine(it).status == ICounter.NOT_COVERED || getLine(it).status == ICounter.PARTLY_COVERED
 }
 
+@Suppress("unused")
 fun IClassCoverage.printLines() = (firstLine..lastLine).toList().forEach {
     println("$it: ${getLine(it).print()}")
 }
