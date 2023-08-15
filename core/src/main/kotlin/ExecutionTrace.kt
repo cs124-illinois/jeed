@@ -803,7 +803,7 @@ data class ExecutionTraceResults(
     @JsonClass(generateAdapter = true)
     data class MethodInfo(val className: String, val method: String, val argumentTypes: List<String>)
 
-    /* ktlint-disable no-multi-spaces */
+    @Suppress("ktlint:standard:no-multi-spaces")
     enum class ValueType {
         REFERENCE, // value is an Integer object ID or null if null reference
         VOID,      // value is always null
@@ -816,7 +816,6 @@ data class ExecutionTraceResults(
         DOUBLE,
         LONG,
     }
-    /* ktlint-enable no-multi-spaces */
 
     @JsonClass(generateAdapter = true)
     data class Value(val type: ValueType, val value: Any?)

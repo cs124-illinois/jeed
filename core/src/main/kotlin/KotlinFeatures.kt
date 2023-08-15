@@ -1,5 +1,5 @@
-// ktlint-disable filename
-@file:Suppress("MatchingDeclarationName")
+
+@file:Suppress("MatchingDeclarationName", "ktlint:standard:filename")
 
 package edu.illinois.cs.cs125.jeed.core
 

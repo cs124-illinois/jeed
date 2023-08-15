@@ -1,4 +1,6 @@
-// ktlint-disable filename
+
+
+@file:Suppress("ktlint:standard:filename")
 
 package edu.illinois.cs.cs125.jeed.core
 
