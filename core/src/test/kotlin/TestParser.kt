@@ -244,4 +244,42 @@ fun test() = {
 """,
         ).parse()
     }
+    "it should handle call site trailing commas" {
+        Source.fromKotlin(
+            """
+fun main() {
+    FooWrapper(
+        Foo(
+            a = 3,
+            b = 4,
+        ),
+    )
+}
+""",
+        ).parse()
+    }
+    "it should handle declaration site trailing commas" {
+        Source.fromKotlin(
+            """
+class FooWrapper(
+    val foo: Foo = Foo(
+        a = 3,
+        b = 4,
+    ),
+)
+""",
+        ).parse()
+    }
+    "it should handle more call site trailing commas" {
+        Source.fromKotlin(
+            """
+fun main() {
+    merge(
+        mergesort(copyOfRange(values, 0, values.size / 2)),
+        mergesort(copyOfRange(values, values.size / 2, values.size)),
+    )
+}
+""",
+        ).complexity()
+    }
 })

@@ -49,15 +49,15 @@ tasks.processResources {
 val dockerName = "cs124/jeed"
 tasks.register<Copy>("dockerCopyJar") {
     from(tasks["shadowJar"].outputs)
-    into("${buildDir}/docker")
+    into(layout.buildDirectory.dir("docker"))
 }
 tasks.register<Copy>("dockerCopyDockerfile") {
     from("${projectDir}/Dockerfile")
-    into("${buildDir}/docker")
+    into(layout.buildDirectory.dir("docker"))
 }
 tasks.register<Exec>("dockerBuild") {
     dependsOn("dockerCopyJar", "dockerCopyDockerfile")
-    workingDir("${buildDir}/docker")
+    workingDir(layout.buildDirectory.dir("docker"))
     environment("DOCKER_BUILDKIT", "1")
     commandLine(
         ("docker build . " +
@@ -67,7 +67,7 @@ tasks.register<Exec>("dockerBuild") {
 }
 tasks.register<Exec>("dockerPush") {
     dependsOn("dockerCopyJar", "dockerCopyDockerfile")
-    workingDir("${buildDir}/docker")
+    workingDir(layout.buildDirectory.dir("docker"))
     commandLine(
         ("docker buildx build . --platform=linux/amd64,linux/arm64/v8 " +
             "--builder multiplatform " +
