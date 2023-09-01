@@ -282,4 +282,15 @@ fun main() {
 """,
         ).complexity()
     }
+    "it should handle new range syntax" {
+        Source.fromKotlin(
+            """
+fun main() {
+    for (i in 0..<4) {
+        println(i)
+    }
+}
+""",
+        ).complexity()
+    }
 })

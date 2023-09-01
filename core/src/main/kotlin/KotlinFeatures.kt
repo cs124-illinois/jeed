@@ -720,6 +720,11 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
                 count(FeatureName.FOR_LOOP_RANGE, ctx.RANGE().toLocation())
             }
         }
+        ctx.RANGE_UNTIL()?.also {
+            if (inForStatement) {
+                count(FeatureName.FOR_LOOP_RANGE, ctx.RANGE_UNTIL().toLocation())
+            }
+        }
         if (ctx.postfixUnarySuffix().isNotEmpty()) {
             var skipDots = false
             if (ctx.expression().getOrNull(0)?.primaryExpression()?.simpleIdentifier() != null &&

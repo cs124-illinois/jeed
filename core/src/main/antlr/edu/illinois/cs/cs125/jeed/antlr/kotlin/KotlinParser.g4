@@ -473,7 +473,7 @@ expression
     | expression postfixUnarySuffix+
     | unaryPrefix+ expression
     | expression NL* asOperator NL* type
-    | expression NL* (multiplicativeOperator | additiveOperator | RANGE) NL* expression
+    | expression NL* (multiplicativeOperator | additiveOperator | (RANGE | RANGE_UNTIL)) NL* expression
     | expression simpleIdentifier NL* expression
     | expression NL* elvis NL* expression
     | expression isOperator NL* type

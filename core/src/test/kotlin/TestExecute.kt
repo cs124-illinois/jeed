@@ -614,6 +614,15 @@ fun main() {
         executionMainResult shouldNot haveTimedOut()
         executionMainResult should haveStdout("Here")
     }
+    "!should execute Kotlin for-until syntax" {
+        val executionMainResult = Source.fromKotlinSnippet(
+            """
+for (i in 0..<4) {
+    println(i)
+}""".trim()
+        ).kompile().execute()
+        executionMainResult should haveCompleted()
+    }
 })
 
 fun haveCompleted() = object : Matcher<Sandbox.TaskResults<out Any?>> {

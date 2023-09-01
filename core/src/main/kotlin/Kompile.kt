@@ -76,16 +76,30 @@ data class KompilationArguments(
 
     @Suppress("RedundantIf")
     override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
+        if (this === other) {
+            return true
+        }
+        if (javaClass != other?.javaClass) {
+            return false
+        }
 
         other as KompilationArguments
 
-        if (verbose != other.verbose) return false
-        if (allWarningsAsErrors != other.allWarningsAsErrors) return false
-        if (useCache != other.useCache) return false
-        if (parameters != other.parameters) return false
-        if (jvmTarget != other.jvmTarget) return false
+        if (verbose != other.verbose) {
+            return false
+        }
+        if (allWarningsAsErrors != other.allWarningsAsErrors) {
+            return false
+        }
+        if (useCache != other.useCache) {
+            return false
+        }
+        if (parameters != other.parameters) {
+            return false
+        }
+        if (jvmTarget != other.jvmTarget) {
+            return false
+        }
 
         return true
     }

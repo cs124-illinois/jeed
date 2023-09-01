@@ -573,6 +573,19 @@ val t = 0..4
                 featureList should haveFeatureAt(FeatureName.FOR_LOOP_RANGE, listOf(1))
             }
         }
+        "should detect for loop range until" {
+            Source.fromKotlinSnippet(
+                """
+for (i in 0..<2) {
+  println(i)
+}
+val t = 0..<4
+""",
+            ).features().check {
+                featureMap[FeatureName.FOR_LOOP_RANGE] shouldBe 1
+                featureList should haveFeatureAt(FeatureName.FOR_LOOP_RANGE, listOf(1))
+            }
+        }
         "should detect Elvis operator" {
             Source.fromKotlinSnippet(
                 """
