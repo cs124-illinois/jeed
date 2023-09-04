@@ -36,6 +36,8 @@ import org.jetbrains.kotlin.konan.file.File
 import org.jetbrains.kotlin.metadata.jvm.deserialization.JvmProtoBufUtil
 import org.jetbrains.kotlin.psi.KtFile
 import java.time.Instant
+import org.jetbrains.kotlin.cli.common.arguments.parseCommandLineArguments
+import org.jetbrains.kotlin.cli.jvm.configureAdvancedJvmOptions
 
 val systemKompilerVersion = KotlinVersion.CURRENT.toString()
 
@@ -55,7 +57,22 @@ data class KompilationArguments(
     val parameters: Boolean = DEFAULT_PARAMETERS,
     val jvmTarget: String = DEFAULT_JVM_TARGET,
 ) {
+    @Transient
+    private val additionalCompilerArguments: List<String> = listOf(
+        "-opt-in=kotlin.ExperimentalStdlibApi",
+        "-opt-in=kotlin.time.ExperimentalTime",
+        "-opt-in=kotlin.RequiresOptIn",
+        "-opt-in=kotlin.ExperimentalUnsignedTypes",
+        "-opt-in=kotlin.contracts.ExperimentalContracts",
+        "-opt-in=kotlin.experimental.ExperimentalTypeInference",
+        "-Xcontext-receivers",
+        "-XXLanguage:+RangeUntilOperator"
+    )
+
     val arguments: K2JVMCompilerArguments = K2JVMCompilerArguments()
+    init {
+        parseCommandLineArguments(additionalCompilerArguments, arguments)
+    }
 
     init {
         arguments.classpath = classpath
@@ -184,7 +201,7 @@ private fun kompile(
         val messageCollector = JeedMessageCollector(source, kompilationArguments.arguments.allWarningsAsErrors)
         val configuration = CompilerConfiguration().apply {
             put(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY, messageCollector)
-            put(CommonConfigurationKeys.MODULE_NAME, JvmProtoBufUtil.DEFAULT_MODULE_NAME)
+            put(CommonConfigurationKeys.MODULE_NAME, "web-module")
             put(JVMConfigurationKeys.PARAMETERS_METADATA, kompilationArguments.parameters)
             put(JVMConfigurationKeys.JVM_TARGET, kompilationArguments.jvmTarget.toJvmTarget())
             put(JVMConfigurationKeys.JDK_HOME, java.io.File(System.getProperty("java.home")))
@@ -197,6 +214,7 @@ private fun kompile(
             }
             configureJavaModulesContentRoots(kompilationArguments.arguments)
             configureContentRootsFromClassPath(kompilationArguments.arguments)
+            configureAdvancedJvmOptions(kompilationArguments.arguments)
             configureJdkClasspathRoots()
         }
 
