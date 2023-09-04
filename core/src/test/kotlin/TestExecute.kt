@@ -619,7 +619,7 @@ fun main() {
             """
 for (i in 0..<4) {
     println(i)
-}""".trim()
+}""".trim(),
         ).kompile().execute()
         executionMainResult should haveCompleted()
     }

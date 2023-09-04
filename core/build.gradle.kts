@@ -28,7 +28,7 @@ dependencies {
     implementation("org.ow2.asm:asm:9.5")
     implementation("org.ow2.asm:asm-tree:9.5")
     implementation("org.ow2.asm:asm-util:9.5")
-    implementation("org.slf4j:slf4j-api:2.0.7")
+    implementation("org.slf4j:slf4j-api:2.0.9")
     implementation("ch.qos.logback:logback-classic:1.4.11")
     implementation("io.github.microutils:kotlin-logging:3.0.5")
     implementation("io.github.classgraph:classgraph:4.8.162")
@@ -43,7 +43,7 @@ dependencies {
     api("org.jacoco:org.jacoco.core:0.8.10")
     api("com.github.ben-manes.caffeine:caffeine:3.1.8")
 
-    testImplementation("io.kotest:kotest-runner-junit5:5.6.2")
+    testImplementation("io.kotest:kotest-runner-junit5:5.7.1")
 }
 tasks.test {
     useJUnitPlatform()

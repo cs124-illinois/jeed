@@ -7,6 +7,7 @@ import edu.illinois.cs.cs125.jeed.core.antlr.KotlinParser
 import io.github.classgraph.ClassGraph
 import org.jetbrains.kotlin.cli.common.CLIConfigurationKeys
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
+import org.jetbrains.kotlin.cli.common.arguments.parseCommandLineArguments
 import org.jetbrains.kotlin.cli.common.environment.setIdeaIoUseFallback
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSourceLocation
@@ -16,6 +17,7 @@ import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinToJVMBytecodeCompiler
 import org.jetbrains.kotlin.cli.jvm.config.VirtualJvmClasspathRoot
 import org.jetbrains.kotlin.cli.jvm.config.configureJdkClasspathRoots
+import org.jetbrains.kotlin.cli.jvm.configureAdvancedJvmOptions
 import org.jetbrains.kotlin.cli.jvm.configureContentRootsFromClassPath
 import org.jetbrains.kotlin.cli.jvm.configureJavaModulesContentRoots
 import org.jetbrains.kotlin.codegen.GeneratedClassLoader
@@ -33,11 +35,8 @@ import org.jetbrains.kotlin.config.JVMConfigurationKeys
 import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.konan.file.File
-import org.jetbrains.kotlin.metadata.jvm.deserialization.JvmProtoBufUtil
 import org.jetbrains.kotlin.psi.KtFile
 import java.time.Instant
-import org.jetbrains.kotlin.cli.common.arguments.parseCommandLineArguments
-import org.jetbrains.kotlin.cli.jvm.configureAdvancedJvmOptions
 
 val systemKompilerVersion = KotlinVersion.CURRENT.toString()
 
@@ -66,7 +65,7 @@ data class KompilationArguments(
         "-opt-in=kotlin.contracts.ExperimentalContracts",
         "-opt-in=kotlin.experimental.ExperimentalTypeInference",
         "-Xcontext-receivers",
-        "-XXLanguage:+RangeUntilOperator"
+        "-XXLanguage:+RangeUntilOperator",
     )
 
     val arguments: K2JVMCompilerArguments = K2JVMCompilerArguments()
