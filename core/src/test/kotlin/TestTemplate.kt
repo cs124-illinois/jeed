@@ -231,4 +231,22 @@ public class Question {
         executionResult shouldNot haveCompleted()
         executionResult.threw?.getStackTraceForSource(source)!!.lines()[1].trim() shouldBe "at Question.main(:2)"
     }
+    "should limit repetitive compiler error messages" {
+        val failed = shouldThrow<CompilationFailed> {
+            Source.fromTemplates(
+                mapOf(
+                    "Test.kt" to "{}}",
+                ),
+                mapOf(
+                    "Test.kt.hbs" to """
+fun arrayBasics(values: DoubleArray) {
+  {{{ contents }}}
+  println(values.contentToString())
+  println(numbers.contentToString())
+}""".trim(),
+                ),
+            ).kompile()
+        }
+        failed.errors shouldHaveSize 1
+    }
 })

@@ -177,6 +177,18 @@ private fun compile(
             null
         }
         CompilationError(location, it.getMessage(Locale.US))
+    }.distinctBy {
+        if (it.location != null) {
+            "${it.location}: ${it.message}"
+        } else {
+            it.message
+        }
+    }.sortedBy {
+        if (it.location == null) {
+            0
+        } else {
+            it.location.line * 1000 + it.location.column
+        }
     }
     if (errors.isNotEmpty()) {
         throw CompilationFailed(errors)

@@ -69,6 +69,7 @@ data class KompilationArguments(
     )
 
     val arguments: K2JVMCompilerArguments = K2JVMCompilerArguments()
+
     init {
         parseCommandLineArguments(additionalCompilerArguments, arguments)
     }
@@ -146,6 +147,18 @@ private class JeedMessageCollector(val source: Source, val allWarningsAsErrors: 
                     )
         }.map {
             CompilationError(it.location, it.message)
+        }.distinctBy {
+            if (it.location != null) {
+                "${it.location}: ${it.message}"
+            } else {
+                it.message
+            }
+        }.sortedBy {
+            if (it.location == null) {
+                0
+            } else {
+                it.location.line * 1000 + it.location.column
+            }
         }
 
     val warnings: List<CompilationMessage>
