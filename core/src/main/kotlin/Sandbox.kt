@@ -1846,7 +1846,7 @@ object Sandbox {
         val (returned, threw) = try {
             Pair(block(), null)
         } catch (e: Throwable) {
-            if (e is ThreadDeath || e is LineLimitExceeded) {
+            if (e is ThreadDeath || e is LineLimitExceeded || e is OutOfMemoryError) {
                 confinedTask.currentRedirectedLines = null
                 throw e
             }
