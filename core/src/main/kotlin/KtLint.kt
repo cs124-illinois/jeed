@@ -11,6 +11,7 @@ import com.pinterest.ktlint.rule.engine.core.api.editorconfig.MAX_LINE_LENGTH_PR
 import com.pinterest.ktlint.rule.engine.core.api.editorconfig.RuleExecution
 import com.pinterest.ktlint.ruleset.standard.rules.ChainWrappingRule
 import com.pinterest.ktlint.ruleset.standard.rules.CommentSpacingRule
+import com.pinterest.ktlint.ruleset.standard.rules.DiscouragedCommentLocationRule
 import com.pinterest.ktlint.ruleset.standard.rules.IfElseBracingRule
 import com.pinterest.ktlint.ruleset.standard.rules.IfElseWrappingRule
 import com.pinterest.ktlint.ruleset.standard.rules.IndentationRule
@@ -32,7 +33,7 @@ import com.pinterest.ktlint.ruleset.standard.rules.SpacingAroundKeywordRule
 import com.pinterest.ktlint.ruleset.standard.rules.SpacingAroundOperatorsRule
 import com.pinterest.ktlint.ruleset.standard.rules.SpacingAroundParensRule
 import com.pinterest.ktlint.ruleset.standard.rules.SpacingAroundRangeOperatorRule
-import com.pinterest.ktlint.ruleset.standard.rules.StatementWrapping
+import com.pinterest.ktlint.ruleset.standard.rules.StatementWrappingRule
 import com.pinterest.ktlint.ruleset.standard.rules.StringTemplateRule
 import com.squareup.moshi.JsonClass
 import kotlinx.coroutines.sync.Semaphore
@@ -94,9 +95,10 @@ val jeedRuleProviders = setOf(
     RuleProvider { SpacingAroundParensRule() },
     RuleProvider { SpacingAroundRangeOperatorRule() },
     RuleProvider { StringTemplateRule() },
-    RuleProvider { StatementWrapping() },
+    RuleProvider { StatementWrappingRule() },
     RuleProvider { IfElseBracingRule() },
     RuleProvider { IfElseWrappingRule() },
+    RuleProvider { DiscouragedCommentLocationRule() },
 )
 
 private val limiter = Semaphore(

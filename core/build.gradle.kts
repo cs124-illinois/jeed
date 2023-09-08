@@ -15,14 +15,14 @@ plugins {
 dependencies {
     ksp("com.squareup.moshi:moshi-kotlin-codegen:1.15.0")
 
-    antlr("org.antlr:antlr4:4.13.0")
+    antlr("org.antlr:antlr4:4.13.1")
 
     implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:1.9.10")
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
     implementation("com.puppycrawl.tools:checkstyle:10.12.3")
-    implementation("com.pinterest.ktlint:ktlint-rule-engine:0.50.0")
-    implementation("com.pinterest.ktlint:ktlint-ruleset-standard:0.50.0")
+    implementation("com.pinterest.ktlint:ktlint-rule-engine:1.0.0")
+    implementation("com.pinterest.ktlint:ktlint-ruleset-standard:1.0.0")
     implementation("com.github.jknack:handlebars:4.3.1")
     implementation("com.squareup.moshi:moshi-kotlin:1.15.0")
     implementation("org.ow2.asm:asm:9.5")
@@ -43,7 +43,7 @@ dependencies {
     api("org.jacoco:org.jacoco.core:0.8.10")
     api("com.github.ben-manes.caffeine:caffeine:3.1.8")
 
-    testImplementation("io.kotest:kotest-runner-junit5:5.7.1")
+    testImplementation("io.kotest:kotest-runner-junit5:5.7.2")
 }
 tasks.test {
     useJUnitPlatform()

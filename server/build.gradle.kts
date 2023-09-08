@@ -33,7 +33,7 @@ dependencies {
     implementation("com.beyondgrader.resource-agent:agent:2023.4.0")
     implementation("com.beyondgrader.resource-agent:jeedplugin:2023.4.0")
 
-    testImplementation("io.kotest:kotest-runner-junit5:5.7.1")
+    testImplementation("io.kotest:kotest-runner-junit5:5.7.2")
     testImplementation("io.kotest:kotest-assertions-ktor:4.4.3")
     testImplementation("io.ktor:ktor-server-test-host:2.3.4")
 }
