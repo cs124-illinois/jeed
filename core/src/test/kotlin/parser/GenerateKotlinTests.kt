@@ -67,7 +67,7 @@ fun generateTemplate(file: String) = """"it should parse $file" {
 }"""
 
 class GenerateKotlinTests : StringSpec({
-    "it should generate Kotlin parser tests" {
+    "!it should generate Kotlin parser tests" {
         val parserDirectory =
             object {}::class.java.getResource("/parser")?.path ?: error("Can't load parser example directory")
         val parserFiles = Files

@@ -2100,7 +2100,7 @@ object Sandbox {
                         }
 
                         else -> {
-                            currentInputLine!!.bytes.add(int.toByte())
+                            currentInputLine?.bytes?.add(int.toByte())
                             currentRedirectingInputLine?.bytes?.add(int.toByte())
                         }
                     }

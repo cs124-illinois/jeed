@@ -901,9 +901,7 @@ class Test<T>
 class Another<T,V>
 val mine = mutableListOf<String>()
 """,
-            ).also {
-                println(it.contents)
-            }.features().check("") {
+            ).features().check("") {
                 featureMap[FeatureName.CLASS] shouldBe 2
                 featureList should haveFeatureAt(FeatureName.CLASS, listOf(1, 2))
 

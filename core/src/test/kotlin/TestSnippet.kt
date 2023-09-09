@@ -368,7 +368,7 @@ val i = 0
 println(i)
 test()
 """,
-        ).also { println(it.contents) }.snippetProperties.apply {
+        ).snippetProperties.apply {
             importCount shouldBe 1
             looseCount shouldBe 3
             methodCount shouldBe 1
