@@ -14,7 +14,9 @@ import edu.illinois.cs.cs125.jeed.core.haveStderr
 import edu.illinois.cs.cs125.jeed.core.haveStdout
 import edu.illinois.cs.cs125.jeed.core.haveTimedOut
 import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.collections.shouldNotContain
+import io.kotest.matchers.ints.shouldBeGreaterThan
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNot
@@ -153,6 +155,45 @@ for (int i = 0; i < 1024; i++) {
         }
         executionResult should haveCompleted()
         executionResult shouldNot haveTimedOut()
+        executionResult.outputLines.size shouldBeGreaterThan 0
+    }
+    "should squash normal output when requested" {
+        val compiledSource = Source.fromSnippet(
+            """
+for (int i = 0; i < 128; i++) {
+  System.out.println(i + " Here");
+  System.err.println(i + " There");
+}
+            """.trim(),
+        ).compile()
+        val squashedResult = Sandbox.execute(compiledSource.classLoader) { (classLoader) ->
+            Sandbox.redirectOutput(squashNormalOutput = true) {
+                classLoader.findClassMethod().invoke(null)
+            }.also {
+                assert(it.stdout.trim().lines().size == 128)
+                assert(it.truncatedLines == 0)
+                assert(it.stderr.trim().lines().size == 128)
+            }
+        }
+        squashedResult should haveCompleted()
+        squashedResult shouldNot haveTimedOut()
+        squashedResult.outputLines shouldHaveSize 0
+        squashedResult.stderrLines shouldHaveSize 0
+
+        val unsquashedResult = Sandbox.execute(compiledSource.classLoader) { (classLoader) ->
+            Sandbox.redirectOutput {
+                classLoader.findClassMethod().invoke(null)
+            }.also {
+                assert(it.stdout.trim().lines().size == 128)
+                assert(it.truncatedLines == 0)
+                assert(it.stderr.trim().lines().size == 128)
+            }
+        }
+        unsquashedResult should haveCompleted()
+        unsquashedResult shouldNot haveTimedOut()
+        unsquashedResult.truncatedLines shouldBe 0
+        unsquashedResult.stdoutLines shouldHaveSize 128
+        unsquashedResult.stderrLines shouldHaveSize 128
     }
     "should redirect output to trusted task properly with print" {
         val compiledSource = Source.fromSnippet(

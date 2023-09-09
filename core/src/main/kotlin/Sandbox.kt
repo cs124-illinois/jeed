@@ -493,6 +493,7 @@ object Sandbox {
         var redirectedOutputLines = mutableListOf<TaskResults.OutputLine>()
 
         var redirectingOutput: Boolean = false
+        var squashNormalOutput: Boolean = false
         var redirectingOutputLimit: Int? = null
         var redirectingTruncatedLines: Int = 0
         var outputListener: OutputListener? = null
@@ -549,14 +550,13 @@ object Sandbox {
             val currentLine = currentLines.getOrPut(console) { CurrentLine() }
             val currentRedirectingLine = currentRedirectedLines?.getOrPut(console) { CurrentLine() }
 
-            if (ioBytes.size <= maxIOBytes) {
+            if (!squashNormalOutput && ioBytes.size <= maxIOBytes) {
                 ioBytes += int.toByte()
             }
             if (redirectingOutput) {
                 redirectingIOBytes += int.toByte()
             }
-            val currentLimit = outputHardLimitBytes
-            if (currentLimit != null) {
+            outputHardLimitBytes?.also { currentLimit ->
                 outputCurrentBytes += 1
                 if (outputCurrentBytes >= currentLimit) {
                     throw OutputHardLimitExceeded(currentLimit)
@@ -572,19 +572,21 @@ object Sandbox {
 
             when (int.toChar()) {
                 '\n' -> {
-                    if (outputLines.size < maxOutputLines) {
-                        outputLines.add(
-                            TaskResults.OutputLine(
-                                console,
-                                currentLine.toString(),
-                                currentLine.started,
-                                currentLine.startedThread,
-                            ),
-                        )
-                    } else {
-                        truncatedLines += 1
+                    if (!squashNormalOutput) {
+                        if (outputLines.size < maxOutputLines) {
+                            outputLines.add(
+                                TaskResults.OutputLine(
+                                    console,
+                                    currentLine.toString(),
+                                    currentLine.started,
+                                    currentLine.startedThread,
+                                ),
+                            )
+                        } else {
+                            truncatedLines += 1
+                        }
+                        currentLines.remove(console)
                     }
-                    currentLines.remove(console)
 
                     if (redirectingOutput && currentRedirectingLine!!.bytes.size > 0) {
                         if (redirectedOutputLines.size < (redirectingOutputLimit ?: Int.MAX_VALUE)) {
@@ -608,10 +610,12 @@ object Sandbox {
                 }
 
                 else -> {
-                    if (truncatedLines == 0) {
+                    if (!squashNormalOutput && truncatedLines == 0) {
                         currentLine.bytes.add(int.toByte())
                     }
-                    currentRedirectingLine?.bytes?.add(int.toByte())
+                    if (redirectingOutput && redirectingTruncatedLines == 0) {
+                        currentRedirectingLine?.bytes?.add(int.toByte())
+                    }
                 }
             }
         }
@@ -1827,12 +1831,13 @@ object Sandbox {
     }
 
     @JvmStatic
-    fun redirectOutput(block: () -> Any?) = redirectOutput(null, null, block)
+    fun redirectOutput(block: () -> Any?) = redirectOutput(null, null, null, block)
 
     @JvmStatic
     fun redirectOutput(
         outputListener: OutputListener? = null,
         redirectingOutputLimit: Int? = null,
+        squashNormalOutput: Boolean? = null,
         block: () -> Any?,
     ): JeedOutputCapture {
         val confinedTask = confinedTaskByThreadGroup() ?: error("should only be used from a confined task")
@@ -1842,6 +1847,7 @@ object Sandbox {
         confinedTask.currentRedirectedLines = mutableMapOf()
         confinedTask.outputListener = outputListener
         confinedTask.redirectingOutputLimit = redirectingOutputLimit
+        confinedTask.squashNormalOutput = squashNormalOutput == true
 
         val (returned, threw) = try {
             Pair(block(), null)
@@ -1853,6 +1859,7 @@ object Sandbox {
             Pair(null, e)
         } finally {
             confinedTask.redirectingOutput = false
+            confinedTask.squashNormalOutput = false
         }
 
         val flushedStdout =
@@ -2059,14 +2066,14 @@ object Sandbox {
             val int = confinedTask.systemInStream.read()
             if (int != -1) {
                 confinedTask.apply {
-                    if (currentInputLine == null) {
+                    if (!squashNormalOutput && currentInputLine == null) {
                         currentInputLine = ConfinedTask.CurrentLine()
                     }
                     if (redirectingOutput && currentRedirectingInputLine == null) {
                         currentRedirectingInputLine = ConfinedTask.CurrentLine()
                     }
 
-                    if (ioBytes.size <= maxIOBytes) {
+                    if (!squashNormalOutput && ioBytes.size <= maxIOBytes) {
                         ioBytes += int.toByte()
                     }
                     if (redirectingOutput) {
