@@ -2063,6 +2063,7 @@ object Sandbox {
     private class RedirectingInputStream : InputStream() {
         override fun read(): Int {
             val confinedTask = confinedTaskByThreadGroup() ?: error("Non-confined tasks should not use System.in")
+
             val int = confinedTask.systemInStream.read()
             if (int != -1) {
                 confinedTask.apply {
@@ -2082,13 +2083,15 @@ object Sandbox {
 
                     when (int.toChar()) {
                         '\n' -> {
-                            inputLines.add(
-                                TaskResults.InputLine(
-                                    currentInputLine!!.toString(),
-                                    currentInputLine!!.started,
-                                ),
-                            )
-                            currentInputLine = null
+                            if (!squashNormalOutput) {
+                                inputLines.add(
+                                    TaskResults.InputLine(
+                                        currentInputLine!!.toString(),
+                                        currentInputLine!!.started,
+                                    ),
+                                )
+                                currentInputLine = null
+                            }
                             if (redirectingOutput && currentRedirectingInputLine!!.bytes.size > 0) {
                                 redirectedInput.append(currentRedirectingInputLine.toString() + "\n")
                                 currentRedirectingInputLine = null
@@ -2100,8 +2103,12 @@ object Sandbox {
                         }
 
                         else -> {
-                            currentInputLine?.bytes?.add(int.toByte())
-                            currentRedirectingInputLine?.bytes?.add(int.toByte())
+                            if (!squashNormalOutput) {
+                                currentInputLine!!.bytes.add(int.toByte())
+                            }
+                            if (redirectingOutput) {
+                                currentRedirectingInputLine!!.bytes.add(int.toByte())
+                            }
                         }
                     }
                 }
