@@ -17,6 +17,7 @@ import com.pinterest.ktlint.ruleset.standard.rules.IfElseWrappingRule
 import com.pinterest.ktlint.ruleset.standard.rules.IndentationRule
 import com.pinterest.ktlint.ruleset.standard.rules.MaxLineLengthRule
 import com.pinterest.ktlint.ruleset.standard.rules.ModifierOrderRule
+import com.pinterest.ktlint.ruleset.standard.rules.MultiLineIfElseRule
 import com.pinterest.ktlint.ruleset.standard.rules.NoEmptyClassBodyRule
 import com.pinterest.ktlint.ruleset.standard.rules.NoLineBreakAfterElseRule
 import com.pinterest.ktlint.ruleset.standard.rules.NoLineBreakBeforeAssignmentRule
@@ -99,6 +100,7 @@ val jeedRuleProviders = setOf(
     RuleProvider { IfElseBracingRule() },
     RuleProvider { IfElseWrappingRule() },
     RuleProvider { DiscouragedCommentLocationRule() },
+    RuleProvider { MultiLineIfElseRule() },
 )
 
 private val limiter = Semaphore(
