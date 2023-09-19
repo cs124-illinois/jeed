@@ -118,16 +118,16 @@ tasks.shadowJar {
         attributes["Can-Retransform-Classes"] = "true"
     }
 }
-/*
-kotlinter {
-    disabledRules = arrayOf("filename", "enum-entry-name-case")
-}
- */
 afterEvaluate {
     tasks.named("formatKotlinGeneratedByKspKotlin") {
         enabled = false
     }
     tasks.named("lintKotlinGeneratedByKspKotlin") {
         enabled = false
+    }
+}
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(17))
     }
 }

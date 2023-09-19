@@ -70,3 +70,8 @@ tasks.register<Exec>("dockerPush") {
             "--tag ${dockerName}:${project.version} --push").split(" ")
     )
 }
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(17))
+    }
+}
