@@ -23,9 +23,14 @@ fun String.stripComments(type: Source.FileType): String {
     val charStream = CharStreams.fromString(this)
     return when (type) {
         Source.FileType.JAVA ->
-            SnippetLexer(charStream).allTokens.filter { it.channel != 1 }.joinToString("") { it.text }
+            SnippetLexer(charStream).apply {
+                removeErrorListeners()
+            }.allTokens.filter { it.channel != 1 }.joinToString("") { it.text }
+
         Source.FileType.KOTLIN ->
-            KotlinLexer(charStream).allTokens.filter { it.channel != 1 }.joinToString("") { it.text }
+            KotlinLexer(charStream).apply {
+                removeErrorListeners()
+            }.allTokens.filter { it.channel != 1 }.joinToString("") { it.text }
     }
 }
 
@@ -35,9 +40,14 @@ internal fun String.identifiers(type: Source.FileType): Set<String> {
     val charStream = CharStreams.fromString(this)
     return when (type) {
         Source.FileType.JAVA ->
-            SnippetLexer(charStream).allTokens.filter { it.type == SnippetLexer.IDENTIFIER }.map { it.text }.toSet()
+            SnippetLexer(charStream).apply {
+                removeErrorListeners()
+            }.allTokens.filter { it.type == SnippetLexer.IDENTIFIER }.map { it.text }.toSet()
+
         Source.FileType.KOTLIN ->
-            KotlinLexer(charStream).allTokens.filter { it.type == KotlinLexer.Identifier }.map { it.text }.toSet()
+            KotlinLexer(charStream).apply {
+                removeErrorListeners()
+            }.allTokens.filter { it.type == KotlinLexer.Identifier }.map { it.text }.toSet()
     }
 }
 
@@ -49,7 +59,9 @@ internal fun Source.ParsedSource.strings(type: Source.FileType): Set<String> {
     return when (type) {
         Source.FileType.JAVA -> {
             val charStream = CharStreams.fromString(contents)
-            JavaLexer(charStream).allTokens
+            JavaLexer(charStream).apply {
+                removeErrorListeners()
+            }.allTokens
                 .filter { it.type == JavaLexer.STRING_LITERAL || it.type == JavaLexer.TEXT_BLOCK_LITERAL }
                 .map {
                     when (it.type) {
@@ -60,6 +72,7 @@ internal fun Source.ParsedSource.strings(type: Source.FileType): Set<String> {
                 }
                 .toSet()
         }
+
         Source.FileType.KOTLIN -> {
             object : KotlinParserBaseListener() {
                 val strings = mutableSetOf<String>()
@@ -104,6 +117,7 @@ fun Source.ParsedSource.stripAssertionMessages(type: Source.FileType): String {
                 keep += (currentStart until stream.size()) as Any
             }
         }.keep
+
         Source.FileType.KOTLIN -> {
             object : KotlinParserBaseListener() {
                 var currentStart = 0
@@ -218,7 +232,7 @@ fun String.getBadWords(separateCamelCase: Boolean = false, whitelist: Set<String
                     } else if (word == wordToCheck) {
                         !(
                             word.length < input.length &&
-                                POS.values().any {
+                                POS.entries.any {
                                     DICTIONARY.getIndexWord(it, input) != null ||
                                         DICTIONARY.getIndexWord(it, input.removeSuffix("ed")) != null ||
                                         DICTIONARY.getIndexWord(it, input.removeSuffix("er")) != null
@@ -292,16 +306,21 @@ fun String.countLines(type: Source.FileType): LineCounts {
     val charStream = CharStreams.fromString(this)
     when (type) {
         Source.FileType.JAVA ->
-            SnippetLexer(charStream).allTokens.forEach {
-                val range = it.line until(it.line + it.text.lines().size)
+            SnippetLexer(charStream).apply {
+                removeErrorListeners()
+            }.allTokens.forEach {
+                val range = it.line until (it.line + it.text.lines().size)
                 when (it.channel) {
                     0 -> source.addAll(range)
                     1 -> comment.addAll(range)
                 }
             }
+
         Source.FileType.KOTLIN ->
-            KotlinLexer(charStream).allTokens.forEach {
-                val range = it.line until(it.line + it.text.lines().size)
+            KotlinLexer(charStream).apply {
+                removeErrorListeners()
+            }.allTokens.forEach {
+                val range = it.line until (it.line + it.text.lines().size)
                 if (it.text.isNotBlank()) {
                     when (it.channel) {
                         0 -> source.addAll(range)
