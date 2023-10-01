@@ -38,7 +38,6 @@ dependencies {
     implementation("com.google.guava:guava:32.0.1-jre")
     implementation("net.sf.extjwnl:extjwnl:2.0.5")
     implementation("net.sf.extjwnl:extjwnl-data-wn31:1.2")
-    implementation("com.beyondgrader.resource-agent:agent:2023.9.0")
 
     api("org.jacoco:org.jacoco.core:0.8.10")
     api("com.github.ben-manes.caffeine:caffeine:3.1.8")
@@ -104,6 +103,11 @@ afterEvaluate {
     tasks.named("lintKotlinTest") {
         dependsOn(tasks.generateTestGrammarSource)
     }
+    tasks.withType<JavaCompile> {
+        // TODO: Remove when KSP supports Java 21
+        sourceCompatibility = "20"
+        targetCompatibility = "20"
+    }
 }
 task("createProperties") {
     dependsOn(tasks.processResources)
@@ -151,6 +155,6 @@ kotlin {
 }
 java {
     toolchain {
-        languageVersion.set(JavaLanguageVersion.of(17))
+        languageVersion.set(JavaLanguageVersion.of(21))
     }
 }

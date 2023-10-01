@@ -37,6 +37,7 @@ import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.konan.file.File
 import org.jetbrains.kotlin.psi.KtFile
 import java.time.Instant
+import kotlin.math.min
 
 val systemKompilerVersion = KotlinVersion.CURRENT.toString()
 
@@ -88,7 +89,9 @@ data class KompilationArguments(
         const val DEFAULT_VERBOSE = false
         const val DEFAULT_ALLWARNINGSASERRORS = false
         const val DEFAULT_PARAMETERS = false
-        val DEFAULT_JVM_TARGET = systemCompilerVersion.toCompilerVersion()
+        // TODO: Remove limit when Kotlin supports Java 21
+        private const val MAX_KOTLIN_SUPPORTED_JAVA_VERSION = 20
+        val DEFAULT_JVM_TARGET = min(systemCompilerVersion, MAX_KOTLIN_SUPPORTED_JAVA_VERSION).toCompilerVersion()
     }
 
     @Suppress("RedundantIf")
@@ -401,6 +404,10 @@ private fun String.toJvmTarget() = when (this) {
     "15" -> JvmTarget.JVM_15
     "16" -> JvmTarget.JVM_16
     "17" -> JvmTarget.JVM_17
+    "18" -> JvmTarget.JVM_18
+    "19" -> JvmTarget.JVM_19
+    "20" -> JvmTarget.JVM_20
+    // "21" -> JvmTarget.JVM_21 // TODO: Uncomment when Kotlin supports Java 21
     else -> error("Bad JVM target: $this")
 }
 
@@ -408,6 +415,6 @@ private fun String.toJvmTarget() = when (this) {
 private fun Int.toCompilerVersion() = when (this) {
     6 -> "1.6"
     8 -> "1.8"
-    in 10..17 -> toString()
+    in 10..21 -> toString()
     else -> error("Bad JVM target: $this")
 }

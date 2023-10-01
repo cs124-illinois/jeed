@@ -24,6 +24,7 @@ subprojects {
         enableAssertions = true
         jvmArgs(
             "-ea", "--enable-preview", "-Dfile.encoding=UTF-8",
+            "-Djava.security.manager=allow",
             "-Xms512m", "-Xmx1G", "-Xss256k",
             "-XX:+UseZGC", "-XX:ZCollectionInterval=8",
             "-XX:-OmitStackTraceInFastThrow",
@@ -38,7 +39,7 @@ subprojects {
     }
     tasks.withType<KotlinCompile> {
         kotlinOptions {
-            jvmTarget = JavaVersion.VERSION_17.toString()
+            jvmTarget = JavaVersion.VERSION_20.toString()
         }
     }
 }

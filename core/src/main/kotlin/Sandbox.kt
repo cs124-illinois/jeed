@@ -1,4 +1,4 @@
-@file:Suppress("SpellCheckingInspection", "JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE", "DEPRECATION")
+@file:Suppress("SpellCheckingInspection", "JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE", "DEPRECATION", "removal")
 
 package edu.illinois.cs.cs125.jeed.core
 
