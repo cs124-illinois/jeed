@@ -12,6 +12,9 @@ plugins {
     id("io.gitlab.arturbosch.detekt")
     id("com.google.devtools.ksp")
 }
+configurations.all {
+    exclude("com.google.collections", "google-collections")
+}
 dependencies {
     ksp("com.squareup.moshi:moshi-kotlin-codegen:1.15.0")
 
