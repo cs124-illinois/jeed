@@ -7,18 +7,9 @@ plugins {
     id("io.gitlab.arturbosch.detekt") version "1.23.1"
     id("com.google.devtools.ksp") version "1.9.10-1.0.13" apply false
 }
-allprojects {
-    repositories {
-        mavenLocal()
-        mavenCentral()
-        maven("https://jitpack.io")
-        maven("https://maven.google.com/")
-        maven("https://maven.codeawakening.com")
-    }
-}
 subprojects {
     group = "com.github.cs124-illinois.jeed"
-    version = "2023.10.1"
+    version = "2023.10.2"
     tasks.withType<Test> {
         useJUnitPlatform()
         enableAssertions = true
@@ -45,7 +36,7 @@ subprojects {
 tasks.dependencyUpdates {
     fun String.isNonStable() = !(
         listOf("RELEASE", "FINAL", "GA").any { uppercase().contains(it) }
-            || "^[0-9,.v-]+(-r)?$".toRegex().matches(this)
+            || "^[0-9,.v-]+(-r|-jre)?$".toRegex().matches(this)
         )
     rejectVersionIf { candidate.version.isNonStable() }
     gradleReleaseChannel = "current"

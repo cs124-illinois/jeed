@@ -12,9 +12,6 @@ plugins {
     id("io.gitlab.arturbosch.detekt")
     id("com.google.devtools.ksp")
 }
-configurations.all {
-    exclude("com.google.collections", "google-collections")
-}
 dependencies {
     ksp("com.squareup.moshi:moshi-kotlin-codegen:1.15.0")
 
@@ -23,9 +20,8 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:1.9.10")
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
-    implementation("com.puppycrawl.tools:checkstyle:10.12.4") {
-        exclude("com.google.collections", "google-collections")
-    }
+    implementation("com.puppycrawl.tools:checkstyle:10.12.4")
+    implementation("org.codehaus.plexus:plexus-container-default:2.1.1")
     implementation("com.pinterest.ktlint:ktlint-rule-engine:1.0.0")
     implementation("com.pinterest.ktlint:ktlint-ruleset-standard:1.0.0")
     implementation("com.github.jknack:handlebars:4.3.1")
@@ -40,7 +36,6 @@ dependencies {
     implementation("net.java.dev.jna:jna:5.13.0")
     implementation("io.github.java-diff-utils:java-diff-utils:4.12")
     implementation("com.google.googlejavaformat:google-java-format:1.18.1")
-    implementation("com.google.guava:guava:32.1.2-jre")
     implementation("net.sf.extjwnl:extjwnl:2.0.5")
     implementation("net.sf.extjwnl:extjwnl-data-wn31:1.2")
     implementation("com.beyondgrader.resource-agent:agent:2023.9.0")
