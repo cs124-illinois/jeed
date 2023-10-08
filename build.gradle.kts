@@ -1,3 +1,4 @@
+import io.gitlab.arturbosch.detekt.Detekt
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
@@ -41,6 +42,9 @@ subprojects {
         kotlinOptions {
             jvmTarget = JavaVersion.VERSION_20.toString()
         }
+    }
+    tasks.withType<Detekt> {
+        jvmTarget = "20"
     }
 }
 tasks.dependencyUpdates {

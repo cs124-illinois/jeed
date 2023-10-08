@@ -137,6 +137,7 @@ private fun compile(
     val fileManager = JeedFileManager(parentFileManager ?: standardFileManager)
 
     val options = mutableSetOf<String>()
+    options.add("-proc:none")
     options.add("-Xlint:${compilationArguments.Xlint}")
     if (compilationArguments.parameters) {
         options.add("-parameters")

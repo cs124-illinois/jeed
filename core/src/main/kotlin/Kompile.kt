@@ -89,6 +89,7 @@ data class KompilationArguments(
         const val DEFAULT_VERBOSE = false
         const val DEFAULT_ALLWARNINGSASERRORS = false
         const val DEFAULT_PARAMETERS = false
+
         // TODO: Remove limit when Kotlin supports Java 21
         private const val MAX_KOTLIN_SUPPORTED_JAVA_VERSION = 20
         val DEFAULT_JVM_TARGET = min(systemCompilerVersion, MAX_KOTLIN_SUPPORTED_JAVA_VERSION).toCompilerVersion()

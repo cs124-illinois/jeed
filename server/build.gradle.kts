@@ -125,6 +125,11 @@ afterEvaluate {
     tasks.named("lintKotlinGeneratedByKspKotlin") {
         enabled = false
     }
+    tasks.withType<JavaCompile> {
+        // TODO: Remove when KSP supports Java 21
+        sourceCompatibility = "20"
+        targetCompatibility = "20"
+    }
 }
 java {
     toolchain {

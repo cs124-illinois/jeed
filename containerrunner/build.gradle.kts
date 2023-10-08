@@ -72,6 +72,13 @@ tasks.register<Exec>("dockerPush") {
 }
 java {
     toolchain {
-        languageVersion.set(JavaLanguageVersion.of(17))
+        languageVersion.set(JavaLanguageVersion.of(21))
+    }
+}
+afterEvaluate {
+    tasks.withType<JavaCompile> {
+        // TODO: Remove when Kotlin supports Java 21
+        sourceCompatibility = "20"
+        targetCompatibility = "20"
     }
 }
