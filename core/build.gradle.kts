@@ -11,6 +11,7 @@ plugins {
     id("org.jmailen.kotlinter")
     id("io.gitlab.arturbosch.detekt")
     id("com.google.devtools.ksp")
+    id("com.ryandens.javaagent-test") version "0.5.0"
 }
 dependencies {
     ksp("com.squareup.moshi:moshi-kotlin-codegen:1.15.0")
@@ -18,16 +19,15 @@ dependencies {
     antlr("org.antlr:antlr4:4.13.1")
 
     implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:1.9.10")
-
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
     implementation("com.puppycrawl.tools:checkstyle:10.12.3")
     implementation("com.pinterest.ktlint:ktlint-rule-engine:1.0.0")
     implementation("com.pinterest.ktlint:ktlint-ruleset-standard:1.0.0")
     implementation("com.github.jknack:handlebars:4.3.1")
     implementation("com.squareup.moshi:moshi-kotlin:1.15.0")
-    implementation("org.ow2.asm:asm:9.5")
-    implementation("org.ow2.asm:asm-tree:9.5")
-    implementation("org.ow2.asm:asm-util:9.5")
+    implementation("org.ow2.asm:asm:9.6")
+    implementation("org.ow2.asm:asm-tree:9.6")
+    implementation("org.ow2.asm:asm-util:9.6")
     implementation("org.slf4j:slf4j-api:2.0.9")
     implementation("ch.qos.logback:logback-classic:1.4.11")
     implementation("io.github.microutils:kotlin-logging:3.0.5")
@@ -43,6 +43,8 @@ dependencies {
     api("com.github.ben-manes.caffeine:caffeine:3.1.8")
 
     testImplementation("io.kotest:kotest-runner-junit5:5.7.2")
+    testImplementation("com.beyondgrader.resource-agent:agent:2023.10.0")
+    testJavaagent("com.beyondgrader.resource-agent:agent:2023.10.0")
 }
 tasks.test {
     useJUnitPlatform()
@@ -64,6 +66,8 @@ tasks.test {
     if (!project.hasProperty("slowTests")) {
         exclude("**/TestResourceExhaustion.class")
         exclude("**/TestParallelism.class")
+        exclude("**/TestContainer.class")
+    } else if (OperatingSystem.current().isWindows) {
         exclude("**/TestContainer.class")
     }
 }

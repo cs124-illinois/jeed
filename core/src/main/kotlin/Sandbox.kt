@@ -69,6 +69,7 @@ object Sandbox {
         // Gracefully degrade if deployed without the needed --add-exports
         null
     }
+    private val legacyThreadStopSupported = Runtime.version().feature() < 20
 
     @JsonClass(generateAdapter = true)
     class ClassLoaderConfiguration(
@@ -317,6 +318,7 @@ object Sandbox {
     }
 
     private const val MAX_THREAD_SHUTDOWN_RETRIES = 256
+    private const val THREAD_JOIN_ATTEMPTS_PER_SIGNAL = 4
     private const val THREAD_SHUTDOWN_DELAY = 20L
     private const val MAX_COROUTINE_SHUTDOWN_RETRIES = 3
 
@@ -685,9 +687,12 @@ object Sandbox {
         }
 
         val stoppedThreads: MutableSet<Thread> = mutableSetOf()
-        val threadGroupShutdownRetries = (0..MAX_THREAD_SHUTDOWN_RETRIES).find {
+        val threadGroupShutdownRetries = (0..MAX_THREAD_SHUTDOWN_RETRIES).find { attempt ->
             if (threadGroup.activeCount() == 0) {
                 return@find true
+            }
+            if (attempt.mod(THREAD_JOIN_ATTEMPTS_PER_SIGNAL) == 0 && !legacyThreadStopSupported) {
+                stoppedThreads.clear()
             }
             val activeThreads = arrayOfNulls<Thread>(threadGroup.activeCount() * 2)
             threadGroup.enumerate(activeThreads)
@@ -711,13 +716,13 @@ object Sandbox {
             throw SandboxContainmentFailure("failed to shut down thread group ($threadGroup)")
         }
 
-        @Suppress("DEPRECATION")
-        threadGroup.destroy()
-        @Suppress("DEPRECATION")
-        assert(threadGroup.isDestroyed)
+        if (legacyThreadStopSupported) {
+            threadGroup.destroy()
+            assert(threadGroup.isDestroyed)
+        }
 
         if (confinedTask.truncatedLines == 0) {
-            for (console in TaskResults.OutputLine.Console.values()) {
+            for (console in TaskResults.OutputLine.Console.entries) {
                 val currentLine = confinedTask.currentLines[console] ?: continue
                 if (currentLine.bytes.isNotEmpty()) {
                     confinedTask.outputLines.add(
