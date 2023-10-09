@@ -458,7 +458,9 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
     }
 
     private enum class ParentType {
-        FUNCTION, CLASS, NONE
+        FUNCTION,
+        CLASS,
+        NONE,
     }
 
     private fun ParserRuleContext.parentContext(): RuleContext? {
@@ -690,7 +692,10 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
     }
 
     private enum class SeparatorType {
-        DOT, COLONCOLON, SAFENAV, UNSAFENAV
+        DOT,
+        COLONCOLON,
+        SAFENAV,
+        UNSAFENAV,
     }
 
     override fun enterExpression(ctx: KotlinParser.ExpressionContext) {

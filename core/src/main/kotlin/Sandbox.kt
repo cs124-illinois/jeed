@@ -2285,7 +2285,8 @@ data class ConfiguredSandboxPlugin<A : Any, V : Any>(
 )
 
 enum class RewritingContext {
-    UNTRUSTED, RELOADED
+    UNTRUSTED,
+    RELOADED,
 }
 
 class OutputHardLimitExceeded(limit: Int) : Error("Output limit $limit exceeded")

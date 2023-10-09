@@ -341,7 +341,10 @@ fun String.parseSnippet(): Source.ParsedSource {
 }
 
 enum class SourceType {
-    JAVA_SOURCE, JAVA_SNIPPET, KOTLIN_SOURCE, KOTLIN_SNIPPET
+    JAVA_SOURCE,
+    JAVA_SNIPPET,
+    KOTLIN_SOURCE,
+    KOTLIN_SNIPPET,
 }
 
 fun String.distinguish(language: String) = when {

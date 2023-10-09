@@ -417,7 +417,8 @@ data class LineTraceArguments(
     val coalesceDuplicates: Boolean = true,
 ) {
     enum class RunLineLimitAction {
-        KILL_SANDBOX, THROW_ERROR
+        KILL_SANDBOX,
+        THROW_ERROR,
     }
 
     companion object {
