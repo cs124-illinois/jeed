@@ -1,7 +1,6 @@
 import { terminalOutput } from "@cs124/jeed-output"
 import { JeedProvider, useJeed } from "@cs124/jeed-react"
 import { Request, Response, Task, TaskArguments, intervalDuration } from "@cs124/jeed-types"
-import { GoogleLoginProvider, WithGoogleTokens, useGoogleLogin } from "@cs124/react-google-login"
 import dynamic from "next/dynamic"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { IAceEditor } from "react-ace/lib/types"
@@ -64,15 +63,6 @@ fun main() {
 }
 `.trim()
 
-const LoginButton: React.FC = () => {
-  const { isSignedIn, auth, ready } = useGoogleLogin()
-  if (!ready) {
-    return null
-  }
-  return (
-    <button onClick={() => (isSignedIn ? auth?.signOut() : auth?.signIn())}>{isSignedIn ? "Signout" : "Signin"}</button>
-  )
-}
 const JeedDemo: React.FC = () => {
   const [value, setValue] = useState("")
   const [mode, setMode] = useState<"java" | "kotlin">("java")
@@ -100,9 +90,6 @@ const JeedDemo: React.FC = () => {
       } else if (job === "complexity") {
         tasks = ["complexity"]
       } else if (job === "features") {
-        if (mode !== "java") {
-          throw Error("features not yet supported for Kotlin")
-        }
         tasks = ["features"]
       } else if (job === "disassemble") {
         tasks = mode === "java" ? ["compile", "disassemble"] : ["kompile", "disassemble"]
@@ -136,7 +123,7 @@ const JeedDemo: React.FC = () => {
         setResponse({ error })
       }
     },
-    [mode, snippet, runJeed]
+    [mode, snippet, runJeed],
   )
 
   const timings = useMemo(() => {
@@ -165,7 +152,7 @@ const JeedDemo: React.FC = () => {
         : response?.error
         ? { output: response?.error, level: "error" }
         : undefined,
-    [response]
+    [response],
   )
 
   const commands = useMemo(() => {
@@ -257,16 +244,14 @@ const JeedDemo: React.FC = () => {
         >
           Complexity
         </button>
-        {mode === "java" && (
-          <button
-            onClick={() => {
-              run("features")
-            }}
-            style={{ marginRight: 8 }}
-          >
-            Features
-          </button>
-        )}
+        <button
+          onClick={() => {
+            run("features")
+          }}
+          style={{ marginRight: 8 }}
+        >
+          Features
+        </button>
         <button
           onClick={() => {
             run("disassemble")
@@ -332,33 +317,23 @@ const JeedDemo: React.FC = () => {
 
 export default function Home() {
   return (
-    <GoogleLoginProvider clientConfig={{ client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID as string }}>
-      <WithGoogleTokens>
-        {({ idToken }) => (
-          <JeedProvider googleToken={idToken} server={process.env.NEXT_PUBLIC_JEED_SERVER as string}>
-            <h2>Jeed Demo</h2>
-            <div style={{ marginBottom: 8 }}>
-              <LoginButton />
-            </div>
-            <div style={{ marginBottom: 8 }}>
-              <p>
-                <a href="https://github.com/cs125-illinois/jeed">Jeed</a> is a fast Java and Kotlin execution and
-                analysis toolkit. It compiles and safely executes Java and Kotlin code up to 100 times faster than using
-                a container, allowing a small number of backend servers to easily support a large amount of interactive
-                use.
-              </p>
-              <p>
-                Jeed can also perform a variety of analysis tasks, including linting (<kbd>checkstyle</kbd> and{" "}
-                <kbd>ktlint</kbd>), cyclomatic complexity analysis, and language feature analysis (Java only currently).
-                It also supports <em>snippet mode</em>, a relaxed Java and Kotlin syntax that allows top-level method
-                definitions and loose code.
-              </p>
-              <p>Use the demo below to explore Jeed&apos;s features.</p>
-            </div>
-            <JeedDemo />
-          </JeedProvider>
-        )}
-      </WithGoogleTokens>
-    </GoogleLoginProvider>
+    <JeedProvider server={process.env.NEXT_PUBLIC_JEED_SERVER as string}>
+      <h2>Jeed Demo</h2>
+      <div style={{ marginBottom: 8 }}>
+        <p>
+          <a href="https://github.com/cs125-illinois/jeed">Jeed</a> is a fast Java and Kotlin execution and analysis
+          toolkit. It compiles and safely executes Java and Kotlin code up to 100 times faster than using a container,
+          allowing a small number of backend servers to easily support a large amount of interactive use.
+        </p>
+        <p>
+          Jeed can also perform a variety of analysis tasks, including linting (<kbd>checkstyle</kbd> and{" "}
+          <kbd>ktlint</kbd>), cyclomatic complexity analysis, and language feature analysis (Java only currently). It
+          also supports <em>snippet mode</em>, a relaxed Java and Kotlin syntax that allows top-level method definitions
+          and loose code.
+        </p>
+        <p>Use the demo below to explore Jeed&apos;s features.</p>
+      </div>
+      <JeedDemo />
+    </JeedProvider>
   )
 }

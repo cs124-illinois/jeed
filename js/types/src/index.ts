@@ -411,6 +411,8 @@ export const Feature = Union(
   Literal("WHEN_EXPRESSIONS"),
   Literal("SAFE_CALL_OPERATOR"),
   Literal("UNSAFE_CALL_OPERATOR"),
+  Literal("WHEN_ENTRY"),
+  Literal("LAST_WHEN_ENTRY"),
 )
 export type Feature = Static<typeof Feature>
 
@@ -460,6 +462,8 @@ export const KOTLIN_ONLY_FEATURES = new Set(
     "WHEN_EXPRESSIONS",
     "SAFE_CALL_OPERATOR",
     "UNSAFE_CALL_OPERATOR",
+    "WHEN_ENTRY",
+    "LAST_WHEN_ENTRY",
   ]),
 )
 
@@ -585,6 +589,8 @@ export const ORDERED_FEATURES = Array(Feature).check([
   "IF_EXPRESSIONS",
   "TRY_EXPRESSIONS",
   "WHEN_EXPRESSIONS",
+  "WHEN_ENTRY",
+  "LAST_WHEN_ENTRY",
 ])
 
 export const LocatedFeature = Record({
