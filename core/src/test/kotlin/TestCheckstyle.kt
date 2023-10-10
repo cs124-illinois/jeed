@@ -12,7 +12,7 @@ import io.kotest.matchers.string.shouldContain
 
 class TestCheckstyle : StringSpec({
     "should retrieve the indentation level properly" {
-        defaultChecker!!.indentation shouldBe 4
+        defaultChecker!!.indentation shouldBe 2
     }
     "should check strings without errors" {
         val checkstyleResult = Source.fromSnippet(
@@ -40,7 +40,7 @@ int y =1;
 int i = 0;
 int y = 1;
 int add(int a, int b) {
-    return a+ b;
+  return a+ b;
 }
 add(i, y);
 """.trim(),
@@ -55,7 +55,7 @@ add(i, y);
 int i = 0;
 int y = 1;
 static int add(int a, int b) {
-    return a+ b;
+  return a+ b;
 }
 add(i, y);
 """.trim(),
@@ -70,7 +70,7 @@ add(i, y);
 int i = 0;
 int y = 1;
 public int add(int a, int b) {
-    return a+ b;
+  return a+ b;
 }
 add(i, y);
 """.trim(),
@@ -83,7 +83,7 @@ add(i, y);
         val checkstyleErrors = Source(
             mapOf(
                 "First.java" to """
-public class First{
+class public First{
 }
                 """.trim(),
                 "Second.java" to """
@@ -144,7 +144,7 @@ public int add(int a, int b) {
         checkstyleErrors should haveCheckstyleErrorAt(line = 2)
         checkstyleErrors.errors[1].let {
             it.message shouldContain "indentation level 3"
-            it.message shouldContain "should be 4"
+            it.message shouldContain "should be 2"
         }
         checkstyleErrors should haveCheckstyleErrorAt(line = 3)
         checkstyleErrors.errors[2].let {
@@ -160,7 +160,7 @@ public int add(int a, int b) {
             mapOf(
                 "Test.java.hbs" to """
 public class Question {
-    {{{ contents }}}
+  {{{ contents }}}
 }
 """,
             ),
@@ -178,7 +178,7 @@ public class Question {
             Source.fromSnippet(
                 """
 public int add(int a,int b) {
-    return a+ b;
+  return a+ b;
 }
 """.trim(),
             ).checkstyle(CheckstyleArguments(failOnError = true))
@@ -192,16 +192,16 @@ public int add(int a,int b) {
             mapOf(
                 "Test.java" to """
 public class Test {
-    public static String testYieldKeyword(int switchArg) {
-        return switch (switchArg) {
-            case 1, 2: yield "works";
-            case 3: yield "oh boy";
-            default: yield "testing";
-        };
-    }
-    public static void main() {
-        System.out.println(testYieldKeyword(1));
-    }
+  public static String testYieldKeyword(int switchArg) {
+    return switch (switchArg) {
+      case 1, 2: yield "works";
+      case 3: yield "oh boy";
+      default: yield "testing";
+    };
+  }
+  public static void main() {
+    System.out.println(testYieldKeyword(1));
+  }
 }
                 """.trim(),
             ),
@@ -214,12 +214,12 @@ public class Test {
             mapOf(
                 "Test.java" to """
 public class Test {
-    public static void main() {
-        Object o = new String("");
-        if (o instanceof String s) {
-            System.out.println(s.length());
-        }
+  public static void main() {
+    Object o = new String("");
+    if (o instanceof String s) {
+      System.out.println(s.length());
     }
+  }
 }
                 """.trim(),
             ),
@@ -232,16 +232,16 @@ public class Test {
             mapOf(
                 "Test.java" to """
 record Range(int lo, int hi) {
-    public Range {
-        if (lo > hi) {
-            throw new IllegalArgumentException(String.format("(%d,%d)", lo, hi));
-        }
+  public Range {
+    if (lo > hi) {
+      throw new IllegalArgumentException(String.format("(%d,%d)", lo, hi));
     }
+  }
 }
 public class Test {
-    public static void main() {
-        Object o = new Range(0, 10);
-    }
+  public static void main() {
+    Object o = new Range(0, 10);
+  }
 }
                 """.trim(),
             ),
@@ -252,7 +252,7 @@ public class Test {
     "should ignore errors on unmapped lines when configured" {
         val templatedSource = Source.fromTemplates(
             mapOf(
-                "Test.java" to "    int i = 0;",
+                "Test.java" to "  int i = 0;",
             ),
             mapOf(
                 "Test.java.hbs" to """

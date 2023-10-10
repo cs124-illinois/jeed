@@ -1074,10 +1074,10 @@ fun reformatName(input: String) {
         Source.fromKotlin(
             """
 fun reformatName(input: String?) {
-    if (input == null) {
-        return
-    }
-    println("Hello, " + input)
+  if (input == null) {
+    return
+  }
+  println("Hello, " + input)
 }
 """.trim(),
         ).allMutations().also { mutations ->

@@ -30,19 +30,21 @@
 
 -->
 
-<!-- Configuration customized for Jeed. Changes marked with "Jeed".  -->
+<!-- Configuration customized for CS124. Changes marked with "CS124".  -->
 
 <module name="Checker">
+    <module name="SuppressWarningsFilter" />
+
     <property name="fileExtensions" value="java"/>
 
     <!-- Checks that a package-info.java file exists for each package.     -->
     <!-- See http://checkstyle.sf.net/config_javadoc.html#JavadocPackage -->
-    <!-- Jeed: we don't create a package. -->
+    <!-- CS124: we don't create a package. -->
     <!-- <module name="JavadocPackage"/> -->
 
     <!-- Checks whether files end with a new line.                        -->
     <!-- See http://checkstyle.sf.net/config_misc.html#NewlineAtEndOfFile -->
-    <!-- Jeed: we don't need to check this.
+    <!-- CS124: we don't need to check this.
     <module name="NewlineAtEndOfFile">
       <property name="lineSeparator" value="lf_cr_crlf"/>
     </module>
@@ -50,7 +52,7 @@
 
     <!-- Checks that property files contain the same keys.         -->
     <!-- See http://checkstyle.sf.net/config_misc.html#Translation -->
-    <!-- Jeed: we don't check these files at all.
+    <!-- CS124: we don't check these files at all.
     <module name="Translation"/>
     -->
 
@@ -65,7 +67,7 @@
     <!-- Miscellaneous other checks.                   -->
     <!-- See http://checkstyle.sf.net/config_misc.html -->
 
-    <!-- Jeed: we're going to be lenient about trailing space.
+    <!-- CS124: we're going to be lenient about trailing space.
     <module name="RegexpSingleline">
       <property name="format" value="\s+$"/>
       <property name="minimum" value="0"/>
@@ -76,16 +78,17 @@
 
     <!-- Checks for Size Violations.                    -->
     <!-- See http://checkstyle.sf.net/config_sizes.html -->
-    <!-- Jeed: 80 characters is too few on modern monitors. Google's style guide uses 100, and so do we. -->
+    <!-- CS124: 80 characters is too few on modern monitors. Google's style guide uses 120, and so do we. -->
     <module name="LineLength">
-        <property name="max" value="100"/>
+        <property name="max" value="120"/>
     </module>
 
     <module name="TreeWalker">
+        <module name="SuppressWarningsHolder" />
 
         <!-- Checks for Javadoc comments.                     -->
         <!-- See http://checkstyle.sf.net/config_javadoc.html -->
-        <!-- Jeed: we don't require Javadoc comments by default.
+        <!-- CS124: we don't require Javadoc comments by default.
         <module name="JavadocMethod"/>
         <module name="JavadocType"/>
         <module name="JavadocVariable"/>
@@ -127,7 +130,10 @@
         <module name="ParenPad"/>
         <module name="TypecastParenPad"/>
         <module name="WhitespaceAfter"/>
-        <module name="WhitespaceAround"/>
+        <module name="WhitespaceAround">
+            <property name="allowEmptyTypes" value="true"/>
+            <property name="allowEmptyMethods" value="true"/>
+        </module>
 
         <!-- Modifier Checks                                    -->
         <!-- See http://checkstyle.sf.net/config_modifiers.html -->
@@ -139,7 +145,7 @@
         <module name="AvoidNestedBlocks"/>
         <module name="EmptyBlock"/>
         <module name="LeftCurly"/>
-        <!-- Jeed: allow empty for loops for list problems. -->
+        <!-- CS124: allow empty for loops for list problems. -->
         <module name="NeedBraces">
             <property name="allowEmptyLoopBody" value="true"/>
         </module>
@@ -148,38 +154,38 @@
         <!-- Checks for common coding problems               -->
         <!-- See http://checkstyle.sf.net/config_coding.html -->
         <module name="AvoidInlineConditionals"/>
-        <!-- Jeed: don't enforce this
+        <!-- CS124: don't enforce this
         <module name="EqualsHashCode"/>
         -->
         <module name="HiddenField"/>
         <module name="IllegalInstantiation"/>
         <module name="InnerAssignment"/>
 
-        <!-- Jeed: disabled by default.
+        <!-- CS124: disabled by default.
         <module name="MagicNumber"/>
         -->
         <module name="MissingSwitchDefault"/>
-        <!-- Jeed: I don't like these defaults. if (test == true) is clear. -->
+        <!-- CS124: I don't like these defaults. if (test == true) is clear. -->
         <!-- <module name="SimplifyBooleanExpression"/> -->
         <!-- <module name="SimplifyBooleanReturn"/> -->
 
         <!-- Checks for class design                         -->
         <!-- See http://checkstyle.sf.net/config_design.html -->
-        <!-- Jeed: No need for this warning.
+        <!-- CS124: No need for this warning.
         <module name="DesignForExtension"/>
         -->
         <module name="FinalClass"/>
         <!-- CS124: Our utility classes must have public main results. -->
         <!-- <module name="HideUtilityClassConstructor"/> -->
         <module name="InterfaceIsType"/>
-        <!-- Jeed: allow public fields by default, although this might be worth disabling on a per-question basis.
+        <!-- CS124: allow public fields by default, although this might be worth disabling on a per-question basis.
         <module name="VisibilityModifier"/>
         -->
 
         <!-- Miscellaneous other checks.                   -->
         <!-- See http://checkstyle.sf.net/config_misc.html -->
         <module name="ArrayTypeStyle"/>
-        <!-- Jeed: Disabling by default, since throwing final everywhere is fairly annoying.
+        <!-- CS124: Disabling by default, since throwing final everywhere is fairly annoying.
         <module name="FinalParameters"/>
         -->
         <module name="TodoComment"/>
@@ -187,13 +193,16 @@
 
         <module name="Indentation">
             <property name="basicOffset" value="2"/>
+            <property name="caseIndent" value="2"/>
+            <property name="arrayInitIndent" value="2"/>
+            <property name="lineWrappingIndentation" value="2"/>
         </module>
 
-        <!-- Jeed: new checks 8-28-2020 -->
+        <!-- CS124: new checks 8-28-2020 -->
         <module name="OneStatementPerLine"/>
         <module name="EmptyStatement"/>
 
-        <!-- Jeed: new checks 1-9-2022 -->
+        <!-- CS124: new checks 1-9-2022 -->
         <module name="ParameterAssignment"/>
         <module name="StringLiteralEquality"/>
 

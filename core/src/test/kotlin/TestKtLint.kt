@@ -35,7 +35,7 @@ class TestKtLint : StringSpec({
         shouldThrow<KtLintFailed> {
             Source.fromKotlin(
                 """fun foo1() { if (true) {
-    val i = 0
+  val i = 0
 }
 }""",
             ).ktLint(KtLintArguments(failOnError = true))
@@ -56,15 +56,16 @@ class TestKtLint : StringSpec({
     }
     "it should adjust indent for indentation errors" {
         shouldThrow<KtLintFailed> {
-            Source.fromSnippet(
-                """println("Hello, world!")""".trim(),
-                SnippetArguments(fileType = Source.FileType.KOTLIN, indent = 3),
+            Source.fromKotlinSnippet(
+                """ println("Hello, world!")""",
+                trim = false,
             ).ktLint(KtLintArguments(failOnError = true))
         }.apply {
             shouldHaveError("indent")
+            println(errors)
             errors.first().let {
-                it.message shouldContain "Unexpected indentation (0)"
-                it.message shouldContain "(should be 3)"
+                it.message shouldContain "Unexpected indentation (1)"
+                it.message shouldContain "(should be 0)"
             }
         }
     }
@@ -87,7 +88,7 @@ class TestKtLint : StringSpec({
             """.trimMargin(),
         ).ktFormat().also {
             it.contents shouldBe """fun main() {
-                |    println("Hello, world!")
+                |  println("Hello, world!")
                 |}
             """.trimMargin()
         }
@@ -109,7 +110,7 @@ class TestKtLint : StringSpec({
                 """.trimMargin(),
             ).ktFormat(KtLintArguments(script = true)).also {
                 it.contents shouldBe """if (true) {
-                |    println("Hello, world!")
+                |  println("Hello, world!")
                 |}
                 """.trimMargin()
             }

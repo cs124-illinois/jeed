@@ -208,13 +208,13 @@ suspend fun Source.ktLint(ktLintArguments: KtLintArguments = KtLintArguments()):
                 ktlintRuleEngine.lint(code) { e ->
                     @Suppress("EmptyCatchBlock")
                     try {
-                        val originalLocation = SourceLocation(filename, e.line, e.col)
+                        val addedIndent = leadingIndentation(SourceLocation(filename, e.line, 0))
+                        val originalLocation = SourceLocation(filename, e.line, e.col + addedIndent)
                         val mappedLocation = mapLocation(originalLocation)
 
                         val detail = if (e.ruleId.value == KTLINT_INDENTATION_RULE_NAME) {
                             @Suppress("TooGenericExceptionCaught")
                             try {
-                                val addedIndent = leadingIndentation(originalLocation)
                                 val (incorrectMessage, incorrectAmount) =
                                     unexpectedRegex.find(e.detail)?.groups?.let { match ->
                                         Pair(match[0]?.value, match[1]?.value?.toInt())

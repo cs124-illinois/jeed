@@ -615,11 +615,10 @@ val student = object : Person() {
 fun first() = Test(3)
 data class Test(val first: Int)
 fun second(): Test {
-    return first()
+  return first()
 }
 println(second())
-            """.trim(),
-            SnippetArguments(indent = 4),
+            """,
         ).also {
             it.ktLint(KtLintArguments(failOnError = true))
         }.kompile().execute().also {
