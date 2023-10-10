@@ -936,10 +936,20 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
         add(FeatureName.BLOCK_END, ctx.RCURL().toLocation())
     }
 
+    override fun exitWhenExpression(ctx: KotlinParser.WhenExpressionContext?) {
+        if (lastWhenEntry != null) {
+            count(FeatureName.LAST_WHEN_ENTRY, lastWhenEntry!!.toLocation())
+            lastWhenEntry = null
+        }
+    }
+
+    private var lastWhenEntry: KotlinParser.WhenEntryContext? = null
     override fun enterWhenEntry(ctx: KotlinParser.WhenEntryContext) {
+        count(FeatureName.WHEN_ENTRY, ctx.toLocation())
         if (ctx.ELSE() != null) {
             count(FeatureName.ELSE_STATEMENTS, ctx.ELSE().toLocation())
         }
+        lastWhenEntry = ctx
     }
 
     override fun enterEnumClassBody(ctx: KotlinParser.EnumClassBodyContext) {

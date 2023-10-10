@@ -152,6 +152,8 @@ enum class FeatureName(val description: String) {
     WHEN_EXPRESSIONS("when expressions"),
     SAFE_CALL_OPERATOR("safe call operator"),
     UNSAFE_CALL_OPERATOR("unsafe call operator"),
+    WHEN_ENTRY("when entry"),
+    LAST_WHEN_ENTRY("last when entry"),
 }
 
 // Java features without Kotlin equivalents
@@ -199,15 +201,17 @@ val KOTLIN_ONLY_FEATURES = setOf(
     FeatureName.WHEN_EXPRESSIONS,
     FeatureName.SAFE_CALL_OPERATOR,
     FeatureName.UNSAFE_CALL_OPERATOR,
+    FeatureName.WHEN_ENTRY,
+    FeatureName.LAST_WHEN_ENTRY,
 )
 
 val STRUCTURAL_FEATURES =
     setOf(FeatureName.BLOCK_START, FeatureName.BLOCK_END, FeatureName.STATEMENT_START, FeatureName.STATEMENT_END)
 
-val ALL_FEATURES = FeatureName.values().associate { it.name to it.description }
+val ALL_FEATURES = FeatureName.entries.associate { it.name to it.description }
 
-val JAVA_FEATURES = FeatureName.values().toSet() - KOTLIN_ONLY_FEATURES - STRUCTURAL_FEATURES - setOf(FeatureName.EMPTY)
-val KOTLIN_FEATURES = FeatureName.values().toSet() - JAVA_ONLY_FEATURES - STRUCTURAL_FEATURES - setOf(FeatureName.EMPTY)
+val JAVA_FEATURES = FeatureName.entries.toSet() - KOTLIN_ONLY_FEATURES - STRUCTURAL_FEATURES - setOf(FeatureName.EMPTY)
+val KOTLIN_FEATURES = FeatureName.entries.toSet() - JAVA_ONLY_FEATURES - STRUCTURAL_FEATURES - setOf(FeatureName.EMPTY)
 
 @Suppress("unused")
 val ORDERED_FEATURES = listOf(
@@ -322,9 +326,11 @@ val ORDERED_FEATURES = listOf(
     FeatureName.WHEN_EXPRESSIONS,
     FeatureName.SAFE_CALL_OPERATOR,
     FeatureName.UNSAFE_CALL_OPERATOR,
+    FeatureName.WHEN_ENTRY,
+    FeatureName.LAST_WHEN_ENTRY,
 ).also {
     val doesExist = it.toSet()
-    val shouldExist = FeatureName.values().toSet() - setOf(FeatureName.EMPTY)
+    val shouldExist = FeatureName.entries.toSet() - setOf(FeatureName.EMPTY)
     check(doesExist == shouldExist) {
         "Ordered list feature mismatch: ${(doesExist + shouldExist) - (doesExist.intersect(shouldExist))}"
     }
@@ -366,7 +372,7 @@ data class Features(
 ) {
     operator fun plus(other: Features): Features {
         val map = FeatureMap()
-        for (key in FeatureName.values()) {
+        for (key in FeatureName.entries) {
             map[key] = featureMap.getValue(key) + other.featureMap.getValue(key)
         }
         return Features(

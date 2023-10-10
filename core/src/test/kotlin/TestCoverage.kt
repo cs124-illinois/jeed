@@ -194,4 +194,46 @@ fun main() {
             coverageResult should haveFileMissedCount(2)
         }
     }
+    "it should adjust for Kotlin when" {
+        val source = Source.fromKotlin(
+            """
+fun catcher(f: () -> Any): Int {
+  try {
+    f()
+  } catch (e: Exception) {
+    when (e) {
+      is NullPointerException -> return 1
+      is IllegalArgumentException -> return 2
+      is IllegalStateException -> return 3
+      is ArrayIndexOutOfBoundsException -> return 4
+    }
+  }
+  return 0
+}
+fun main() {
+  catcher({ throw NullPointerException() })
+  catcher({ throw IllegalStateException() })
+  catcher({ throw IllegalArgumentException() })
+  catcher({ throw ArrayIndexOutOfBoundsException() })
+  catcher({ "test" })
+}
+""",
+        )
+        val coverage = source.coverage()
+        val features = source.features()
+
+        coverage.let { coverageResult ->
+            println(coverageResult)
+            coverageResult should haveFileMissedCount(1)
+            coverageResult.adjustWithFeatures(features, source.type)
+        }.also { coverageResult ->
+            coverageResult should haveFileMissedCount(0)
+        }
+        coverage.byFile["Main.kt"]!!.let { fileCoverage ->
+            fileCoverage should haveMissedCount(1)
+            fileCoverage.adjustWithFeatures(features.lookup("", "Main.kt") as UnitFeatures, Source.FileType.KOTLIN)
+        }.also { fileCoverage ->
+            fileCoverage should haveMissedCount(0)
+        }
+    }
 })

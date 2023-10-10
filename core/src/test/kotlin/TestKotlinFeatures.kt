@@ -760,6 +760,11 @@ when {
 
                 featureMap[FeatureName.ELSE_STATEMENTS] shouldBe 1
                 featureList should haveFeatureAt(FeatureName.ELSE_STATEMENTS, listOf(3))
+
+                featureMap[FeatureName.WHEN_ENTRY] shouldBe 4
+                featureMap[FeatureName.LAST_WHEN_ENTRY] shouldBe 2
+                featureList should haveFeatureAt(FeatureName.WHEN_ENTRY, listOf(2, 3, 6, 7))
+                featureList should haveFeatureAt(FeatureName.LAST_WHEN_ENTRY, listOf(3, 7))
             }
         }
         "should count enum classes" {
