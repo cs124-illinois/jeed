@@ -622,6 +622,8 @@ class Test(val first: Int) {
             ).features().check("Test") {
                 featureMap[FeatureName.CONSTRUCTOR] shouldBe 1
                 featureList should haveFeatureAt(FeatureName.CONSTRUCTOR, listOf(1))
+                featureMap[FeatureName.CLASS_FIELD] shouldBe 2
+                featureList should haveFeatureAt(FeatureName.CLASS_FIELD, listOf(1, 2))
             }
         }
         "should count secondary constructors" {

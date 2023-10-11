@@ -873,6 +873,12 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
         count(FeatureName.CONSTRUCTOR, ctx.toLocation())
     }
 
+    override fun enterClassParameter(ctx: KotlinParser.ClassParameterContext) {
+        if (ctx.VAL() != null || ctx.VAR() != null) {
+            count(FeatureName.CLASS_FIELD, ctx.toLocation())
+        }
+    }
+
     override fun enterEqualityOperator(ctx: KotlinParser.EqualityOperatorContext) {
         if (ctx.EQEQEQ() != null || ctx.EXCL_EQEQ() != null) {
             count(FeatureName.REFERENCE_EQUALITY, (ctx.EQEQEQ() ?: ctx.EXCL_EQEQ()).toLocation())
