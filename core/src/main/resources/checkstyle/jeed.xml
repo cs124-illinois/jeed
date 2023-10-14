@@ -39,8 +39,9 @@
 
     <!-- Checks that a package-info.java file exists for each package.     -->
     <!-- See http://checkstyle.sf.net/config_javadoc.html#JavadocPackage -->
-    <!-- CS124: we don't create a package. -->
-    <!-- <module name="JavadocPackage"/> -->
+    <!-- CS124: we don't create a package.
+    <module name="JavadocPackage"/>
+    -->
 
     <!-- Checks whether files end with a new line.                        -->
     <!-- See http://checkstyle.sf.net/config_misc.html#NewlineAtEndOfFile -->
@@ -121,7 +122,9 @@
 
         <!-- Checks for whitespace                               -->
         <!-- See http://checkstyle.sf.net/config_whitespace.html -->
-        <module name="EmptyForIteratorPad"/>
+        <module name="EmptyForIteratorPad">
+            <property name="option" value="space" />
+        </module>
         <module name="GenericWhitespace"/>
         <module name="MethodParamPad"/>
         <module name="NoWhitespaceAfter"/>
@@ -131,9 +134,10 @@
         <module name="TypecastParenPad"/>
         <module name="WhitespaceAfter"/>
         <module name="WhitespaceAround">
-            <property name="allowEmptyTypes" value="true"/>
-            <property name="allowEmptyMethods" value="true"/>
-            <property name="allowEmptyLambdas" value="true"/>
+            <property name="allowEmptyTypes" value="true" />
+            <property name="allowEmptyMethods" value="true" />
+            <property name="allowEmptyConstructors" value="true" />
+            <property name="allowEmptyLambdas" value="true" />
         </module>
 
         <!-- Modifier Checks                                    -->
@@ -155,6 +159,7 @@
         <!-- Checks for common coding problems               -->
         <!-- See http://checkstyle.sf.net/config_coding.html -->
         <module name="AvoidInlineConditionals"/>
+        <module name="EmptyStatement" />
         <!-- CS124: don't enforce this
         <module name="EqualsHashCode"/>
         -->
@@ -166,9 +171,9 @@
         <module name="MagicNumber"/>
         -->
         <module name="MissingSwitchDefault"/>
-        <!-- CS124: I don't like these defaults. if (test == true) is clear. -->
+        <!-- CS124: if (test == true) is clear. -->
         <!-- <module name="SimplifyBooleanExpression"/> -->
-        <!-- <module name="SimplifyBooleanReturn"/> -->
+        <module name="SimplifyBooleanReturn" />
 
         <!-- Checks for class design                         -->
         <!-- See http://checkstyle.sf.net/config_design.html -->
@@ -176,8 +181,9 @@
         <module name="DesignForExtension"/>
         -->
         <module name="FinalClass"/>
-        <!-- CS124: Our utility classes must have public main results. -->
-        <!-- <module name="HideUtilityClassConstructor"/> -->
+        <!-- CS124: Our utility classes must have public main methods.
+        <module name="HideUtilityClassConstructor"/>
+        -->
         <module name="InterfaceIsType"/>
         <!-- CS124: allow public fields by default, although this might be worth disabling on a per-question basis.
         <module name="VisibilityModifier"/>
@@ -199,11 +205,8 @@
             <property name="lineWrappingIndentation" value="2"/>
         </module>
 
-        <!-- CS124: new checks 8-28-2020 -->
         <module name="OneStatementPerLine"/>
         <module name="EmptyStatement"/>
-
-        <!-- CS124: new checks 1-9-2022 -->
         <module name="ParameterAssignment"/>
         <module name="StringLiteralEquality"/>
 
