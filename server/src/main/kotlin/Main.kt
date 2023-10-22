@@ -54,7 +54,7 @@ val runtime: Runtime = Runtime.getRuntime()
 
 @Suppress("ComplexMethod", "LongMethod")
 fun Application.jeed() {
-    Agent.activate(countLines = false)
+    Agent.activate(countLines = false, redirectFiles = false)
     StaticFailureDetection.recordingFailedClasses = true
 
     install(CORS) {

@@ -15,7 +15,7 @@ plugins {
 dependencies {
     ksp("com.squareup.moshi:moshi-kotlin-codegen:1.15.0")
 
-    testJavaagent("com.beyondgrader.resource-agent:agent:2023.9.0")
+    testJavaagent("com.beyondgrader.resource-agent:agent:2023.10.0")
 
     implementation(project(":core"))
 
@@ -30,8 +30,8 @@ dependencies {
     implementation("com.uchuhimo:konf-yaml:1.1.2")
     implementation("io.github.microutils:kotlin-logging:3.0.5")
     implementation("com.github.cs124-illinois:libcs1:2023.8.0")
-    implementation("com.beyondgrader.resource-agent:agent:2023.9.0")
-    implementation("com.beyondgrader.resource-agent:jeedplugin:2023.9.0")
+    implementation("com.beyondgrader.resource-agent:agent:2023.10.0")
+    implementation("com.beyondgrader.resource-agent:jeedplugin:2023.10.0")
 
     testImplementation("io.kotest:kotest-runner-junit5:5.7.2")
     testImplementation("io.kotest:kotest-assertions-ktor:4.4.3")
@@ -124,11 +124,6 @@ afterEvaluate {
     }
     tasks.named("lintKotlinGeneratedByKspKotlin") {
         enabled = false
-    }
-    tasks.withType<JavaCompile> {
-        // TODO: Remove when KSP supports Java 21
-        sourceCompatibility = "20"
-        targetCompatibility = "20"
     }
 }
 java {

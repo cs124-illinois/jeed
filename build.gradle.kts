@@ -38,13 +38,17 @@ subprojects {
             "--add-exports", "java.management/sun.management=ALL-UNNAMED"
         )
     }
+    tasks.withType<JavaCompile> {
+        sourceCompatibility = "17"
+        targetCompatibility = "17"
+    }
     tasks.withType<KotlinCompile> {
         kotlinOptions {
-            jvmTarget = JavaVersion.VERSION_20.toString()
+            jvmTarget = JavaVersion.VERSION_17.toString()
         }
     }
     tasks.withType<Detekt> {
-        jvmTarget = "20"
+        jvmTarget = "17"
     }
 }
 tasks.dependencyUpdates {

@@ -75,10 +75,3 @@ java {
         languageVersion.set(JavaLanguageVersion.of(21))
     }
 }
-afterEvaluate {
-    tasks.withType<JavaCompile> {
-        // TODO: Remove when Kotlin supports Java 21
-        sourceCompatibility = "20"
-        targetCompatibility = "20"
-    }
-}

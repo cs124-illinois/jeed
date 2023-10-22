@@ -107,11 +107,6 @@ afterEvaluate {
     tasks.named("lintKotlinTest") {
         dependsOn(tasks.generateTestGrammarSource)
     }
-    tasks.withType<JavaCompile> {
-        // TODO: Remove when KSP supports Java 21
-        sourceCompatibility = "20"
-        targetCompatibility = "20"
-    }
 }
 task("createProperties") {
     dependsOn(tasks.processResources)
