@@ -24,6 +24,7 @@ import java.io.FilePermission
 import java.io.InputStream
 import java.io.OutputStream
 import java.io.PrintStream
+import java.lang.UnsupportedOperationException
 import java.lang.invoke.LambdaMetafactory
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Modifier
@@ -59,17 +60,25 @@ import kotlin.reflect.jvm.javaMethod
 private typealias SandboxCallableArguments<T> = (Pair<ClassLoader, (() -> Any?) -> JeedOutputCapture>) -> T
 
 object Sandbox {
-    init {
-        warmPlatform()
-    }
-
     private val runtime = try {
         ManagementFactoryHelper.getHotspotRuntimeMBean()
     } catch (e: IllegalAccessError) {
         // Gracefully degrade if deployed without the needed --add-exports
         null
     }
+    private val threadGroupDestroySupported = Runtime.version().feature() < 19
     private val legacyThreadStopSupported = Runtime.version().feature() < 20
+
+    init {
+        if (!legacyThreadStopSupported) {
+            try {
+                Thread().stop()
+            } catch (_: UnsupportedOperationException) {
+                error("the Code Awakening agent is required on this JVM because Thread#stop functionality was removed")
+            }
+        }
+        warmPlatform()
+    }
 
     @JsonClass(generateAdapter = true)
     class ClassLoaderConfiguration(
@@ -716,7 +725,7 @@ object Sandbox {
             throw SandboxContainmentFailure("failed to shut down thread group ($threadGroup)")
         }
 
-        if (legacyThreadStopSupported) {
+        if (threadGroupDestroySupported) {
             threadGroup.destroy()
             assert(threadGroup.isDestroyed)
         }
