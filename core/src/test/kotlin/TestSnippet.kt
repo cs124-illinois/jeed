@@ -709,24 +709,21 @@ val first = It { value -> value % 2 == 0 }
             """.trim(),
         )
     }
-    "should parse Java 15 case syntax" {
-        if (systemCompilerVersion >= 14) {
-            Source.fromJavaSnippet(
-                """
+    "should parse Java 15 case syntax".config(enabled = systemCompilerVersion >= 15) {
+        Source.fromJavaSnippet(
+            """
 int foo = 3;
 boolean boo = switch (foo) {
   case 1, 2, 3 -> true;
   default -> false;
 };
 System.out.println(boo);
-            """.trim(),
-            )
-        }
+        """.trim(),
+        )
     }
-    "should parse another Java 15 case syntax" {
-        if (systemCompilerVersion >= 14) {
-            Source.fromJavaSnippet(
-                """
+    "should parse another Java 15 case syntax".config(enabled = systemCompilerVersion >= 15) {
+        Source.fromJavaSnippet(
+            """
 int foo = 3;
 boolean boo = switch (foo) {
   case 1:
@@ -736,9 +733,28 @@ boolean boo = switch (foo) {
   default:
     yield true;
 };
-            """.trim(),
-            )
-        }
+        """.trim(),
+        )
+    }
+    "!should parse Java 21 patterns".config(enabled = systemCompilerVersion >= 21) {
+        @Suppress("SpellCheckingInspection")
+        Source.fromJavaSnippet("""
+            record Point(int x, int y) {}
+            Object obj = new Point(1, 10);
+            if (obj instanceof Point(int a, int b)) {
+                System.out.println("got the point!");
+            }
+        """.trimIndent())
+    }
+    "!should parse Java 21 switch".config(enabled = systemCompilerVersion >= 21) {
+        Source.fromJavaSnippet("""
+            Object obj = 5;
+            String str = switch (obj) {
+                Integer i when i > 0 -> "a positive number: " + i;
+                Integer i -> "some other number: " + i;
+                default -> "not a number";
+            };
+        """.trimIndent())
     }
     "should use Example.main when no loose code is provided" {
         Source.fromJavaSnippet(
