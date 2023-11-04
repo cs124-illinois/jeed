@@ -11,6 +11,7 @@ import edu.illinois.cs.cs125.jeed.core.execute
 import edu.illinois.cs.cs125.jeed.core.fromSnippet
 import edu.illinois.cs.cs125.jeed.core.haveCompleted
 import edu.illinois.cs.cs125.jeed.core.haveOutput
+import edu.illinois.cs.cs125.jeed.core.haveTimedOut
 import edu.illinois.cs.cs125.jeed.core.kompile
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
@@ -64,6 +65,26 @@ System.exit(2);
         ).compile().execute()
 
         executionResult shouldNot haveCompleted()
+        executionResult.permissionDenied shouldBe true
+    }
+    "should prevent creating virtual threads".config(enabled = Runtime.version().feature() >= 21) {
+        // Warm virtual thread machinery outside sandbox
+        val virtualBuilder = Thread::class.java.methods.find { it.name == "ofVirtual" }!!.invoke(null)
+        val builderIface = Class.forName("java.lang.Thread\$Builder")
+        val startMethod = builderIface.methods.find { it.name == "start" }!!
+        val thread = startMethod.invoke(virtualBuilder, Runnable { }) as Thread
+        thread.join()
+
+        val executionResult = Source.fromSnippet(
+            """
+            Thread.ofVirtual().start(() -> {
+                while (true);
+            });
+            """.trimIndent(),
+        ).compile().execute()
+
+        executionResult shouldNot haveCompleted()
+        executionResult.threw shouldNot beInstanceOf<ExceptionInInitializerError>()
         executionResult.permissionDenied shouldBe true
     }
     "should prevent snippets from redirecting System.out" {
@@ -327,6 +348,21 @@ if (br != null) {
         """.trim(),
         ).compile().execute()
 
+        executionResult shouldNot haveCompleted()
+        executionResult.permissionDenied shouldBe true
+    }
+    "should not allow serving web requests".config(enabled = Runtime.version().feature() >= 18) {
+        val executionResult = Source.fromSnippet(
+            """
+import com.sun.net.httpserver.*;
+import java.net.*;
+import java.nio.file.*;
+
+SimpleFileServer.createFileServer(new InetSocketAddress(8124), Path.of("/"), SimpleFileServer.OutputLevel.NONE).start();
+        """.trim(),
+        ).compile().execute()
+
+        executionResult shouldNot haveTimedOut()
         executionResult shouldNot haveCompleted()
         executionResult.permissionDenied shouldBe true
     }
@@ -706,6 +742,18 @@ import java.nio.*;
 MappedByteBuffer.allocateDirect(1000);
         """.trim(),
         ).compile().execute(SourceExecutionArguments(timeout = 10000))
+        executionResult shouldNot haveCompleted()
+        executionResult.permissionDenied shouldBe true
+    }
+    "should not allow native memory access".config(enabled = Runtime.version().feature() >= 20) {
+        val executionResult = Source.fromSnippet(
+            """
+import java.lang.foreign.*;
+Linker linker = Linker.nativeLinker();
+MemorySegment segment = MemorySegment.ofAddress(0x200000).reinterpret(2);
+segment.set(ValueLayout.JAVA_BYTE, 0L, (byte) 100);
+        """.trim(),
+        ).compile().execute()
         executionResult shouldNot haveCompleted()
         executionResult.permissionDenied shouldBe true
     }

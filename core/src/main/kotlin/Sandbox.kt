@@ -124,9 +124,11 @@ object Sandbox {
             val DEFAULT_UNSAFE_EXCEPTIONS = setOf<String>()
             val DEFAULT_ISOLATED_CLASSES = setOf<String>()
             val DEFAULT_BLACKLISTED_METHODS = setOf(
+                MethodFilter("java.lang.foreign.", ""),
                 MethodFilter("java.lang.invoke.MethodHandles.Lookup", ""),
                 MethodFilter("java.lang.Class", "forName"),
                 MethodFilter("java.lang.Module", "add"),
+                MethodFilter("java.lang.Thread", "ofVirtual"),
                 MethodFilter("java.nio.", "allocateDirect"), // can cause trouble for GC
                 MethodFilter("java.lang.Class", "getClassLoader", allowInReload = true),
                 MethodFilter("java.lang.ClassLoader", "", allowInReload = true),

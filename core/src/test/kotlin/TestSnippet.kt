@@ -738,23 +738,27 @@ boolean boo = switch (foo) {
     }
     "!should parse Java 21 patterns".config(enabled = systemCompilerVersion >= 21) {
         @Suppress("SpellCheckingInspection")
-        Source.fromJavaSnippet("""
+        Source.fromJavaSnippet(
+            """
             record Point(int x, int y) {}
             Object obj = new Point(1, 10);
             if (obj instanceof Point(int a, int b)) {
                 System.out.println("got the point!");
             }
-        """.trimIndent())
+            """.trimIndent(),
+        )
     }
     "!should parse Java 21 switch".config(enabled = systemCompilerVersion >= 21) {
-        Source.fromJavaSnippet("""
+        Source.fromJavaSnippet(
+            """
             Object obj = 5;
             String str = switch (obj) {
                 Integer i when i > 0 -> "a positive number: " + i;
                 Integer i -> "some other number: " + i;
                 default -> "not a number";
             };
-        """.trimIndent())
+            """.trimIndent(),
+        )
     }
     "should use Example.main when no loose code is provided" {
         Source.fromJavaSnippet(
