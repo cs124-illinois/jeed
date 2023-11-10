@@ -1,3 +1,5 @@
+import org.jmailen.gradle.kotlinter.tasks.FormatTask
+import org.jmailen.gradle.kotlinter.tasks.LintTask
 import java.io.File
 import java.io.StringWriter
 import java.util.Properties
@@ -10,7 +12,7 @@ plugins {
     id("org.jmailen.kotlinter")
     id("io.gitlab.arturbosch.detekt")
     id("com.google.devtools.ksp")
-    id("com.ryandens.javaagent-test") version "0.5.0"
+    id("com.ryandens.javaagent-test") version "0.5.1"
 }
 dependencies {
     ksp("com.squareup.moshi:moshi-kotlin-codegen:1.15.0")
@@ -19,9 +21,9 @@ dependencies {
 
     implementation(project(":core"))
 
-    implementation("io.ktor:ktor-server-netty:2.3.5")
-    implementation("io.ktor:ktor-server-cors:2.3.5")
-    implementation("io.ktor:ktor-server-content-negotiation:2.3.5")
+    implementation("io.ktor:ktor-server-netty:2.3.6")
+    implementation("io.ktor:ktor-server-cors:2.3.6")
+    implementation("io.ktor:ktor-server-content-negotiation:2.3.6")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
     implementation("com.squareup.moshi:moshi-kotlin:1.15.0")
     implementation("com.github.cs124-illinois:ktor-moshi:2023.10.1")
@@ -29,13 +31,13 @@ dependencies {
     implementation("com.uchuhimo:konf-core:1.1.2")
     implementation("com.uchuhimo:konf-yaml:1.1.2")
     implementation("io.github.microutils:kotlin-logging:3.0.5")
-    implementation("com.github.cs124-illinois:libcs1:2023.10.0")
+    implementation("com.github.cs124-illinois:libcs1:2023.11.0")
     implementation("com.beyondgrader.resource-agent:agent:2023.9.0")
     implementation("com.beyondgrader.resource-agent:jeedplugin:2023.9.0")
 
-    testImplementation("io.kotest:kotest-runner-junit5:5.7.2")
+    testImplementation("io.kotest:kotest-runner-junit5:5.8.0")
     testImplementation("io.kotest:kotest-assertions-ktor:4.4.3")
-    testImplementation("io.ktor:ktor-server-test-host:2.3.5")
+    testImplementation("io.ktor:ktor-server-test-host:2.3.6")
 }
 
 application {
@@ -118,16 +120,15 @@ tasks.shadowJar {
         attributes["Can-Retransform-Classes"] = "true"
     }
 }
-afterEvaluate {
-    tasks.named("formatKotlinGeneratedByKspKotlin") {
-        enabled = false
-    }
-    tasks.named("lintKotlinGeneratedByKspKotlin") {
-        enabled = false
-    }
-}
 java {
     toolchain {
         languageVersion.set(JavaLanguageVersion.of(17))
     }
 }
+tasks.withType<FormatTask> {
+    this.source = this.source.minus(fileTree("build")).asFileTree
+}
+tasks.withType<LintTask> {
+    this.source = this.source.minus(fileTree("build")).asFileTree
+}
+
