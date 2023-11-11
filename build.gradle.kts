@@ -6,10 +6,13 @@ plugins {
     id("com.github.ben-manes.versions") version "0.49.0"
     id("io.gitlab.arturbosch.detekt") version "1.23.3"
     id("com.google.devtools.ksp") version "1.9.20-1.0.14" apply false
+    id("io.github.gradle-nexus.publish-plugin") version "1.3.0"
+}
+allprojects {
+    group = "org.cs124.jeed"
+    version = "2023.11.0"
 }
 subprojects {
-    group = "com.github.cs124-illinois.jeed"
-    version = "2023.11.0"
     tasks.withType<Test> {
         useJUnitPlatform()
         enableAssertions = true
@@ -46,4 +49,12 @@ detekt {
 }
 tasks.register("check") {
     dependsOn("detekt")
+}
+nexusPublishing {
+    repositories {
+        sonatype {
+            nexusUrl.set(uri("https://s01.oss.sonatype.org/service/local/"))
+            snapshotRepositoryUrl.set(uri("https://s01.oss.sonatype.org/content/repositories/snapshots/"))
+        }
+    }
 }

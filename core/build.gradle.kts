@@ -10,6 +10,7 @@ plugins {
     antlr
     java
     `maven-publish`
+    signing
     id("org.jmailen.kotlinter")
     id("io.gitlab.arturbosch.detekt")
     id("com.google.devtools.ksp")
@@ -135,17 +136,12 @@ tasks.lintKotlinMain {
 tasks.formatKotlinMain {
     dependsOn(tasks.generateGrammarSource)
 }
-publishing {
-    publications {
-        create<MavenPublication>("core") {
-            from(components["java"])
-        }
-    }
-}
 kotlin {
     kotlinDaemonJvmArgs = listOf("-Dfile.encoding=UTF-8")
 }
 java {
+    withJavadocJar()
+    withSourcesJar()
     toolchain {
         languageVersion.set(JavaLanguageVersion.of(17))
     }
@@ -155,4 +151,38 @@ tasks.withType<FormatTask> {
 }
 tasks.withType<LintTask> {
     this.source = this.source.minus(fileTree("build")).asFileTree
+}
+publishing {
+    publications {
+        create<MavenPublication>("core") {
+            artifactId = "core"
+            from(components["java"])
+            pom {
+                name = "jeed"
+                description = "Sandboxing and code analysis toolkit for CS 124."
+                url = "https://cs124.org"
+                licenses {
+                    license {
+                        name = "MIT License"
+                        url = "https://opensource.org/license/mit/"
+                    }
+                }
+                developers {
+                    developer {
+                        id = "gchallen"
+                        name = "Geoffrey Challen"
+                        email = "challen@illinois.edu"
+                    }
+                }
+                scm {
+                    connection = "scm:git:https://github.com/cs124-illinois/jeed.git"
+                    developerConnection = "scm:git:https://github.com/cs124-illinois/jeed.git"
+                    url = "https://github.com/cs124-illinois/jeed"
+                }
+            }
+        }
+    }
+}
+signing {
+    sign(publishing.publications["core"])
 }

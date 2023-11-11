@@ -8,6 +8,7 @@ plugins {
     kotlin("jvm")
     application
     `maven-publish`
+    signing
     id("com.github.johnrengelman.shadow") version "8.1.1"
     id("org.jmailen.kotlinter")
     id("io.gitlab.arturbosch.detekt")
@@ -26,12 +27,12 @@ dependencies {
     implementation("io.ktor:ktor-server-content-negotiation:2.3.6")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
     implementation("com.squareup.moshi:moshi-kotlin:1.15.0")
-    implementation("com.github.cs124-illinois:ktor-moshi:2023.10.1")
+    implementation("org.cs124:ktor-moshi:2023.11.0")
     implementation("ch.qos.logback:logback-classic:1.4.11")
     implementation("com.uchuhimo:konf-core:1.1.2")
     implementation("com.uchuhimo:konf-yaml:1.1.2")
     implementation("io.github.microutils:kotlin-logging:3.0.5")
-    implementation("com.github.cs124-illinois:libcs1:2023.11.0")
+    implementation("org.cs124:libcs1:2023.11.1")
     implementation("com.beyondgrader.resource-agent:agent:2023.9.0")
     implementation("com.beyondgrader.resource-agent:jeedplugin:2023.9.0")
 
@@ -102,13 +103,6 @@ tasks.processResources {
     dependsOn("createProperties")
 }
 
-publishing {
-    publications {
-        create<MavenPublication>("server") {
-            from(components["java"])
-        }
-    }
-}
 kotlin {
     kotlinDaemonJvmArgs = listOf("-Dfile.encoding=UTF-8")
 }
@@ -121,6 +115,8 @@ tasks.shadowJar {
     }
 }
 java {
+    withJavadocJar()
+    withSourcesJar()
     toolchain {
         languageVersion.set(JavaLanguageVersion.of(17))
     }
@@ -131,4 +127,37 @@ tasks.withType<FormatTask> {
 tasks.withType<LintTask> {
     this.source = this.source.minus(fileTree("build")).asFileTree
 }
-
+publishing {
+    publications {
+        create<MavenPublication>("server") {
+            artifactId = "server"
+            from(components["java"])
+            pom {
+                name = "jeed"
+                description = "Jeed server components for CS 124."
+                url = "https://cs124.org"
+                licenses {
+                    license {
+                        name = "MIT License"
+                        url = "https://opensource.org/license/mit/"
+                    }
+                }
+                developers {
+                    developer {
+                        id = "gchallen"
+                        name = "Geoffrey Challen"
+                        email = "challen@illinois.edu"
+                    }
+                }
+                scm {
+                    connection = "scm:git:https://github.com/cs124-illinois/jeed.git"
+                    developerConnection = "scm:git:https://github.com/cs124-illinois/jeed.git"
+                    url = "https://github.com/cs124-illinois/jeed"
+                }
+            }
+        }
+    }
+}
+signing {
+    sign(publishing.publications["server"])
+}
