@@ -14,9 +14,12 @@ plugins {
     id("org.jmailen.kotlinter")
     id("io.gitlab.arturbosch.detekt")
     id("com.google.devtools.ksp")
+    id("com.ryandens.javaagent-test") version "0.5.1"
 }
 dependencies {
     ksp("com.squareup.moshi:moshi-kotlin-codegen:1.15.0")
+
+    testJavaagent("com.beyondgrader.resource-agent:agent:2023.9.0")
 
     antlr("org.antlr:antlr4:4.13.1")
 
@@ -42,6 +45,7 @@ dependencies {
     implementation("net.sf.extjwnl:extjwnl:2.0.5")
     implementation("net.sf.extjwnl:extjwnl-data-wn31:1.2")
     implementation("com.beyondgrader.resource-agent:agent:2023.9.0")
+    implementation("com.beyondgrader.resource-agent:virtualfsplugin:2023.9.0")
 
     api("org.jacoco:org.jacoco.core:0.8.11")
     api("com.github.ben-manes.caffeine:caffeine:3.1.8")

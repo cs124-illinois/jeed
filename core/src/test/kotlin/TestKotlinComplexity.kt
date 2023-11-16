@@ -3,10 +3,8 @@ package edu.illinois.cs.cs125.jeed.core
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
-import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 
-@OptIn(ExperimentalTime::class)
 class TestKotlinComplexity : StringSpec({
     "should compute complexity for Kotlin top-level method" {
         Source.fromKotlin(
@@ -775,6 +773,31 @@ class Modifier {
 }
 """.trim(),
         ).complexity()
+    }
+    "should work on class references" {
+        Source.fromKotlinSnippet(
+            """
+class Server {
+  private var courses = mutableMapOf<String, String>()
+  
+  init {
+    val json = File("courses.json").readText()
+    val objectMapper = ObjectMapper()
+    val nodes = objectMapper.readTree(json)
+    for (node in nodes) {
+      val course = objectMapper.readValue(node.toString(), Course::class.java)
+      courses[course.subject + "/" + course.number] = node.toPrettyString()
+    }
+  }
+
+  fun getCourse(path: String): String? {
+    return courses[path]
+  }
+}
+""".trim(),
+        ).complexity().also {
+            println(it)
+        }
     }
     "should work on deep nesting" {
         Source.fromKotlin(

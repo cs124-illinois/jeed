@@ -8,10 +8,8 @@ import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.string.shouldMatch
 import io.kotest.matchers.string.shouldNotContain
 import kotlin.random.Random
-import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 
-@OptIn(ExperimentalTime::class)
 class TestKotlinMutater : StringSpec({
     "it should mutate equals" {
         Source.fromKotlin(
