@@ -8,10 +8,8 @@ import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.string.shouldMatch
 import io.kotest.matchers.string.shouldNotContain
 import kotlin.random.Random
-import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 
-@OptIn(ExperimentalTime::class)
 class TestKotlinMutater : StringSpec({
     "it should mutate equals" {
         Source.fromKotlin(
@@ -1074,10 +1072,10 @@ fun reformatName(input: String) {
         Source.fromKotlin(
             """
 fun reformatName(input: String?) {
-    if (input == null) {
-        return
-    }
-    println("Hello, " + input)
+  if (input == null) {
+    return
+  }
+  println("Hello, " + input)
 }
 """.trim(),
         ).allMutations().also { mutations ->

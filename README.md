@@ -11,4 +11,4 @@ Jeed can also perform a wide and growing number of Java and Kotlin source code a
 
 Jeed is heavily used by [CS 124](https://www.cs124.org), the CS1 course at the
 University of Illinois.
-An [online demo is also available](https://cs125-illinois.github.io/jeed/).
+An [online demo is also available](https://cs124-illinois.github.io/jeed/).

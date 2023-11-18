@@ -129,7 +129,8 @@ object Sandbox {
                 MethodFilter("java.lang.Class", "forName"),
                 MethodFilter("java.lang.Module", "add"),
                 MethodFilter("java.lang.Thread", "ofVirtual"),
-                MethodFilter("java.nio.", "allocateDirect"), // can cause trouble for GC
+                // can cause trouble for GC
+                MethodFilter("java.nio.", "allocateDirect"),
                 MethodFilter("java.lang.Class", "getClassLoader", allowInReload = true),
                 MethodFilter("java.lang.ClassLoader", "", allowInReload = true),
                 MethodFilter("java.lang.ModuleLayer", "", allowInReload = true),
@@ -192,7 +193,8 @@ object Sandbox {
         @Suppress("unused")
         val executionArguments: ExecutionArguments,
         val killReason: String? = null,
-        @Suppress("MemberVisibilityCanBePrivate") // For serialization
+        // For serialization
+        @Suppress("MemberVisibilityCanBePrivate")
         val pluginResults: Map<String, Any>,
         @Deprecated("no-op, to be removed")
         val killedClassInitializers: List<String>,
@@ -2301,7 +2303,8 @@ data class ConfiguredSandboxPlugin<A : Any, V : Any>(
 )
 
 enum class RewritingContext {
-    UNTRUSTED, RELOADED
+    UNTRUSTED,
+    RELOADED,
 }
 
 class OutputHardLimitExceeded(limit: Int) : Error("Output limit $limit exceeded")

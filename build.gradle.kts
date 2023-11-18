@@ -2,24 +2,18 @@ import io.gitlab.arturbosch.detekt.Detekt
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    kotlin("jvm") version "1.9.10" apply false
-    id("org.jmailen.kotlinter") version "3.16.0" apply false
-    id("com.github.ben-manes.versions") version "0.48.0"
-    id("io.gitlab.arturbosch.detekt") version "1.23.1"
-    id("com.google.devtools.ksp") version "1.9.10-1.0.13" apply false
+    kotlin("jvm") version "1.9.20" apply false
+    id("org.jmailen.kotlinter") version "4.0.0" apply false
+    id("com.github.ben-manes.versions") version "0.49.0"
+    id("io.gitlab.arturbosch.detekt") version "1.23.3"
+    id("com.google.devtools.ksp") version "1.9.20-1.0.14" apply false
+    id("io.github.gradle-nexus.publish-plugin") version "1.3.0"
 }
 allprojects {
-    repositories {
-        mavenLocal()
-        mavenCentral()
-        maven("https://jitpack.io")
-        maven("https://maven.google.com/")
-        maven("https://maven.codeawakening.com")
-    }
+    group = "org.cs124.jeed"
+    version = "2023.11.1"
 }
 subprojects {
-    group = "com.github.cs124-illinois.jeed"
-    version = "2023.9.5"
     tasks.withType<Test> {
         useJUnitPlatform()
         enableAssertions = true
@@ -54,7 +48,7 @@ subprojects {
 tasks.dependencyUpdates {
     fun String.isNonStable() = !(
         listOf("RELEASE", "FINAL", "GA").any { uppercase().contains(it) }
-            || "^[0-9,.v-]+(-r)?$".toRegex().matches(this)
+            || "^[0-9,.v-]+(-r|-jre)?$".toRegex().matches(this)
         )
     rejectVersionIf { candidate.version.isNonStable() }
     gradleReleaseChannel = "current"
@@ -64,4 +58,12 @@ detekt {
 }
 tasks.register("check") {
     dependsOn("detekt")
+}
+nexusPublishing {
+    repositories {
+        sonatype {
+            nexusUrl.set(uri("https://s01.oss.sonatype.org/service/local/"))
+            snapshotRepositoryUrl.set(uri("https://s01.oss.sonatype.org/content/repositories/snapshots/"))
+        }
+    }
 }

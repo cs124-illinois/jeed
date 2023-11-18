@@ -7,7 +7,7 @@ private const val COROUTINE_INIT_TIMEOUT = 10000L
 val isWindows = System.getProperty("os.name").lowercase().startsWith("windows")
 
 @Suppress("BlockingMethodInNonBlockingContext", "MagicNumber", "SpellCheckingInspection")
-suspend fun warm(indent: Int = 4, failLint: Boolean = true, quiet: Boolean = false, useDocker: Boolean = true) {
+suspend fun warm(indent: Int = 2, failLint: Boolean = true, quiet: Boolean = false, useDocker: Boolean = true) {
     Source.fromSnippet(
         """System.out.println("javac initialized");""",
         SnippetArguments(indent = indent),

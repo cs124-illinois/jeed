@@ -2,27 +2,31 @@ import java.io.File
 import java.io.StringWriter
 import java.util.Properties
 import org.gradle.internal.os.OperatingSystem
+import org.jmailen.gradle.kotlinter.tasks.FormatTask
+import org.jmailen.gradle.kotlinter.tasks.LintTask
 
 plugins {
     kotlin("jvm")
     antlr
     java
     `maven-publish`
+    signing
     id("org.jmailen.kotlinter")
     id("io.gitlab.arturbosch.detekt")
     id("com.google.devtools.ksp")
-    id("com.ryandens.javaagent-test") version "0.5.0"
+    id("com.ryandens.javaagent-test") version "0.5.1"
 }
 dependencies {
     ksp("com.squareup.moshi:moshi-kotlin-codegen:1.15.0")
 
     antlr("org.antlr:antlr4:4.13.1")
 
-    implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:1.9.10")
+    implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:1.9.20")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
-    implementation("com.puppycrawl.tools:checkstyle:10.12.3")
-    implementation("com.pinterest.ktlint:ktlint-rule-engine:1.0.0")
-    implementation("com.pinterest.ktlint:ktlint-ruleset-standard:1.0.0")
+    implementation("com.puppycrawl.tools:checkstyle:10.12.4")
+    implementation("org.codehaus.plexus:plexus-container-default:2.1.1")
+    implementation("com.pinterest.ktlint:ktlint-rule-engine:1.0.1")
+    implementation("com.pinterest.ktlint:ktlint-ruleset-standard:1.0.1")
     implementation("com.github.jknack:handlebars:4.3.1")
     implementation("com.squareup.moshi:moshi-kotlin:1.15.0")
     implementation("org.ow2.asm:asm:9.6")
@@ -31,18 +35,19 @@ dependencies {
     implementation("org.slf4j:slf4j-api:2.0.9")
     implementation("ch.qos.logback:logback-classic:1.4.11")
     implementation("io.github.microutils:kotlin-logging:3.0.5")
-    implementation("io.github.classgraph:classgraph:4.8.162")
+    implementation("io.github.classgraph:classgraph:4.8.164")
     implementation("net.java.dev.jna:jna:5.13.0")
     implementation("io.github.java-diff-utils:java-diff-utils:4.12")
-    implementation("com.google.googlejavaformat:google-java-format:1.17.0")
-    implementation("com.google.guava:guava:32.0.1-jre")
+    implementation("com.google.googlejavaformat:google-java-format:1.18.1")
     implementation("net.sf.extjwnl:extjwnl:2.0.5")
     implementation("net.sf.extjwnl:extjwnl-data-wn31:1.2")
+    implementation("com.beyondgrader.resource-agent:agent:2023.9.0")
+    implementation("com.beyondgrader.resource-agent:virtualfsplugin:2023.9.0")
 
-    api("org.jacoco:org.jacoco.core:0.8.10")
+    api("org.jacoco:org.jacoco.core:0.8.11")
     api("com.github.ben-manes.caffeine:caffeine:3.1.8")
 
-    testImplementation("io.kotest:kotest-runner-junit5:5.7.2")
+    testImplementation("io.kotest:kotest-runner-junit5:5.8.0")
     testImplementation("com.beyondgrader.resource-agent:agent:2023.10.0")
     testJavaagent("com.beyondgrader.resource-agent:agent:2023.10.0")
 }
@@ -95,12 +100,6 @@ afterEvaluate {
     tasks.named("kspTestKotlin") {
         dependsOn(tasks.generateTestGrammarSource)
     }
-    tasks.named("formatKotlinGeneratedByKspKotlin") {
-        enabled = false
-    }
-    tasks.named("lintKotlinGeneratedByKspKotlin") {
-        enabled = false
-    }
     tasks.named("formatKotlinTest") {
         dependsOn(tasks.generateTestGrammarSource)
     }
@@ -142,18 +141,53 @@ tasks.lintKotlinMain {
 tasks.formatKotlinMain {
     dependsOn(tasks.generateGrammarSource)
 }
-publishing {
-    publications {
-        create<MavenPublication>("core") {
-            from(components["java"])
-        }
-    }
-}
 kotlin {
     kotlinDaemonJvmArgs = listOf("-Dfile.encoding=UTF-8")
 }
 java {
+    withJavadocJar()
+    withSourcesJar()
     toolchain {
         languageVersion.set(JavaLanguageVersion.of(21))
     }
+}
+tasks.withType<FormatTask> {
+    this.source = this.source.minus(fileTree("build")).asFileTree
+}
+tasks.withType<LintTask> {
+    this.source = this.source.minus(fileTree("build")).asFileTree
+}
+publishing {
+    publications {
+        create<MavenPublication>("core") {
+            artifactId = "core"
+            from(components["java"])
+            pom {
+                name = "jeed"
+                description = "Sandboxing and code analysis toolkit for CS 124."
+                url = "https://cs124.org"
+                licenses {
+                    license {
+                        name = "MIT License"
+                        url = "https://opensource.org/license/mit/"
+                    }
+                }
+                developers {
+                    developer {
+                        id = "gchallen"
+                        name = "Geoffrey Challen"
+                        email = "challen@illinois.edu"
+                    }
+                }
+                scm {
+                    connection = "scm:git:https://github.com/cs124-illinois/jeed.git"
+                    developerConnection = "scm:git:https://github.com/cs124-illinois/jeed.git"
+                    url = "https://github.com/cs124-illinois/jeed"
+                }
+            }
+        }
+    }
+}
+signing {
+    sign(publishing.publications["core"])
 }

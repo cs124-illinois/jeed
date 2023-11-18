@@ -1283,12 +1283,12 @@ public class Example {
         Source.fromJava(
             """
 public class Example {
-    void reformatName(String input) {
-        if (input == null) {
-            return;
-        }
-        System.out.println("Hello, " + input);
+  void reformatName(String input) {
+    if (input == null) {
+      return;
     }
+    System.out.println("Hello, " + input);
+  }
 }""",
         ).allMutations().also { mutations ->
             mutations shouldHaveSize 13
@@ -1323,18 +1323,18 @@ public class Example {
         Source.fromJava(
             """
 public class Example {
-    public String startWord(String input, String word) {
-        if (input.length > 4
-            && word.length > 5
-            && word.length > 4) {
-            System.out.println("Here");
-        }
-        if (input.length() > 0 && input.substring(1).startsWith(word.substring(1))) {
-            return input.substring(0, word.length());
-        } else {
-            return "";
-        }
+  public String startWord(String input, String word) {
+    if (input.length > 4
+        && word.length > 5
+        && word.length > 4) {
+      System.out.println("Here");
     }
+    if (input.length() > 0 && input.substring(1).startsWith(word.substring(1))) {
+      return input.substring(0, word.length());
+    } else {
+      return "";
+    }
+  }
 }""",
         ).allMutations().onEach { mutatedSource ->
             mutatedSource.marked().checkstyle().also { errors ->
@@ -1375,23 +1375,23 @@ public class Example {
         Source.fromJava(
             """
 public class Question {
-    char gameOver(char[][] board) {
-        for (int i = 0; i < 3; i++) {
-            if (board[i][0] != ' '
-                && board[i][0] == board[i][1]
-                && board[i][0] == board[i][2]) {
-                return board[i][0];
-            }
-        }
-        for (int i = 0; i < 3; i++) {
-            if (board[0][i] != ' '
-                && board[0][i] == board[1][i]
-                && board[0][i] == board[2][i]) {
-                return board[0][i];
-            }
-        }
-        return ' ';
+  char gameOver(char[][] board) {
+    for (int i = 0; i < 3; i++) {
+      if (board[i][0] != ' '
+            && board[i][0] == board[i][1]
+            && board[i][0] == board[i][2]) {
+        return board[i][0];
+      }
     }
+    for (int i = 0; i < 3; i++) {
+      if (board[0][i] != ' '
+            && board[0][i] == board[1][i]
+            && board[0][i] == board[2][i]) {
+        return board[0][i];
+      }
+    }
+    return ' ';
+  }
 }
 """,
         ).allMutations().forEach { mutatedSource ->

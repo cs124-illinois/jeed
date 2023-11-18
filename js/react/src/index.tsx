@@ -1,5 +1,5 @@
 import { Request, Response, ServerStatus } from "@cs124/jeed-types"
-import React, { useCallback, useContext, useEffect, useState } from "react"
+import React, { PropsWithChildren, useCallback, useContext, useEffect, useState } from "react"
 
 export interface JeedContext {
   available: boolean
@@ -11,10 +11,9 @@ export interface JeedContext {
 interface JeedProviderProps {
   server: string
   googleToken?: string | undefined
-  children: React.ReactNode
 }
 
-export const JeedProvider: React.FC<JeedProviderProps> = ({ googleToken, server, children }) => {
+export const JeedProvider: React.FC<PropsWithChildren<JeedProviderProps>> = ({ googleToken, server, children }) => {
   const [status, setStatus] = useState<ServerStatus | undefined>(undefined)
 
   useEffect(() => {

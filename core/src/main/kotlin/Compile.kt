@@ -456,6 +456,8 @@ class JeedClassLoader(private val fileManager: JeedFileManager, parentClassLoade
         loadedClasses += name
         return klass
     }
+
+    val sizeInBytes = bytecodeForClasses.values.sumOf { it.size }
 }
 
 @Suppress("Unused")
@@ -475,3 +477,6 @@ class IsolatingClassLoader(private val klasses: Set<String>) : ClassLoader() {
         }
     }
 }
+
+@Suppress("unused")
+fun getEmptyJavaClassSize() = Source(mapOf("Test.java" to "class Test {}")).compile().classLoader.sizeInBytes

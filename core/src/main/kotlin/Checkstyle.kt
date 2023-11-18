@@ -150,7 +150,7 @@ suspend fun Checker.processString(name: String, source: String): List<Checkstyle
 }
 
 val defaultChecker = run {
-    object {}::class.java.getResource("/checkstyle/default.xml")?.readText()?.let { ConfiguredChecker(it) }
+    object {}::class.java.getResource("/checkstyle/jeed.xml")?.readText()?.let { ConfiguredChecker(it) }
 }
 
 private val incorrectLevelRegex = """incorrect indentation level (\d+)""".toRegex()

@@ -168,7 +168,7 @@ data class SnippetArguments(
     val noEmptyMain: Boolean = false,
 ) {
     companion object {
-        const val DEFAULT_SNIPPET_INDENT = 4
+        const val DEFAULT_SNIPPET_INDENT = 2
     }
 }
 

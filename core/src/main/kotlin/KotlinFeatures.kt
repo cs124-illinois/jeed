@@ -458,7 +458,9 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
     }
 
     private enum class ParentType {
-        FUNCTION, CLASS, NONE
+        FUNCTION,
+        CLASS,
+        NONE,
     }
 
     private fun ParserRuleContext.parentContext(): RuleContext? {
@@ -690,7 +692,10 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
     }
 
     private enum class SeparatorType {
-        DOT, COLONCOLON, SAFENAV, UNSAFENAV
+        DOT,
+        COLONCOLON,
+        SAFENAV,
+        UNSAFENAV,
     }
 
     override fun enterExpression(ctx: KotlinParser.ExpressionContext) {
@@ -868,6 +873,12 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
         count(FeatureName.CONSTRUCTOR, ctx.toLocation())
     }
 
+    override fun enterClassParameter(ctx: KotlinParser.ClassParameterContext) {
+        if (ctx.VAL() != null || ctx.VAR() != null) {
+            count(FeatureName.CLASS_FIELD, ctx.toLocation())
+        }
+    }
+
     override fun enterEqualityOperator(ctx: KotlinParser.EqualityOperatorContext) {
         if (ctx.EQEQEQ() != null || ctx.EXCL_EQEQ() != null) {
             count(FeatureName.REFERENCE_EQUALITY, (ctx.EQEQEQ() ?: ctx.EXCL_EQEQ()).toLocation())
@@ -931,10 +942,20 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
         add(FeatureName.BLOCK_END, ctx.RCURL().toLocation())
     }
 
+    override fun exitWhenExpression(ctx: KotlinParser.WhenExpressionContext?) {
+        if (lastWhenEntry != null) {
+            count(FeatureName.LAST_WHEN_ENTRY, lastWhenEntry!!.toLocation())
+            lastWhenEntry = null
+        }
+    }
+
+    private var lastWhenEntry: KotlinParser.WhenEntryContext? = null
     override fun enterWhenEntry(ctx: KotlinParser.WhenEntryContext) {
+        count(FeatureName.WHEN_ENTRY, ctx.toLocation())
         if (ctx.ELSE() != null) {
             count(FeatureName.ELSE_STATEMENTS, ctx.ELSE().toLocation())
         }
+        lastWhenEntry = ctx
     }
 
     override fun enterEnumClassBody(ctx: KotlinParser.EnumClassBodyContext) {
