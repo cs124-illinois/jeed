@@ -40,14 +40,13 @@ dependencies {
     implementation("com.google.googlejavaformat:google-java-format:1.18.1")
     implementation("net.sf.extjwnl:extjwnl:2.0.5")
     implementation("net.sf.extjwnl:extjwnl-data-wn31:1.2")
-    implementation("com.beyondgrader.resource-agent:agent:2023.9.0")
 
     api("org.jacoco:org.jacoco.core:0.8.11")
     api("com.github.ben-manes.caffeine:caffeine:3.1.8")
 
     testImplementation("io.kotest:kotest-runner-junit5:5.8.0")
-    testImplementation("com.beyondgrader.resource-agent:agent:2023.10.0")
-    testJavaagent("com.beyondgrader.resource-agent:agent:2023.10.0")
+    testImplementation("com.beyondgrader.resource-agent:agent:2023.11.1")
+    testJavaagent("com.beyondgrader.resource-agent:agent:2023.11.1")
 }
 tasks.test {
     useJUnitPlatform()
@@ -188,4 +187,7 @@ publishing {
 }
 signing {
     sign(publishing.publications["core"])
+    setRequired {
+        gradle.taskGraph.hasTask("publishCorePublicationToSonatype")
+    }
 }
