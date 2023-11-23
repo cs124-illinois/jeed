@@ -71,6 +71,9 @@ fun Application.jeed() {
         get("/") {
             call.respond(currentStatus.update())
         }
+        get("/version") {
+            call.respond(VERSION)
+        }
         post("/") {
             withContext(Dispatchers.IO) {
                 val job = try {
