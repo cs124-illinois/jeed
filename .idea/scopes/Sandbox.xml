@@ -1,0 +1,3 @@
+<component name="DependencyValidationManager">
+  <scope name="Sandbox" pattern="file[jeed.core.main]:kotlin/Sandbox.kt" />
+</component>

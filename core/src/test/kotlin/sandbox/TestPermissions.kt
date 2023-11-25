@@ -2,6 +2,7 @@
 
 package edu.illinois.cs.cs125.jeed.core.sandbox
 
+import edu.illinois.cs.cs125.jeed.core.CompiledSource
 import edu.illinois.cs.cs125.jeed.core.Sandbox
 import edu.illinois.cs.cs125.jeed.core.SnippetArguments
 import edu.illinois.cs.cs125.jeed.core.Source
@@ -11,6 +12,7 @@ import edu.illinois.cs.cs125.jeed.core.execute
 import edu.illinois.cs.cs125.jeed.core.fromSnippet
 import edu.illinois.cs.cs125.jeed.core.haveCompleted
 import edu.illinois.cs.cs125.jeed.core.haveOutput
+import edu.illinois.cs.cs125.jeed.core.haveTimedOut
 import edu.illinois.cs.cs125.jeed.core.kompile
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
@@ -33,9 +35,14 @@ import java.net.URI
 import java.nio.file.FileSystems
 import java.util.PropertyPermission
 
+val blacklistArguments = SourceExecutionArguments(
+    permissionBlackList = true,
+    permissions = SourceExecutionArguments.GENERALLY_UNSAFE_PERMISSIONS,
+)
+
 class TestPermissions : StringSpec({
     "should prevent threads from populating a new thread group" {
-        val executionResult = Source.fromSnippet(
+        Source.fromSnippet(
             """
 public class Example implements Runnable {
     public void run() {
@@ -51,23 +58,17 @@ try {
 } catch (Exception e) { }
 System.out.println("There");
         """.trim(),
-        ).compile().execute(SourceExecutionArguments(maxExtraThreads = 7))
-
-        executionResult shouldNot haveCompleted()
-        executionResult.permissionDenied shouldBe true
+        ).compile().checkPermissions(SourceExecutionArguments(maxExtraThreads = 7))
     }
     "should prevent snippets from exiting" {
-        val executionResult = Source.fromSnippet(
+        Source.fromSnippet(
             """
 System.exit(2);
         """.trim(),
-        ).compile().execute()
-
-        executionResult shouldNot haveCompleted()
-        executionResult.permissionDenied shouldBe true
+        ).compile().checkPermissions()
     }
     "should prevent snippets from redirecting System.out" {
-        val executionResult = Source.fromSnippet(
+        Source.fromSnippet(
             """
 import java.io.*;
 
@@ -75,10 +76,7 @@ ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 PrintStream printStream = new PrintStream(byteArrayOutputStream);
 System.setOut(printStream);
         """.trim(),
-        ).compile().execute()
-
-        executionResult shouldNot haveCompleted()
-        executionResult.permissionDenied shouldBe true
+        ).compile().checkPermissions()
     }
     "should prevent trusted task code from redirecting System.out" {
         val executionResult = Sandbox.execute<Any> {
@@ -86,36 +84,29 @@ System.setOut(printStream);
             val printStream = PrintStream(byteArrayOutputStream)
             System.setOut(printStream)
         }
-
         executionResult shouldNot haveCompleted()
         executionResult.permissionDenied shouldBe true
     }
     "should prevent snippets from reading files" {
-        val executionResult = Source.fromSnippet(
+        Source.fromSnippet(
             """
 import java.io.*;
 System.out.println(new File("/").listFiles().length);
         """.trim(),
-        ).compile().execute()
-
-        executionResult shouldNot haveCompleted()
-        executionResult.permissionDenied shouldBe true
+        ).compile().checkPermissions()
     }
     "should prevent snippets from writing files" {
-        val executionResult = Source.fromSnippet(
+        Source.fromSnippet(
             """
 import java.io.*;
 var writer = new PrintWriter("test.txt", "UTF-8");
 writer.println("Uh oh");
 writer.close();
         """.trim(),
-        ).compile().execute()
-
-        executionResult shouldNot haveCompleted()
-        executionResult.permissionDenied shouldBe true
+        ).compile().checkPermissions()
     }
     "should prevent snippets from writing files through the Files API" {
-        val executionResult = Source.fromSnippet(
+        Source.fromSnippet(
             """
 import java.nio.file.*;
 import java.nio.charset.StandardCharsets;
@@ -123,44 +114,42 @@ import java.util.Arrays;
 Path file = Paths.get("test.txt");
 Files.write(file, Arrays.asList("oh", "no"), StandardCharsets.UTF_8);
         """.trim(),
-        ).compile().execute()
-
-        executionResult shouldNot haveCompleted()
-        executionResult.permissionDenied shouldBe true
+        ).compile().checkPermissions()
     }
     "should prevent writing files through the Kotlin stdlib" {
-        val executionResult = Source.fromSnippet(
+        Source.fromSnippet(
             """
 import java.io.File
 File("test.txt").writeText("uh oh")
                 """.trim(),
             SnippetArguments(fileType = Source.FileType.KOTLIN),
-        ).kompile().execute()
-
-        executionResult shouldNot haveCompleted()
-        executionResult.permissionDenied shouldBe true
+        ).kompile().checkPermissions()
     }
     "should allow snippets to read system properties if allowed" {
-        val executionResult = Source.fromSnippet(
+        Source.fromSnippet(
             """
 System.out.println(System.getProperty("file.separator"));
         """.trim(),
-        ).compile().execute(
-            SourceExecutionArguments(permissions = setOf(PropertyPermission("*", "read"))),
-        )
-
-        executionResult should haveCompleted()
-        executionResult.permissionDenied shouldBe false
+        ).compile()
+            .checkPermissions(SourceExecutionArguments(permissions = setOf(PropertyPermission("*", "read"))), ok = true)
     }
     "should prevent snippets from reading system properties" {
-        val executionResult = Source.fromSnippet(
+        Source.fromSnippet(
             """
 System.out.println(System.getProperty("file.separator"));
         """.trim(),
-        ).compile().execute()
-
-        executionResult shouldNot haveCompleted()
-        executionResult.permissionDenied shouldBe true
+        ).compile().execute().also { executionResult ->
+            executionResult shouldNot haveCompleted()
+            executionResult.permissionDenied shouldBe true
+        }
+        Source.fromSnippet(
+            """
+System.out.println(System.getProperty("file.separator"));
+        """.trim(),
+        ).compile().execute(blacklistArguments).also { executionResult ->
+            executionResult should haveCompleted()
+            executionResult.permissionDenied shouldBe false
+        }
     }
     "should allow permissions to be changed between runs" {
         val compiledSource = Source.fromSnippet(
@@ -169,20 +158,20 @@ System.out.println(System.getProperty("file.separator"));
         """.trim(),
         ).compile()
 
-        val failedExecution = compiledSource.execute()
-        failedExecution shouldNot haveCompleted()
-        failedExecution.permissionDenied shouldBe true
+        compiledSource.execute().also { failedExecution ->
+            failedExecution shouldNot haveCompleted()
+            failedExecution.permissionDenied shouldBe true
+        }
 
-        val successfulExecution = compiledSource.execute(
-            SourceExecutionArguments(
-                permissions = setOf(PropertyPermission("*", "read")),
-            ),
-        )
-        successfulExecution should haveCompleted()
-        successfulExecution.permissionDenied shouldBe false
+        compiledSource
+            .execute(SourceExecutionArguments(permissions = setOf(PropertyPermission("*", "read"))))
+            .also { successfulExecution ->
+                successfulExecution should haveCompleted()
+                successfulExecution.permissionDenied shouldBe false
+            }
     }
     "should prevent snippets from starting threads by default" {
-        val executionResult = Source.fromSnippet(
+        Source.fromSnippet(
             """
 public class Example implements Runnable {
     public void run() { }
@@ -191,10 +180,7 @@ Thread thread = new Thread(new Example());
 thread.start();
 System.out.println("Started");
         """.trim(),
-        ).compile().execute()
-
-        executionResult shouldNot haveCompleted()
-        executionResult.permissionDenied shouldBe true
+        ).compile().checkPermissions()
     }
     "should allow snippets to start threads when configured" {
         val compiledSource = Source.fromSnippet(
@@ -215,17 +201,14 @@ try {
         """.trim(),
         ).compile()
 
-        val failedExecutionResult = compiledSource.execute()
-        failedExecutionResult shouldNot haveCompleted()
-        failedExecutionResult.permissionDenied shouldBe true
-
-        val successfulExecutionResult = compiledSource.execute(SourceExecutionArguments(maxExtraThreads = 1))
-        successfulExecutionResult.permissionDenied shouldBe false
-        successfulExecutionResult should haveCompleted()
-        successfulExecutionResult should haveOutput("Started\nEnded")
+        compiledSource.checkPermissions()
+        compiledSource.checkPermissions(SourceExecutionArguments(maxExtraThreads = 1), ok = true)
+            .also { successfulExecutionResult ->
+                successfulExecutionResult should haveOutput("Started\nEnded")
+            }
     }
     "should limit threads with delayed start" {
-        val result = Source.fromSnippet(
+        Source.fromSnippet(
             """
 Runnable r = () -> {
     while (true);
@@ -240,10 +223,9 @@ for (int i = 0; i < threads.length; i++) {
 }
 threads[0].join();
         """.trim(),
-        ).compile().execute(SourceExecutionArguments(maxExtraThreads = 1))
-        result shouldNot haveCompleted()
-        result.permissionDenied shouldBe true
-        result.output shouldNotContain "1"
+        ).compile().checkPermissions(SourceExecutionArguments(maxExtraThreads = 1)).also { result ->
+            result.output shouldNotContain "1"
+        }
     }
     "should not allow unsafe permissions to be provided" {
         shouldThrow<IllegalArgumentException> {
@@ -257,7 +239,7 @@ System.exit(3);
         }
     }
     "should allow Java streams with default permissions" {
-        val executionResult = Source.fromSnippet(
+        Source.fromSnippet(
             """
 import java.util.List;
 import java.util.ArrayList;
@@ -271,13 +253,12 @@ strings.stream()
     .map(String::new)
     .forEach(System.out::println);
         """.trim(),
-        ).compile().execute()
-
-        executionResult should haveCompleted()
-        executionResult should haveOutput("ME\nTEST")
+        ).compile().checkPermissions(ok = true).also { executionResult ->
+            executionResult should haveOutput("ME\nTEST")
+        }
     }
     "should allow generic methods with the default permissions" {
-        val executionResult = Source(
+        Source(
             mapOf(
                 "A.java" to """
 public class A implements Comparable<A> {
@@ -297,13 +278,12 @@ public class Main {
 }
         """.trim(),
             ),
-        ).compile().execute()
-
-        executionResult should haveCompleted()
-        executionResult should haveOutput("8")
+        ).compile().checkPermissions(ok = true).also { executionResult ->
+            executionResult should haveOutput("8")
+        }
     }
     "it should not allow snippets to read from the internet" {
-        val executionResult = Source.fromSnippet(
+        Source.fromSnippet(
             """
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -325,13 +305,10 @@ if (br != null) {
     br.close();
 }
         """.trim(),
-        ).compile().execute()
-
-        executionResult shouldNot haveCompleted()
-        executionResult.permissionDenied shouldBe true
+        ).compile().checkPermissions(SourceExecutionArguments(timeout = 10000))
     }
     "it should not allow snippets to execute commands" {
-        val executionResult = Source.fromSnippet(
+        Source.fromSnippet(
             """
 import java.io.*;
 
@@ -344,35 +321,34 @@ while ((line = in.readLine()) != null) {
     System.out.println(line);
 }
         """.trim(),
-        ).compile().execute()
-
-        executionResult shouldNot haveCompleted()
-        executionResult.permissionDenied shouldBe true
+        ).compile().checkPermissions()
     }
     "it should not allow snippets to examine other processes" {
-        val executionResult = Source.fromSnippet(
+        Source.fromSnippet(
             """
 ProcessHandle.allProcesses().forEach(p -> System.out.println(p.info()));
         """.trim(),
-        ).compile().execute()
-
-        executionResult shouldNot haveCompleted()
-        executionResult.permissionDenied shouldBe true
-        executionResult should haveOutput("")
+        ).compile().apply {
+            execute().also { executionResult ->
+                executionResult shouldNot haveCompleted()
+                executionResult.permissionDenied shouldBe true
+            }
+            execute(blacklistArguments).also { executionResult ->
+                executionResult shouldNot haveCompleted()
+                executionResult.permissionDenied shouldBe true
+            }
+        }
     }
     "should not allow SecurityManager to be created again through reflection" {
-        val executionResult = Source.fromSnippet(
+        Source.fromSnippet(
             """
 Class<SecurityManager> c = SecurityManager.class;
 SecurityManager s = c.newInstance();
         """.trim(),
-        ).compile().execute()
-
-        executionResult shouldNot haveCompleted()
-        executionResult.permissionDenied shouldBe true
+        ).compile().checkPermissions()
     }
     "should not allow access to the compiler" {
-        val executionResult = Source.fromSnippet(
+        Source.fromSnippet(
             """
 import java.lang.reflect.*;
 
@@ -391,13 +367,10 @@ Method compile = Class.forName(
 Object compileArgs = compileArgsClass.newInstance();
 Object compiledSource = compile.invoke(null, snippet, compileArgs);
         """.trim(),
-        ).compile().execute()
-
-        executionResult shouldNot haveCompleted()
-        executionResult.permissionDenied shouldBe true
+        ).compile().checkPermissions()
     }
     "should not allow reflection to disable the sandbox" {
-        val executionResult = Source.fromSnippet(
+        Source.fromSnippet(
             """
 import java.lang.reflect.*;
 import java.util.Map;
@@ -407,10 +380,7 @@ Field field = sandboxClass.getDeclaredField("confinedTasks");
 field.setAccessible(true);
 Map confinedTasks = (Map) field.get(null);
         """.trim(),
-        ).compile().execute()
-
-        executionResult shouldNot haveCompleted()
-        executionResult.permissionDenied shouldBe true
+        ).compile().checkPermissions()
     }
     "should not prevent trusted code from using reflection" {
         val executionResult = Sandbox.execute {
@@ -430,7 +400,7 @@ Map confinedTasks = (Map) field.get(null);
         executionResult.permissionDenied shouldBe false
     }
     "should not allow static{} to escape the sandbox" {
-        val executionResult = Source(
+        Source(
             mapOf(
                 "Example.java" to """
 public class Example {
@@ -444,13 +414,10 @@ public class Example {
 }
         """,
             ),
-        ).compile().execute(SourceExecutionArguments("Example"))
-
-        executionResult shouldNot haveCompleted()
-        executionResult.permissionDenied shouldBe true
+        ).compile().checkPermissions(SourceExecutionArguments("Example"))
     }
     "should not allow finalizers to escape the sandbox" {
-        val executionResult = Source(
+        Source(
             mapOf(
                 "Example.java" to """
 public class Example {
@@ -470,13 +437,16 @@ public class Example {
 }
 """.trim(),
             ),
-        ).compile().execute(SourceExecutionArguments("Example", maxOutputLines = 10240))
-        System.gc()
-        executionResult.outputLines shouldHaveSize 10000
-        executionResult.outputLines.all { (_, line) -> line.trim() == "Example" } shouldBe true
+        ).compile()
+            .checkPermissions(SourceExecutionArguments("Example", maxOutputLines = 10240), ok = true)
+            .also { executionResult ->
+                System.gc()
+                executionResult.outputLines shouldHaveSize 10000
+                executionResult.outputLines.all { (_, line) -> line.trim() == "Example" } shouldBe true
+            }
     }
     "should not allow LambdaMetafactory to escape the sandbox" {
-        val executionResult = Source.fromSnippet(
+        Source.fromSnippet(
             """
 import java.lang.invoke.*;
             
@@ -497,11 +467,10 @@ try {
     throw new RuntimeException(t);
 }
         """.trim(),
-        ).compile().execute(SourceExecutionArguments(maxExtraThreads = 1))
-        executionResult.permissionDenied shouldBe true
+        ).compile().checkPermissions(SourceExecutionArguments(maxExtraThreads = 1))
     }
     "should not allow MethodHandle-based reflection to dodge the sandbox" {
-        val executionResult = Source.fromSnippet(
+        Source.fromSnippet(
             """
 import java.lang.invoke.*;
 import com.puppycrawl.tools.checkstyle.api.CheckstyleException;
@@ -524,11 +493,10 @@ try {
     throw new RuntimeException(t);
 }
         """.trim(),
-        ).compile().execute(SourceExecutionArguments(timeout = 10000))
-        executionResult.permissionDenied shouldBe true
+        ).compile().checkPermissions(SourceExecutionArguments())
     }
     "should not allow MethodHandles to alter the security manager" {
-        val executionResult = Source.fromSnippet(
+        Source.fromSnippet(
             """
 import java.lang.invoke.*;
 import java.util.Map;
@@ -553,11 +521,10 @@ try {
     throw new RuntimeException(t);
 }
         """.trim(),
-        ).compile().execute(SourceExecutionArguments(timeout = 10000))
-        executionResult.permissionDenied shouldBe true
+        ).compile().checkPermissions()
     }
     "should not allow calling forbidden methods" {
-        val executionResult = Source.fromSnippet(
+        Source.fromSnippet(
             """
 import java.lang.invoke.MethodHandles;
 
@@ -565,36 +532,35 @@ MethodHandles.Lookup lookup = null;
 var clazz = lookup.findClass("edu.illinois.cs.cs125.jeed.core.Sandbox");
 System.out.println(clazz);
         """.trim(),
-        ).compile().execute(SourceExecutionArguments(timeout = 10000))
-        executionResult.permissionDenied shouldBe true
-        executionResult.threw shouldBe instanceOf<SecurityException>()
-        executionResult.threw!!.message shouldBe "use of forbidden method"
+        ).compile().checkPermissions().also { executionResult ->
+            executionResult.threw shouldBe instanceOf<SecurityException>()
+            executionResult.threw!!.message shouldBe "use of forbidden method"
+        }
     }
     "should not allow installing an agent through ByteBuddy, coroutine-style" {
-        val executionResult = Source.fromSnippet(
+        Source.fromSnippet(
             """
 import net.bytebuddy.agent.ByteBuddyAgent;
 
 ByteBuddyAgent.install(ByteBuddyAgent.AttachmentProvider.ForEmulatedAttachment.INSTANCE);
         """.trim(),
-        ).compile().execute(SourceExecutionArguments(timeout = 10000))
-        executionResult.permissionDenied shouldBe true
-        executionResult.completed shouldBe false
-        executionResult.threw shouldNot beNull()
+        ).compile().checkPermissions().also { executionResult ->
+            executionResult.threw shouldNot beNull()
+        }
     }
     "should not allow installing an agent through ByteBuddy's default provider" {
-        val executionResult = Source.fromSnippet(
+        Source.fromSnippet(
             """
 import net.bytebuddy.agent.ByteBuddyAgent;
 
 ByteBuddyAgent.install();
         """.trim(),
-        ).compile().execute(SourceExecutionArguments(timeout = 10000))
-        executionResult.completed shouldBe false
-        executionResult.threw shouldNot beNull()
+        ).compile().checkPermissions().also { executionResult ->
+            executionResult.threw shouldNot beNull()
+        }
     }
     "should not allow using the attachment/VM API directly" {
-        val executionResult = Source.fromSnippet(
+        Source.fromSnippet(
             """
 import com.sun.tools.attach.VirtualMachine;
 
@@ -602,13 +568,12 @@ var vms = VirtualMachine.list();
 var vmid = vms.get(0).id();
 var vm = VirtualMachine.attach(vmid);
         """.trim(),
-        ).compile().execute(SourceExecutionArguments(timeout = 10000))
-        executionResult.permissionDenied shouldBe true
-        executionResult.completed shouldBe false
-        executionResult.threw shouldNot beNull()
+        ).compile().checkPermissions().also { executionResult ->
+            executionResult.threw shouldNot beNull()
+        }
     }
     "should not allow access to private constructors" {
-        val executionResult = Source.fromSnippet(
+        Source.fromSnippet(
             """
 import java.lang.reflect.*;
 
@@ -620,73 +585,65 @@ Constructor<?> cons = Example.class.getDeclaredConstructors()[0];
 cons.setAccessible(true);
 System.out.println(cons.newInstance());
         """.trim(),
-        ).compile().execute(SourceExecutionArguments(timeout = 10000))
-        executionResult.permissionDenied shouldBe true
-        executionResult.completed shouldBe false
+        ).compile().checkPermissions()
     }
     "should not allow loading sun.misc classes" {
-        val executionResult = Source.fromSnippet(
+        Source.fromSnippet(
             """
 import sun.misc.Unsafe;
 
 Unsafe unsafe = null;
 unsafe.getInt(null, 0); // obvious NPE, but should fail in classloading first
         """.trim(),
-        ).compile().execute(SourceExecutionArguments(timeout = 10000))
-        executionResult.permissionDenied shouldBe true
-        executionResult.permissionRequests.find {
-            it.permission.name.startsWith("accessClassInPackage.sun")
-        } shouldNot beNull()
-        executionResult.completed shouldBe false
+        ).compile().execute().also { executionResult ->
+            executionResult shouldNot haveTimedOut()
+            executionResult shouldNot haveCompleted()
+            executionResult.permissionDenied shouldBe true
+            executionResult.permissionRequests.find {
+                it.permission.name.startsWith("accessClassInPackage.sun")
+            } shouldNot beNull()
+        }
     }
     "should not allow Class.forName by default" {
-        val executionResult = Source.fromSnippet(
+        Source.fromSnippet(
             """
 class X {}
 var cl = X.class.getClassLoader().getParent();
 System.out.println(Class.forName("edu.illinois.cs.cs125.jeed.core.Sandbox", true, cl));
         """.trim(),
-        ).compile().execute(SourceExecutionArguments(timeout = 10000))
-        executionResult shouldNot haveCompleted()
-        executionResult.permissionDenied shouldBe true
+        ).compile().checkPermissions()
     }
     "should block forbidden methods in method references" {
-        val executionResult = Source.fromSnippet(
+        Source.fromSnippet(
             """
                 import java.util.function.*;
                 class X {}
                 Function<Class<?>, ClassLoader> gcl = Class::getClassLoader;
                 System.out.println(gcl.apply(X.class));
             """.trimIndent(),
-        ).compile().execute()
-        executionResult shouldNot haveCompleted()
-        executionResult.permissionDenied shouldBe true
+        ).compile().checkPermissions()
     }
     "should not allow using classloaders by default" {
-        val executionResult = Source.fromSnippet(
+        Source.fromSnippet(
             """
 class X {}
 var cl = X.class.getClassLoader().getParent();
 System.out.println(cl.loadClass("edu.illinois.cs.cs125.jeed.core.Sandbox"));
         """.trim(),
-        ).compile().execute(SourceExecutionArguments(timeout = 10000))
-        executionResult shouldNot haveCompleted()
-        executionResult.permissionDenied shouldBe true
+        ).compile().checkPermissions()
     }
     "should not allow using classloaders through a cast to SecureClassLoader" {
-        val executionResult = Source.fromSnippet(
+        Source.fromSnippet(
             """
 import com.puppycrawl.tools.checkstyle.api.CheckstyleException;
 import java.security.SecureClassLoader;
 var cl = (SecureClassLoader) CheckstyleException.class.getClassLoader();
 System.out.println(cl.loadClass("edu.illinois.cs.cs125.jeed.core.Sandbox"));
         """.trim(),
-        ).compile().execute(SourceExecutionArguments(timeout = 10000))
-        executionResult shouldNot haveCompleted()
-        executionResult.permissionDenied shouldBe true
+        ).compile().checkPermissions()
     }
     "should not allow Kotlin reflection by default" {
-        val executionMainResult = Source.fromSnippet(
+        Source.fromSnippet(
             """
 import edu.illinois.cs.cs125.jeed.core.Sandbox.RewriteBytecode
 
@@ -695,62 +652,54 @@ val sandboxKlass = klass.java.enclosingClass.kotlin
 println(sandboxKlass.constructors)
                 """.trim(),
             SnippetArguments(fileType = Source.FileType.KOTLIN),
-        ).kompile().execute()
-        executionMainResult shouldNot haveCompleted()
-        executionMainResult.permissionDenied shouldBe true
+        ).kompile().checkPermissions()
     }
     "should not allow allocation of direct byte buffers" {
-        val executionResult = Source.fromSnippet(
+        Source.fromSnippet(
             """
 import java.nio.*;
 MappedByteBuffer.allocateDirect(1000);
         """.trim(),
-        ).compile().execute(SourceExecutionArguments(timeout = 10000))
-        executionResult shouldNot haveCompleted()
-        executionResult.permissionDenied shouldBe true
+        ).compile().checkPermissions()
     }
     "should not allow parallel streams to escape the sandbox" {
         repeat(3) {
             // Try a few times, with a short delay --
             // the sandbox thread can throw before the background threads call exit
-            val executionResult = Source.fromSnippet(
+            Source.fromSnippet(
                 """
                 import java.util.Arrays;
                 int[] ints = new int[1024];
                 Arrays.stream(ints).parallel().forEach(System::exit);
                 """.trimIndent(),
-            ).compile().execute()
-            executionResult shouldNot haveCompleted()
-            executionResult.threw should beInstanceOf<SecurityException>()
+            ).compile().checkPermissions().also { executionResult ->
+                executionResult.threw should beInstanceOf<SecurityException>()
+            }
             delay(2L - it)
         }
     }
     "should not allow parallel streams to poison the pool" {
-        val executionResult = Source.fromSnippet(
+        Source.fromSnippet(
             """
             import java.util.Arrays;
             int[] ints = new int[1024];
             Arrays.stream(ints).parallel().forEach(System::exit);
             """.trimIndent(),
-        ).compile().execute()
-        executionResult shouldNot haveCompleted()
-        executionResult.threw should beInstanceOf<SecurityException>()
+        ).compile().checkPermissions()
         (0 until 1024).toList().parallelStream().map {
             Thread.sleep(1) // Prevent the main thread from doing all the work
             Thread.currentThread()
         }.distinct().count() shouldBeGreaterThan 1
     }
     "should not allow printing to the real stdout" {
-        val executionResult = Source.fromSnippet(
+        Source.fromSnippet(
             """
             import java.io.*;
             FileOutputStream fdOut = new FileOutputStream(FileDescriptor.out);
             PrintStream psOut = new PrintStream(fdOut, true);
             psOut.println("Uh oh");
             """.trimIndent(),
-        ).compile().execute()
-        executionResult shouldNot haveCompleted()
-        executionResult.permissionDenied shouldBe true
+        ).compile().checkPermissions()
     }
     "should not choke on security checks from other classloaders" {
         val executionResult = Sandbox.execute(executionArguments = Sandbox.ExecutionArguments(timeout = 1000)) {
@@ -760,3 +709,32 @@ MappedByteBuffer.allocateDirect(1000);
         executionResult.threw should beInstanceOf<IOException>() // Not StackOverflowError
     }
 })
+
+private suspend fun CompiledSource.checkPermissions(
+    arguments: SourceExecutionArguments = SourceExecutionArguments(),
+    ok: Boolean = false,
+): Sandbox.TaskResults<*> {
+    fun Sandbox.TaskResults<*>.check() {
+        this shouldNot haveTimedOut()
+        if (!ok) {
+            this shouldNot haveCompleted()
+            permissionDenied shouldBe true
+        } else {
+            this should haveCompleted()
+            permissionDenied shouldBe false
+        }
+    }
+    execute(arguments).check()
+    val blacklistArguments = SourceExecutionArguments(
+        klass = arguments.klass,
+        timeout = arguments.timeout,
+        maxOutputLines = arguments.maxOutputLines,
+        maxExtraThreads = arguments.maxExtraThreads,
+        permissionBlackList = true,
+        permissions = SourceExecutionArguments.GENERALLY_UNSAFE_PERMISSIONS,
+    )
+    execute(blacklistArguments).also {
+        it.check()
+        return it
+    }
+}

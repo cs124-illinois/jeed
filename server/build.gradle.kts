@@ -33,8 +33,13 @@ dependencies {
     implementation("com.uchuhimo:konf-yaml:1.1.2")
     implementation("io.github.microutils:kotlin-logging:3.0.5")
     implementation("org.cs124:libcs1:2023.11.1")
-    implementation("com.beyondgrader.resource-agent:agent:2023.9.0")
-    implementation("com.beyondgrader.resource-agent:jeedplugin:2023.9.0")
+
+    implementation("com.beyondgrader.resource-agent:agent:2023.9.0")  {
+        exclude(group = "com.github.cs124-illinois.jeed", module = "core")
+    }
+    implementation("com.beyondgrader.resource-agent:jeedplugin:2023.9.0")  {
+        exclude(group = "com.github.cs124-illinois.jeed", module = "core")
+    }
 
     testImplementation("io.kotest:kotest-runner-junit5:5.8.0")
     testImplementation("io.kotest:kotest-assertions-ktor:4.4.3")

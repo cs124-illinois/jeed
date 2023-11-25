@@ -11,7 +11,6 @@ dependencyResolutionManagement {
     repositories {
         mavenLocal()
         mavenCentral()
-        maven("https://jitpack.io")
         maven("https://maven.google.com/")
         maven("https://maven.codeawakening.com")
     }

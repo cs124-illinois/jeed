@@ -795,9 +795,7 @@ class Server {
   }
 }
 """.trim(),
-        ).complexity().also {
-            println(it)
-        }
+        ).complexity()
     }
     "should work on deep nesting" {
         Source.fromKotlin(
