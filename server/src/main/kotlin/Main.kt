@@ -110,6 +110,7 @@ fun Application.jeed() {
 private val backgroundScope = CoroutineScope(Dispatchers.IO)
 
 fun main() = runBlocking<Unit> {
+    logger.info { Status().toJson() }
     logger.info(configuration.toJson.toText())
 
     backgroundScope.launch { warm(2, failLint = false) }
