@@ -11,7 +11,7 @@ import io.kotest.matchers.shouldBe
 
 class TestCompile : StringSpec({
     "should compile simple snippets" {
-        val compiledSource = Source.fromSnippet("int i = 1;").compile()
+        val compiledSource = Source.fromJavaSnippet("int i = 1;").compile()
 
         compiledSource should haveDefinedExactlyTheseClasses(setOf("Main"))
         compiledSource should haveProvidedThisManyClasses(0)
@@ -29,7 +29,7 @@ private static int main() {
         compiledSource should haveProvidedThisManyClasses(0)
     }
     "should compile snippets that include class definitions" {
-        val compiledSource = Source.fromSnippet(
+        val compiledSource = Source.fromJavaSnippet(
             """
 int i = 0;
 public class Foo {
@@ -69,7 +69,7 @@ public class Test {
         compiledSource should haveProvidedThisManyClasses(0)
     }
     "should compile snippets that use the record keyword" {
-        val compiledSource = Source.fromSnippet(
+        val compiledSource = Source.fromJavaSnippet(
             """
 String record = "record";
 int record() {
@@ -412,6 +412,19 @@ public class Test {
             compiledSource should haveDefinedExactlyTheseClasses(setOf("Test"))
             compiledSource should haveProvidedThisManyClasses(0)
         }
+    }
+    "should fail on bare lists" {
+        val failedCompilation = shouldThrow<CompilationFailed> {
+            Source.fromJavaSnippet(
+                """
+import java.util.List;
+import java.util.ArrayList;
+List first = new ArrayList();
+                """.trimIndent(),
+            ).compile(CompilationArguments(wError = true))
+        }
+        println(failedCompilation.errors)
+        failedCompilation should haveCompilationErrorAt(line = 3)
     }
     "should compile sources that use Java 14 features" {
         if (systemCompilerVersion >= 14) {

@@ -1,4 +1,3 @@
-
 @file:Suppress("MatchingDeclarationName", "ktlint:standard:filename")
 
 package edu.illinois.cs.cs125.jeed.core
@@ -218,6 +217,8 @@ class KotlinMutationListener(private val parsedSource: Source.ParsedSource) : Ko
         } catch (e: Exception) {
             false
         }
+        val isDivision = false
+
         ctx.IntegerLiteral()?.also {
             ctx.toLocation().also { location ->
                 val content = parsedSource.contents(location)
@@ -228,9 +229,10 @@ class KotlinMutationListener(private val parsedSource: Source.ParsedSource) : Ko
                         Source.FileType.KOTLIN,
                         base = 10,
                         isNegative = isNegative,
+                        isDivision = isDivision,
                     ),
                 )
-                if (NumberLiteralTrim.matches(content, base = 10, isNegative = isNegative)) {
+                if (NumberLiteralTrim.matches(content, base = 10, isNegative = isNegative, isDivision = isDivision)) {
                     mutations.add(
                         NumberLiteralTrim(
                             location,
@@ -238,6 +240,7 @@ class KotlinMutationListener(private val parsedSource: Source.ParsedSource) : Ko
                             Source.FileType.KOTLIN,
                             base = 10,
                             isNegative = isNegative,
+                            isDivision = isDivision,
                         ),
                     )
                 }
@@ -254,9 +257,10 @@ class KotlinMutationListener(private val parsedSource: Source.ParsedSource) : Ko
                         Source.FileType.KOTLIN,
                         base = 16,
                         isNegative = isNegative,
+                        isDivision = isDivision,
                     ),
                 )
-                if (NumberLiteralTrim.matches(content, 16, isNegative)) {
+                if (NumberLiteralTrim.matches(content, 16, isNegative, isDivision)) {
                     mutations.add(
                         NumberLiteralTrim(
                             location,
@@ -264,6 +268,7 @@ class KotlinMutationListener(private val parsedSource: Source.ParsedSource) : Ko
                             Source.FileType.KOTLIN,
                             base = 16,
                             isNegative = isNegative,
+                            isDivision = isDivision,
                         ),
                     )
                 }
@@ -279,9 +284,10 @@ class KotlinMutationListener(private val parsedSource: Source.ParsedSource) : Ko
                         Source.FileType.KOTLIN,
                         base = 2,
                         isNegative = isNegative,
+                        isDivision = isDivision,
                     ),
                 )
-                if (NumberLiteralTrim.matches(content, 2, isNegative)) {
+                if (NumberLiteralTrim.matches(content, 2, isNegative, isDivision)) {
                     mutations.add(
                         NumberLiteralTrim(
                             location,
@@ -289,6 +295,7 @@ class KotlinMutationListener(private val parsedSource: Source.ParsedSource) : Ko
                             Source.FileType.KOTLIN,
                             base = 2,
                             isNegative = isNegative,
+                            isDivision = isDivision,
                         ),
                     )
                 }
@@ -303,9 +310,26 @@ class KotlinMutationListener(private val parsedSource: Source.ParsedSource) : Ko
         ctx.RealLiteral()?.also {
             ctx.toLocation().also { location ->
                 val content = parsedSource.contents(location)
-                mutations.add(NumberLiteral(location, content, Source.FileType.KOTLIN))
-                if (NumberLiteralTrim.matches(content, base = 10, isNegative = isNegative)) {
-                    mutations.add(NumberLiteralTrim(location, content, Source.FileType.KOTLIN, base = 10))
+                mutations.add(
+                    NumberLiteral(
+                        location,
+                        content,
+                        Source.FileType.KOTLIN,
+                        isDivision = isDivision,
+                        isNegative = isNegative,
+                    ),
+                )
+                if (NumberLiteralTrim.matches(content, base = 10, isNegative = isNegative, isDivision = isDivision)) {
+                    mutations.add(
+                        NumberLiteralTrim(
+                            location,
+                            content,
+                            Source.FileType.KOTLIN,
+                            base = 10,
+                            isNegative = isNegative,
+                            isDivision = isDivision,
+                        ),
+                    )
                 }
             }
         }
@@ -319,9 +343,10 @@ class KotlinMutationListener(private val parsedSource: Source.ParsedSource) : Ko
                         Source.FileType.KOTLIN,
                         base = 10,
                         isNegative = isNegative,
+                        isDivision = isDivision,
                     ),
                 )
-                if (NumberLiteralTrim.matches(content, base = 10, isNegative = isNegative)) {
+                if (NumberLiteralTrim.matches(content, base = 10, isNegative = isNegative, isDivision = isDivision)) {
                     mutations.add(
                         NumberLiteralTrim(
                             location,
@@ -329,6 +354,7 @@ class KotlinMutationListener(private val parsedSource: Source.ParsedSource) : Ko
                             Source.FileType.KOTLIN,
                             base = 10,
                             isNegative = isNegative,
+                            isDivision = isDivision,
                         ),
                     )
                 }
@@ -381,8 +407,9 @@ class KotlinMutationListener(private val parsedSource: Source.ParsedSource) : Ko
     private val loopBlockDepths = mutableListOf<Int>()
     private var continueUntil = 0
 
-    private fun StatementContext.isContinue() = expression()?.primaryExpression()?.jumpExpression()?.CONTINUE() != null ||
-        expression()?.primaryExpression()?.jumpExpression()?.CONTINUE_AT() != null
+    private fun StatementContext.isContinue() =
+        expression()?.primaryExpression()?.jumpExpression()?.CONTINUE() != null ||
+            expression()?.primaryExpression()?.jumpExpression()?.CONTINUE_AT() != null
 
     private fun StatementContext.isIfTry() = expression()?.primaryExpression()?.ifExpression() != null ||
         expression()?.primaryExpression()?.tryExpression() != null

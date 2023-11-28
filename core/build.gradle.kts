@@ -23,7 +23,7 @@ dependencies {
 
     antlr("org.antlr:antlr4:4.13.1")
 
-    implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:1.9.20")
+    implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:1.9.21")
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
     implementation("com.puppycrawl.tools:checkstyle:10.12.5")
@@ -35,7 +35,7 @@ dependencies {
     implementation("org.ow2.asm:asm:9.6")
     implementation("org.ow2.asm:asm-tree:9.6")
     implementation("org.ow2.asm:asm-util:9.6")
-    implementation("ch.qos.logback:logback-classic:1.4.11")
+    implementation("ch.qos.logback:logback-classic:1.4.12")
     implementation("io.github.microutils:kotlin-logging:3.0.5")
     implementation("io.github.classgraph:classgraph:4.8.165")
     implementation("net.java.dev.jna:jna:5.13.0")
