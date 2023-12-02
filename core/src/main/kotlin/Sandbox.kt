@@ -987,7 +987,8 @@ object Sandbox {
 
             private fun transformFromClasspath(name: String): ByteArray {
                 val originalBytes = sandboxableClassLoader.classLoader.parent
-                    .getResourceAsStream("${name.replace('.', '/')}.class")?.readAllBytes()
+                    .getResourceAsStream("${name.replace('.', '/')}.class")
+                    ?.use { it.readAllBytes() }
                     ?: throw ClassNotFoundException("failed to reload $name")
                 return RewriteBytecode.rewrite(
                     name,
