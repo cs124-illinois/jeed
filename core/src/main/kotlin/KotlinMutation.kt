@@ -3,12 +3,15 @@
 package edu.illinois.cs.cs125.jeed.core
 
 import edu.illinois.cs.cs125.jeed.core.antlr.KotlinParser
+import edu.illinois.cs.cs125.jeed.core.antlr.KotlinParser.AssignmentContext
 import edu.illinois.cs.cs125.jeed.core.antlr.KotlinParser.ControlStructureBodyContext
 import edu.illinois.cs.cs125.jeed.core.antlr.KotlinParser.ExpressionContext
+import edu.illinois.cs.cs125.jeed.core.antlr.KotlinParser.LiteralConstantContext
 import edu.illinois.cs.cs125.jeed.core.antlr.KotlinParser.PrimaryExpressionContext
 import edu.illinois.cs.cs125.jeed.core.antlr.KotlinParser.StatementContext
 import edu.illinois.cs.cs125.jeed.core.antlr.KotlinParserBaseListener
 import org.antlr.v4.runtime.ParserRuleContext
+import org.antlr.v4.runtime.RuleContext
 import org.antlr.v4.runtime.tree.ParseTreeWalker
 import org.antlr.v4.runtime.tree.TerminalNode
 import org.jetbrains.kotlin.backend.common.pop
@@ -200,8 +203,22 @@ class KotlinMutationListener(private val parsedSource: Source.ParsedSource) : Ko
         }
     }
 
+    private fun LiteralConstantContext.checkDivision(): Boolean {
+        var current: RuleContext? = this
+        while (current != null) {
+            if (current is ExpressionContext && current.multiplicativeOperator()?.let { it.DIV() != null || it.MOD() != null } == true) {
+                return current.expression(1)?.text?.trimParentheses() == text
+            }
+            if (current is AssignmentContext && current.assignmentAndOperator()?.let { it.MOD_ASSIGNMENT() != null || it.DIV_ASSIGNMENT() != null } == true) {
+                return current.fullExpression()?.text?.trimParentheses() == text
+            }
+            current = current.parent
+        }
+        return false
+    }
+
     @Suppress("ComplexMethod")
-    override fun enterLiteralConstant(ctx: KotlinParser.LiteralConstantContext) {
+    override fun enterLiteralConstant(ctx: LiteralConstantContext) {
         if (insideAnnotation) {
             return
         }
@@ -211,13 +228,18 @@ class KotlinMutationListener(private val parsedSource: Source.ParsedSource) : Ko
             }
         }
         val isNegative = try {
-            ((((ctx.parent as PrimaryExpressionContext).parent as ExpressionContext)).parent as ExpressionContext).unaryPrefix(
+            (((ctx.parent as PrimaryExpressionContext).parent as ExpressionContext).parent as ExpressionContext).unaryPrefix(
                 0,
             ).text == "-"
         } catch (e: Exception) {
             false
         }
-        val isDivision = false
+
+        val isDivision = try {
+            ctx.checkDivision()
+        } catch (e: Exception) {
+            false
+        }
 
         ctx.IntegerLiteral()?.also {
             ctx.toLocation().also { location ->

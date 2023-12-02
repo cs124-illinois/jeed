@@ -695,4 +695,58 @@ public class Modifier {
 """.trim(),
         ).complexity()
     }
+    "should add assert paths correctly" {
+        Source(
+            mapOf(
+                "Location.java" to """
+import java.util.Objects;
+public class Location {
+  private String description;
+  private double latitude, longitude;
+
+  public Location(String setDescription, double setLatitude, double setLongitude) {
+    if (setDescription == null || setLongitude < -180 || setLongitude > 180 || setLatitude < -90 || setLatitude > 90) {
+      throw new IllegalArgumentException();
+    }
+    description = setDescription;
+    latitude = setLatitude;
+    longitude = setLongitude;
+  }
+  
+  @Override
+  public int hashCode() {
+    return Objects.hash(description, latitude, longitude);
+  }
+}""".trim(),
+            ),
+        ).complexity().also {
+            it.lookup("Location", "Location.java").complexity shouldBe 8
+        }
+        Source(
+            mapOf(
+                "Location.java" to """
+import java.util.Objects;
+public class Location {
+  private String description;
+  private double latitude, longitude;
+
+  public Location(String setDescription, double setLatitude, double setLongitude) {
+    assert setDescription != null;
+    assert setLatitude >= -90.0 && setLatitude <= 90.0;
+    assert setLongitude >= -180.0 && setLongitude <= 180.0;
+    description = setDescription;
+    latitude = setLatitude;
+    longitude = setLongitude;
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(description, latitude, longitude);
+  }
+}""".trim(),
+            ),
+        ).complexity().also {
+            it.lookup("Location", "Location.java").complexity shouldBe 7
+        }
+    }
 })

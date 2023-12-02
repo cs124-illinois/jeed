@@ -35,7 +35,7 @@ dependencies {
     implementation("org.ow2.asm:asm:9.6")
     implementation("org.ow2.asm:asm-tree:9.6")
     implementation("org.ow2.asm:asm-util:9.6")
-    implementation("ch.qos.logback:logback-classic:1.4.12")
+    implementation("ch.qos.logback:logback-classic:1.4.14")
     implementation("io.github.microutils:kotlin-logging:3.0.5")
     implementation("io.github.classgraph:classgraph:4.8.165")
     implementation("net.java.dev.jna:jna:5.13.0")

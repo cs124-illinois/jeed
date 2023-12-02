@@ -5,10 +5,12 @@ package edu.illinois.cs.cs125.jeed.core
 import edu.illinois.cs.cs125.jeed.core.antlr.JavaParser
 import edu.illinois.cs.cs125.jeed.core.antlr.JavaParser.BlockContext
 import edu.illinois.cs.cs125.jeed.core.antlr.JavaParser.ExpressionContext
+import edu.illinois.cs.cs125.jeed.core.antlr.JavaParser.LiteralContext
 import edu.illinois.cs.cs125.jeed.core.antlr.JavaParser.PrimaryContext
 import edu.illinois.cs.cs125.jeed.core.antlr.JavaParser.StatementContext
 import edu.illinois.cs.cs125.jeed.core.antlr.JavaParserBaseListener
 import org.antlr.v4.runtime.ParserRuleContext
+import org.antlr.v4.runtime.RuleContext
 import org.antlr.v4.runtime.Token
 import org.antlr.v4.runtime.tree.ParseTreeWalker
 import org.antlr.v4.runtime.tree.TerminalNode
@@ -73,6 +75,18 @@ class JavaMutationListener(private val parsedSource: Source.ParsedSource) : Java
             last().symbol.line,
         )
 
+    private val divisions = listOf("%", "/", "%=", "/=")
+    private fun LiteralContext.checkDivision(): Boolean {
+        var current: RuleContext? = this
+        while (current != null) {
+            if (current is ExpressionContext && divisions.contains(current.bop?.text)) {
+                return current.expression(1)?.text?.trimParentheses() == text
+            }
+            current = current.parent
+        }
+        return false
+    }
+
     override fun enterLiteral(ctx: JavaParser.LiteralContext) {
         if (insideAnnotation) {
             return
@@ -100,13 +114,7 @@ class JavaMutationListener(private val parsedSource: Source.ParsedSource) : Java
             false
         }
         val isDivision = try {
-            ctx.parent.parent.parent is ExpressionContext &&
-                listOf("%", "/").contains((ctx.parent.parent.parent as ExpressionContext).bop.text) ||
-                (
-                    ctx.parent.parent.parent.parent.parent is ExpressionContext &&
-                        listOf("%", "/").contains((ctx.parent.parent.parent.parent.parent as ExpressionContext).bop.text) &&
-                        (ctx.parent.parent.parent is PrimaryContext && (ctx.parent.parent.parent as PrimaryContext).LPAREN() != null)
-                    )
+            ctx.checkDivision()
         } catch (e: Exception) {
             false
         }

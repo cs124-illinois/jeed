@@ -1511,6 +1511,23 @@ public class Question {
             """
 public class Question {
   public static void test() {
+    value /= 1;
+  }
+}
+            """.trimMargin(),
+        ).checkMutations<NumberLiteral> { mutations, contents ->
+            mutations shouldHaveSize 1
+            repeat(32) {
+                mutations.first().apply(contents).also { mutated ->
+                    mutated shouldNotContain "value /= 0"
+                }
+                mutations.first().reset()
+            }
+        }
+        Source.fromJava(
+            """
+public class Question {
+  public static void test() {
     int value = value / 1;
   }
 }
@@ -1528,7 +1545,7 @@ public class Question {
             """
 public class Question {
   public static void test() {
-    int value = value % (1);
+    int value = value % ((1));
   }
 }
             """.trimMargin(),
@@ -1536,7 +1553,7 @@ public class Question {
             mutations shouldHaveSize 1
             repeat(32) {
                 mutations.first().apply(contents).also { mutated ->
-                    mutated shouldNotContain "value % (0)"
+                    mutated shouldNotContain "value % ((0))"
                 }
                 mutations.first().reset()
             }

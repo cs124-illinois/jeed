@@ -1184,6 +1184,115 @@ fun test() {
             """,
         ).allMutations()
     }
+    "it should not mutate modulo to zero with number literal" {
+        Source.fromKotlin(
+            """
+fun test() {
+  val test = value % 1
+}
+            """.trimMargin(),
+        ).checkMutations<NumberLiteral> { mutations, contents ->
+            mutations shouldHaveSize 1
+            repeat(32) {
+                mutations.first().apply(contents).also { mutated ->
+                    mutated shouldNotContain "value % 0"
+                }
+                mutations.first().reset()
+            }
+        }
+        Source.fromKotlin(
+            """
+fun test() {
+  test %= 1
+}
+            """.trimMargin(),
+        ).checkMutations<NumberLiteral> { mutations, contents ->
+            mutations shouldHaveSize 1
+            repeat(32) {
+                mutations.first().apply(contents).also { mutated ->
+                    mutated shouldNotContain "test %= 0"
+                }
+                mutations.first().reset()
+            }
+        }
+        Source.fromKotlin(
+            """
+fun test() {
+  val test = value / 1
+}
+            """.trimMargin(),
+        ).checkMutations<NumberLiteral> { mutations, contents ->
+            mutations shouldHaveSize 1
+            repeat(32) {
+                mutations.first().apply(contents).also { mutated ->
+                    mutated shouldNotContain "value / 0"
+                }
+                mutations.first().reset()
+            }
+        }
+        Source.fromKotlin(
+            """
+fun test() {
+  val test = value / (((1)))
+}
+            """.trimMargin(),
+        ).checkMutations<NumberLiteral> { mutations, contents ->
+            mutations shouldHaveSize 1
+            repeat(32) {
+                mutations.first().apply(contents).also { mutated ->
+                    mutated shouldNotContain "value / (((0)))"
+                }
+                mutations.first().reset()
+            }
+        }
+    }
+    "it should not mutate modulo to zero with number literal trim" {
+        Source.fromKotlin(
+            """
+fun test() {
+  val test = value % 10
+}
+            """.trimMargin(),
+        ).checkMutations<NumberLiteralTrim> { mutations, contents ->
+            mutations shouldHaveSize 1
+            repeat(32) {
+                mutations.first().apply(contents).also { mutated ->
+                    mutated shouldNotContain "value % 0"
+                }
+                mutations.first().reset()
+            }
+        }
+        Source.fromKotlin(
+            """
+fun test() {
+  val test = value / 10
+}
+            """.trimMargin(),
+        ).checkMutations<NumberLiteralTrim> { mutations, contents ->
+            mutations shouldHaveSize 1
+            repeat(32) {
+                mutations.first().apply(contents).also { mutated ->
+                    mutated shouldNotContain "value / 0"
+                }
+                mutations.first().reset()
+            }
+        }
+        Source.fromKotlin(
+            """
+fun test() {
+  val test = value / ((10))
+}
+            """.trimMargin(),
+        ).checkMutations<NumberLiteralTrim> { mutations, contents ->
+            mutations shouldHaveSize 1
+            repeat(32) {
+                mutations.first().apply(contents).also { mutated ->
+                    mutated shouldNotContain "value % ((0))"
+                }
+                mutations.first().reset()
+            }
+        }
+    }
     "!it should handle braceless statements" {
         // BROKEN WITH NEW GRAMMAR
         // Not a huge price to pay. (Why does this even work?)

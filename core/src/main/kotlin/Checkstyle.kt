@@ -109,7 +109,13 @@ private val limiter = Semaphore(
 )
 
 suspend fun Checker.processString(name: String, source: String): List<CheckstyleError> {
-    val file = File(if (name.endsWith(".java")) name else "$name.java")
+    val file = if (name.endsWith(".java")) {
+        name
+    } else {
+        "$name.java"
+    }.let {
+        File(it)
+    }
     val contents = FileText(file, source.lines())
 
     val field = this::class.java.getDeclaredField("fileSetChecks")

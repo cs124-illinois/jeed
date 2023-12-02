@@ -344,7 +344,7 @@ public class Test(var first: Int, var second: Int) {
                 """.trim(),
             ),
         ).complexity().also {
-            it.lookup("Test.init0", "Test.kt").complexity shouldBe 6
+            it.lookup("Test.init0", "Test.kt").complexity shouldBe 5
         }
     }
 
@@ -372,7 +372,7 @@ class PingPonger constructor(private var state: String) {
                 """.trim(),
             ),
         ).complexity().also {
-            it.lookup("PingPonger", "Test.kt").complexity shouldBe 8
+            it.lookup("PingPonger", "Test.kt").complexity shouldBe 7
             it.lookup("PingPonger.pong():Boolean", "Test.kt").complexity shouldBe 2
             it.lookup("PingPonger.ping():Boolean", "Test.kt").complexity shouldBe 2
         }
@@ -742,7 +742,7 @@ class Main {
 }
 """.trim(),
         ).complexity().also {
-            it.lookupFile("Main.kt") shouldBe 2
+            it.lookupFile("Main.kt") shouldBe 1
         }
     }
     "should handle secondary constructors" {
@@ -889,6 +889,38 @@ fun getPronunciation(input: String): String {
             measureTime {
                 source.complexity()
             }
+        }
+    }
+    "should add assert paths correctly" {
+        Source(
+            mapOf(
+                "Location.kt" to """
+class Location(private val description: String?, private val latitude: Double, private val longitude: Double) {
+  init {
+    if (description == null || longitude < -180 || longitude > 180 || latitude < -90 || latitude > 90) {
+      throw IllegalArgumentException()
+    }
+  }
+  override fun hashCode(): Int = Objects.hash(description, latitude, longitude)
+}""".trim(),
+            ),
+        ).complexity().also {
+            it.lookup("Location", "Location.kt").complexity shouldBe 8
+        }
+        Source(
+            mapOf(
+                "Location.kt" to """
+class Location(private val description: String?, private val latitude: Double, private val longitude: Double) {
+  init {
+    require(description != null)
+    check(longitude >= -180 && longitude <= 180)
+    assert(latitude >= -90 && latitude <= 90)
+  }
+  override fun hashCode(): Int = Objects.hash(description, latitude, longitude)
+}""".trim(),
+            ),
+        ).complexity().also {
+            it.lookup("Location", "Location.kt").complexity shouldBe 7
         }
     }
 })

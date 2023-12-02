@@ -171,11 +171,7 @@ class KotlinComplexityListener(val source: Source, entry: Map.Entry<String, Stri
             "init${initCounter - 1}",
             Location(ctx.start.line, ctx.start.charPositionInLine),
             Location(ctx.stop.line, ctx.stop.charPositionInLine),
-            initialComplexity = if (initCounter == 1) {
-                1
-            } else {
-                0
-            },
+            initialComplexity = 0,
         )
     }
 
