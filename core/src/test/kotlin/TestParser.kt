@@ -1,6 +1,7 @@
 package edu.illinois.cs.cs125.jeed.core
 
 import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.comparables.shouldBeLessThan
 import io.kotest.matchers.shouldBe
 import kotlin.time.measureTime
 
@@ -81,36 +82,25 @@ record State(int value) {
   """
 
         val sourceBaseline = 16
-        println("As source:")
-        println(
-            "Original: " + measureTime {
-                Source.fromKotlin(makeSource(sourceBaseline)).getParsed("Main.kt").tree
-            },
-        )
+        val originalAsSource = measureTime {
+            Source.fromKotlin(makeSource(sourceBaseline)).getParsed("Main.kt").tree
+        }
 
-        println("After warmup:")
         repeat(8) {
-            println(
-                measureTime {
-                    Source.fromKotlin(makeSource(sourceBaseline)).getParsed("Main.kt").tree
-                },
-            )
+            measureTime {
+                Source.fromKotlin(makeSource(sourceBaseline)).getParsed("Main.kt").tree
+            } shouldBeLessThan originalAsSource * 2
         }
 
         val snippetBaseline = 16
-        println("As snippet:")
-        println(
-            "Original: " + measureTime {
-                Source.fromKotlinSnippet(makeSource(snippetBaseline)).parse()
-            },
-        )
-        println("After warmup:")
+        val originalAsSnippet = measureTime {
+            Source.fromKotlinSnippet(makeSource(snippetBaseline)).parse()
+        }
+
         repeat(8) {
-            println(
-                measureTime {
-                    Source.fromKotlinSnippet(makeSource(snippetBaseline)).parse()
-                },
-            )
+            measureTime {
+                Source.fromKotlinSnippet(makeSource(snippetBaseline)).parse()
+            } shouldBeLessThan originalAsSnippet * 2
         }
     }
     "it should parse an actual file" {
@@ -184,18 +174,14 @@ fun getPronunciation(word: String): String {
   return pron
 }
 """
-        println(
-            "Original: " + measureTime {
-                Source.fromKotlin(source).getParsed("Main.kt").tree
-            },
-        )
-        println("After warmup:")
+        val original = measureTime {
+            Source.fromKotlin(source).getParsed("Main.kt").tree
+        }
+
         repeat(8) {
-            println(
-                measureTime {
-                    Source.fromKotlin(source).getParsed("Main.kt").tree
-                },
-            )
+            measureTime {
+                Source.fromKotlin(source).getParsed("Main.kt").tree
+            } shouldBeLessThan original * 2
         }
     }
     "it should parse lambda assignment" {

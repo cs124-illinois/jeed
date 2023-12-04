@@ -7,7 +7,7 @@ plugins {
     id("io.gitlab.arturbosch.detekt") version "1.23.4"
     id("com.google.devtools.ksp") version "1.9.21-1.0.15" apply false
     id("io.github.gradle-nexus.publish-plugin") version "1.3.0"
-    id("com.autonomousapps.dependency-analysis") version "1.26.0"
+    id("com.autonomousapps.dependency-analysis") version "1.27.0"
 }
 allprojects {
     group = "org.cs124.jeed"

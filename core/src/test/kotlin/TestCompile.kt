@@ -423,7 +423,6 @@ List first = new ArrayList();
                 """.trimIndent(),
             ).compile(CompilationArguments(wError = true))
         }
-        println(failedCompilation.errors)
         failedCompilation should haveCompilationErrorAt(line = 3)
     }
     "should compile sources that use Java 14 features" {

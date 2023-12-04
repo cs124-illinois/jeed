@@ -6,6 +6,5 @@ import io.kotest.matchers.shouldNotBe
 class TestVersion : StringSpec({
     "should have a valid version" {
         version shouldNotBe "unspecified"
-        println(version)
     }
 })

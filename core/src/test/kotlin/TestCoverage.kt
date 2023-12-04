@@ -223,7 +223,6 @@ fun main() {
         val features = source.features()
 
         coverage.let { coverageResult ->
-            println(coverageResult)
             coverageResult should haveFileMissedCount(1)
             coverageResult.adjustWithFeatures(features, source.type)
         }.also { coverageResult ->

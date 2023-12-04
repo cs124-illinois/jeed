@@ -2,6 +2,7 @@ package edu.illinois.cs.cs125.jeed.core
 
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.longs.shouldBeLessThan
 import io.kotest.matchers.shouldBe
 import kotlin.time.measureTime
 
@@ -886,9 +887,10 @@ fun getPronunciation(input: String): String {
   }
 }""",
         ).also { source ->
-            measureTime {
+            val complexityTime = measureTime {
                 source.complexity()
             }
+            complexityTime.inWholeMilliseconds shouldBeLessThan 1000
         }
     }
     "should add assert paths correctly" {
