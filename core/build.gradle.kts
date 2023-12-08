@@ -26,7 +26,7 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:1.9.21")
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
-    implementation("com.puppycrawl.tools:checkstyle:10.12.5")
+    implementation("com.puppycrawl.tools:checkstyle:10.12.6")
     implementation("org.codehaus.plexus:plexus-container-default:2.1.1")
     implementation("com.pinterest.ktlint:ktlint-rule-engine:1.0.1")
     implementation("com.pinterest.ktlint:ktlint-ruleset-standard:1.0.1")
