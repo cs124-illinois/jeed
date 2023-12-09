@@ -180,6 +180,10 @@ class JavaComplexityListener(val source: Source, entry: Map.Entry<String, String
              */
             currentComplexity.complexity++
         }
+        // assert statements can throw, adding one path
+        ctx.ASSERT()?.also {
+            currentComplexity.complexity++
+        }
     }
 
     override fun enterExpression(ctx: JavaParser.ExpressionContext) {

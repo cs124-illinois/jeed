@@ -2,6 +2,7 @@ package edu.illinois.cs.cs125.jeed.core
 
 import com.squareup.moshi.JsonClass
 import java.io.ByteArrayInputStream
+import java.io.FilePermission
 import java.io.InputStream
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
@@ -29,9 +30,13 @@ class SourceExecutionArguments(
     @Transient
     internal val plugins: MutableList<ConfiguredSandboxPlugin<*, *>> = mutableListOf(),
     systemInStream: InputStream? = null,
+    permissionBlackList: Boolean = DEFAULT_PERMISSION_BLACKLIST,
 ) : Sandbox.ExecutionArguments(
     timeout,
-    permissions.union(REQUIRED_PERMISSIONS),
+    when (permissionBlackList) {
+        true -> permissions.union(Sandbox.BLACKLISTED_PERMISSIONS)
+        false -> permissions.union(REQUIRED_PERMISSIONS)
+    },
     maxExtraThreads,
     maxOutputLines,
     maxIOBytes,
@@ -39,6 +44,7 @@ class SourceExecutionArguments(
     waitForShutdown,
     returnTimeout,
     systemInStream = systemInStream,
+    permissionBlacklist = permissionBlackList,
 ) {
     companion object {
         const val DEFAULT_KLASS = "Main"
@@ -56,6 +62,13 @@ class SourceExecutionArguments(
             // Not sure why this is required by Date, but it seems to be
             // ClassLoader enumeration is probably not unsafe...
             RuntimePermission("getClassLoader"),
+            RuntimePermission("charsetProvider"),
+        )
+        val GENERALLY_UNSAFE_PERMISSIONS = setOf(
+            FilePermission("*", "read"),
+            FilePermission("*", "write"),
+            RuntimePermission("manageProcess"),
+            RuntimePermission("writeFileDescriptor"),
         )
     }
 
@@ -144,7 +157,7 @@ suspend fun CompiledSource.execute(
                 method.invoke(null, null)
             }
         } catch (e: InvocationTargetException) {
-            throw(e.cause ?: e)
+            throw (e.cause ?: e)
         }
     }
 }
@@ -165,7 +178,7 @@ suspend fun <T> CompiledSource.executeWith(
         try {
             return@sandbox executor(classLoader)
         } catch (e: InvocationTargetException) {
-            throw(e.cause ?: e)
+            throw (e.cause ?: e)
         }
     }
 }

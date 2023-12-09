@@ -1489,6 +1489,129 @@ public class Question {
             }
         }
     }
+    "it should not mutate modulo to zero with number literal" {
+        Source.fromJava(
+            """
+public class Question {
+  public static void test() {
+    int value = value % 1;
+  }
+}
+            """.trimMargin(),
+        ).checkMutations<NumberLiteral> { mutations, contents ->
+            mutations shouldHaveSize 1
+            repeat(32) {
+                mutations.first().apply(contents).also { mutated ->
+                    mutated shouldNotContain "value % 0"
+                }
+                mutations.first().reset()
+            }
+        }
+        Source.fromJava(
+            """
+public class Question {
+  public static void test() {
+    value /= 1;
+  }
+}
+            """.trimMargin(),
+        ).checkMutations<NumberLiteral> { mutations, contents ->
+            mutations shouldHaveSize 1
+            repeat(32) {
+                mutations.first().apply(contents).also { mutated ->
+                    mutated shouldNotContain "value /= 0"
+                }
+                mutations.first().reset()
+            }
+        }
+        Source.fromJava(
+            """
+public class Question {
+  public static void test() {
+    int value = value / 1;
+  }
+}
+            """.trimMargin(),
+        ).checkMutations<NumberLiteral> { mutations, contents ->
+            mutations shouldHaveSize 1
+            repeat(32) {
+                mutations.first().apply(contents).also { mutated ->
+                    mutated shouldNotContain "value / 0"
+                }
+                mutations.first().reset()
+            }
+        }
+        Source.fromJava(
+            """
+public class Question {
+  public static void test() {
+    int value = value % ((1));
+  }
+}
+            """.trimMargin(),
+        ).checkMutations<NumberLiteral> { mutations, contents ->
+            mutations shouldHaveSize 1
+            repeat(32) {
+                mutations.first().apply(contents).also { mutated ->
+                    mutated shouldNotContain "value % ((0))"
+                }
+                mutations.first().reset()
+            }
+        }
+    }
+    "it should not mutate modulo to zero with number literal trim" {
+        Source.fromJava(
+            """
+public class Question {
+  public static void test() {
+    int value = value % 10;
+  }
+}
+            """.trimMargin(),
+        ).checkMutations<NumberLiteralTrim> { mutations, contents ->
+            mutations shouldHaveSize 1
+            repeat(32) {
+                mutations.first().apply(contents).also { mutated ->
+                    mutated shouldNotContain "value % 0"
+                }
+                mutations.first().reset()
+            }
+        }
+        Source.fromJava(
+            """
+public class Question {
+  public static void test() {
+    int value = value / 10;
+  }
+}
+            """.trimMargin(),
+        ).checkMutations<NumberLiteralTrim> { mutations, contents ->
+            mutations shouldHaveSize 1
+            repeat(32) {
+                mutations.first().apply(contents).also { mutated ->
+                    mutated shouldNotContain "value / 0"
+                }
+                mutations.first().reset()
+            }
+        }
+        Source.fromJava(
+            """
+public class Question {
+  public static void test() {
+    int value = value % (10);
+  }
+}
+            """.trimMargin(),
+        ).checkMutations<NumberLiteralTrim> { mutations, contents ->
+            mutations shouldHaveSize 1
+            repeat(32) {
+                mutations.first().apply(contents).also { mutated ->
+                    mutated shouldNotContain "value % (0)"
+                }
+                mutations.first().reset()
+            }
+        }
+    }
 })
 
 inline fun <reified T : Mutation> Source.checkMutations(

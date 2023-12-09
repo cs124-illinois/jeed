@@ -1,4 +1,3 @@
-
 @file:Suppress("MatchingDeclarationName", "ktlint:standard:filename")
 
 package edu.illinois.cs.cs125.jeed.core
@@ -6,10 +5,12 @@ package edu.illinois.cs.cs125.jeed.core
 import edu.illinois.cs.cs125.jeed.core.antlr.JavaParser
 import edu.illinois.cs.cs125.jeed.core.antlr.JavaParser.BlockContext
 import edu.illinois.cs.cs125.jeed.core.antlr.JavaParser.ExpressionContext
+import edu.illinois.cs.cs125.jeed.core.antlr.JavaParser.LiteralContext
 import edu.illinois.cs.cs125.jeed.core.antlr.JavaParser.PrimaryContext
 import edu.illinois.cs.cs125.jeed.core.antlr.JavaParser.StatementContext
 import edu.illinois.cs.cs125.jeed.core.antlr.JavaParserBaseListener
 import org.antlr.v4.runtime.ParserRuleContext
+import org.antlr.v4.runtime.RuleContext
 import org.antlr.v4.runtime.Token
 import org.antlr.v4.runtime.tree.ParseTreeWalker
 import org.antlr.v4.runtime.tree.TerminalNode
@@ -74,6 +75,18 @@ class JavaMutationListener(private val parsedSource: Source.ParsedSource) : Java
             last().symbol.line,
         )
 
+    private val divisions = listOf("%", "/", "%=", "/=")
+    private fun LiteralContext.checkDivision(): Boolean {
+        var current: RuleContext? = this
+        while (current != null) {
+            if (current is ExpressionContext && divisions.contains(current.bop?.text)) {
+                return current.expression(1)?.text?.trimParentheses() == text
+            }
+            current = current.parent
+        }
+        return false
+    }
+
     override fun enterLiteral(ctx: JavaParser.LiteralContext) {
         if (insideAnnotation) {
             return
@@ -100,13 +113,18 @@ class JavaMutationListener(private val parsedSource: Source.ParsedSource) : Java
         } catch (e: Exception) {
             false
         }
+        val isDivision = try {
+            ctx.checkDivision()
+        } catch (e: Exception) {
+            false
+        }
 
         ctx.integerLiteral()?.also { integerLiteral ->
             integerLiteral.DECIMAL_LITERAL()?.also {
                 ctx.toLocation().also { location ->
                     val contents = parsedSource.contents(location)
-                    mutations.add(NumberLiteral(location, contents, Source.FileType.JAVA, isNegative))
-                    if (NumberLiteralTrim.matches(contents, base = 10, isNegative = isNegative)) {
+                    mutations.add(NumberLiteral(location, contents, Source.FileType.JAVA, isNegative, isDivision))
+                    if (NumberLiteralTrim.matches(contents, base = 10, isNegative = isNegative, isDivision = isDivision)) {
                         mutations.add(
                             NumberLiteralTrim(
                                 location,
@@ -114,6 +132,7 @@ class JavaMutationListener(private val parsedSource: Source.ParsedSource) : Java
                                 Source.FileType.JAVA,
                                 base = 10,
                                 isNegative = isNegative,
+                                isDivision = isDivision,
                             ),
                         )
                     }
@@ -122,8 +141,8 @@ class JavaMutationListener(private val parsedSource: Source.ParsedSource) : Java
             integerLiteral.BINARY_LITERAL()?.also {
                 ctx.toLocation().also { location ->
                     val contents = parsedSource.contents(location)
-                    mutations.add(NumberLiteral(location, contents, Source.FileType.JAVA, isNegative, 2))
-                    if (NumberLiteralTrim.matches(contents, 2, isNegative)) {
+                    mutations.add(NumberLiteral(location, contents, Source.FileType.JAVA, isNegative, isDivision, 2))
+                    if (NumberLiteralTrim.matches(contents, 2, isNegative, isDivision)) {
                         mutations.add(
                             NumberLiteralTrim(
                                 location,
@@ -131,6 +150,7 @@ class JavaMutationListener(private val parsedSource: Source.ParsedSource) : Java
                                 Source.FileType.JAVA,
                                 base = 2,
                                 isNegative = isNegative,
+                                isDivision = isDivision,
                             ),
                         )
                     }
@@ -139,8 +159,8 @@ class JavaMutationListener(private val parsedSource: Source.ParsedSource) : Java
             integerLiteral.HEX_LITERAL()?.also {
                 ctx.toLocation().also { location ->
                     val contents = parsedSource.contents(location)
-                    mutations.add(NumberLiteral(location, contents, Source.FileType.JAVA, isNegative, 16))
-                    if (NumberLiteralTrim.matches(contents, 16, isNegative)) {
+                    mutations.add(NumberLiteral(location, contents, Source.FileType.JAVA, isNegative, isDivision, 16))
+                    if (NumberLiteralTrim.matches(contents, 16, isNegative, isDivision)) {
                         mutations.add(
                             NumberLiteralTrim(
                                 location,
@@ -148,6 +168,7 @@ class JavaMutationListener(private val parsedSource: Source.ParsedSource) : Java
                                 Source.FileType.JAVA,
                                 base = 16,
                                 isNegative = isNegative,
+                                isDivision = isDivision,
                             ),
                         )
                     }
@@ -159,7 +180,7 @@ class JavaMutationListener(private val parsedSource: Source.ParsedSource) : Java
                 ctx.toLocation().also { location ->
                     val contents = parsedSource.contents(location)
                     mutations.add(NumberLiteral(location, contents, Source.FileType.JAVA, isNegative = isNegative))
-                    if (NumberLiteralTrim.matches(contents, base = 10, isNegative = isNegative)) {
+                    if (NumberLiteralTrim.matches(contents, base = 10, isNegative = isNegative, isDivision)) {
                         mutations.add(
                             NumberLiteralTrim(
                                 location,
@@ -167,6 +188,7 @@ class JavaMutationListener(private val parsedSource: Source.ParsedSource) : Java
                                 Source.FileType.JAVA,
                                 base = 10,
                                 isNegative = isNegative,
+                                isDivision = isDivision,
                             ),
                         )
                     }
@@ -399,6 +421,7 @@ class JavaMutationListener(private val parsedSource: Source.ParsedSource) : Java
             currentIf = currentIf.statement(1)
         }
     }
+
     private fun BlockContext.setContinueUntil() {
         continueUntil = 0
         if (blockStatement().isEmpty()) {
@@ -421,6 +444,7 @@ class JavaMutationListener(private val parsedSource: Source.ParsedSource) : Java
             continueUntil = it.toLocation().end
         }
     }
+
     override fun enterStatement(ctx: StatementContext) {
         ctx.IF()?.also {
             val outerLocation = ctx.toLocation()
@@ -570,6 +594,7 @@ class JavaMutationListener(private val parsedSource: Source.ParsedSource) : Java
             loopBlockDepths[0]++
         }
     }
+
     override fun exitBlock(ctx: BlockContext) {
         if (loopDepth > 0 && !insideLambda) {
             val rbrace = ctx.RBRACE()

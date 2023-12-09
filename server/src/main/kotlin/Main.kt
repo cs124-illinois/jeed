@@ -71,6 +71,9 @@ fun Application.jeed() {
         get("/") {
             call.respond(currentStatus.update())
         }
+        get("/version") {
+            call.respond(VERSION)
+        }
         post("/") {
             withContext(Dispatchers.IO) {
                 val job = try {
@@ -107,6 +110,7 @@ fun Application.jeed() {
 private val backgroundScope = CoroutineScope(Dispatchers.IO)
 
 fun main() = runBlocking<Unit> {
+    logger.info { Status().toJson() }
     logger.info(configuration.toJson.toText())
 
     backgroundScope.launch { warm(2, failLint = false) }

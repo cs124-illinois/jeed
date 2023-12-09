@@ -62,7 +62,6 @@ class TestKtLint : StringSpec({
             ).ktLint(KtLintArguments(failOnError = true))
         }.apply {
             shouldHaveError("indent")
-            println(errors)
             errors.first().let {
                 it.message shouldContain "Unexpected indentation (1)"
                 it.message shouldContain "(should be 0)"

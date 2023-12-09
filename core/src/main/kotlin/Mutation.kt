@@ -516,6 +516,7 @@ class NumberLiteral(
     original: String,
     fileType: Source.FileType,
     private val isNegative: Boolean = false,
+    private val isDivision: Boolean = false,
     private val base: Int = 10,
 ) : Mutation(Type.NUMBER_LITERAL, location, original, fileType) {
     override val preservesLength = true
@@ -530,6 +531,8 @@ class NumberLiteral(
         }
     override val estimatedCount = if (original == "0") {
         1
+    } else if (isDivision && original == "1") {
+        1
     } else if (isNegative && (original == "1" || original == (base - 1).toString())) {
         1
     } else {
@@ -540,6 +543,9 @@ class NumberLiteral(
         // Special case since 0 -> 9 is a bit too obvious
         if (original == "0") {
             return "1"
+        }
+        if (original == "1" && isDivision) {
+            return "2"
         }
         val position = numberPositions.shuffled(random).first()
         return original.toCharArray().also { characters ->
@@ -577,12 +583,13 @@ class NumberLiteralTrim(
     fileType: Source.FileType,
     base: Int,
     isNegative: Boolean = false,
+    isDivision: Boolean = false,
 ) : Mutation(Type.NUMBER_LITERAL_TRIM, location, original, fileType) {
     override val preservesLength = false
     override val mightNotCompile = false
     override val fixedCount = true
 
-    private val options = original.trims(base, isNegative)
+    private val options = original.trims(base, isNegative, isDivision)
     override val estimatedCount = options.size
 
     override fun applyMutation(random: Random) = options.shuffled(random).first()
@@ -594,7 +601,7 @@ class NumberLiteralTrim(
 
         private val suffixes = setOf('f', 'F', 'd', 'D', 'l', 'L')
 
-        private fun String.trims(passedBase: Int, isNegative: Boolean): List<String> {
+        private fun String.trims(passedBase: Int, isNegative: Boolean, isDivision: Boolean): List<String> {
             val base = if (length >= 2 && startsWith("0") && this[1].isDigit()) {
                 8
             } else {
@@ -665,12 +672,12 @@ class NumberLiteralTrim(
                         }
                     }.all { it == '0' }
                 }
-                .filter { !(isNegative && it == "0") }
+                .filter { !((isNegative || isDivision) && it == "0") }
                 .map { "$prefix$it$exponent$suffix" }
         }
 
-        fun matches(contents: String, base: Int, isNegative: Boolean) =
-            contents.trims(base, isNegative = isNegative).isNotEmpty()
+        fun matches(contents: String, base: Int, isNegative: Boolean, isDivision: Boolean) =
+            contents.trims(base, isNegative = isNegative, isDivision = isDivision).isNotEmpty()
     }
 }
 

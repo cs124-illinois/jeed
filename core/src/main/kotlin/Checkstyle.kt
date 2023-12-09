@@ -102,14 +102,16 @@ class ConfiguredChecker(configurationString: String) {
     }
 }
 
-private val limiter = Semaphore(
-    System.getenv("JEED_LOCK_CHECKSTYLE")?.let {
-        1
-    } ?: 1024,
-)
+private val limiter = Semaphore(1)
 
 suspend fun Checker.processString(name: String, source: String): List<CheckstyleError> {
-    val file = File(if (name.endsWith(".java")) name else "$name.java")
+    val file = if (name.endsWith(".java")) {
+        name
+    } else {
+        "$name.java"
+    }.let {
+        File(it)
+    }
     val contents = FileText(file, source.lines())
 
     val field = this::class.java.getDeclaredField("fileSetChecks")

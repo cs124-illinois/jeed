@@ -21,9 +21,10 @@ dependencies {
 
     antlr("org.antlr:antlr4:4.13.1")
 
-    implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:1.9.20")
+    implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:1.9.21")
+
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
-    implementation("com.puppycrawl.tools:checkstyle:10.12.5")
+    implementation("com.puppycrawl.tools:checkstyle:10.12.6")
     implementation("org.codehaus.plexus:plexus-container-default:2.1.1")
     implementation("com.pinterest.ktlint:ktlint-rule-engine:1.0.1")
     implementation("com.pinterest.ktlint:ktlint-ruleset-standard:1.0.1")
@@ -32,7 +33,7 @@ dependencies {
     implementation("org.ow2.asm:asm:9.6")
     implementation("org.ow2.asm:asm-tree:9.6")
     implementation("org.ow2.asm:asm-util:9.6")
-    implementation("ch.qos.logback:logback-classic:1.4.11")
+    implementation("ch.qos.logback:logback-classic:1.4.14")
     implementation("io.github.microutils:kotlin-logging:3.0.5")
     implementation("io.github.classgraph:classgraph:4.8.165")
     implementation("net.java.dev.jna:jna:5.13.0")
@@ -186,6 +187,9 @@ publishing {
     }
 }
 signing {
+    setRequired {
+        gradle.taskGraph.allTasks.any { it is PublishToMavenRepository }
+    }
     sign(publishing.publications["core"])
     setRequired {
         gradle.taskGraph.hasTask("publishCorePublicationToSonatype")

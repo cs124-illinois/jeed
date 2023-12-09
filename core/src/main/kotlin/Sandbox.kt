@@ -154,7 +154,7 @@ object Sandbox {
     open class ExecutionArguments(
         // var because may be increased in the presence of coroutines
         var timeout: Long = DEFAULT_TIMEOUT,
-        val permissions: Set<Permission> = setOf(),
+        permissions: Set<Permission> = setOf(),
         // var because may be increased in the presence of coroutines
         var maxExtraThreads: Int = DEFAULT_MAX_EXTRA_THREADS,
         val maxOutputLines: Int = DEFAULT_MAX_OUTPUT_LINES,
@@ -162,8 +162,14 @@ object Sandbox {
         val classLoaderConfiguration: ClassLoaderConfiguration = ClassLoaderConfiguration(),
         val waitForShutdown: Boolean = DEFAULT_WAIT_FOR_SHUTDOWN,
         val returnTimeout: Int = DEFAULT_RETURN_TIMEOUT,
+        val permissionBlacklist: Boolean = DEFAULT_PERMISSION_BLACKLIST,
         @Transient val systemInStream: InputStream? = null,
     ) {
+        val permissions = if (permissionBlacklist) {
+            permissions + BLACKLISTED_PERMISSIONS
+        } else {
+            permissions
+        }
         companion object {
             const val DEFAULT_TIMEOUT = 100L
             const val DEFAULT_MAX_EXTRA_THREADS = 0
@@ -171,6 +177,7 @@ object Sandbox {
             const val DEFAULT_MAX_IO_BYTES = 4 * 1024
             const val DEFAULT_WAIT_FOR_SHUTDOWN = false
             const val DEFAULT_RETURN_TIMEOUT = 1
+            const val DEFAULT_PERMISSION_BLACKLIST = false
         }
     }
 
@@ -267,7 +274,7 @@ object Sandbox {
         }
     }
 
-    private val BLACKLISTED_PERMISSIONS = setOf(
+    val BLACKLISTED_PERMISSIONS = setOf(
         // Suggestions from here: https://github.com/pro-grade/pro-grade/issues/31.
         RuntimePermission("createClassLoader"),
         RuntimePermission("accessClassInPackage.sun"),
@@ -297,8 +304,14 @@ object Sandbox {
         executionArguments: ExecutionArguments,
         callable: SandboxCallableArguments<T>,
     ): TaskResults<out T?> {
-        require(executionArguments.permissions.intersect(BLACKLISTED_PERMISSIONS).isEmpty()) {
-            "attempt to allow unsafe permissions"
+        when (executionArguments.permissionBlacklist) {
+            true -> require(executionArguments.permissions.containsAll(BLACKLISTED_PERMISSIONS)) {
+                "attempt to allow unsafe permissions"
+            }
+
+            false -> require(executionArguments.permissions.intersect(BLACKLISTED_PERMISSIONS).isEmpty()) {
+                "attempt to allow unsafe permissions"
+            }
         }
 
         if (!running) {
@@ -468,12 +481,13 @@ object Sandbox {
         executionArguments: ExecutionArguments,
     ) {
         val threadGroup = thread.threadGroup ?: error("thread should be in thread group")
-        val accessControlContext: AccessControlContext
-
-        init {
-            val permissions = Permissions()
-            executionArguments.permissions.forEach { permissions.add(it) }
-            accessControlContext = AccessControlContext(arrayOf(ProtectionDomain(null, permissions)))
+        val permissionBlacklist = executionArguments.permissionBlacklist
+        val permissions: Permissions = Permissions().apply {
+            executionArguments.permissions.forEach { add(it) }
+        }
+        val accessControlContext: AccessControlContext? = when (permissionBlacklist) {
+            false -> AccessControlContext(arrayOf(ProtectionDomain(null, permissions)))
+            true -> null
         }
 
         val maxExtraThreads: Int = executionArguments.maxExtraThreads
@@ -1809,7 +1823,14 @@ object Sandbox {
             ) {
                 return
             }
-            confinedTask.accessControlContext.checkPermission(permission)
+            when (confinedTask.permissionBlacklist) {
+                true -> {
+                    if (confinedTask.permissions.implies(permission)) {
+                        throw SecurityException()
+                    }
+                }
+                false -> confinedTask.accessControlContext!!.checkPermission(permission)
+            }
         }
     }
 

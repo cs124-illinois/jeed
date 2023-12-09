@@ -25,8 +25,8 @@ import kotlin.concurrent.getOrSet
 class JeedParseError(location: SourceLocation?, message: String) : SourceError(location, message)
 class JeedParsingException(errors: List<SourceError>) : JeedError(errors)
 
-private val JEED_PARSER_MAX_CONTEXT_SIZE = System.getenv("JEED_PARSER_MAX_CONTEXT_SIZE")?.toInt() ?: 1024
-private val JEED_PARSER_MAX_DFA_SIZE = System.getenv("JEED_PARSER_MAX_DFA_SIZE")?.toInt() ?: 1024
+private val JEED_PARSER_MAX_CONTEXT_SIZE = System.getenv("JEED_PARSER_MAX_CONTEXT_SIZE")?.toInt() ?: 0
+private val JEED_PARSER_MAX_DFA_SIZE = System.getenv("JEED_PARSER_MAX_DFA_SIZE")?.toInt() ?: 0
 
 @Suppress("ArrayInDataClass")
 private data class ANTLR4Cache(

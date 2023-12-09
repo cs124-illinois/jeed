@@ -18,19 +18,27 @@ import edu.illinois.cs.cs125.jeed.core.version as JEED_VERSION
 @JsonClass(generateAdapter = true)
 @Suppress("MemberVisibilityCanBePrivate", "LongParameterList", "unused")
 class Status(
-    val tasks: Set<Task> = Task.values().toSet(),
+    val tasks: Set<Task> = Task.entries.toSet(),
     val started: Instant = Instant.now(),
     val hostname: String = InetAddress.getLocalHost().hostName,
     var lastRequest: Instant? = null,
     val versions: Versions = Versions(JEED_VERSION, VERSION, COMPILER_NAME, KOMPILER_VERSION),
     val counts: Counts = Counts(),
     val cache: Cache = Cache(),
+    val resources: Resources = Resources(),
 ) {
     @JsonClass(generateAdapter = true)
     data class Versions(val jeed: String, val server: String, val compiler: String, val kompiler: String)
 
     @JsonClass(generateAdapter = true)
     data class Counts(var submitted: Int = 0, var completed: Int = 0, var saved: Int = 0)
+
+    @JsonClass(generateAdapter = true)
+    data class Resources(
+        val processors: Int = Runtime.getRuntime().availableProcessors(),
+        val totalMemory: Long = Runtime.getRuntime().totalMemory() / 1024 / 1024,
+        var freeMemory: Long = Runtime.getRuntime().freeMemory() / 1024 / 1024,
+    )
 
     @JsonClass(generateAdapter = true)
     data class Cache(
@@ -42,6 +50,7 @@ class Status(
         var evictionCount: Long = 0,
         var averageLoadPenalty: Double = 0.0,
     )
+
     fun update(): Status {
         compilationCache.stats().also {
             cache.hits = MoreCacheStats.hits
@@ -50,8 +59,12 @@ class Status(
             cache.evictionCount = it.evictionCount()
             cache.averageLoadPenalty = it.averageLoadPenalty()
         }
+        resources.freeMemory = Runtime.getRuntime().freeMemory() / 1024 / 1024
         return this
     }
+
+    fun toJson() = statusAdapter.indent("  ").toJson(this)
+
     companion object {
         private val statusAdapter: JsonAdapter<Status> = moshi.adapter(Status::class.java)
         fun from(response: String?): Status {

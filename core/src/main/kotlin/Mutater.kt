@@ -505,3 +505,14 @@ fun Source.mutations(mutationsArguments: MutationsArguments = MutationsArguments
         throw MutationsFailed(e.errors)
     }
 }
+
+fun String.trimParentheses(): String {
+    var current = this
+    while (true) {
+        val next = current.removePrefix("(").removeSuffix(")")
+        if (current == next) {
+            return next
+        }
+        current = next
+    }
+}
