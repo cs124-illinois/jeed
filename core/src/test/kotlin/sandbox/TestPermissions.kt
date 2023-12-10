@@ -302,28 +302,14 @@ public class Main {
             executionResult should haveOutput("8")
         }
     }
-    "it should not allow snippets to read from the internet" {
+    "it should not allow snippets to contact the internet" {
         Source.fromSnippet(
             """
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
 import java.net.URL;
 
-BufferedReader br = null;
-URL url = new URL("http://cs125.cs.illinois.edu");
-br = new BufferedReader(new InputStreamReader(url.openStream()));
-
-String line;
-StringBuilder sb = new StringBuilder();
-while ((line = br.readLine()) != null) {
-    sb.append(line);
-    sb.append(System.lineSeparator());
-}
-
-System.out.println(sb);
-if (br != null) {
-    br.close();
-}
+URL url = new URL("http://cs124.org");
+var connection = url.openConnection();
+connection.connect();
         """.trim(),
         ).compile().checkPermissions(SourceExecutionArguments(timeout = 10000))
     }
@@ -359,6 +345,7 @@ while ((line = in.readLine()) != null) {
         ).compile().checkPermissions()
     }
     "it should not allow snippets to examine other processes" {
+        ProcessHandle.current() // Warm (execute static initializers) outside sandbox
         Source.fromSnippet(
             """
 ProcessHandle.allProcesses().forEach(p -> System.out.println(p.info()));

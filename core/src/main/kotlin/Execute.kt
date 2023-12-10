@@ -8,6 +8,7 @@ import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 import java.lang.reflect.Modifier
 import java.lang.reflect.ReflectPermission
+import java.net.SocketPermission
 import java.security.Permission
 import java.util.PropertyPermission
 
@@ -65,10 +66,10 @@ class SourceExecutionArguments(
             RuntimePermission("charsetProvider"),
         )
         val GENERALLY_UNSAFE_PERMISSIONS = setOf(
-            FilePermission("*", "read"),
-            FilePermission("*", "write"),
+            FilePermission("<<ALL FILES>>", "read,write,execute,delete,readlink"),
             RuntimePermission("manageProcess"),
             RuntimePermission("writeFileDescriptor"),
+            SocketPermission("*", "resolve,connect,listen,accept"),
         )
     }
 
