@@ -104,6 +104,7 @@ enum class FeatureName(val description: String) {
     LAMBDA_EXPRESSIONS("lambda expressions"),
     GENERIC_CLASS("generic classes"),
     SWITCH("switch statements"),
+    SWITCH_EXPRESSION("switch expressions"),
     STREAM("streams"),
     ENUM("enums"),
 
@@ -167,6 +168,7 @@ val JAVA_ONLY_FEATURES = setOf(
     FeatureName.FINAL_METHOD,
     FeatureName.FINAL_CLASS,
     FeatureName.SWITCH,
+    FeatureName.SWITCH_EXPRESSION,
     FeatureName.STREAM,
     FeatureName.RECORD,
     FeatureName.BOXING_CLASSES,
@@ -328,6 +330,7 @@ val ORDERED_FEATURES = listOf(
     FeatureName.UNSAFE_CALL_OPERATOR,
     FeatureName.WHEN_ENTRY,
     FeatureName.LAST_WHEN_ENTRY,
+    FeatureName.SWITCH_EXPRESSION,
 ).also {
     val doesExist = it.toSet()
     val shouldExist = FeatureName.entries.toSet() - setOf(FeatureName.EMPTY)

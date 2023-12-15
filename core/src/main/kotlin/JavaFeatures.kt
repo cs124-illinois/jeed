@@ -725,6 +725,11 @@ class JavaFeatureListener(val source: Source, entry: Map.Entry<String, String>) 
         ctx.lambdaExpression()?.also {
             count(FeatureName.LAMBDA_EXPRESSIONS, ctx.toLocation())
         }
+        ctx.SWITCH()?.also {
+            count(FeatureName.SWITCH_EXPRESSION, ctx.toLocation())
+            add(FeatureName.BLOCK_START, ctx.LBRACE().toLocation())
+            add(FeatureName.BLOCK_END, ctx.RBRACE().toLocation())
+        }
     }
 
     override fun enterTypeType(ctx: JavaParser.TypeTypeContext) {

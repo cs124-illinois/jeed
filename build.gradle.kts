@@ -5,9 +5,9 @@ plugins {
     id("org.jmailen.kotlinter") version "4.1.0" apply false
     id("com.github.ben-manes.versions") version "0.50.0"
     id("io.gitlab.arturbosch.detekt") version "1.23.4"
-    id("com.google.devtools.ksp") version "1.9.21-1.0.15" apply false
+    id("com.google.devtools.ksp") version "1.9.21-1.0.16" apply false
     id("io.github.gradle-nexus.publish-plugin") version "1.3.0"
-    id("com.autonomousapps.dependency-analysis") version "1.27.0"
+    id("com.autonomousapps.dependency-analysis") version "1.28.0"
 }
 allprojects {
     group = "org.cs124.jeed"

@@ -277,7 +277,7 @@ if (i < 5 || i > 15) {
                 featureList should haveFeatureAt(FeatureName.LOGICAL_OPERATORS, listOf(2, 6, 6))
             }
         }
-        "should count try blocks, switch statements, finally blocks, and assertions in snippets" {
+        "should count try blocks, switch statements, switch expressions, finally blocks, and assertions in snippets" {
             Source.fromJavaSnippet(
                 """
 int i = 0;
@@ -293,6 +293,25 @@ try {
         default:
             System.out.println("not zero or one");
     }
+    int numLetters = switch (day) {
+        case MONDAY:
+        case FRIDAY:
+        case SUNDAY:
+            System.out.println(6);
+            yield 6;
+        case TUESDAY:
+            System.out.println(7);
+            yield 7;
+        case THURSDAY:
+        case SATURDAY:
+            System.out.println(8);
+            yield 8;
+        case WEDNESDAY:
+            System.out.println(9);
+            yield 9;
+        default:
+            throw new IllegalStateException("Invalid day: " + day);
+    };
 } catch (Exception e) {
     System.out.println("Oops");
 } finally { }
@@ -307,8 +326,11 @@ try {
                 featureMap[FeatureName.SWITCH] shouldBe 1
                 featureList should haveFeatureAt(FeatureName.SWITCH, listOf(4))
 
+                featureMap[FeatureName.SWITCH_EXPRESSION] shouldBe 1
+                featureList should haveFeatureAt(FeatureName.SWITCH_EXPRESSION, listOf(14))
+
                 featureMap[FeatureName.FINALLY] shouldBe 1
-                featureList should haveFeatureAt(FeatureName.FINALLY, listOf(16))
+                featureList should haveFeatureAt(FeatureName.FINALLY, listOf(35))
             }
         }
         "should count operators in snippets" {
