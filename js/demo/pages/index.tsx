@@ -150,8 +150,8 @@ const JeedDemo: React.FC = () => {
       response?.response
         ? terminalOutput(response.response)
         : response?.error
-        ? { output: response?.error, level: "error" }
-        : undefined,
+          ? { output: response?.error, level: "error" }
+          : undefined,
     [response],
   )
 
