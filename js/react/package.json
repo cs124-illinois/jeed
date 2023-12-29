@@ -1,6 +1,6 @@
 {
   "name": "@cs124/jeed-react",
-  "version": "2023.12.0",
+  "version": "2023.12.2",
   "license": "MIT",
   "main": "dist/index.js",
   "scripts": {
@@ -18,16 +18,16 @@
   },
   "types": "dist/index.d.ts",
   "dependencies": {
-    "@cs124/jeed-types": "2023.12.0"
+    "@cs124/jeed-types": "2023.12.2"
   },
   "peerDependencies": {
     "react": ">= 16"
   },
   "devDependencies": {
-    "@types/react": "18.2.45",
-    "@typescript-eslint/eslint-plugin": "6.14.0",
-    "@typescript-eslint/parser": "6.14.0",
-    "eslint": "8.55.0",
+    "@types/react": "18.2.46",
+    "@typescript-eslint/eslint-plugin": "6.16.0",
+    "@typescript-eslint/parser": "6.16.0",
+    "eslint": "8.56.0",
     "eslint-config-prettier": "9.1.0",
     "npm-check-updates": "16.14.12",
     "prettier": "3.1.1",

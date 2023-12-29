@@ -1,5 +1,4 @@
 import { Request, Response, ServerStatus } from "@cs124/jeed-types"
-import { googleLogin } from "@cs124/koa-google-login"
 import cors from "@koa/cors"
 import Router from "@koa/router"
 import hkdf from "@panva/hkdf"
@@ -173,7 +172,6 @@ const server = new Koa({ proxy: true })
       whitelist: (ctx) => ctx.request.method === "GET",
     }),
   )
-  .use(audience ? googleLogin({ audience, required: false }) : (_, next) => next())
   .use(decryptToken)
   .use(koaBody({ jsonLimit: "8mb" }))
   .use(router.routes())
