@@ -1355,20 +1355,38 @@ public class Example {
         };
     }
 }""",
-        ).allMutations()
+        ).allMutations().map {
+            try {
+                Source.fromJava(it.contents).complexity()
+            } catch (e: Exception) {
+                println(it.mutations.first().mutation.mutationType)
+                println(it.contents)
+                throw e
+            }
+        }
     }
 
     "should not fail with another new switch syntax" {
         Source.fromJava(
             """
 public class Example {
-    int foo = 3;
-    boolean boo = switch (foo) {
-      case 1, 2, 3 -> true;
-      default -> false;
-    };
+    public void test() {
+        int foo = 3;
+        boolean boo = switch (foo) {
+          case 1, 2, 3 -> true;
+          default -> false;
+        };
+    }
 }""",
-        ).allMutations()
+        ).allMutations().map {
+            try {
+                Source.fromJava(it.contents).complexity()
+            } catch (e: Exception) {
+                println(it.mutations.first().mutation.mutationType)
+                println(it.contents)
+                throw e
+            }
+        }
     }
 
     "it should handle double marks again" {

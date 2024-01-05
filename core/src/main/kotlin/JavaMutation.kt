@@ -4,10 +4,13 @@ package edu.illinois.cs.cs125.jeed.core
 
 import edu.illinois.cs.cs125.jeed.core.antlr.JavaParser
 import edu.illinois.cs.cs125.jeed.core.antlr.JavaParser.BlockContext
+import edu.illinois.cs.cs125.jeed.core.antlr.JavaParser.BlockStatementContext
 import edu.illinois.cs.cs125.jeed.core.antlr.JavaParser.ExpressionContext
 import edu.illinois.cs.cs125.jeed.core.antlr.JavaParser.LiteralContext
 import edu.illinois.cs.cs125.jeed.core.antlr.JavaParser.PrimaryContext
 import edu.illinois.cs.cs125.jeed.core.antlr.JavaParser.StatementContext
+import edu.illinois.cs.cs125.jeed.core.antlr.JavaParser.SwitchBlockStatementGroupContext
+import edu.illinois.cs.cs125.jeed.core.antlr.JavaParser.SwitchExpressionBlockStatementGroupContext
 import edu.illinois.cs.cs125.jeed.core.antlr.JavaParserBaseListener
 import org.antlr.v4.runtime.ParserRuleContext
 import org.antlr.v4.runtime.RuleContext
@@ -124,7 +127,13 @@ class JavaMutationListener(private val parsedSource: Source.ParsedSource) : Java
                 ctx.toLocation().also { location ->
                     val contents = parsedSource.contents(location)
                     mutations.add(NumberLiteral(location, contents, Source.FileType.JAVA, isNegative, isDivision))
-                    if (NumberLiteralTrim.matches(contents, base = 10, isNegative = isNegative, isDivision = isDivision)) {
+                    if (NumberLiteralTrim.matches(
+                            contents,
+                            base = 10,
+                            isNegative = isNegative,
+                            isDivision = isDivision,
+                        )
+                    ) {
                         mutations.add(
                             NumberLiteralTrim(
                                 location,
@@ -561,13 +570,21 @@ class JavaMutationListener(private val parsedSource: Source.ParsedSource) : Java
             mutations.add(RemoveTry(ctx.toLocation(), parsedSource.contents(ctx.toLocation()), Source.FileType.JAVA))
         }
         ctx.statementExpression?.also {
-            mutations.add(
-                RemoveStatement(
-                    ctx.toLocation(),
-                    parsedSource.contents(ctx.toLocation()),
-                    Source.FileType.JAVA,
-                ),
-            )
+            val inSwitch = try {
+                val blockStatement = (ctx.parent as BlockStatementContext).parent
+                blockStatement is SwitchBlockStatementGroupContext || blockStatement is SwitchExpressionBlockStatementGroupContext
+            } catch (e: Exception) {
+                false
+            }
+            if (!inSwitch) {
+                mutations.add(
+                    RemoveStatement(
+                        ctx.toLocation(),
+                        parsedSource.contents(ctx.toLocation()),
+                        Source.FileType.JAVA,
+                    ),
+                )
+            }
         }
         ctx.BREAK()?.symbol?.also {
             mutations.add(

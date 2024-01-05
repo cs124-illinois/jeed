@@ -26,7 +26,7 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:1.9.22")
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
-    implementation("com.puppycrawl.tools:checkstyle:10.12.6")
+    implementation("com.puppycrawl.tools:checkstyle:10.12.7")
     implementation("org.codehaus.plexus:plexus-container-default:2.1.1")
     implementation("com.pinterest.ktlint:ktlint-rule-engine:1.1.0")
     implementation("com.pinterest.ktlint:ktlint-ruleset-standard:1.1.0")
@@ -40,7 +40,7 @@ dependencies {
     implementation("io.github.classgraph:classgraph:4.8.165")
     implementation("net.java.dev.jna:jna:5.14.0")
     implementation("io.github.java-diff-utils:java-diff-utils:4.12")
-    implementation("com.google.googlejavaformat:google-java-format:1.19.1")
+    implementation("com.google.googlejavaformat:google-java-format:1.19.2")
     implementation("net.sf.extjwnl:extjwnl:2.0.5")
     implementation("net.sf.extjwnl:extjwnl-data-wn31:1.2")
     implementation("com.beyondgrader.resource-agent:agent:2023.9.0")
