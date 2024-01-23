@@ -366,6 +366,7 @@ export const Feature = Union(
   Literal("LAMBDA_EXPRESSIONS"),
   Literal("GENERIC_CLASS"),
   Literal("SWITCH"),
+  Literal("SWITCH_EXPRESSION"),
   Literal("STREAM"),
   Literal("ENUM"),
   //
@@ -427,6 +428,7 @@ export const JAVA_ONLY_FEATURES = new Set(
     "FINAL_METHOD",
     "FINAL_CLASS",
     "SWITCH",
+    "SWITCH_EXPRESSION",
     "STREAM",
     "RECORD",
     "BOXING_CLASSES",
@@ -591,6 +593,7 @@ export const ORDERED_FEATURES = Array(Feature).check([
   "WHEN_EXPRESSIONS",
   "WHEN_ENTRY",
   "LAST_WHEN_ENTRY",
+  "SWITCH_EXPRESSION",
 ])
 
 export const LocatedFeature = Record({

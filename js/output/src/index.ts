@@ -138,8 +138,8 @@ ${originalLine ? originalLine + "\n" + new Array(column).join(" ") + "^" : ""}${
         ? completed.outputLines.length > 0
           ? completed.outputLines.map(({ line }) => line)
           : response.completed.execution?.threw
-          ? []
-          : [`(Completed without output)`]
+            ? []
+            : [`(Completed without output)`]
         : []
       if (response.completed.execution?.killReason) {
         level = "error"

@@ -141,6 +141,24 @@ public class Test {
             it.lookup("Test.int chooser(int)", "Test.java").complexity shouldBe 5
         }
     }
+    "should calculate complexity for new switch expressions" {
+        Source(
+            mapOf(
+                "Test.java" to """
+public class Test {
+    String determineStatus(int n) {
+      return switch (n) {
+        case 0, 1 -> "neither prime nor composite";
+        default -> "out of range";
+      };
+    }
+}
+""".trim(),
+            ),
+        ).complexity().also {
+            it.lookup("Test.String determineStatus(int)", "Test.java").complexity shouldBe 2
+        }
+    }
     "should calculate complexity for classes in snippets" {
         Source.fromSnippet(
             """
