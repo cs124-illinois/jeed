@@ -209,7 +209,9 @@ class DistinguishErrorListener : BaseErrorListener() {
     ) {
         check(!msg.trim().startsWith("extraneous input"))
         if (e != null) {
-            throw (e)
+            throw e
+        } else {
+            error(msg)
         }
     }
 }
@@ -264,7 +266,7 @@ fun String.isKotlinSource(): Boolean {
     val errorListener = DistinguishErrorListener()
     @Suppress("TooGenericExceptionCaught")
     return try {
-        CharStreams.fromString(this).let { charStream ->
+        CharStreams.fromString(this + "\n").let { charStream ->
             KotlinLexer(charStream).let { lexer ->
                 lexer.removeErrorListeners()
                 lexer.addErrorListener(errorListener)
@@ -287,7 +289,7 @@ fun String.isKotlinSnippet(): Boolean {
     val errorListener = DistinguishErrorListener()
     @Suppress("TooGenericExceptionCaught")
     return try {
-        CharStreams.fromString(this).let { charStream ->
+        CharStreams.fromString(this + "\n").let { charStream ->
             KotlinLexer(charStream).let { lexer ->
                 lexer.removeErrorListeners()
                 lexer.addErrorListener(errorListener)

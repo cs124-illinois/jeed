@@ -208,7 +208,7 @@ class JavaComplexityListener(val source: Source, entry: Map.Entry<String, String
         }
     }
 
-    override fun enterSwitchExpressionLabel(ctx: JavaParser.SwitchExpressionLabelContext) {
+    override fun enterSwitchLabeledRule(ctx: JavaParser.SwitchLabeledRuleContext) {
         assert(complexityStack.isNotEmpty())
         val currentMethod = currentComplexity as MethodComplexity
         if (ctx.DEFAULT() == null) {

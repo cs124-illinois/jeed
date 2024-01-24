@@ -21,7 +21,7 @@ subprojects {
         jvmArgs(
             "-ea", "--enable-preview", "-Dfile.encoding=UTF-8",
             "-Djava.security.manager=allow",
-            "-Xms512m", "-Xmx1G", "-Xss256k",
+            "-Xms512m", "-Xmx1500m", "-Xss256k",
             "-XX:+UseZGC", "-XX:ZCollectionInterval=8",
             "-XX:-OmitStackTraceInFastThrow",
             "--add-opens", "java.base/java.lang=ALL-UNNAMED",

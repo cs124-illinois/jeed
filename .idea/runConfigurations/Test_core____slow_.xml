@@ -16,7 +16,6 @@
       <option name="taskNames">
         <list>
           <option value=":core:cleanTest" />
-          <option value=":containerrunner:dockerBuild" />
           <option value=":core:test" />
         </list>
       </option>
@@ -25,6 +24,7 @@
     <ExternalSystemDebugServerProcess>false</ExternalSystemDebugServerProcess>
     <ExternalSystemReattachDebugProcess>true</ExternalSystemReattachDebugProcess>
     <DebugAllEnabled>false</DebugAllEnabled>
+    <RunAsTest>false</RunAsTest>
     <method v="2" />
   </configuration>
 </component>

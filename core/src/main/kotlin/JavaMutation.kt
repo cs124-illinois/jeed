@@ -10,7 +10,7 @@ import edu.illinois.cs.cs125.jeed.core.antlr.JavaParser.LiteralContext
 import edu.illinois.cs.cs125.jeed.core.antlr.JavaParser.PrimaryContext
 import edu.illinois.cs.cs125.jeed.core.antlr.JavaParser.StatementContext
 import edu.illinois.cs.cs125.jeed.core.antlr.JavaParser.SwitchBlockStatementGroupContext
-import edu.illinois.cs.cs125.jeed.core.antlr.JavaParser.SwitchExpressionBlockStatementGroupContext
+import edu.illinois.cs.cs125.jeed.core.antlr.JavaParser.SwitchRuleOutcomeContext
 import edu.illinois.cs.cs125.jeed.core.antlr.JavaParserBaseListener
 import org.antlr.v4.runtime.ParserRuleContext
 import org.antlr.v4.runtime.RuleContext
@@ -351,7 +351,7 @@ class JavaMutationListener(private val parsedSource: Source.ParsedSource) : Java
             @Suppress("ComplexCondition")
             if (contents == "." &&
                 ctx.methodCall()?.identifier()?.text == "equals" &&
-                ctx.methodCall()?.expressionList()?.expression()?.size == 1
+                ctx.methodCall()?.arguments()?.expressionList()?.expression()?.size == 1
             ) {
                 mutations.add(
                     ChangeEquals(
@@ -360,7 +360,7 @@ class JavaMutationListener(private val parsedSource: Source.ParsedSource) : Java
                         Source.FileType.JAVA,
                         ".equals",
                         parsedSource.contents(ctx.expression(0).toLocation()),
-                        parsedSource.contents(ctx.methodCall().expressionList().expression(0).toLocation()),
+                        parsedSource.contents(ctx.methodCall().arguments().expressionList().expression(0).toLocation()),
                     ),
                 )
             }
@@ -375,7 +375,7 @@ class JavaMutationListener(private val parsedSource: Source.ParsedSource) : Java
             }
             if (contents == "." &&
                 (ctx.methodCall()?.identifier()?.text == "length" || ctx.methodCall()?.identifier()?.text == "size") &&
-                ctx.methodCall()?.expressionList()?.isEmpty != false
+                ctx.methodCall()?.arguments()?.expressionList()?.isEmpty != false
             ) {
                 mutations.add(
                     ChangeLengthAndSize(
@@ -572,7 +572,7 @@ class JavaMutationListener(private val parsedSource: Source.ParsedSource) : Java
         ctx.statementExpression?.also {
             val inSwitch = try {
                 val blockStatement = (ctx.parent as BlockStatementContext).parent
-                blockStatement is SwitchBlockStatementGroupContext || blockStatement is SwitchExpressionBlockStatementGroupContext
+                blockStatement is SwitchBlockStatementGroupContext || blockStatement is SwitchRuleOutcomeContext
             } catch (e: Exception) {
                 false
             }

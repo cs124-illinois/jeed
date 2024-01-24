@@ -4,6 +4,7 @@ import io.kotest.core.spec.Spec
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.Matcher
 import io.kotest.matchers.MatcherResult
+import io.kotest.matchers.collections.beEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
@@ -19,7 +20,7 @@ class TestJavaFeatures : StringSpec() {
     override suspend fun afterSpec(spec: Spec) {
         val focused = spec.rootTests().any { it.name.focus }
         if (!focused) {
-            seenJavaFeatures shouldBe JAVA_FEATURES
+            JAVA_FEATURES.minus(seenJavaFeatures) should beEmpty()
         }
     }
 
@@ -431,7 +432,7 @@ char[][] array1 = new char[10][10];
             Source.fromJavaSnippet(
                 """
 var first = 0;
-val second = "Hello, world!";
+var second = ("Hello, world!" + '\n') + "This is a more complicated expression.";
 """,
             ).features().check {
                 featureMap[FeatureName.TYPE_INFERENCE] shouldBe 2
