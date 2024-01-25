@@ -75,6 +75,8 @@ tasks.test {
     }
 }
 tasks.generateGrammarSource {
+    dependsOn("copyJavaGrammar")
+    exclude("src/main/antlr/edu/illinois/cs/cs125/jeed/antlr/lib")
     outputDirectory = File(projectDir, "src/main/java/edu/illinois/cs/cs125/jeed/core/antlr")
     arguments.addAll(
         listOf(
@@ -119,6 +121,11 @@ task("createProperties") {
                 )
             }
     }
+}
+tasks.register<Copy>("copyJavaGrammar") {
+    from(project.file("src/main/antlr/edu/illinois/cs/cs125/jeed/antlr/java"))
+    include("*.g4")
+    into(project.file("src/main/antlr/edu/illinois/cs/cs125/jeed/antlr/lib"))
 }
 tasks {
     val sourcesJar by creating(Jar::class) {
