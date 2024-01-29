@@ -11,7 +11,7 @@ snippet
 snippetStatement
     : localVariableDeclaration ';'
     | statement
-    | localTypeDeclaration
+    | typeDeclaration
     | modifier* methodDeclaration
     | modifier* genericMethodDeclaration
     | importDeclaration

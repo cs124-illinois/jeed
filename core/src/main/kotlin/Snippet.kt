@@ -8,10 +8,12 @@ import edu.illinois.cs.cs125.jeed.core.antlr.KotlinParserBaseListener
 import edu.illinois.cs.cs125.jeed.core.antlr.KotlinParserBaseVisitor
 import edu.illinois.cs.cs125.jeed.core.antlr.SnippetLexer
 import edu.illinois.cs.cs125.jeed.core.antlr.SnippetParser
+import edu.illinois.cs.cs125.jeed.core.antlr.SnippetParser.IdentifierContext
 import edu.illinois.cs.cs125.jeed.core.antlr.SnippetParserBaseVisitor
 import org.antlr.v4.runtime.BaseErrorListener
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
+import org.antlr.v4.runtime.ParserRuleContext
 import org.antlr.v4.runtime.RecognitionException
 import org.antlr.v4.runtime.Recognizer
 import org.antlr.v4.runtime.tree.ParseTreeWalker
@@ -627,14 +629,14 @@ private fun sourceFromJavaSnippet(originalSource: String, snippetArguments: Snip
             if (statementDepth > 0) {
                 return
             }
-            val parent = context.parent as SnippetParser.LocalTypeDeclarationContext
+            val parent = context.parent as SnippetParser.TypeDeclarationContext
             classCount++
             markAs(parent.start.line, parent.stop.line, "class")
             val className = context.identifier().text
             classNames.add(className)
-            if (context.parent is SnippetParser.LocalTypeDeclarationContext &&
+            if (context.parent is SnippetParser.TypeDeclarationContext &&
                 (
-                    (context.parent as SnippetParser.LocalTypeDeclarationContext).classOrInterfaceModifier()
+                    (context.parent as SnippetParser.TypeDeclarationContext).classOrInterfaceModifier()
                         ?.find { it.text == "public" } != null
                     ) &&
                 context.identifier().text == "Example"
@@ -665,22 +667,33 @@ private fun sourceFromJavaSnippet(originalSource: String, snippetArguments: Snip
                 )
                 return
             }
-            val parent = context.parent as SnippetParser.LocalTypeDeclarationContext
+            val parent = context.parent as SnippetParser.TypeDeclarationContext
             classCount++
             markAs(parent.start.line, parent.stop.line, "class")
             val className = context.identifier().text
             classNames.add(className)
         }
 
-        override fun visitRecordDeclaration(context: SnippetParser.RecordDeclarationContext) {
+        private fun visitSimpleTopLevelType(context: ParserRuleContext, identifier: IdentifierContext, markType: String) {
             if (statementDepth > 0) {
                 return
             }
-            val parent = context.parent as SnippetParser.LocalTypeDeclarationContext
+            val parent = context.parent as SnippetParser.TypeDeclarationContext
             classCount++
-            markAs(parent.start.line, parent.stop.line, "record")
-            val className = context.identifier().text
-            classNames.add(className)
+            markAs(parent.start.line, parent.stop.line, markType)
+            classNames.add(identifier.text)
+        }
+
+        override fun visitEnumDeclaration(context: SnippetParser.EnumDeclarationContext) {
+            visitSimpleTopLevelType(context, context.identifier(), "class")
+        }
+
+        override fun visitAnnotationTypeDeclaration(context: SnippetParser.AnnotationTypeDeclarationContext) {
+            visitSimpleTopLevelType(context, context.identifier(), "class")
+        }
+
+        override fun visitRecordDeclaration(context: SnippetParser.RecordDeclarationContext) {
+            visitSimpleTopLevelType(context, context.identifier(), "record")
         }
 
         override fun visitMethodDeclaration(context: SnippetParser.MethodDeclarationContext) {

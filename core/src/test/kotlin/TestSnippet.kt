@@ -561,6 +561,59 @@ class Tester implements Test {
             }
         }.compile()
     }
+    "should allow enum classes in snippets" {
+        Source.fromJavaSnippet(
+            """
+            public enum Simple {
+                ONE_THING,
+                ANOTHER_THING
+            }
+            
+            public enum WithData {
+                HYDROGEN(1),
+                HELIUM(2);
+            
+                private final int p;
+                
+                WithData(int setP) {
+                    p = setP;
+                }
+            }
+            """.trimIndent(),
+        ).also {
+            it.snippetProperties.apply {
+                importCount shouldBe 0
+                looseCount shouldBe 0
+                methodCount shouldBe 0
+                classCount shouldBe 2
+            }
+        }
+    }
+    "should allow annotation interfaces in snippets" {
+        Source.fromJavaSnippet(
+            """
+            import java.lang.annotation.*;
+            
+            @interface Test1 {
+                String x();
+            }
+            
+            @Target(ElementType.TYPE_USE)
+            @interface Test2 {
+                int y() default 5;
+            }
+            
+            @Test1(x="z") @Test2 int annotated = 1;
+            """.trimIndent(),
+        ).also {
+            it.snippetProperties.apply {
+                importCount shouldBe 1
+                looseCount shouldBe 1
+                methodCount shouldBe 0
+                classCount shouldBe 2
+            }
+        }.compile()
+    }
     "should allow generic methods in Java snippets" {
         Source.fromJavaSnippet(
             """
