@@ -658,7 +658,18 @@ expression
 
 // Java17
 pattern
+    : typePattern
+    | recordPattern
+    ;
+
+// Java21
+typePattern
     : variableModifier* typeType annotation* identifier
+    ;
+
+// Java21
+recordPattern
+    : typeType LPAREN (pattern (COMMA pattern)*)? RPAREN
     ;
 
 // Java8

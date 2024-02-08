@@ -788,7 +788,7 @@ boolean boo = switch (foo) {
         """.trim(),
         )
     }
-    "!should parse Java 21 patterns".config(enabled = systemCompilerVersion >= 21) {
+    "should parse Java 21 patterns".config(enabled = systemCompilerVersion >= 21) {
         @Suppress("SpellCheckingInspection")
         Source.fromJavaSnippet(
             """
@@ -796,6 +796,22 @@ boolean boo = switch (foo) {
             Object obj = new Point(1, 10);
             if (obj instanceof Point(int a, int b)) {
                 System.out.println("got the point!");
+            }
+            """.trimIndent(),
+        )
+    }
+    "should parse Java 21 nested patterns".config(enabled = systemCompilerVersion >= 21) {
+        @Suppress("SpellCheckingInspection")
+        Source.fromJavaSnippet(
+            """
+            record Point(int x, int y) {}
+            record Rectagle(Point tl, Point br);
+            Object obj = new Rectangle(new Point(1, 10), new Point(5, 20));
+            if (obj instanceof Rectangle(Point a, Point b)) {
+                System.out.println("rectangle based on " + b.y);
+            }
+            if (obj instanceof Rectangle(Point(int t, int l), Point(int b, int r))) {
+                System.out.println("rectangle based on " + c);
             }
             """.trimIndent(),
         )

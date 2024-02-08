@@ -126,6 +126,15 @@ tasks.register<Copy>("copyJavaGrammar") {
     from(project.file("src/main/antlr/edu/illinois/cs/cs125/jeed/antlr/java"))
     include("*.g4")
     into(project.file("src/main/antlr/edu/illinois/cs/cs125/jeed/antlr/lib"))
+    doLast {
+        // ANTLR doesn't notice if library grammars are updated, even if the main grammar's modified date is changed
+        // When the Java grammar was modified (i.e. this task has to run), delete the dependent Snippet outputs
+        project.file("src/main/java/edu/illinois/cs/cs125/jeed/core/antlr").listFiles()?.filter {
+            it.name.startsWith("Snippet")
+        }?.forEach {
+            it.delete()
+        }
+    }
 }
 tasks {
     val sourcesJar by creating(Jar::class) {
