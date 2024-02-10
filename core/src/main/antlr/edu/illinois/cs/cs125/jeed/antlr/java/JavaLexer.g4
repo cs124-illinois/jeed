@@ -101,6 +101,7 @@ VAR: 'var'; // reserved type name
 
 // Switch Expressions
 YIELD: 'yield'; // reserved type name from Java 14
+WHEN : 'when';
 
 // Records
 RECORD: 'record';

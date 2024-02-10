@@ -816,14 +816,74 @@ boolean boo = switch (foo) {
             """.trimIndent(),
         )
     }
-    "!should parse Java 21 switch".config(enabled = systemCompilerVersion >= 21) {
+    "should parse Java 21 multi-literal cases".config(enabled = systemCompilerVersion >= 21) {
+        Source.fromJavaSnippet(
+            """
+            int i = 5;
+            String str = switch (i) {
+                case 0, 1 -> "a small number";
+                case 2, 3, 4, 5 -> "a somewhat bigger number";
+                default -> "some other number";
+            };
+            """.trimIndent(),
+        )
+    }
+    "should parse Java 21 guarded patterns".config(enabled = systemCompilerVersion >= 21) {
         Source.fromJavaSnippet(
             """
             Object obj = 5;
             String str = switch (obj) {
-                Integer i when i > 0 -> "a positive number: " + i;
-                Integer i -> "some other number: " + i;
-                default -> "not a number";
+                case null, default -> "not a number";
+                case Integer i when i > 0 -> "a positive number: " + i;
+                case Integer i -> "some other number: " + i;
+            };
+            """.trimIndent(),
+        )
+    }
+    "should parse Java 21 guarded patterns in switch statements".config(enabled = systemCompilerVersion >= 21) {
+        Source.fromJavaSnippet(
+            """
+            Object obj = 5;
+            switch (obj) {
+                case null, default:
+                    System.out.println("not a number");
+                    break;
+                case Integer i when i > 0:
+                    System.out.println("a positive number: " + i);
+                    break;
+                case Integer i:
+                    System.out.println("some other number: " + i);
+                    break;
+            };
+            """.trimIndent(),
+        )
+    }
+    "should parse Java 21 record patterns in switch expressions".config(enabled = systemCompilerVersion >= 21) {
+        Source.fromJavaSnippet(
+            """
+            record Point(int x, int y) {}
+            String str = switch (getSomeObject()) {
+                case Point(int x, int y) when x == 0 && y == 0 -> "the origin";
+                case Point(int x, int y) -> "(" + x + ", " + y + ")";
+                default -> "something else";
+            };
+            """.trimIndent(),
+        )
+    }
+    "should parse Java 21 record patterns in switch statements".config(enabled = systemCompilerVersion >= 21) {
+        Source.fromJavaSnippet(
+            """
+            record Point(int x, int y) {}
+            switch (getSomeObject()) {
+                case Point(int x, int y) when x == 0 && y == 0:
+                    System.out.println("the origin");
+                    break;
+                case Point(int x, int y):
+                    System.out.println("(" + x + ", " + y + ")");
+                    break;
+                default:
+                    System.out.println("something else");
+                    break;
             };
             """.trimIndent(),
         )

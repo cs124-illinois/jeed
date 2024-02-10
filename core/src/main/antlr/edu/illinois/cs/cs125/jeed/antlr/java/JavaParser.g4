@@ -479,6 +479,7 @@ identifier
     | PERMITS
     | RECORD
     | VAR
+    | WHEN
     ;
 
 typeIdentifier // Identifiers that are not restricted for type declarations
@@ -496,6 +497,7 @@ typeIdentifier // Identifiers that are not restricted for type declarations
     | SEALED
     | PERMITS
     | RECORD
+    | WHEN
     ;
 
 localTypeDeclaration
@@ -558,9 +560,9 @@ switchBlockStatementGroup
 
 switchLabel
     : CASE (
-        constantExpression = expression
-        | enumConstantName = IDENTIFIER
-        | typeType varName = identifier
+        NULL_LITERAL (',' DEFAULT)? // Java21
+        | constantExpressions = expressionList
+        | switchCasePattern         // Java21
     ) ':'
     | DEFAULT ':'
     ;
@@ -708,15 +710,17 @@ switchExpression
 
 // Java17
 switchLabeledRule
-    : CASE (expressionList | NULL_LITERAL | guardedPattern) (ARROW | COLON) switchRuleOutcome
+    : CASE (
+        NULL_LITERAL (',' DEFAULT)? // Java21
+        | expressionList
+        | switchCasePattern         // Java21
+    ) (ARROW | COLON) switchRuleOutcome
     | DEFAULT (ARROW | COLON) switchRuleOutcome
     ;
 
-// Java17
-guardedPattern
-    : '(' guardedPattern ')'
-    | variableModifier* typeType annotation* identifier ('&&' expression)*
-    | guardedPattern '&&' expression
+// Java21
+switchCasePattern
+    : pattern (WHEN expression)?
     ;
 
 // Java17
