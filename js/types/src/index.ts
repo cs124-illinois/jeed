@@ -237,7 +237,11 @@ export const CheckstyleError = Record({
   severity: String,
   location: SourceLocation,
   message: String,
-})
+}).And(
+  Partial({
+    sourceName: String,
+  }),
+)
 export type CheckstyleError = Static<typeof CheckstyleError>
 
 export const CheckstyleResults = Record({
