@@ -17,7 +17,7 @@ plugins {
     id("com.ryandens.javaagent-test") version "0.5.1"
 }
 dependencies {
-    ksp("com.squareup.moshi:moshi-kotlin-codegen:1.15.0")
+    ksp("com.squareup.moshi:moshi-kotlin-codegen:1.15.1")
 
     testJavaagent("com.beyondgrader.resource-agent:agent:2023.9.0")
 
@@ -26,12 +26,12 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:1.9.22")
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
-    implementation("com.puppycrawl.tools:checkstyle:10.12.7")
+    implementation("com.puppycrawl.tools:checkstyle:10.13.0")
     implementation("org.codehaus.plexus:plexus-container-default:2.1.1")
-    implementation("com.pinterest.ktlint:ktlint-rule-engine:1.1.0")
-    implementation("com.pinterest.ktlint:ktlint-ruleset-standard:1.1.0")
+    implementation("com.pinterest.ktlint:ktlint-rule-engine:1.1.1")
+    implementation("com.pinterest.ktlint:ktlint-ruleset-standard:1.1.1")
     implementation("com.github.jknack:handlebars:4.3.1")
-    implementation("com.squareup.moshi:moshi-kotlin:1.15.0")
+    implementation("com.squareup.moshi:moshi-kotlin:1.15.1")
     implementation("org.ow2.asm:asm:9.6")
     implementation("org.ow2.asm:asm-tree:9.6")
     implementation("org.ow2.asm:asm-util:9.6")
@@ -190,4 +190,7 @@ signing {
         gradle.taskGraph.allTasks.any { it is PublishToMavenRepository }
     }
     sign(publishing.publications["core"])
+}
+tasks.withType<Javadoc> {
+    exclude("edu/illinois/cs/cs125/jeed/core/antlr/**")
 }

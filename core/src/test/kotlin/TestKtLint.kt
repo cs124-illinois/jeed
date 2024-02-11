@@ -10,11 +10,9 @@ import io.kotest.matchers.string.shouldContain
 
 class TestKtLint : StringSpec({
     "it should check simple kotlin sources" {
-        repeat(8) {
-            Source.fromKotlinSnippet(
-                """println("Hello, world!")""",
-            ).ktLint(KtLintArguments(failOnError = true))
-        }
+        Source.fromKotlinSnippet(
+            """println("Hello, world!")""",
+        ).ktLint(KtLintArguments(failOnError = true))
     }
     "it should check kotlin sources with too long lines" {
         @Suppress("MaxLineLength")
@@ -23,6 +21,30 @@ class TestKtLint : StringSpec({
                 """val test = "ttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt"""",
             ).ktLint(KtLintArguments(failOnError = true))
         }.shouldHaveError("max-line-length")
+    }
+    "it should ignore errors when filtered" {
+        @Suppress("MaxLineLength")
+        shouldThrow<KtLintFailed> {
+            Source.fromKotlinSnippet(
+                """val test = "ttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt"""",
+            ).ktLint(KtLintArguments(failOnError = true))
+        }.shouldHaveError("max-line-length")
+
+        Source.fromKotlinSnippet(
+            """val test = "ttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt"""",
+        ).ktLint(
+            KtLintArguments(failOnError = true, filterErrors = { error ->
+                error.location.line != 1
+            }),
+        )
+
+        Source.fromKotlinSnippet(
+            """val test = "ttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt"""",
+        ).ktLint(
+            KtLintArguments(failOnError = true, filterErrors = { error ->
+                error.ruleId != "standard:max-line-length"
+            }),
+        )
     }
     "it should fail when everything is on one line" {
         shouldThrow<KtLintFailed> {

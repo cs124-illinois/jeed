@@ -16,17 +16,17 @@ plugins {
     id("com.ryandens.javaagent-test") version "0.5.1"
 }
 dependencies {
-    ksp("com.squareup.moshi:moshi-kotlin-codegen:1.15.0")
+    ksp("com.squareup.moshi:moshi-kotlin-codegen:1.15.1")
 
     testJavaagent("com.beyondgrader.resource-agent:agent:2023.9.0")
 
     implementation(project(":core"))
 
-    implementation("io.ktor:ktor-server-netty:2.3.7")
-    implementation("io.ktor:ktor-server-cors:2.3.7")
-    implementation("io.ktor:ktor-server-content-negotiation:2.3.7")
+    implementation("io.ktor:ktor-server-netty:2.3.8")
+    implementation("io.ktor:ktor-server-cors:2.3.8")
+    implementation("io.ktor:ktor-server-content-negotiation:2.3.8")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
-    implementation("com.squareup.moshi:moshi-kotlin:1.15.0")
+    implementation("com.squareup.moshi:moshi-kotlin:1.15.1")
     implementation("org.cs124:ktor-moshi:2023.11.0")
     implementation("ch.qos.logback:logback-classic:1.4.14")
     implementation("com.uchuhimo:konf-core:1.1.2")
@@ -43,7 +43,7 @@ dependencies {
 
     testImplementation("io.kotest:kotest-runner-junit5:5.8.0")
     testImplementation("io.kotest:kotest-assertions-ktor:4.4.3")
-    testImplementation("io.ktor:ktor-server-test-host:2.3.7")
+    testImplementation("io.ktor:ktor-server-test-host:2.3.8")
 }
 
 application {

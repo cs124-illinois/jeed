@@ -11,7 +11,6 @@ import com.pinterest.ktlint.rule.engine.core.api.editorconfig.MAX_LINE_LENGTH_PR
 import com.pinterest.ktlint.rule.engine.core.api.editorconfig.RuleExecution
 import com.pinterest.ktlint.ruleset.standard.rules.ChainWrappingRule
 import com.pinterest.ktlint.ruleset.standard.rules.CommentSpacingRule
-import com.pinterest.ktlint.ruleset.standard.rules.DiscouragedCommentLocationRule
 import com.pinterest.ktlint.ruleset.standard.rules.IfElseBracingRule
 import com.pinterest.ktlint.ruleset.standard.rules.IfElseWrappingRule
 import com.pinterest.ktlint.ruleset.standard.rules.IndentationRule
@@ -39,6 +38,7 @@ import com.pinterest.ktlint.ruleset.standard.rules.StringTemplateRule
 import com.squareup.moshi.JsonClass
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
+import java.util.Objects
 
 @JsonClass(generateAdapter = true)
 data class KtLintArguments(
@@ -47,6 +47,8 @@ data class KtLintArguments(
     val indent: Int = SnippetArguments.DEFAULT_SNIPPET_INDENT,
     val maxLineLength: Int = DEFAULT_MAX_LINE_LENGTH,
     val script: Boolean = false,
+    @Transient
+    val filterErrors: (error: KtLintError) -> Boolean = { _ -> true },
 ) {
     companion object {
         const val DEFAULT_MAX_LINE_LENGTH = 100
@@ -60,7 +62,17 @@ class KtLintError(
     val ruleId: String,
     @Suppress("MemberVisibilityCanBePrivate") val detail: String,
     location: SourceLocation,
-) : AlwaysLocatedSourceError(location, "$ruleId: $detail")
+) : AlwaysLocatedSourceError(location, "$ruleId: $detail") {
+    override fun equals(other: Any?) = when {
+        other === this -> true
+        other?.javaClass != KtLintError::class.java -> false
+        else -> {
+            other as KtLintError
+            other.ruleId == ruleId && other.detail == detail && other.location == location
+        }
+    }
+    override fun hashCode() = Objects.hash(ruleId, detail, location)
+}
 
 class KtLintFailed(errors: List<KtLintError>) : AlwaysLocatedJeedError(errors) {
     override fun toString(): String {
@@ -77,8 +89,6 @@ val jeedRuleProviders = setOf(
     RuleProvider { IndentationRule() },
     RuleProvider { MaxLineLengthRule() },
     RuleProvider { ModifierOrderRule() },
-    // RuleProvider { NoBlankLineBeforeRbraceRule() },
-    // RuleProvider { NoConsecutiveBlankLinesRule() },
     RuleProvider { NoEmptyClassBodyRule() },
     RuleProvider { NoLineBreakAfterElseRule() },
     RuleProvider { NoLineBreakBeforeAssignmentRule() },
@@ -99,7 +109,6 @@ val jeedRuleProviders = setOf(
     RuleProvider { StatementWrappingRule() },
     RuleProvider { IfElseBracingRule() },
     RuleProvider { IfElseWrappingRule() },
-    RuleProvider { DiscouragedCommentLocationRule() },
     RuleProvider { MultiLineIfElseRule() },
 )
 
@@ -186,7 +195,7 @@ suspend fun Source.ktLint(ktLintArguments: KtLintArguments = KtLintArguments()):
     require(type == Source.FileType.KOTLIN) { "Can't run ktlint on non-Kotlin sources" }
 
     val names = ktLintArguments.sources ?: sources.keys
-    val errors = mutableListOf<KtLintError>()
+    val allErrors = mutableListOf<KtLintError>()
 
     val ktlintRuleEngine =
         if (ktLintArguments.maxLineLength == KtLintArguments.DEFAULT_MAX_LINE_LENGTH && ktLintArguments.indent == SnippetArguments.DEFAULT_SNIPPET_INDENT) {
@@ -243,13 +252,14 @@ suspend fun Source.ktLint(ktLintArguments: KtLintArguments = KtLintArguments()):
                         } else {
                             e.detail
                         }
-                        errors.add(
-                            KtLintError(
-                                e.ruleId.value,
-                                detail,
-                                mappedLocation,
-                            ),
+                        val newError = KtLintError(
+                            e.ruleId.value,
+                            detail,
+                            mappedLocation,
                         )
+                        if (ktLintArguments.filterErrors(newError)) {
+                            allErrors.add(newError)
+                        }
                     } catch (_: Exception) {
                     }
                 }
@@ -260,6 +270,7 @@ suspend fun Source.ktLint(ktLintArguments: KtLintArguments = KtLintArguments()):
         throw e
     }
 
+    val errors = allErrors.distinct()
     if (errors.isNotEmpty() && ktLintArguments.failOnError) {
         throw KtLintFailed(errors)
     }

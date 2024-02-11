@@ -1,5 +1,6 @@
 package edu.illinois.cs.cs125.jeed.core
 
+import com.google.common.base.Objects
 import com.puppycrawl.tools.checkstyle.Checker
 import com.puppycrawl.tools.checkstyle.ConfigurationLoader
 import com.puppycrawl.tools.checkstyle.PackageObjectFactory
@@ -10,6 +11,7 @@ import com.puppycrawl.tools.checkstyle.api.SeverityLevel
 import com.squareup.moshi.JsonClass
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
+import org.jetbrains.kotlin.util.removeSuffixIfPresent
 import org.w3c.dom.Node
 import org.xml.sax.InputSource
 import java.io.ByteArrayInputStream
@@ -25,6 +27,8 @@ data class CheckstyleArguments(
     val failOnError: Boolean = false,
     val skipUnmapped: Boolean = true,
     val suppressions: Set<String> = setOf(),
+    @Transient
+    val filterErrors: (error: CheckstyleError) -> Boolean = { _ -> true },
 )
 
 @JsonClass(generateAdapter = true)
@@ -33,7 +37,19 @@ class CheckstyleError(
     val key: String?,
     location: SourceLocation,
     message: String,
-) : AlwaysLocatedSourceError(location, message)
+    val sourceName: String = "",
+) : AlwaysLocatedSourceError(location, message) {
+    override fun equals(other: Any?) = when {
+        this === other -> true
+        other?.javaClass != CheckstyleError::class.java -> false
+        else -> {
+            other as CheckstyleError
+            other.severity == severity && other.key == key && other.location == location && other.message == message && other.sourceName == sourceName
+        }
+    }
+
+    override fun hashCode() = Objects.hashCode(severity, key, location, message)
+}
 
 class CheckstyleFailed(errors: List<CheckstyleError>) : AlwaysLocatedJeedError(errors) {
     override fun toString(): String {
@@ -134,6 +150,7 @@ suspend fun Checker.processString(name: String, source: String): List<Checkstyle
                         it.key!!,
                         SourceLocation(name, it.lineNo, it.columnNo),
                         it.violation,
+                        it.sourceName,
                     ),
                 )
             }
@@ -166,12 +183,13 @@ suspend fun Source.checkstyle(
     require(checker != null) { "Must pass a configured checker" }
     require(type == Source.FileType.JAVA) { "Can't run checkstyle on non-Java sources" }
 
+    val suppressAll = checkstyleArguments.suppressions.contains("*")
     val names = checkstyleArguments.sources ?: sources.keys
     val checkstyleResults = checker.check(
         sources.filter {
             names.contains(it.key)
         },
-    ).values.flatten().mapNotNull { error ->
+    ).values.asSequence().flatten().mapNotNull { error ->
         val mappedLocation = try {
             mapLocation(error.location)
         } catch (e: SourceMappingException) {
@@ -180,7 +198,9 @@ suspend fun Source.checkstyle(
             }
             null
         }
-        if (mappedLocation != null && error.key !in checkstyleArguments.suppressions) {
+        val checkstyleKey = error.sourceName.split(".").last().lowercase().removeSuffixIfPresent("check")
+        val suppressed = checkstyleArguments.suppressions.any { suppression -> checkstyleKey.equals(suppression, true) }
+        if (mappedLocation != null && error.key !in checkstyleArguments.suppressions && !suppressed && !suppressAll) {
             val message = if (error.key?.startsWith("indentation") == true) {
                 @Suppress("TooGenericExceptionCaught")
                 try {
@@ -206,7 +226,9 @@ suspend fun Source.checkstyle(
         } else {
             null
         }
-    }.sortedWith(compareBy({ it.location.source }, { it.location.line }))
+    }.filter { error ->
+        checkstyleArguments.filterErrors(error)
+    }.sortedWith(compareBy({ it.location.source }, { it.location.line })).distinct().toList()
 
     if (checkstyleArguments.failOnError && checkstyleResults.any { it.severity == "error" }) {
         throw CheckstyleFailed(checkstyleResults)
