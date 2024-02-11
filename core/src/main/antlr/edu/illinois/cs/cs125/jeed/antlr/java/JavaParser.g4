@@ -244,7 +244,7 @@ variableDeclarators
     ;
 
 variableDeclarator
-    : variableDeclaratorId ('=' variableInitializer)?
+    : (variableDeclaratorId | UNDERSCORE) ('=' variableInitializer)?
     ;
 
 variableDeclaratorId
@@ -291,11 +291,11 @@ formalParameterList
     ;
 
 formalParameter
-    : variableModifier* typeType variableDeclaratorId
+    : variableModifier* typeType (variableDeclaratorId | UNDERSCORE)
     ;
 
 lastFormalParameter
-    : variableModifier* typeType annotation* '...' variableDeclaratorId
+    : variableModifier* typeType annotation* '...' (variableDeclaratorId | UNDERSCORE)
     ;
 
 // local variable type inference
@@ -304,7 +304,7 @@ lambdaLVTIList
     ;
 
 lambdaLVTIParameter
-    : variableModifier* VAR identifier
+    : variableModifier* VAR (identifier | UNDERSCORE)
     ;
 
 qualifiedName
@@ -459,7 +459,10 @@ blockStatement
     ;
 
 localVariableDeclaration
-    : variableModifier* (VAR identifier '=' expression | typeType variableDeclarators)
+    : variableModifier* (
+        VAR (identifier | UNDERSCORE) '=' expression
+        | typeType variableDeclarators
+    )
     ;
 
 identifier
@@ -527,7 +530,7 @@ statement
     ;
 
 catchClause
-    : CATCH '(' variableModifier* catchType identifier ')' block
+    : CATCH '(' variableModifier* catchType (identifier | UNDERSCORE) ')' block
     ;
 
 catchType
@@ -547,7 +550,11 @@ resources
     ;
 
 resource
-    : variableModifier* (classOrInterfaceType variableDeclaratorId | VAR identifier) '=' expression
+    : variableModifier* (
+        classOrInterfaceType variableDeclaratorId
+        | VAR identifier
+        | (classOrInterfaceType | VAR) UNDERSCORE // Java21 preview
+    ) '=' expression
     | qualifiedName
     ;
 
@@ -561,8 +568,8 @@ switchBlockStatementGroup
 switchLabel
     : CASE (
         NULL_LITERAL (',' DEFAULT)? // Java21
-        | constantExpressions = expressionList
         | switchCasePattern         // Java21
+        | constantExpressions = expressionList
     ) ':'
     | DEFAULT ':'
     ;
@@ -578,7 +585,7 @@ forInit
     ;
 
 enhancedForControl
-    : variableModifier* (typeType | VAR) variableDeclaratorId ':' expression
+    : variableModifier* (typeType | VAR) (variableDeclaratorId | UNDERSCORE) ':' expression
     ;
 
 // EXPRESSIONS
@@ -666,12 +673,21 @@ pattern
 
 // Java21
 typePattern
-    : variableModifier* typeType annotation* identifier
+    : variableModifier* typeType (
+        annotation* identifier
+        | UNDERSCORE // Java21 preview
+    )
     ;
 
 // Java21
 recordPattern
-    : typeType LPAREN (pattern (COMMA pattern)*)? RPAREN
+    : typeType '(' (patternOrUnnamedPattern (',' patternOrUnnamedPattern)*)? ')'
+    ;
+
+// Java21 preview
+patternOrUnnamedPattern
+    : pattern
+    | UNDERSCORE
     ;
 
 // Java8
@@ -681,10 +697,16 @@ lambdaExpression
 
 // Java8
 lambdaParameters
-    : identifier
+    : lambdaParameter
     | '(' formalParameterList? ')'
-    | '(' identifier (',' identifier)* ')'
+    | '(' lambdaParameter (',' lambdaParameter)* ')'
     | '(' lambdaLVTIList? ')'
+    ;
+
+// Java21 preview
+lambdaParameter
+    : identifier
+    | UNDERSCORE
     ;
 
 // Java8
@@ -712,15 +734,20 @@ switchExpression
 switchLabeledRule
     : CASE (
         NULL_LITERAL (',' DEFAULT)? // Java21
-        | expressionList
         | switchCasePattern         // Java21
+        | expressionList
     ) (ARROW | COLON) switchRuleOutcome
     | DEFAULT (ARROW | COLON) switchRuleOutcome
     ;
 
 // Java21
 switchCasePattern
-    : pattern (WHEN expression)?
+    : patternList (WHEN expression)?
+    ;
+
+// Java21 preview
+patternList
+    : pattern (',' pattern)*
     ;
 
 // Java17

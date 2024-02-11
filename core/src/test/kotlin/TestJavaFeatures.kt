@@ -6,6 +6,7 @@ import io.kotest.matchers.Matcher
 import io.kotest.matchers.MatcherResult
 import io.kotest.matchers.collections.beEmpty
 import io.kotest.matchers.collections.shouldContainExactly
+import io.kotest.matchers.collections.shouldNotContain
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
@@ -1167,6 +1168,26 @@ t == 1;
 
                 featureMap[FeatureName.REFERENCE_EQUALITY] shouldBe 4
                 featureList should haveFeatureAt(FeatureName.REFERENCE_EQUALITY, (3..6).toList())
+            }
+        }
+        "should not choke on unnamed variables" {
+            Source.fromJavaSnippet(
+                """
+                var _ = 5;
+                int a = 10, _ = 12;
+                try (var _ = somethingDisposable()) {}
+                for (int i = 0, _ = unused(); ;) {}
+                for (var _ : things) {}
+                try {
+                    boom();
+                } catch (Exception _) {}
+                Consumer<String> c = _ -> System.out.println("unused");
+                BiConsumer<String, Integer> b1 = (_, _) -> unused();
+                BiConsumer<String, Integer> b2 = (String _, Integer i) -> count(i);
+                BiConsumer<String, Integer> b3 = (var _, var i) -> count(i);
+                """.trimIndent(),
+            ).features().check("") {
+                identifierList shouldNotContain "_"
             }
         }
         "should separate statements and blocks" {

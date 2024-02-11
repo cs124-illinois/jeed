@@ -448,9 +448,11 @@ class JavaFeatureListener(val source: Source, entry: Map.Entry<String, String>) 
                 numBrackets > 2 -> count(FeatureName.MULTIDIMENSIONAL_ARRAYS, ctx.toLocation())
                 numBrackets > 0 -> count(FeatureName.ARRAYS, ctx.toLocation())
             }
-            for (declarator in ctx.variableDeclarators().variableDeclarator()) {
-                currentFeatures.features.identifierList.add(declarator.variableDeclaratorId().identifier().text)
-            }
+            currentFeatures.features.identifierList.addAll(
+                ctx.variableDeclarators().variableDeclarator().mapNotNull {
+                    it.variableDeclaratorId()?.identifier()?.text
+                },
+            )
         } else if (ctx.identifier() != null) {
             // Inferred type, single declaration, array literals not supported
 

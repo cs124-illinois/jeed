@@ -84,6 +84,8 @@ VOID         : 'void';
 VOLATILE     : 'volatile';
 WHILE        : 'while';
 
+UNDERSCORE   : '_'; // reserved as of Java 9
+
 // Module related keywords
 MODULE     : 'module';
 OPEN       : 'open';

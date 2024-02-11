@@ -1389,6 +1389,31 @@ public class Example {
         }
     }
 
+    "should not fail on unused variables" {
+        Source.fromJava(
+            """
+            public class Example {
+                public void test() {
+                    var _ = 5;
+                    int a = 10, _ = 12;
+                    try (var _ = somethingDisposable()) {}
+                    for (int i = 0, _ = unused(); ;) {}
+                    for (var _ : things) {}
+                    try {
+                        boom();
+                    } catch (Exception _) {}
+                    Consumer<String> c = _ -> System.out.println("unused");
+                    BiConsumer<String, Integer> b1 = (_, _) -> unused();
+                    BiConsumer<String, Integer> b2 = (String _, Integer i) -> count(i);
+                    BiConsumer<String, Integer> b3 = (var _, var i) -> count(i);
+                }
+            }
+            """.trimIndent(),
+        ).allMutations().map {
+            Source.fromJava(it.contents).complexity()
+        }
+    }
+
     "it should handle double marks again" {
         Source.fromJava(
             """

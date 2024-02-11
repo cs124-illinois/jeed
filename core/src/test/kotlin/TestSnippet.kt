@@ -888,6 +888,46 @@ boolean boo = switch (foo) {
             """.trimIndent(),
         )
     }
+    "should parse Java 21 unnamed patterns".config(enabled = systemCompilerVersion >= 21) {
+        Source.fromJavaSnippet(
+            """
+            if (thing instanceof Box(_, Packaging(Cube c, _))) {
+                doSomething(c);
+            }
+            """.trimIndent(),
+        )
+    }
+    "should allow Java 21 preview guard for multiple patterns".config(enabled = systemCompilerVersion >= 21) {
+        Source.fromJavaSnippet(
+            """
+            switch (thing) {
+                case Box(Sphere _), Box(Cube _) when thing.color == "red":
+                    System.out.println("red thing");
+                    break;
+                default:
+                    break;
+            }
+            """.trimIndent(),
+        )
+    }
+    "should support Java 21 preview unnamed variables".config(enabled = systemCompilerVersion >= 21) {
+        Source.fromJavaSnippet(
+            """
+            var _ = 5;
+            int a = 10, _ = 12;
+            try (var _ = somethingDisposable()) {}
+            for (int i = 0, _ = unused(); ;) {}
+            for (var _ : things) {}
+            try {
+                boom();
+            } catch (Exception _) {}
+            Consumer<String> c = _ -> System.out.println("unused");
+            BiConsumer<String, Integer> b1 = (_, _) -> unused();
+            BiConsumer<String, Integer> b2 = (String _, Integer i) -> count(i);
+            BiConsumer<String, Integer> b3 = (var _, var i) -> count(i);
+            """.trimIndent(),
+        )
+    }
     "should use Example.main when no loose code is provided" {
         Source.fromJavaSnippet(
             """
