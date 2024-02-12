@@ -50,7 +50,6 @@ val VERSION: String = Properties().also {
 }.getProperty("version")
 
 val currentStatus = Status()
-val runtime: Runtime = Runtime.getRuntime()
 
 @Suppress("ComplexMethod", "LongMethod")
 fun Application.jeed() {
