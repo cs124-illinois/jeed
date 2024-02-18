@@ -4,6 +4,7 @@
  Copyright (c) 2017 Ivan Kochurkin (upgrade to Java 8)
  Copyright (c) 2021 Michał Lorek (upgrade to Java 11)
  Copyright (c) 2022 Michał Lorek (upgrade to Java 17)
+ Copyright (c) 2024 Code Awakening LLC (upgrade to Java 21)
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -30,6 +31,10 @@
 */
 
 lexer grammar JavaLexer;
+
+//
+// DEFAULT MODE
+//
 
 // Keywords
 
@@ -137,12 +142,17 @@ TEXT_BLOCK: '"""' [ \t]* [\r\n] (. | EscapeSequence)*? '"""';
 
 NULL_LITERAL: 'null';
 
+// String templates
+
+STRING_TEMPLATE_START : '."' -> type(DOT), pushMode(StringTemplate);
+BLOCK_TEMPLATE_START  : '."""' [ \t]* [\r\n] -> type(DOT), pushMode(BlockTemplate);
+
 // Separators
 
 LPAREN : '(';
 RPAREN : ')';
-LBRACE : '{';
-RBRACE : '}';
+LBRACE : '{' -> pushMode(DEFAULT_MODE);
+RBRACE : '}' { if (!_modeStack.isEmpty()) { popMode(); } }; // for nicer errors (can be "-> popMode" in other targets)
 LBRACK : '[';
 RBRACK : ']';
 SEMI   : ';';
@@ -230,3 +240,22 @@ fragment Letter:
     | ~[\u0000-\u007F\uD800-\uDBFF]   // covers all characters above 0x7F which are not a surrogate
     | [\uD800-\uDBFF] [\uDC00-\uDFFF] // covers UTF-16 surrogate pairs encodings for U+10000 to U+10FFFF
 ;
+
+//
+// STRING TEMPLATES
+//
+
+mode StringTemplate;
+
+TEMPLATE_CONSTANT_PART : (~["\\\r\n] | EscapeSequence)+;
+TEMPLATE_ARG_START     : '\\{' -> pushMode(DEFAULT_MODE);
+TEMPLATE_CLOSE         : '"' -> popMode;
+
+mode BlockTemplate;
+
+fragment BlockTemplateSpanNoDoubleQuotes: (~["\\] | EscapeSequence)+;
+
+BLOCK_TEMPLATE_CONSTANT_PART :
+    BlockTemplateSpanNoDoubleQuotes ('"' '"'? BlockTemplateSpanNoDoubleQuotes)* -> type(TEMPLATE_CONSTANT_PART);
+BLOCK_TEMPLATE_ARG_START     : '\\{' -> type(TEMPLATE_ARG_START), pushMode(DEFAULT_MODE);
+BLOCK_TEMPLATE_CLOSE         : '"""' -> type(TEMPLATE_CLOSE), popMode;

@@ -2,6 +2,7 @@
 /.gradle
 out/
 build/
+gen/
 test-output/
 /email.txt
 *.class

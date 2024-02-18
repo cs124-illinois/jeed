@@ -4,6 +4,7 @@
  Copyright (c) 2017 Ivan Kochurkin (upgrade to Java 8)
  Copyright (c) 2021 Michał Lorek (upgrade to Java 11)
  Copyright (c) 2022 Michał Lorek (upgrade to Java 17)
+ Copyright (c) 2024 Code Awakening LLC (upgrade to Java 21)
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -614,6 +615,7 @@ expression
         | NEW nonWildcardTypeArguments? innerCreator
         | SUPER superSuffix
         | explicitGenericInvocation
+        | stringTemplate // Java21 preview
     )
     // Method calls and method references are part of primary, and hence level 16 precedence
     | methodCall
@@ -836,4 +838,19 @@ explicitGenericInvocationSuffix
 
 arguments
     : '(' expressionList? ')'
+    ;
+
+// Java21 preview
+stringTemplate
+    : stringTemplatePart* TEMPLATE_CLOSE
+    ;
+
+// Java21 preview
+stringTemplatePart
+    : TEMPLATE_CONSTANT_PART | stringTemplateArgument
+    ;
+
+// Java21 preview
+stringTemplateArgument
+    : '\\{' expression '}'
     ;

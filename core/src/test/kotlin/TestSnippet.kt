@@ -928,6 +928,69 @@ boolean boo = switch (foo) {
             """.trimIndent(),
         )
     }
+    "should support Java 21 preview templates".config(enabled = systemCompilerVersion >= 21) {
+        Source.fromJavaSnippet(
+            """
+            String degree = "very";
+            String opinion = "weird";
+            System.out.println(STR."this syntax is \{degree + " " + opinion}");
+            """.trimIndent(),
+        )
+    }
+    "should support nested templates".config(enabled = systemCompilerVersion >= 21) {
+        Source.fromJavaSnippet(
+            """
+            int x = 10;
+            int y = 20;
+            int z = 30;
+            System.out.println(STR."x = \{x}\{", " + STR."y = \{y}, z = \{z}"}");
+            """.trimIndent(),
+        )
+    }
+    "should support comments in templates".config(enabled = systemCompilerVersion >= 21) {
+        Source.fromJavaSnippet(
+            """
+            int x = 5;
+            System.out.println(STR."x = \{
+                // line comment
+                x
+                /*
+                 * block comment
+                 */
+            }.");
+            """.trimIndent(),
+        )
+    }
+    "should support Java 21 preview block templates".config(enabled = systemCompilerVersion >= 21) {
+        val threeQuotes = "\"\"\""
+        Source.fromJavaSnippet(
+            """
+            String degree = "very";
+            String opinion = "weird";
+            System.out.println(STR.$threeQuotes
+                In my opinion,
+                this syntax is
+                \{
+                    degree
+                        + " "
+                        + opinion
+                }.
+                $threeQuotes);
+            """.trimIndent(),
+        )
+    }
+    "should support quotes in block templates".config(enabled = systemCompilerVersion >= 21) {
+        val threeQuotes = "\"\"\""
+        Source.fromJavaSnippet(
+            """
+            System.out.println(STR.$threeQuotes
+                These \$threeQuotes shouldn't terminate the block,
+                nor should "\"", ", "", or ""\".
+                Now here comes the end.
+                $threeQuotes);
+            """.trimIndent(),
+        )
+    }
     "should use Example.main when no loose code is provided" {
         Source.fromJavaSnippet(
             """
