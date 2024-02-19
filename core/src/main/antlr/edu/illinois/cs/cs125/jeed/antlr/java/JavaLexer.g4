@@ -144,8 +144,8 @@ NULL_LITERAL: 'null';
 
 // String templates
 
-STRING_TEMPLATE_START : '."' -> type(DOT), pushMode(StringTemplate);
-BLOCK_TEMPLATE_START  : '."""' [ \t]* [\r\n] -> type(DOT), pushMode(BlockTemplate);
+TEMPLATE_OPEN       : '."' -> pushMode(StringTemplate);
+BLOCK_TEMPLATE_OPEN : '."""' [ \t]* [\r\n] -> type(TEMPLATE_OPEN), pushMode(BlockTemplate);
 
 // Separators
 

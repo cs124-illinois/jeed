@@ -608,13 +608,17 @@ expression
     // Level 16, Primary, array and member access
     : primary
     | expression '[' expression ']'
-    | expression bop = '.' (
-        identifier
-        | methodCall
-        | THIS
-        | NEW nonWildcardTypeArguments? innerCreator
-        | SUPER superSuffix
-        | explicitGenericInvocation
+    | expression (
+        bop = '.' (
+            identifier
+            | methodCall
+            | THIS
+            | NEW nonWildcardTypeArguments? innerCreator
+            | SUPER superSuffix
+            | explicitGenericInvocation
+        )
+        // String templates are only evaluated when dotting the template processor,
+        // so this must be the same precedence as other dotted access
         | stringTemplate // Java21 preview
     )
     // Method calls and method references are part of primary, and hence level 16 precedence
@@ -842,7 +846,7 @@ arguments
 
 // Java21 preview
 stringTemplate
-    : stringTemplatePart* TEMPLATE_CLOSE
+    : TEMPLATE_OPEN stringTemplatePart* TEMPLATE_CLOSE
     ;
 
 // Java21 preview
