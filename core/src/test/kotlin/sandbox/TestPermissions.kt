@@ -391,23 +391,22 @@ Object compiledSource = compile.invoke(null, snippet, compileArgs);
         """.trim(),
         ).compile().checkPermissions()
     }
-    "should not allow reflection to disable the sandbox" {
+    "should not allow reflection to control the sandbox" {
         Source.fromSnippet(
             """
 import java.lang.reflect.*;
-import java.util.Map;
 
-Class<?> sandboxClass = Class.forName("edu.illinois.cs.cs125.jeed.core.Sandbox");
-Field field = sandboxClass.getDeclaredField("confinedTasks");
+Class<?> groupClass = Class.forName("edu.illinois.cs.cs125.jeed.core.Sandbox${'$'}ConfinedThreadGroup");
+Field field = groupClass.getDeclaredField("task");
 field.setAccessible(true);
-Map confinedTasks = (Map) field.get(null);
+Object confinedTask = field.get(Thread.currentThread().getThreadGroup());
         """.trim(),
         ).compile().checkPermissions()
     }
     "should not prevent trusted code from using reflection" {
         val executionResult = Sandbox.execute {
-            val sandboxClass = Class.forName("edu.illinois.cs.cs125.jeed.core.Sandbox")
-            val field = sandboxClass.getDeclaredField("confinedTasks")
+            val groupClass = Class.forName("edu.illinois.cs.cs125.jeed.core.Sandbox\$ConfinedThreadGroup")
+            val field = groupClass.getDeclaredField("task")
             field.isAccessible = true
         }
 

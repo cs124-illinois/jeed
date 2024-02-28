@@ -480,7 +480,7 @@ object Sandbox {
         val thread: Thread,
         executionArguments: ExecutionArguments,
     ) {
-        val threadGroup = thread.threadGroup ?: error("thread should be in thread group")
+        val threadGroup = thread.threadGroup as? ConfinedThreadGroup ?: error("thread should be confined")
         val permissionBlacklist = executionArguments.permissionBlacklist
         val permissions: Permissions = Permissions().apply {
             executionArguments.permissions.forEach { add(it) }
@@ -496,6 +496,9 @@ object Sandbox {
 
         @Volatile
         var shuttingDown: Boolean = false
+
+        @Volatile
+        var released: Boolean = false
 
         @Volatile
         var killReason: String? = null
@@ -666,11 +669,12 @@ object Sandbox {
         }
     }
 
-    private val confinedTasks: MutableMap<ThreadGroup, ConfinedTask<*>> = mutableMapOf()
-    private val confinedClassLoaders: MutableSet<SandboxedClassLoader> = mutableSetOf()
+    private val confinedClassLoaders: MutableSet<SandboxedClassLoader> = Collections.synchronizedSet(mutableSetOf())
 
     private fun confinedTaskByThreadGroup(): ConfinedTask<*>? {
-        return confinedTasks[Thread.currentThread().threadGroup]
+        // CAUTION: Requires ConfinedThreadGroup to already be loaded to avoid StackOverflowError
+        // It would be more solid to use a ThreadLocal to detect reentrancy, but this method is called a lot
+        return (Thread.currentThread().threadGroup as? ConfinedThreadGroup)?.task
     }
 
     @Synchronized
@@ -679,23 +683,14 @@ object Sandbox {
         sandboxedClassLoader: SandboxedClassLoader,
         executionArguments: ExecutionArguments,
     ): ConfinedTask<T> {
-        val threadGroup = object : ThreadGroup("Sandbox") {
-            @Suppress("EmptyFunctionBlock")
-            override fun uncaughtException(t: Thread?, e: Throwable?) {
-            }
-        }
-        require(!confinedClassLoaders.contains(sandboxedClassLoader)) {
+        require(confinedClassLoaders.add(sandboxedClassLoader)) {
             "Duplicate class loader for confined task"
         }
-        require(!confinedTasks.containsKey(threadGroup)) {
-            "Duplicate thread group in confined tasks map"
-        }
-        threadGroup.maxPriority = Thread.MIN_PRIORITY
         val task = FutureTask(SandboxedCallable<T>(callable, sandboxedClassLoader))
+        val threadGroup = ConfinedThreadGroup()
         val thread = Thread(threadGroup, task, "main")
         val confinedTask = ConfinedTask(sandboxedClassLoader, task, thread, executionArguments)
-        confinedTasks[threadGroup] = confinedTask
-        confinedClassLoaders.add(sandboxedClassLoader)
+        threadGroup.task = confinedTask
         return confinedTask
     }
 
@@ -703,7 +698,7 @@ object Sandbox {
     @Suppress("ComplexMethod", "LongMethod")
     private fun <T> release(confinedTask: ConfinedTask<T>) {
         val threadGroup = confinedTask.threadGroup
-        require(confinedTasks.containsKey(threadGroup)) { "thread group is not confined" }
+        require(!confinedTask.released) { "thread group is already released" }
 
         confinedTask.shuttingDown = true
 
@@ -777,7 +772,7 @@ object Sandbox {
             plugin.executionFinished(data)
         }
 
-        confinedTasks.remove(threadGroup)
+        confinedTask.released = true
         confinedClassLoaders.remove(confinedTask.classLoader)
     }
 
@@ -2157,6 +2152,18 @@ object Sandbox {
         }
     }
 
+    private class ConfinedThreadGroup : ThreadGroup("Sandbox") {
+        init {
+            maxPriority = Thread.MIN_PRIORITY
+        }
+
+        lateinit var task: ConfinedTask<*>
+
+        @Suppress("EmptyFunctionBlock")
+        override fun uncaughtException(t: Thread?, e: Throwable?) {
+        }
+    }
+
     // Save a bit of time by not filling in the stack trace
     private class SandboxDeath : ThreadDeath() {
         override fun fillInStackTrace() = this
@@ -2210,6 +2217,9 @@ object Sandbox {
         System.setIn(RedirectingInputStream())
 
         threadPool = Executors.newFixedThreadPool(size)
+
+        // Ensure ConfinedThreadGroup is loaded before any tasks try to get their confined task
+        ConfinedThreadGroup::class.java.toString()
 
         originalSecurityManager = System.getSecurityManager()
         System.setSecurityManager(SandboxSecurityManager)
