@@ -10,6 +10,7 @@ plugins {
     id("io.github.gradle-nexus.publish-plugin") version "1.3.0"
     id("com.autonomousapps.dependency-analysis") version "1.28.0"
 }
+val agentVersion by extra { "2024.3.0" }
 allprojects {
     group = "org.cs124.jeed"
     version = "2024.1.0"

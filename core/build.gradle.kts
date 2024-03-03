@@ -16,6 +16,7 @@ plugins {
     id("com.google.devtools.ksp")
     id("com.ryandens.javaagent-test") version "0.5.1"
 }
+val agentVersion: String by rootProject.extra
 dependencies {
     ksp("com.squareup.moshi:moshi-kotlin-codegen:1.15.0")
 
@@ -46,8 +47,8 @@ dependencies {
     api("com.github.ben-manes.caffeine:caffeine:3.1.8")
 
     testImplementation("io.kotest:kotest-runner-junit5:5.8.0")
-    testImplementation("com.beyondgrader.resource-agent:agent:2023.11.1")
-    testJavaagent("com.beyondgrader.resource-agent:agent:2023.11.1")
+    testImplementation("com.beyondgrader.resource-agent:agent:$agentVersion")
+    testJavaagent("com.beyondgrader.resource-agent:agent:$agentVersion")
 }
 tasks.test {
     useJUnitPlatform()

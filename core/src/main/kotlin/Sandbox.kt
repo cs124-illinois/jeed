@@ -129,6 +129,7 @@ object Sandbox {
                 MethodFilter("java.lang.Class", "forName"),
                 MethodFilter("java.lang.Module", "add"),
                 MethodFilter("java.lang.Thread", "ofVirtual"),
+                MethodFilter("java.lang.Thread", "startVirtualThread"),
                 // can cause trouble for GC
                 MethodFilter("java.nio.", "allocateDirect"),
                 MethodFilter("java.lang.Class", "getClassLoader", allowInReload = true),
@@ -674,7 +675,9 @@ object Sandbox {
     private fun confinedTaskByThreadGroup(): ConfinedTask<*>? {
         // CAUTION: Requires ConfinedThreadGroup to already be loaded to avoid StackOverflowError
         // It would be more solid to use a ThreadLocal to detect reentrancy, but this method is called a lot
-        return (Thread.currentThread().threadGroup as? ConfinedThreadGroup)?.task
+        val confinedThreadGroup = Thread.currentThread().threadGroup as? ConfinedThreadGroup ?: return null
+        check(!confinedThreadGroup.task.released) { "a released task should not be running in any thread" }
+        return confinedThreadGroup.task
     }
 
     @Synchronized
@@ -721,7 +724,6 @@ object Sandbox {
             val existingActiveThreads = activeThreads.filterNotNull()
             existingActiveThreads.filter { !stoppedThreads.contains(it) }.forEach {
                 stoppedThreads.add(it)
-                @Suppress("DEPRECATION")
                 it.stop()
             }
             threadGroup.maxPriority = Thread.NORM_PRIORITY
@@ -740,7 +742,9 @@ object Sandbox {
 
         if (threadGroupDestroySupported) {
             threadGroup.destroy()
-            assert(threadGroup.isDestroyed)
+            if (!threadGroup.isDestroyed) {
+                throw SandboxContainmentFailure("failed to destroy thread group ($threadGroup)")
+            }
         }
 
         if (confinedTask.truncatedLines == 0) {
@@ -772,8 +776,8 @@ object Sandbox {
             plugin.executionFinished(data)
         }
 
-        confinedTask.released = true
         confinedClassLoaders.remove(confinedTask.classLoader)
+        confinedTask.released = true
     }
 
     private class SandboxedCallable<T>(
@@ -1747,6 +1751,7 @@ object Sandbox {
             if (thread.threadGroup != Thread.currentThread().threadGroup) {
                 confinedTask.addPermissionRequest(RuntimePermission("changeThreadGroup"), false)
             } else {
+                // Called in Thread#start only if the Code Awakening agent is active
                 if (confinedTask.shuttingDown) throw SandboxDeath()
                 systemSecurityManager?.checkAccess(thread)
             }
