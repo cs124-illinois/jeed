@@ -412,5 +412,4 @@ private fun Int.toCompilerVersion() = when (this) {
     else -> error("Bad JVM target: $this")
 }
 
-@Suppress("unused")
-fun getEmptyKotlinClassSize() = Source(mapOf("Test.kt" to "class Test")).kompile().classLoader.sizeInBytes
+fun getEmptyKotlinClassSize() = Source(mapOf("Test.kt" to "fun test() = true")).kompile().classLoader.sizeInBytes

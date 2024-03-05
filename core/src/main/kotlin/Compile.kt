@@ -477,5 +477,4 @@ class IsolatingClassLoader(private val klasses: Set<String>) : ClassLoader() {
     }
 }
 
-@Suppress("unused")
 fun getEmptyJavaClassSize() = Source(mapOf("Test.java" to "class Test {}")).compile().classLoader.sizeInBytes
