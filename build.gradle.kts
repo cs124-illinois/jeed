@@ -11,7 +11,7 @@ plugins {
 }
 allprojects {
     group = "org.cs124.jeed"
-    version = "2024.3.0"
+    version = "2024.3.1"
 }
 subprojects {
     tasks.withType<Test> {

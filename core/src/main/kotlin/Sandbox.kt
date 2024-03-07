@@ -1792,8 +1792,8 @@ object Sandbox {
             } ?: return systemSecurityManager?.checkPermission(permission) ?: return
 
             val kotlinxWhitelisted = try {
-                val stackTrace = Thread.currentThread().stackTrace
                 if (permission == SET_CONTEXT_CLASSLOADER_PERMISSION) {
+                    val stackTrace = Thread.currentThread().stackTrace
                     val setContextClassLoaderFrame = stackTrace.indexOfFirst {
                         it.moduleName == "java.base" &&
                             it.className == "java.lang.Thread" &&
