@@ -113,6 +113,7 @@ kotlin {
 }
 
 tasks.shadowJar {
+    isZip64 = true
     manifest {
         attributes["Launcher-Agent-Class"] = "com.beyondgrader.resourceagent.AgentKt"
         attributes["Can-Redefine-Classes"] = "true"
