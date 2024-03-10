@@ -202,8 +202,12 @@ fun main() {
             val executionResult = kompileResult.execute(executionArguments = executionArguments)
             executionResult shouldNot haveTimedOut()
             executionResult should haveCompleted()
-            executionResult.outputLines.size shouldBe 257
-            executionResult.outputLines[0].line shouldBe "Started"
+            try {
+                executionResult.outputLines.size shouldBe 257
+                executionResult.outputLines[0].line shouldBe "Started"
+            } catch (e: AssertionError) {
+                throw AssertionError("on run #$it: ${e.message}")
+            }
         }
     }
     "should not give coroutines more time than they need" {

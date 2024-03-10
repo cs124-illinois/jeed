@@ -52,9 +52,6 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.locks.Condition
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.math.min
-import kotlin.reflect.KProperty
-import kotlin.reflect.full.memberProperties
-import kotlin.reflect.jvm.isAccessible
 import kotlin.reflect.jvm.javaMethod
 
 private typealias SandboxCallableArguments<T> = (Pair<ClassLoader, (() -> Any?) -> JeedOutputCapture>) -> T
@@ -389,53 +386,21 @@ object Sandbox {
                     TaskResult(null, e.cause ?: e)
                 }
 
-                fun threadGroupActive(): Boolean {
-                    val threads = Array<Thread?>(confinedTask.threadGroup.activeCount() * 2) { null }
-                    confinedTask.threadGroup.enumerate(threads)
-                    return threads.filterNotNull().any {
-                        it.state !in setOf(Thread.State.WAITING, Thread.State.TIMED_WAITING)
-                    }
+                val forceEndTime = executionStarted.plusMillis(executionArguments.timeout)
+                fun hasTime(): Boolean {
+                    return Instant.now().isBefore(forceEndTime)
                 }
-
-                val coroutinesUsed = sandboxedClassLoader.loadedClasses.any { it.startsWith("kotlinx.coroutines.") }
-                fun anyActiveCoroutines(): Boolean {
-                    if (!coroutinesUsed) return false
-                    try {
-                        performingSafeUnconstrainedInvocation.set(true)
-                        val defaultExecutorName = "kotlinx.coroutines.DefaultExecutor"
-                        val defaultExecutorClass = sandboxedClassLoader.loadClass(defaultExecutorName)
-                        if (!sandboxedClassLoader.isClassReloaded(defaultExecutorClass)) return false // Shenanigans
-                        val defaultExecutor = defaultExecutorClass.kotlin.objectInstance
-                        val emptyProp = defaultExecutorClass.kotlin.memberProperties
-                            .first { it.name == "isEmpty" }.also { it.isAccessible = true } as KProperty<*>
-                        return emptyProp.getter.call(defaultExecutor) == false
-                    } catch (e: Throwable) {
-                        return false
-                    } finally {
-                        performingSafeUnconstrainedInvocation.set(false)
-                    }
-                }
-
-                fun workPending(): Boolean {
-                    if (threadGroupActive() || anyActiveCoroutines()) return true
-                    if (coroutinesUsed) {
-                        /*
-                         * Our checks might happen right in the time between a coroutine continuation being taken off
-                         * the queue and actually getting started running, in which case we would miss it in both
-                         * places, shutting down the thread pool before it had a chance to run. Check a few times to
-                         * increase the chance of noticing it.
-                         */
-                        repeat(MAX_COROUTINE_SHUTDOWN_RETRIES) {
-                            Thread.yield()
-                            if (threadGroupActive() || anyActiveCoroutines()) return true
+                if (executionArguments.waitForShutdown && hasTime()) {
+                    fun workPending(): Boolean {
+                        val threadsHolder = arrayOfNulls<Thread>(confinedTask.maxExtraThreads + 1)
+                        confinedTask.threadGroup.enumerate(threadsHolder)
+                        val threads = threadsHolder.filterNotNull()
+                        val threadGroupActive = threads.any {
+                            it.state !in setOf(Thread.State.WAITING, Thread.State.TIMED_WAITING)
                         }
+                        return threadGroupActive || coroutinesActive(sandboxedClassLoader, threads)
                     }
-                    return false
-                }
-                if (executionArguments.waitForShutdown && !confinedTask.shuttingDown) {
-                    while (Instant.now().isBefore(executionStarted.plusMillis(executionArguments.timeout)) &&
-                        workPending()
-                    ) {
+                    while (hasTime() && workPending()) {
                         // Give non-main tasks like coroutines a chance to finish
                         Thread.yield()
                     }
@@ -863,7 +828,7 @@ object Sandbox {
         override val providedClasses: MutableSet<String> = mutableSetOf()
         override val loadedClasses: MutableSet<String> = Collections.newSetFromMap(ConcurrentHashMap())
 
-        private val reloadedClasses: MutableMap<String, Class<*>> = mutableMapOf()
+        internal val reloadedClasses: MutableMap<String, Class<*>> = Collections.synchronizedMap(mutableMapOf())
         private val canCacheReloadedClasses = configuredPlugins.none { it.plugin.transformsReloadedClasses }
         private val reloader = TrustedReloader()
         var transformedReloadedClasses: Int = 0 // Not atomic, but used only for statistics purposes
@@ -962,10 +927,6 @@ object Sandbox {
                     delegateClass(name)
                 }
             }
-        }
-
-        internal fun isClassReloaded(clazz: Class<*>): Boolean {
-            return reloadedClasses[clazz.name] == clazz
         }
 
         companion object {
@@ -1930,6 +1891,16 @@ object Sandbox {
             confinedTask.redirectedOutputLines = mutableListOf()
             confinedTask.redirectedInput = StringBuilder()
             confinedTask.redirectingIOBytes = mutableListOf()
+        }
+    }
+
+    @JvmStatic
+    fun <T> allowingUnconstrainedInvocation(block: () -> T): T {
+        performingSafeUnconstrainedInvocation.set(true)
+        try {
+            return block()
+        } finally {
+            performingSafeUnconstrainedInvocation.set(false)
         }
     }
 
