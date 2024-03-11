@@ -1000,7 +1000,9 @@ object Sandbox {
             ?: error("should be able to retrieve method signature")
         val enclosureMethodName = RewriteBytecode::checkSandboxEnclosure.javaMethod?.name
             ?: error("should have a method name for the enclosure checker")
-        val enclosureMethodDescriptor =
+        val enclosureReloadedMethodName = RewriteBytecode::checkSandboxEnclosureReloaded.javaMethod?.name
+            ?: error("should have a method name for the reloaded enclosure checker")
+        val enclosureMethodsDescriptor =
             Type.getMethodDescriptor(RewriteBytecode::checkSandboxEnclosure.javaMethod)
                 ?: error("should be able to retrieve method signature for enclosure checker")
         private val syncNotifyMethods = mapOf(
@@ -1087,8 +1089,15 @@ object Sandbox {
 
         @JvmStatic
         fun checkSandboxEnclosure() {
-            if (confinedTaskByThreadGroup() == null && !performingSafeUnconstrainedInvocation.get()) {
+            if (confinedTaskByThreadGroup() == null) {
                 throw SecurityException("invocation of untrusted code outside confined task")
+            }
+        }
+
+        @JvmStatic
+        fun checkSandboxEnclosureReloaded() {
+            if (confinedTaskByThreadGroup() == null && !performingSafeUnconstrainedInvocation.get()) {
+                throw SecurityException("invocation of sandbox-loaded code outside confined task")
             }
         }
 
@@ -1206,8 +1215,8 @@ object Sandbox {
                     wrapperMv.visitMethodInsn(
                         Opcodes.INVOKESTATIC,
                         rewriterClassName,
-                        enclosureMethodName,
-                        enclosureMethodDescriptor,
+                        if (context == RewritingContext.RELOADED) enclosureReloadedMethodName else enclosureMethodName,
+                        enclosureMethodsDescriptor,
                         false,
                     )
                     wrapperMv.visitLdcInsn(handle)
@@ -1346,8 +1355,8 @@ object Sandbox {
                 super.visitMethodInsn(
                     Opcodes.INVOKESTATIC,
                     rewriterClassName,
-                    enclosureMethodName,
-                    enclosureMethodDescriptor,
+                    if (rewritingContext == RewritingContext.RELOADED) enclosureReloadedMethodName else enclosureMethodName,
+                    enclosureMethodsDescriptor,
                     false,
                 )
             }
@@ -1895,7 +1904,7 @@ object Sandbox {
     }
 
     @JvmStatic
-    fun <T> allowingUnconstrainedInvocation(block: () -> T): T {
+    internal fun <T> allowingReloadedCodeInvocation(block: () -> T): T {
         performingSafeUnconstrainedInvocation.set(true)
         try {
             return block()

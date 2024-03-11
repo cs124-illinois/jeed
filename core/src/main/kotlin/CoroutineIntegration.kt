@@ -12,10 +12,6 @@ private const val COROUTINE_SCHEDULER_WORKER_NAME = "kotlinx.coroutines.scheduli
 private const val LOCK_FREE_TASK_QUEUE_NAME = "kotlinx.coroutines.internal.LockFreeTaskQueue"
 private const val WORK_QUEUE_NAME = "kotlinx.coroutines.scheduling.WorkQueue"
 
-private fun usesCoroutines(classLoader: Sandbox.SandboxedClassLoader): Boolean {
-    return classLoader.loadedClasses.any { it.startsWith("kotlinx.coroutines.") }
-}
-
 internal fun coroutinesActive(classLoader: Sandbox.SandboxedClassLoader, threads: List<Thread>): Boolean {
     return try {
         coroutinesActiveInternal(classLoader, threads)
@@ -34,7 +30,7 @@ private fun defaultExecutorActive(classLoader: Sandbox.SandboxedClassLoader): Bo
         .find { it.name == "isEmpty" }
         ?.also { it.isAccessible = true }
         ?.getter as? KCallable<*> ?: return false
-    return Sandbox.allowingUnconstrainedInvocation {
+    return Sandbox.allowingReloadedCodeInvocation {
         val defaultExecutor = defaultExecutorClass.kotlin.objectInstance
         isEmptyPropGetter.call(defaultExecutor) == false
     }
@@ -50,7 +46,7 @@ private fun workerQueuesActive(classLoader: Sandbox.SandboxedClassLoader, thread
     val queueSizeProp = workQueueClass.kotlin.memberProperties
         .find { it.name == "size" }
         ?.also { it.isAccessible = true } as? KProperty<*> ?: return false
-    val localQueuesActive = Sandbox.allowingUnconstrainedInvocation {
+    val localQueuesActive = Sandbox.allowingReloadedCodeInvocation {
         workerThreads.any {
             val localQueue = localQueueField.get(it)
             queueSizeProp.getter.call(localQueue) != 0
@@ -70,7 +66,7 @@ private fun workerQueuesActive(classLoader: Sandbox.SandboxedClassLoader, thread
         val lockFreeQueue = field.get(scheduler)
         return lockFreeQueueEmptyProp.getter.call(lockFreeQueue) == false
     }
-    return Sandbox.allowingUnconstrainedInvocation {
+    return Sandbox.allowingReloadedCodeInvocation {
         schedulerQueueActive("globalCpuQueue") || schedulerQueueActive("globalBlockingQueue")
     }
 }
