@@ -638,6 +638,9 @@ public class Test {
             klass.declaredMethods.find { it.name == "method" }?.parameters?.map { it.name }?.first() shouldBe "first"
         }
     }
+    "should compute empty klass size" {
+        getEmptyJavaClassSize() shouldBeGreaterThan 0
+    }
 })
 
 fun haveCompilationErrorAt(source: String = SNIPPET_SOURCE, line: Int, column: Int? = null) =

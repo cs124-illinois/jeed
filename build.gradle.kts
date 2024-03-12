@@ -4,16 +4,16 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
     kotlin("jvm") version "1.9.22" apply false
     id("org.jmailen.kotlinter") version "4.1.1" apply false
-    id("com.github.ben-manes.versions") version "0.50.0"
-    id("io.gitlab.arturbosch.detekt") version "1.23.4"
-    id("com.google.devtools.ksp") version "1.9.22-1.0.16" apply false
+    id("com.github.ben-manes.versions") version "0.51.0"
+    id("io.gitlab.arturbosch.detekt") version "1.23.5"
+    id("com.google.devtools.ksp") version "1.9.22-1.0.18" apply false
     id("io.github.gradle-nexus.publish-plugin") version "1.3.0"
-    id("com.autonomousapps.dependency-analysis") version "1.28.0"
+    id("com.autonomousapps.dependency-analysis") version "1.30.0"
 }
 val agentVersion by extra { "2024.3.0" }
 allprojects {
     group = "org.cs124.jeed"
-    version = "2024.1.0"
+    version = "2024.3.1"
 }
 subprojects {
     tasks.withType<Test> {

@@ -168,6 +168,7 @@ object Sandbox {
         } else {
             permissions
         }
+
         companion object {
             const val DEFAULT_TIMEOUT = 100L
             const val DEFAULT_MAX_EXTRA_THREADS = 0
@@ -1669,6 +1670,7 @@ object Sandbox {
     private object SandboxSecurityManager : SecurityManager() {
         private val SET_IO_PERMISSION = RuntimePermission("setIO")
         private val GET_CLASSLOADER_PERMISSION = RuntimePermission("getClassLoader")
+        private val SET_CONTEXT_CLASSLOADER_PERMISSION = RuntimePermission("setContextClassLoader")
         private val inReentrantPermissionCheck = ThreadLocal.withInitial { false }
 
         @Suppress("ReturnCount")
@@ -1776,8 +1778,26 @@ object Sandbox {
                 else -> confinedTaskByClassLoader()
             } ?: return systemSecurityManager?.checkPermission(permission) ?: return
 
+            val kotlinxWhitelisted = try {
+                if (permission == SET_CONTEXT_CLASSLOADER_PERMISSION) {
+                    val stackTrace = Thread.currentThread().stackTrace
+                    val setContextClassLoaderFrame = stackTrace.indexOfFirst {
+                        it.moduleName == "java.base" &&
+                            it.className == "java.lang.Thread" &&
+                            it.methodName == "setContextClassLoader"
+                    }
+                    val previousFrame = stackTrace[setContextClassLoaderFrame + 1]
+                    previousFrame.className.startsWith("kotlinx.coroutines")
+                } else {
+                    false
+                }
+            } catch (e: Exception) {
+                false
+            }
             try {
-                checkTaskPermission(confinedTask, permission)
+                if (!kotlinxWhitelisted) {
+                    checkTaskPermission(confinedTask, permission)
+                }
                 confinedTask.addPermissionRequest(permission, true)
             } catch (e: SecurityException) {
                 confinedTask.addPermissionRequest(permission, granted = false, throwException = false)
@@ -1799,6 +1819,7 @@ object Sandbox {
                         throw SecurityException()
                     }
                 }
+
                 false -> confinedTask.accessControlContext!!.checkPermission(permission)
             }
         }

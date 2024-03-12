@@ -286,11 +286,32 @@ public int add(int a, int b) {
         }
     }
     "should allow suppressions" {
+        // Old syntax
         Source.fromSnippet(
             """
 for (int i = 0; i < 10; i++);
 """.trim(),
         ).checkstyle(CheckstyleArguments(suppressions = setOf("empty.statement"))).also {
+            it shouldNot haveCheckstyleErrors()
+        }
+        // New syntax
+        Source.fromSnippet(
+            """
+for (int i = 0; i < 10; i++);
+""".trim(),
+        ).checkstyle(CheckstyleArguments(suppressions = setOf("emptystatement"))).also {
+            it shouldNot haveCheckstyleErrors()
+        }
+        // Filter method
+        Source.fromSnippet(
+            """
+for (int i = 0; i < 10; i++);
+""".trim(),
+        ).checkstyle(
+            CheckstyleArguments(filterErrors = { error ->
+                error.location.line != 1
+            }),
+        ).also {
             it shouldNot haveCheckstyleErrors()
         }
     }

@@ -78,7 +78,13 @@ open class Source(
         return Location(resultSourceLocation.line, resultSourceLocation.column)
     }
 
-    data class ParsedSource(val tree: ParseTree, val stream: CharStream, val contents: String, val parser: Parser, val tokenStream: TokenStream)
+    data class ParsedSource(
+        val tree: ParseTree,
+        val stream: CharStream,
+        val contents: String,
+        val parser: Parser,
+        val tokenStream: TokenStream,
+    )
 
     var parsed = false
 
@@ -101,6 +107,7 @@ open class Source(
     fun parse() {
         parsedSources
     }
+
     fun getParsed(filename: String): ParsedSource = parsedSources[filename] ?: error("$filename not in sources")
 
     fun sourceFilenameToFileType(filename: String): FileType {
@@ -194,7 +201,6 @@ data class SourceLocation(
             "($line:$column)"
         }
     }
-    fun asLocation(): Location = Location(line, column)
 }
 
 @JsonClass(generateAdapter = true)

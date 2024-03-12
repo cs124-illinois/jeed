@@ -2,8 +2,8 @@
 
 package edu.illinois.cs.cs125.jeed.core
 
-import com.github.jknack.handlebars.internal.text.StringEscapeUtils
 import com.squareup.moshi.JsonClass
+import org.apache.commons.text.StringEscapeUtils
 import java.util.Objects
 import kotlin.math.abs
 import kotlin.math.pow
