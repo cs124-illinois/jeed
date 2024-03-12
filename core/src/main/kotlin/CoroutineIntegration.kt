@@ -1,16 +1,24 @@
 package edu.illinois.cs.cs125.jeed.core
 
+import org.objectweb.asm.Opcodes
+import org.objectweb.asm.Type
 import kotlin.reflect.KCallable
 import kotlin.reflect.KProperty
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.jvm.isAccessible
+import kotlin.reflect.jvm.javaMethod
 
 private const val DEFAULT_EXECUTOR_NAME = "kotlinx.coroutines.DefaultExecutor"
-
 private const val COROUTINE_SCHEDULER_NAME = "kotlinx.coroutines.scheduling.CoroutineScheduler"
 private const val COROUTINE_SCHEDULER_WORKER_NAME = "kotlinx.coroutines.scheduling.CoroutineScheduler\$Worker"
 private const val LOCK_FREE_TASK_QUEUE_NAME = "kotlinx.coroutines.internal.LockFreeTaskQueue"
 private const val WORK_QUEUE_NAME = "kotlinx.coroutines.scheduling.WorkQueue"
+
+private val SETCONTEXTCLASSLOADER_DESC = Type.getMethodDescriptor(Thread::setContextClassLoader.javaMethod)
+
+private val DEFAULT_EXECUTOR_INTERNAL_NAME = classNameToPath(DEFAULT_EXECUTOR_NAME)
+private val COROUTINE_SCHEDULER_WORKER_INTERNAL_NAME = classNameToPath(COROUTINE_SCHEDULER_WORKER_NAME)
+private val THREAD_INTERNAL_NAME = classNameToPath(Thread::class.java.name)
 
 internal fun coroutinesActive(classLoader: Sandbox.SandboxedClassLoader, threads: List<Thread>): Boolean {
     return try {
@@ -69,4 +77,12 @@ private fun workerQueuesActive(classLoader: Sandbox.SandboxedClassLoader, thread
     return Sandbox.allowingReloadedCodeInvocation {
         schedulerQueueActive("globalCpuQueue") || schedulerQueueActive("globalBlockingQueue")
     }
+}
+
+internal fun isIgnorableSetContextClassLoader(containerClassName: String, opcode: Int, owner: String, methodName: String, desc: String): Boolean {
+    return (containerClassName == DEFAULT_EXECUTOR_INTERNAL_NAME || containerClassName == COROUTINE_SCHEDULER_WORKER_INTERNAL_NAME) &&
+        opcode == Opcodes.INVOKEVIRTUAL &&
+        (owner == THREAD_INTERNAL_NAME || owner == containerClassName) &&
+        methodName == "setContextClassLoader" &&
+        desc == SETCONTEXTCLASSLOADER_DESC
 }

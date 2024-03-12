@@ -1172,6 +1172,7 @@ object Sandbox {
                             access
                         }
                         SandboxingMethodVisitor(
+                            className ?: error("should have visited the class"),
                             unsafeExceptionClasses,
                             blacklistedMethods,
                             preinspection.badTryCatchBlockPositions,
@@ -1340,6 +1341,7 @@ object Sandbox {
         }
 
         private class SandboxingMethodVisitor(
+            val containerClassName: String,
             val unsafeExceptionClasses: Set<Class<*>>,
             val blacklistedMethods: Set<MethodFilter>,
             val badTryCatchBlockPositions: Set<Int>,
@@ -1469,9 +1471,7 @@ object Sandbox {
                 } else {
                     null
                 }
-                if (rewriteTarget == null) {
-                    super.visitMethodInsn(opcode, owner, name, descriptor, isInterface)
-                } else {
+                if (rewriteTarget != null) {
                     super.visitMethodInsn(
                         Opcodes.INVOKESTATIC,
                         rewriterClassName,
@@ -1479,6 +1479,12 @@ object Sandbox {
                         Type.getMethodDescriptor(rewriteTarget.javaMethod),
                         false,
                     )
+                } else if (rewritingContext == RewritingContext.RELOADED &&
+                    isIgnorableSetContextClassLoader(containerClassName, opcode, owner, name, descriptor)
+                ) {
+                    super.visitInsn(Opcodes.POP2)
+                } else {
+                    super.visitMethodInsn(opcode, owner, name, descriptor, isInterface)
                 }
             }
 
@@ -1778,26 +1784,8 @@ object Sandbox {
                 else -> confinedTaskByClassLoader()
             } ?: return systemSecurityManager?.checkPermission(permission) ?: return
 
-            val kotlinxWhitelisted = try {
-                if (permission == SET_CONTEXT_CLASSLOADER_PERMISSION) {
-                    val stackTrace = Thread.currentThread().stackTrace
-                    val setContextClassLoaderFrame = stackTrace.indexOfFirst {
-                        it.moduleName == "java.base" &&
-                            it.className == "java.lang.Thread" &&
-                            it.methodName == "setContextClassLoader"
-                    }
-                    val previousFrame = stackTrace[setContextClassLoaderFrame + 1]
-                    previousFrame.className.startsWith("kotlinx.coroutines")
-                } else {
-                    false
-                }
-            } catch (e: Exception) {
-                false
-            }
             try {
-                if (!kotlinxWhitelisted) {
-                    checkTaskPermission(confinedTask, permission)
-                }
+                checkTaskPermission(confinedTask, permission)
                 confinedTask.addPermissionRequest(permission, true)
             } catch (e: SecurityException) {
                 confinedTask.addPermissionRequest(permission, granted = false, throwException = false)
