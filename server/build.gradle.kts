@@ -27,12 +27,12 @@ dependencies {
     implementation("io.ktor:ktor-server-content-negotiation:2.3.9")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.0")
     implementation("com.squareup.moshi:moshi-kotlin:1.15.1")
-    implementation("org.cs124:ktor-moshi:2023.11.0")
+    implementation("org.cs124:ktor-moshi:2024.3.0")
     implementation("ch.qos.logback:logback-classic:1.5.3")
     implementation("com.uchuhimo:konf-core:1.1.2")
     implementation("com.uchuhimo:konf-yaml:1.1.2")
     implementation("io.github.microutils:kotlin-logging:3.0.5")
-    implementation("org.cs124:libcs1:2024.3.0")
+    implementation("org.cs124:libcs1:2024.3.1")
 
     implementation("com.beyondgrader.resource-agent:agent:2023.9.0")  {
         exclude(group = "com.github.cs124-illinois.jeed", module = "core")
@@ -41,7 +41,7 @@ dependencies {
         exclude(group = "com.github.cs124-illinois.jeed", module = "core")
     }
 
-    testImplementation("io.kotest:kotest-runner-junit5:5.8.0")
+    testImplementation("io.kotest:kotest-runner-junit5:5.8.1")
     testImplementation("io.kotest:kotest-assertions-ktor:4.4.3")
     testImplementation("io.ktor:ktor-server-test-host:2.3.9")
 }
