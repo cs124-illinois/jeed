@@ -21,10 +21,12 @@ import org.jetbrains.kotlin.cli.jvm.configureAdvancedJvmOptions
 import org.jetbrains.kotlin.cli.jvm.configureContentRootsFromClassPath
 import org.jetbrains.kotlin.cli.jvm.configureJavaModulesContentRoots
 import org.jetbrains.kotlin.codegen.GeneratedClassLoader
+import org.jetbrains.kotlin.com.intellij.lang.java.JavaLanguage
 import org.jetbrains.kotlin.com.intellij.openapi.util.Disposer
 import org.jetbrains.kotlin.com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.kotlin.com.intellij.openapi.vfs.VirtualFileListener
 import org.jetbrains.kotlin.com.intellij.openapi.vfs.VirtualFileSystem
+import org.jetbrains.kotlin.com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.com.intellij.psi.PsiFileFactory
 import org.jetbrains.kotlin.com.intellij.psi.impl.PsiFileFactoryImpl
 import org.jetbrains.kotlin.com.intellij.testFramework.LightVirtualFile
@@ -36,6 +38,7 @@ import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.konan.file.File
 import org.jetbrains.kotlin.psi.KtFile
+import java.nio.file.FileSystems
 import java.time.Instant
 
 val systemKompilerVersion = KotlinVersion.CURRENT.toString()
@@ -56,6 +59,7 @@ data class KompilationArguments(
     val parameters: Boolean = DEFAULT_PARAMETERS,
     val jvmTarget: String = DEFAULT_JVM_TARGET,
 ) {
+    @Suppress("SpellCheckingInspection")
     @Transient
     private val additionalCompilerArguments: List<String> = listOf(
         "-opt-in=kotlin.ExperimentalStdlibApi",
@@ -86,6 +90,7 @@ data class KompilationArguments(
 
     companion object {
         const val DEFAULT_VERBOSE = false
+        @Suppress("SpellCheckingInspection")
         const val DEFAULT_ALLWARNINGSASERRORS = false
         const val DEFAULT_PARAMETERS = false
         val DEFAULT_JVM_TARGET = systemCompilerVersion.toCompilerVersion()
@@ -131,7 +136,7 @@ data class KompilationArguments(
     }
 }
 
-private class JeedMessageCollector(val source: Source, val allWarningsAsErrors: Boolean) : MessageCollector {
+internal class JeedMessageCollector(val source: Source, val allWarningsAsErrors: Boolean) : MessageCollector {
     private val messages: MutableList<CompilationMessage> = mutableListOf()
 
     override fun clear() {
@@ -142,9 +147,9 @@ private class JeedMessageCollector(val source: Source, val allWarningsAsErrors: 
         get() = messages.filter {
             it.kind == CompilerMessageSeverity.ERROR.presentableName ||
                 allWarningsAsErrors && (
-                    it.kind == CompilerMessageSeverity.WARNING.presentableName ||
-                        it.kind == CompilerMessageSeverity.STRONG_WARNING.presentableName
-                    )
+                it.kind == CompilerMessageSeverity.WARNING.presentableName ||
+                    it.kind == CompilerMessageSeverity.STRONG_WARNING.presentableName
+                )
         }.map {
             CompilationError(it.location, it.message)
         }.distinctBy {
@@ -180,7 +185,7 @@ private class JeedMessageCollector(val source: Source, val allWarningsAsErrors: 
             ?.let {
                 when {
                     source is Snippet -> SNIPPET_SOURCE
-                    it.path != KOTLIN_EMPTY_LOCATION -> it.path.removePrefix(System.getProperty("file.separator"))
+                    it.path != KOTLIN_EMPTY_LOCATION -> it.path.removePrefix(FileSystems.getDefault().separator)
                     else -> null
                 }
             }?.let {
@@ -195,22 +200,20 @@ private class JeedMessageCollector(val source: Source, val allWarningsAsErrors: 
     }
 }
 
-@Suppress("LongMethod", "ReturnCount")
-@Throws(CompilationFailed::class)
-private fun kompile(
+internal fun kompileToFileManager(
     kompilationArguments: KompilationArguments,
-    source: Source,
+    kotlinSource: Source,
     parentFileManager: JeedFileManager? = kompilationArguments.parentFileManager,
-    parentClassLoader: ClassLoader? = kompilationArguments.parentClassLoader,
-): CompiledSource {
-    require(source.type == Source.FileType.KOTLIN) { "Kotlin compiler needs Kotlin sources" }
-
-    val started = Instant.now()
-    source.tryCache(kompilationArguments, started, systemCompilerName)?.let { return it }
+    javaSource: Source? = null,
+): Pair<JeedFileManager, JeedMessageCollector> {
+    require(kotlinSource.type == Source.FileType.KOTLIN) { "Kotlin compiler needs Kotlin sources" }
+    if (javaSource != null) {
+        require(javaSource.type == Source.FileType.JAVA) { "Java source should contain Java sources" }
+    }
 
     val rootDisposable = Disposer.newDisposable()
     try {
-        val messageCollector = JeedMessageCollector(source, kompilationArguments.arguments.allWarningsAsErrors)
+        val messageCollector = JeedMessageCollector(kotlinSource, kompilationArguments.arguments.allWarningsAsErrors)
         val configuration = CompilerConfiguration().apply {
             put(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY, messageCollector)
             put(CommonConfigurationKeys.MODULE_NAME, "web-module")
@@ -240,11 +243,15 @@ private fun kompile(
         )
 
         val psiFileFactory = PsiFileFactory.getInstance(environment.project) as PsiFileFactoryImpl
-        val psiFiles = source.sources.map { (name, contents) ->
+        val psiFiles = kotlinSource.sources.map { (name, contents) ->
             val virtualFile = LightVirtualFile(name, KotlinLanguage.INSTANCE, contents)
             psiFileFactory.trySetupPsiForFile(virtualFile, KotlinLanguage.INSTANCE, true, false) as KtFile?
                 ?: error("couldn't parse source to psiFile")
-        }.toMutableList()
+        }.toMutableList() + (javaSource?.sources?.map { (name, contents) ->
+            val virtualFile = LightVirtualFile(name, JavaLanguage.INSTANCE, contents)
+            psiFileFactory.trySetupPsiForFile(virtualFile, JavaLanguage.INSTANCE, true, false)
+                ?: error("couldn't parse source to psiFile")
+        } ?: mutableListOf<PsiFile>())
 
         environment::class.java.getDeclaredField("sourceFiles").also { field ->
             field.isAccessible = true
@@ -262,24 +269,42 @@ private fun kompile(
         }
         check(state != null) { "compilation should have succeeded" }
 
-        val fileManager = JeedFileManager(
-            parentFileManager ?: standardFileManager,
-            GeneratedClassLoader(state.factory, kompilationArguments.parentClassLoader),
+        return Pair(
+            JeedFileManager(
+                parentFileManager ?: standardFileManager,
+                GeneratedClassLoader(state.factory, kompilationArguments.parentClassLoader),
+            ), messageCollector
         )
-        val classLoader = JeedClassLoader(fileManager, parentClassLoader)
-
-        return CompiledSource(
-            source,
-            messageCollector.warnings,
-            started,
-            Interval(started, Instant.now()),
-            classLoader,
-            fileManager,
-        ).also {
-            it.cache(kompilationArguments)
-        }
     } finally {
         Disposer.dispose(rootDisposable)
+    }
+}
+
+@Suppress("LongMethod", "ReturnCount")
+@Throws(CompilationFailed::class)
+private fun kompile(
+    kompilationArguments: KompilationArguments,
+    source: Source,
+    parentFileManager: JeedFileManager? = kompilationArguments.parentFileManager,
+    parentClassLoader: ClassLoader? = kompilationArguments.parentClassLoader,
+): CompiledSource {
+    require(source.type == Source.FileType.KOTLIN) { "Kotlin compiler needs Kotlin sources" }
+
+    val started = Instant.now()
+    source.tryCache(kompilationArguments, started, systemCompilerName)?.let { return it }
+
+    val (fileManager, messageCollector) = kompileToFileManager(kompilationArguments, source, parentFileManager)
+    val classLoader = JeedClassLoader(fileManager, parentClassLoader)
+
+    return CompiledSource(
+        source,
+        messageCollector.warnings,
+        started,
+        Interval(started, Instant.now()),
+        classLoader,
+        fileManager,
+    ).also { compiledSource ->
+        compiledSource.cache(kompilationArguments)
     }
 }
 

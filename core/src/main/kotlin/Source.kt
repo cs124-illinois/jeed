@@ -31,7 +31,6 @@ data class Sources(val sources: Map<String, String>) : Map<String, String> by so
             it.first()
         }
 }
-
 open class Source(
     sourceMap: Map<String, String>,
     checkSourceNames: (Sources) -> FileType = ::defaultCheckSourceNames,
