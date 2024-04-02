@@ -35,6 +35,7 @@ data class ContainerExecutionArguments(
         """--network="none"""",
 ) {
     companion object {
+        @Suppress("SpellCheckingInspection")
         const val DEFAULT_IMAGE = "cs125/jeed-containerrunner:latest"
         const val DEFAULT_TIMEOUT = 2000L
     }
@@ -61,19 +62,20 @@ data class ContainerExecutionResults(
         }
 }
 
-@Suppress("LongMethod", "BlockingMethodInNonBlockingContext")
+@Suppress("LongMethod")
 suspend fun CompiledSource.cexecute(
     executionArguments: ContainerExecutionArguments = ContainerExecutionArguments(),
 ): ContainerExecutionResults {
     val started = Instant.now()
 
     val defaultKlass = when (this.source.type) {
-        Source.FileType.JAVA -> "Main"
-        Source.FileType.KOTLIN -> "MainKt"
+        Source.SourceType.JAVA -> "Main"
+        Source.SourceType.KOTLIN -> "MainKt"
+        else -> error("Can't cexecute mixed sources")
     }
 
     // Check that we can load the class before we start the container
-    // Note that this check is different than what is used to load the method by the actual containerrunner,
+    // Note that this check is different than what is used to load the method by the actual container runner,
     // but should be similar enough
     val methodToRun = classLoader.findClassMethod(
         executionArguments.klass,
@@ -192,7 +194,7 @@ class StreamGobbler(
 }
 
 suspend fun <T> withTempDir(root: File? = null, f: suspend (directory: File) -> T): T {
-    @Suppress("DEPRECATION")
+    @Suppress("DEPRECATION", "SpellCheckingInspection")
     val directory = createTempDir("containerrunner", null, root)
     return try {
         f(directory)

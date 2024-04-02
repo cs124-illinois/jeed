@@ -344,7 +344,6 @@ List list = new ArrayList();
         compiledSource should haveProvidedThisManyClasses(0)
     }
     "should compile with classes from nonstandard libraries" {
-        @Suppress("SpellCheckingInspection")
         val compiledSource = Source.fromSnippet(
             """
 import com.puppycrawl.tools.checkstyle.Checker;
@@ -427,7 +426,6 @@ List first = new ArrayList();
     }
     "should compile sources that use Java 14 features" {
         if (systemCompilerVersion >= 14) {
-            @Suppress("SpellCheckingInspection")
             val compiledSource = Source(
                 mapOf(
                     "Test.java" to """

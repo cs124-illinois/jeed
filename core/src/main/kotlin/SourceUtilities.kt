@@ -34,7 +34,7 @@ fun String.stripComments(type: Source.FileType): String {
     }
 }
 
-fun Source.stripComments() = Source(sources.mapValues { (_, contents) -> contents.stripComments(type) })
+fun Source.stripComments() = Source(sources.mapValues { (_, contents) -> contents.stripComments(type.toFileType()) })
 
 internal fun String.identifiers(type: Source.FileType): Set<String> {
     val charStream = CharStreams.fromString(this)
@@ -52,7 +52,7 @@ internal fun String.identifiers(type: Source.FileType): Set<String> {
 }
 
 fun Source.identifiers() = mutableSetOf<String>().apply {
-    sources.mapValues { (_, contents) -> addAll(contents.identifiers(type)) }
+    sources.mapValues { (_, contents) -> addAll(contents.identifiers(type.toFileType())) }
 }.toSet()
 
 internal fun Source.ParsedSource.strings(type: Source.FileType): Set<String> {
@@ -94,7 +94,7 @@ internal fun Source.ParsedSource.strings(type: Source.FileType): Set<String> {
 }
 
 fun Source.strings() = mutableSetOf<String>().apply {
-    sources.mapValues { (filename, _) -> addAll(getParsed(filename).strings(type)) }
+    sources.mapValues { (filename, _) -> addAll(getParsed(filename).strings(type.toFileType())) }
 }.toSet()
 
 fun Source.ParsedSource.stripAssertionMessages(type: Source.FileType): String {
@@ -158,7 +158,7 @@ fun Source.ParsedSource.stripAssertionMessages(type: Source.FileType): String {
 }
 
 fun Source.stripAssertionMessages() =
-    Source(sources.mapValues { (filename, _) -> getParsed(filename).stripAssertionMessages(type) })
+    Source(sources.mapValues { (filename, _) -> getParsed(filename).stripAssertionMessages(type.toFileType()) })
 
 fun Source.trimLines() =
     Source(sources.mapValues { (_, contents) -> contents.lines().joinToString("\n") { it.trimEnd() } })
@@ -265,10 +265,10 @@ fun Source.hasBadWords(whitelist: Set<String> = setOf()): String? {
     }
 
     sources.entries.forEach { (filename, contents) ->
-        contents.identifiers(type).check(true)?.also {
+        contents.identifiers(type.toFileType()).check(true)?.also {
             return it
         }
-        getParsed(filename).strings(type).check(false)?.also {
+        getParsed(filename).strings(type.toFileType()).check(false)?.also {
             return it
         }
     }
@@ -283,8 +283,8 @@ fun Source.getBadWords(whitelist: Set<String> = setOf()): Set<String> {
         }
     }
     sources.entries.forEach { (filename, contents) ->
-        contents.identifiers(type).check(true)
-        getParsed(filename).strings(type).check(false)
+        contents.identifiers(type.toFileType()).check(true)
+        getParsed(filename).strings(type.toFileType()).check(false)
     }
     return badWords
 }
@@ -345,7 +345,7 @@ fun String.countLines(type: Source.FileType): LineCounts {
 }
 
 @Suppress("unused")
-fun Source.countLines() = sources.mapValues { (_, contents) -> contents.countLines(type) }
+fun Source.countLines() = sources.mapValues { (_, contents) -> contents.countLines(type.toFileType()) }
 
 fun Tree.format(parser: Parser, indent: Int = 0): String = buildString {
     val tree = this@format

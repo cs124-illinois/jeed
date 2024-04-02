@@ -251,10 +251,10 @@ public class Test {}
     }
 })
 
-suspend fun Source.coverage(): CoverageResult = if (type == Source.FileType.JAVA) {
-    compile()
-} else {
-    kompile()
+suspend fun Source.coverage(): CoverageResult = when (type) {
+    Source.SourceType.JAVA -> compile()
+    Source.SourceType.KOTLIN -> kompile()
+    else -> error("Can't compute coverage for mixed sources")
 }.execute(SourceExecutionArguments().addPlugin(Jacoco)).also { taskResults ->
     taskResults.completed shouldBe true
     taskResults.permissionDenied shouldBe false

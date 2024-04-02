@@ -271,11 +271,11 @@ class Request(
             }
 
             if (tasks.contains(Task.checkstyle)) {
-                check(actualSource.type == Source.FileType.JAVA) { "can't run checkstyle on non-Java sources" }
+                check(actualSource.type == Source.SourceType.JAVA) { "can't run checkstyle on non-Java sources" }
                 response.completed.checkstyle = actualSource.checkstyle(arguments.checkstyle)
                 response.completedTasks.add(Task.checkstyle)
             } else if (tasks.contains(Task.ktlint)) {
-                check(actualSource.type == Source.FileType.KOTLIN) { "can't run ktlint on non-Kotlin sources" }
+                check(actualSource.type == Source.SourceType.KOTLIN) { "can't run ktlint on non-Kotlin sources" }
                 response.completed.ktlint = actualSource.ktLint(arguments.ktlint)
                 response.completedTasks.add(Task.ktlint)
             }

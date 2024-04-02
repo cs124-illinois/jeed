@@ -37,14 +37,15 @@ class MutatedSource(
     val originalSources: Sources,
     val mutations: List<AppliedSourceMutation>,
     val appliedMutations: Int,
-    val unappliedMutations: Int,
+    @Suppress("SpellCheckingInspection") val unappliedMutations: Int,
 ) : Source(sources) {
     fun cleaned() = Source(sources.mapValues { removeMutationSuppressions(it.value) })
 
     suspend fun formatted(): MutatedSource {
         val formattedSources = when (type) {
-            FileType.JAVA -> googleFormat()
-            FileType.KOTLIN -> ktFormat()
+            SourceType.JAVA -> googleFormat()
+            SourceType.KOTLIN -> ktFormat()
+            else -> error("Can't mutate mixed sources")
         }
         return MutatedSource(formattedSources.sources, originalSources, mutations, appliedMutations, unappliedMutations)
     }
@@ -237,7 +238,7 @@ class Mutater(
 ) {
     private val random = Random(seed)
     private val mutations = originalSource.sources.keys.map { name ->
-        Mutation.find<Mutation>(originalSource.getParsed(name), originalSource.type)
+        Mutation.find<Mutation>(originalSource.getParsed(name), originalSource.type.toFileType())
             .map { mutation -> SourceMutation(name, mutation) }
             .filter {
                 types.contains(it.mutation.mutationType)
@@ -300,7 +301,7 @@ fun Source.mutate(
     shuffle: Boolean = true,
     seed: Int = Random.nextInt(),
     limit: Int = 1,
-    types: Set<Mutation.Type> = Mutation.Type.values().toSet(),
+    types: Set<Mutation.Type> = Mutation.Type.entries.toSet(),
 ) =
     Mutater(this, shuffle, seed, types).mutate(limit)
 
@@ -336,7 +337,7 @@ fun Source.allMutations(
     types: Set<Mutation.Type> = ALL,
 ): List<MutatedSource> {
     val mutations = sources.keys.map { name ->
-        Mutation.find<Mutation>(getParsed(name), type).map { mutation -> SourceMutation(name, mutation) }
+        Mutation.find<Mutation>(getParsed(name), type.toFileType()).map { mutation -> SourceMutation(name, mutation) }
     }.flatten()
         .filter { types.contains(it.mutation.mutationType) }
         .filter { !suppressWithComments || !it.suppressed(sources[it.name]!!) }
@@ -365,7 +366,7 @@ fun Source.mutationStream(
     retryCount: Int = 32,
 ) = sequence {
     val mutations = sources.keys.asSequence().map { name ->
-        Mutation.find<Mutation>(getParsed(name), type).map { mutation -> SourceMutation(name, mutation) }
+        Mutation.find<Mutation>(getParsed(name), type.toFileType()).map { mutation -> SourceMutation(name, mutation) }
     }.flatten()
         .filter { types.contains(it.mutation.mutationType) }
         .filter { !suppressWithComments || !it.suppressed(sources[it.name]!!) }
@@ -422,7 +423,7 @@ fun Source.allFixedMutations(
 ): List<MutatedSource> {
     val mutations = sources.keys.asSequence()
         .map {
-            Mutation.find<Mutation>(getParsed(it), type).map { mutation -> SourceMutation(name, mutation) }
+            Mutation.find<Mutation>(getParsed(it), type.toFileType()).map { mutation -> SourceMutation(name, mutation) }
         }.flatten()
         .filter { types.contains(it.mutation.mutationType) }
         .filter { !suppressWithComments || !it.suppressed(sources[it.name]!!) }

@@ -104,7 +104,7 @@ fun CompiledSource.updateExecutionArguments(
     noFind: Boolean = false,
 ): SourceExecutionArguments {
     // Coroutines need some extra time and threads to run.
-    if (this.source.type == Source.FileType.KOTLIN && this.usesCoroutines()) {
+    if (this.source.type == Source.SourceType.KOTLIN && this.usesCoroutines()) {
         executionArguments.timeout = executionArguments.timeout.coerceAtLeast(KOTLIN_COROUTINE_MIN_TIMEOUT)
         executionArguments.maxExtraThreads =
             executionArguments.maxExtraThreads.coerceAtLeast(KOTLIN_COROUTINE_MIN_EXTRA_THREADS)
@@ -118,8 +118,9 @@ fun CompiledSource.updateExecutionArguments(
         this.source.entryClassName
     } else {
         when (this.source.type) {
-            Source.FileType.JAVA -> "Main"
-            Source.FileType.KOTLIN -> "MainKt"
+            Source.SourceType.JAVA -> "Main"
+            Source.SourceType.KOTLIN -> "MainKt"
+            else -> error("Must specify execution class for mixed sources")
         }
     }
 

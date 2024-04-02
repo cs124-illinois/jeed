@@ -129,7 +129,7 @@ val defaultRuleEngine = KtLintRuleEngine(
 )
 
 suspend fun Source.ktFormat(ktLintArguments: KtLintArguments = KtLintArguments()): Source {
-    require(type == Source.FileType.KOTLIN) { "Can't run ktlint on non-Kotlin sources" }
+    require(type == Source.SourceType.KOTLIN) { "Can't run ktlint on non-Kotlin sources" }
 
     val names = ktLintArguments.sources ?: sources.keys
     val source = this
@@ -192,7 +192,7 @@ private val shouldBeRegex = """should be (\d+)""".toRegex()
 
 @Suppress("LongMethod")
 suspend fun Source.ktLint(ktLintArguments: KtLintArguments = KtLintArguments()): KtLintResults {
-    require(type == Source.FileType.KOTLIN) { "Can't run ktlint on non-Kotlin sources" }
+    require(type == Source.SourceType.KOTLIN) { "Can't run ktlint on non-Kotlin sources" }
 
     val names = ktLintArguments.sources ?: sources.keys
     val allErrors = mutableListOf<KtLintError>()

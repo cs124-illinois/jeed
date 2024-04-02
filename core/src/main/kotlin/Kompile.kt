@@ -12,15 +12,10 @@ import org.jetbrains.kotlin.cli.common.environment.setIdeaIoUseFallback
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSourceLocation
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
-import org.jetbrains.kotlin.cli.common.modules.ModuleBuilder
-import org.jetbrains.kotlin.cli.common.modules.ModuleChunk
 import org.jetbrains.kotlin.cli.jvm.compiler.EnvironmentConfigFiles
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinToJVMBytecodeCompiler
-import org.jetbrains.kotlin.cli.jvm.compiler.configureFromArgs
-import org.jetbrains.kotlin.cli.jvm.compiler.configureSourceRoots
 import org.jetbrains.kotlin.cli.jvm.config.VirtualJvmClasspathRoot
-import org.jetbrains.kotlin.cli.jvm.config.addJavaSourceRoot
 import org.jetbrains.kotlin.cli.jvm.config.configureJdkClasspathRoots
 import org.jetbrains.kotlin.cli.jvm.configureAdvancedJvmOptions
 import org.jetbrains.kotlin.cli.jvm.configureContentRootsFromClassPath
@@ -141,7 +136,7 @@ data class KompilationArguments(
     }
 }
 
-internal class JeedMessageCollector(val source: Source, val allWarningsAsErrors: Boolean) : MessageCollector {
+internal class JeedMessageCollector(val source: Source, private val allWarningsAsErrors: Boolean) : MessageCollector {
     private val messages: MutableList<CompilationMessage> = mutableListOf()
 
     override fun clear() {
@@ -152,9 +147,9 @@ internal class JeedMessageCollector(val source: Source, val allWarningsAsErrors:
         get() = messages.filter {
             it.kind == CompilerMessageSeverity.ERROR.presentableName ||
                 allWarningsAsErrors && (
-                it.kind == CompilerMessageSeverity.WARNING.presentableName ||
-                    it.kind == CompilerMessageSeverity.STRONG_WARNING.presentableName
-                )
+                    it.kind == CompilerMessageSeverity.WARNING.presentableName ||
+                        it.kind == CompilerMessageSeverity.STRONG_WARNING.presentableName
+                    )
         }.map {
             CompilationError(it.location, it.message)
         }.distinctBy {
@@ -207,51 +202,45 @@ internal class JeedMessageCollector(val source: Source, val allWarningsAsErrors:
 
 internal fun kompileToFileManager(
     kompilationArguments: KompilationArguments,
-    kotlinSource: Source,
+    source: Source,
     parentFileManager: JeedFileManager? = kompilationArguments.parentFileManager,
-    parentVirtualFile: VirtualFile? = null,
-    javaSource: Source? = null,
-): Pair<JeedFileManager, JeedMessageCollector> {
-    require(kotlinSource.type == Source.FileType.KOTLIN) { "Kotlin compiler needs Kotlin sources" }
-    if (javaSource != null) {
-        require(javaSource.type == Source.FileType.JAVA) { "Java source should contain Java sources" }
+): Pair<JeedFileManager, List<CompilationMessage>> {
+    val kotlinSource = when (source.type) {
+        Source.SourceType.KOTLIN -> source
+        Source.SourceType.MIXED -> source.kotlinSource
+        else -> error("Can't kompile Java-only sources")
+    }
+    val javaSource = when (source.type) {
+        Source.SourceType.MIXED -> source.javaSource
+        else -> null
     }
 
     val rootDisposable = Disposer.newDisposable()
 
-    val module = ModuleBuilder(JvmProtoBufUtil.DEFAULT_MODULE_NAME, ".", "java-production")
-    val arguments = K2JVMCompilerArguments()
-    arguments.freeArgs = listOf("First.java", "Second.kt")
-    module.configureFromArgs(arguments)
-
     try {
-        val messageCollector = JeedMessageCollector(kotlinSource, kompilationArguments.arguments.allWarningsAsErrors)
+        val messageCollector = JeedMessageCollector(source, kompilationArguments.arguments.allWarningsAsErrors)
         val configuration = CompilerConfiguration().apply {
             put(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY, messageCollector)
-            put(CommonConfigurationKeys.MODULE_NAME, "web-module")
+            put(CommonConfigurationKeys.MODULE_NAME, JvmProtoBufUtil.DEFAULT_MODULE_NAME)
             put(JVMConfigurationKeys.PARAMETERS_METADATA, kompilationArguments.parameters)
             put(JVMConfigurationKeys.JVM_TARGET, kompilationArguments.jvmTarget.toJvmTarget())
             put(JVMConfigurationKeys.JDK_HOME, java.io.File(System.getProperty("java.home")))
 
-            if (kompilationArguments.parentFileManager != null) {
-                add(
-                    CLIConfigurationKeys.CONTENT_ROOTS,
-                    VirtualJvmClasspathRoot(kompilationArguments.parentFileManager.toVirtualFile()),
-                )
+            kompilationArguments.parentFileManager?.toVirtualFile()?.also { virtualRoot ->
+                add(CLIConfigurationKeys.CONTENT_ROOTS, VirtualJvmClasspathRoot(virtualRoot))
             }
-            if (parentVirtualFile != null) {
-                add(
-                    CLIConfigurationKeys.CONTENT_ROOTS,
-                    VirtualJvmClasspathRoot(parentVirtualFile),
-                )
-            }
+
+            javaSource?.sources?.entries
+                ?.map { (path, contents) -> SimpleVirtualFile(path, contents = contents.toByteArray()) }
+                ?.forEach { virtualFile ->
+                    add(CLIConfigurationKeys.CONTENT_ROOTS, VirtualJvmClasspathRoot(virtualFile))
+                }
+
             configureJavaModulesContentRoots(kompilationArguments.arguments)
             configureContentRootsFromClassPath(kompilationArguments.arguments)
             configureAdvancedJvmOptions(kompilationArguments.arguments)
             configureJdkClasspathRoots()
-            add(CLIConfigurationKeys.CONTENT_ROOTS, VirtualJvmClasspathRoot(SimpleVirtualFile("First.java", contents = "public class First {}".toByteArray())))
         }
-        // configuration.configureSourceRoots(ModuleChunk(listOf(module)).modules)
 
         // Silence scaring warning on Windows
         setIdeaIoUseFallback()
@@ -268,7 +257,7 @@ internal fun kompileToFileManager(
                 LightVirtualFile(name, KotlinLanguage.INSTANCE, contents),
                 KotlinLanguage.INSTANCE,
                 true,
-                false
+                false,
             ) as KtFile?
                 ?: error("couldn't parse source to psiFile")
         }.toMutableList()
@@ -293,32 +282,32 @@ internal fun kompileToFileManager(
             JeedFileManager(
                 parentFileManager ?: standardFileManager,
                 GeneratedClassLoader(state.factory, kompilationArguments.parentClassLoader),
-            ), messageCollector
+            ),
+            messageCollector.warnings,
         )
     } finally {
         Disposer.dispose(rootDisposable)
     }
 }
 
-@Suppress("LongMethod", "ReturnCount")
 @Throws(CompilationFailed::class)
 private fun kompile(
-    kompilationArguments: KompilationArguments,
     source: Source,
+    kompilationArguments: KompilationArguments,
     parentFileManager: JeedFileManager? = kompilationArguments.parentFileManager,
     parentClassLoader: ClassLoader? = kompilationArguments.parentClassLoader,
 ): CompiledSource {
-    require(source.type == Source.FileType.KOTLIN) { "Kotlin compiler needs Kotlin sources" }
+    require(source.type == Source.SourceType.KOTLIN) { "Kotlin compiler needs Kotlin sources" }
 
     val started = Instant.now()
     source.tryCache(kompilationArguments, started, systemCompilerName)?.let { return it }
 
-    val (fileManager, messageCollector) = kompileToFileManager(kompilationArguments, source, parentFileManager)
+    val (fileManager, messages) = kompileToFileManager(kompilationArguments, source, parentFileManager)
     val classLoader = JeedClassLoader(fileManager, parentClassLoader)
 
     return CompiledSource(
         source,
-        messageCollector.warnings,
+        messages,
         started,
         Interval(started, Instant.now()),
         classLoader,
@@ -328,9 +317,8 @@ private fun kompile(
     }
 }
 
-fun Source.kompile(kompilationArguments: KompilationArguments = KompilationArguments()): CompiledSource {
-    return kompile(kompilationArguments, this)
-}
+fun Source.kompile(kompilationArguments: KompilationArguments = KompilationArguments()) =
+    kompile(this, kompilationArguments)
 
 private val KOTLIN_COROUTINE_IMPORTS = setOf("kotlinx.coroutines", "kotlin.coroutines")
 const val KOTLIN_COROUTINE_MIN_TIMEOUT = 600L
@@ -351,7 +339,7 @@ fun JeedFileManager.toVirtualFile(): VirtualFile {
         var workingDirectory = root
         path.split("/").also { parts ->
             parts.dropLast(1).forEach { directory ->
-                workingDirectory = workingDirectory.children.find { it.name == directory } as SimpleVirtualFile?
+                workingDirectory = workingDirectory.children.find { it.name == directory }
                     ?: workingDirectory.addChild(SimpleVirtualFile(directory))
             }
             workingDirectory.addChild(
@@ -401,17 +389,12 @@ class SimpleVirtualFile(
     }
 
     override fun getName() = name
-    override fun getChildren(): Array<VirtualFile> {
-        println("""getChildren: "$name' -> (${children.toTypedArray().map { it.name }})""")
-        return children.toTypedArray()
-    }
+    override fun getChildren() = children.toTypedArray()
 
     override fun isValid() = true
     override fun isDirectory() = directory ?: children.isNotEmpty()
-    override fun contentsToByteArray(): ByteArray {
-        println("contentsToByteArray $name")
-        return contents!!
-    }
+    override fun contentsToByteArray() = contents!!
+
     override fun getModificationStamp() = created
     override fun getFileSystem() = SimpleVirtualFileSystem
 
@@ -425,8 +408,6 @@ class SimpleVirtualFile(
                     paths.addAll(child.prefixedString("$path/$name"))
                 }
             }
-        }.also {
-            println("prefixedString: ${it}")
         }
     }
 
@@ -439,21 +420,6 @@ class SimpleVirtualFile(
     override fun getInputStream() = TODO("getInputStream")
     override fun isWritable() = TODO("isWritable")
     override fun getOutputStream(p0: Any?, p1: Long, p2: Long) = TODO("getOutputStream")
-
-    override fun findChild(name: String): VirtualFile? {
-        println("findChild $name")
-        return super.findChild(name)
-    }
-
-    override fun findFileByRelativePath(relPath: String): VirtualFile? {
-        println("findFileByRelativePath $relPath")
-        return super.findFileByRelativePath(relPath)
-    }
-
-    override fun findOrCreateChildData(requestor: Any?, name: String): VirtualFile {
-        println("findOrCreateChildData $name")
-        return super.findOrCreateChildData(requestor, name)
-    }
 }
 
 @Suppress("unused")

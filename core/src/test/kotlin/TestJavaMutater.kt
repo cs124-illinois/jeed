@@ -1635,7 +1635,7 @@ public class Question {
 inline fun <reified T : Mutation> Source.checkMutations(
     checker: (mutations: List<Mutation>, contents: String) -> Unit,
 ) = getParsed(name).also { parsedSource ->
-    checker(Mutation.find<T>(parsedSource, type), contents)
+    checker(Mutation.find<T>(parsedSource, type.toFileType()), contents)
 }
 
 fun Mutation.check(contents: String, original: String, modified: String? = null, seed: Int = 124): String {

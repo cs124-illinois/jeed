@@ -22,7 +22,7 @@ public class Main {
 
         coverage.let { coverageResult ->
             coverageResult should haveFileMissedCount(1)
-            coverageResult.adjustWithFeatures(features, source.type)
+            coverageResult.adjustWithFeatures(features, source.type.toFileType())
         }.also { coverageResult ->
             coverageResult should haveFileMissedCount(0)
         }
@@ -44,7 +44,7 @@ public class Main {
         )
         source.coverage().let { coverageResult ->
             coverageResult should haveFileMissedCount(2)
-            coverageResult.adjustWithFeatures(source.features(), source.type)
+            coverageResult.adjustWithFeatures(source.features(), source.type.toFileType())
         }.also { coverageResult ->
             coverageResult should haveFileMissedCount(0)
         }
@@ -60,7 +60,7 @@ fun main() {
         )
         source.coverage().let { coverageResult ->
             coverageResult should haveFileMissedCount(3)
-            coverageResult.adjustWithFeatures(source.features(), source.type)
+            coverageResult.adjustWithFeatures(source.features(), source.type.toFileType())
         }.also { coverageResult ->
             coverageResult should haveFileMissedCount(0)
         }
@@ -77,7 +77,7 @@ fun main() {
         )
         source.coverage().let { coverageResult ->
             coverageResult should haveFileMissedCount(1)
-            coverageResult.adjustWithFeatures(source.features(), source.type)
+            coverageResult.adjustWithFeatures(source.features(), source.type.toFileType())
         }.also { coverageResult ->
             coverageResult should haveFileMissedCount(0)
         }
@@ -97,7 +97,7 @@ fun main() {
         )
         source.coverage().let { coverageResult ->
             coverageResult should haveFileMissedCount(1)
-            coverageResult.adjustWithFeatures(source.features(), source.type)
+            coverageResult.adjustWithFeatures(source.features(), source.type.toFileType())
         }.also { coverageResult ->
             coverageResult should haveFileMissedCount(0)
         }
@@ -116,7 +116,7 @@ fun main() {
         )
         source.coverage().let { coverageResult ->
             coverageResult should haveClassMissedCount(1)
-            coverageResult.adjustWithFeatures(source.features(), source.type)
+            coverageResult.adjustWithFeatures(source.features(), source.type.toFileType())
         }.also { coverageResult ->
             coverageResult should haveFileMissedCount(0)
         }
@@ -135,7 +135,7 @@ fun main() {
         )
         source.coverage().let { coverageResult ->
             coverageResult should haveFileMissedCount(1)
-            coverageResult.adjustWithFeatures(source.features(), source.type)
+            coverageResult.adjustWithFeatures(source.features(), source.type.toFileType())
         }.also { coverageResult ->
             coverageResult should haveFileMissedCount(0)
         }
@@ -158,7 +158,7 @@ fun main() {
 
         coverage.let { coverageResult ->
             coverageResult should haveFileMissedCount(1)
-            coverageResult.adjustWithFeatures(features, source.type)
+            coverageResult.adjustWithFeatures(features, source.type.toFileType())
         }.also { coverageResult ->
             coverageResult should haveFileMissedCount(0)
         }
@@ -189,7 +189,7 @@ fun main() {
 
         coverage.let { coverageResult ->
             coverageResult should haveFileMissedCount(2)
-            coverageResult.adjustWithFeatures(features, source.type)
+            coverageResult.adjustWithFeatures(features, source.type.toFileType())
         }.also { coverageResult ->
             coverageResult should haveFileMissedCount(2)
         }
@@ -224,7 +224,7 @@ fun main() {
 
         coverage.let { coverageResult ->
             coverageResult should haveFileMissedCount(1)
-            coverageResult.adjustWithFeatures(features, source.type)
+            coverageResult.adjustWithFeatures(features, source.type.toFileType())
         }.also { coverageResult ->
             coverageResult should haveFileMissedCount(0)
         }

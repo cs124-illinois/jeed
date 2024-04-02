@@ -31,9 +31,10 @@ data class Sources(val sources: Map<String, String>) : Map<String, String> by so
             it.first()
         }
 }
+
 open class Source(
     sourceMap: Map<String, String>,
-    checkSourceNames: (Sources) -> FileType = ::defaultCheckSourceNames,
+    checkSourceNames: (Sources) -> SourceType = ::defaultCheckSourceNames,
     @Transient val sourceMappingFunction: (SourceLocation) -> SourceLocation = { it },
     @Transient val leadingIndentationFunction: (SourceLocation) -> Int = { 0 },
 ) {
@@ -44,6 +45,17 @@ open class Source(
 
     val name: String
         get() = sources.name
+
+    val javaSource: Source
+        get() {
+            check(type == SourceType.MIXED) { "Need mixed sources to extract Java sources" }
+            return Source(sources.filter { (path) -> sourceFilenameToFileType(path) == FileType.JAVA })
+        }
+    val kotlinSource: Source
+        get() {
+            check(type == SourceType.MIXED) { "Need mixed sources to extract Kotlin sources" }
+            return Source(sources.filter { (path) -> sourceFilenameToFileType(path) == FileType.KOTLIN })
+        }
 
     operator fun get(filename: String) = sources[filename]
     override fun toString() = if (sources.keys.size == 1 && name == "") {
@@ -57,7 +69,13 @@ open class Source(
         KOTLIN("Kotlin"),
     }
 
-    val type: FileType
+    enum class SourceType(val type: String) {
+        JAVA("Java"),
+        KOTLIN("Kotlin"),
+        MIXED("Mixed"),
+    }
+
+    val type: SourceType
 
     init {
         require(sources.keys.isNotEmpty())
@@ -112,7 +130,7 @@ open class Source(
     fun sourceFilenameToFileType(filename: String): FileType {
         if (this is Snippet) {
             check(filename.isEmpty()) { "Snippets should not have a filename" }
-            return type
+            return type.toFileType()
         }
         return filenameToFileType(filename)
     }
@@ -162,13 +180,13 @@ open class Source(
             }.distinct()
         }
 
-        private fun defaultCheckSourceNames(sources: Sources): FileType {
+        private fun defaultCheckSourceNames(sources: Sources): SourceType {
             sources.keys.forEach { name ->
                 require(name.isNotBlank()) { "filename cannot be blank" }
             }
             val fileTypes = filenamesToFileTypes(sources.keys)
             require(fileTypes.size == 1) {
-                "mixed sources are not supported: found ${fileTypes.joinToString()}"
+                return SourceType.MIXED
             }
             if (fileTypes.contains(FileType.JAVA)) {
                 sources.keys.filter { filenameToFileType(it) == FileType.JAVA }.forEach { name ->
@@ -177,7 +195,7 @@ open class Source(
                     }
                 }
             }
-            return fileTypes.first()
+            return fileTypes.first().toSourceType()
         }
 
         fun fromJava(contents: String) = Source(mapOf("Main.java" to contents.trimStart()))
@@ -203,6 +221,7 @@ data class SourceLocation(
 }
 
 @JsonClass(generateAdapter = true)
+@Suppress("unused")
 data class Location(val line: Int, val column: Int) {
     fun asSourceLocation(source: String) = SourceLocation(source, line, column)
 }
@@ -314,10 +333,19 @@ fun Method.getQualifiedName(): String {
 
 class SourceMappingException(message: String) : Exception(message)
 
-fun Source.FileType.extension() = when {
-    this === Source.FileType.KOTLIN -> ".kt"
-    this === Source.FileType.JAVA -> ".java"
-    else -> {
-        error("Unknown filetype: $this")
-    }
+fun Source.SourceType.extension() = when {
+    this === Source.SourceType.KOTLIN -> ".kt"
+    this === Source.SourceType.JAVA -> ".java"
+    else -> error("Unknown filetype: $this")
+}
+
+internal fun Source.FileType.toSourceType() = when (this) {
+    Source.FileType.JAVA -> Source.SourceType.JAVA
+    Source.FileType.KOTLIN -> Source.SourceType.KOTLIN
+}
+
+fun Source.SourceType.toFileType() = when (this) {
+    Source.SourceType.JAVA -> Source.FileType.JAVA
+    Source.SourceType.KOTLIN -> Source.FileType.KOTLIN
+    else -> error("Can't convert MIXED to file type")
 }

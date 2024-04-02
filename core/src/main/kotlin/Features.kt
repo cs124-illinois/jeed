@@ -503,8 +503,9 @@ fun Source.features(names: Set<String> = sources.keys.toSet()): FeaturesResults 
                 names.contains(it.key)
             }.mapValues {
                 when (type) {
-                    Source.FileType.JAVA -> JavaFeatureListener(this, it).results
-                    Source.FileType.KOTLIN -> KotlinFeatureListener(this, it).results
+                    Source.SourceType.JAVA -> JavaFeatureListener(this, it).results
+                    Source.SourceType.KOTLIN -> KotlinFeatureListener(this, it).results
+                    else -> error("Can't compute features for mixed sources")
                 }
             },
         )

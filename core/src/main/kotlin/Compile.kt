@@ -45,6 +45,7 @@ val standardFileManager: JavaFileManager = run {
     }
 }
 private val standardFileManagerSyncRoot = Object()
+
 @Suppress("SpellCheckingInspection")
 private var lastMultireleaseOperand: String? = null
 
@@ -120,21 +121,18 @@ class CompiledSource(
 
 @Suppress("LongMethod", "ComplexMethod", "SpellCheckingInspection")
 @Throws(CompilationFailed::class)
-private fun compile(
-    source: Source,
+internal fun compileToFileManager(
     compilationArguments: CompilationArguments = CompilationArguments(),
+    source: Source,
     parentFileManager: JavaFileManager? = compilationArguments.parentFileManager,
-    parentClassLoader: ClassLoader? = compilationArguments.parentClassLoader ?: ClassLoader.getSystemClassLoader(),
-): CompiledSource {
-    require(source.type == Source.FileType.JAVA) { "Java compiler needs Java sources" }
-    require(!compilationArguments.isolatedClassLoader || compilationArguments.parentClassLoader == null) {
-        "Can't use parentClassLoader when isolatedClassLoader is set"
+): Pair<JeedFileManager, List<CompilationMessage>> {
+    val javaSource = when (source.type) {
+        Source.SourceType.JAVA -> source
+        Source.SourceType.MIXED -> source.javaSource
+        else -> error("Can't compile Kotlin-only sources")
     }
 
-    val started = Instant.now()
-    source.tryCache(compilationArguments, started, systemCompilerName)?.let { return it }
-
-    val units = source.sources.entries.map { Unit(it) }
+    val units = javaSource.sources.entries.map { Unit(it) }
     val results = Results()
     val fileManager = JeedFileManager(parentFileManager ?: standardFileManager)
 
@@ -206,6 +204,25 @@ private fun compile(
         CompilationMessage(it.kind.toString(), location, it.getMessage(Locale.US))
     }
 
+    return Pair(fileManager, messages)
+}
+
+@Throws(CompilationFailed::class)
+private fun compile(
+    source: Source,
+    compilationArguments: CompilationArguments = CompilationArguments(),
+    parentFileManager: JavaFileManager? = compilationArguments.parentFileManager,
+    parentClassLoader: ClassLoader? = compilationArguments.parentClassLoader ?: ClassLoader.getSystemClassLoader(),
+): CompiledSource {
+    require(source.type == Source.SourceType.JAVA) { "Java compiler needs Java sources" }
+    require(!compilationArguments.isolatedClassLoader || compilationArguments.parentClassLoader == null) {
+        "Can't use parentClassLoader when isolatedClassLoader is set"
+    }
+
+    val started = Instant.now()
+    source.tryCache(compilationArguments, started, systemCompilerName)?.let { return it }
+
+    val (fileManager, messages) = compileToFileManager(compilationArguments, source, parentFileManager)
     val actualParentClassloader = if (compilationArguments.isolatedClassLoader) {
         IsolatingClassLoader(fileManager.classFiles.keys.map { pathToClassName(it) }.toSet())
     } else {
@@ -219,8 +236,8 @@ private fun compile(
         Interval(started, Instant.now()),
         JeedClassLoader(fileManager, actualParentClassloader),
         fileManager,
-    ).also {
-        it.cache(compilationArguments)
+    ).also { compiledSource ->
+        compiledSource.cache(compilationArguments)
     }
 }
 
@@ -297,6 +314,14 @@ class JeedFileManager(private val parentFileManager: JavaFileManager) :
     val size: Int
         get() = classFiles.values.filterIsInstance<ByteSource>().sumOf { it.buffer.size() }
 
+    fun merge(other: JeedFileManager) {
+        check(classFiles.keys.intersect(other.classFiles.keys).isEmpty()) {
+            "Attempting to merge JeedFileManagers with duplicate keys"
+        }
+        other.classFiles.forEach { path, contents ->
+            classFiles[path] = contents
+        }
+    }
     private class ByteSource(path: String) :
         SimpleJavaFileObject(URI.create("bytearray:///$path"), JavaFileObject.Kind.CLASS) {
         init {
@@ -420,7 +445,6 @@ class JeedFileManager(private val parentFileManager: JavaFileManager) :
         }
     }
 }
-
 
 class JeedClassLoader(private val fileManager: JeedFileManager, parentClassLoader: ClassLoader?) :
     ClassLoader(parentClassLoader), Sandbox.SandboxableClassLoader, Sandbox.EnumerableClassLoader {

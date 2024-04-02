@@ -126,8 +126,9 @@ fun Source.complexity(names: Set<String> = sources.keys.toSet()): ComplexityResu
                 names.contains(it.key)
             }.mapValues {
                 when (type) {
-                    Source.FileType.JAVA -> JavaComplexityListener(this, it).results
-                    Source.FileType.KOTLIN -> KotlinComplexityListener(this, it).results
+                    Source.SourceType.JAVA -> JavaComplexityListener(this, it).results
+                    Source.SourceType.KOTLIN -> KotlinComplexityListener(this, it).results
+                    else -> error("Can't compute complexity on mixed sources")
                 }
             },
         )

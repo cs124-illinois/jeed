@@ -181,7 +181,7 @@ suspend fun Source.checkstyle(
     checker: ConfiguredChecker? = defaultChecker,
 ): CheckstyleResults {
     require(checker != null) { "Must pass a configured checker" }
-    require(type == Source.FileType.JAVA) { "Can't run checkstyle on non-Java sources" }
+    require(type == Source.SourceType.JAVA) { "Can't run checkstyle on non-Java sources" }
 
     val suppressAll = checkstyleArguments.suppressions.contains("*")
     val names = checkstyleArguments.sources ?: sources.keys
