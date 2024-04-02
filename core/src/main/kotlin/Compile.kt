@@ -45,8 +45,10 @@ val standardFileManager: JavaFileManager = run {
     }
 }
 private val standardFileManagerSyncRoot = Object()
+@Suppress("SpellCheckingInspection")
 private var lastMultireleaseOperand: String? = null
 
+@Suppress("PropertyName", "SpellCheckingInspection")
 @JsonClass(generateAdapter = true)
 data class CompilationArguments(
     val wError: Boolean = DEFAULT_WERROR,
@@ -116,7 +118,7 @@ class CompiledSource(
     val cached: Boolean = false,
 )
 
-@Suppress("LongMethod", "ComplexMethod")
+@Suppress("LongMethod", "ComplexMethod", "SpellCheckingInspection")
 @Throws(CompilationFailed::class)
 private fun compile(
     source: Source,
@@ -393,6 +395,7 @@ class JeedFileManager(private val parentFileManager: JavaFileManager) :
         }
     }
 
+    @Suppress("SpellCheckingInspection")
     override fun handleOption(current: String?, remaining: MutableIterator<String>?): Boolean {
         return if (parentFileManager === standardFileManager && current == "--multi-release") {
             val operand = remaining?.next() ?: error("MULTIRELEASE should have an operand")
@@ -417,6 +420,7 @@ class JeedFileManager(private val parentFileManager: JavaFileManager) :
         }
     }
 }
+
 
 class JeedClassLoader(private val fileManager: JeedFileManager, parentClassLoader: ClassLoader?) :
     ClassLoader(parentClassLoader), Sandbox.SandboxableClassLoader, Sandbox.EnumerableClassLoader {

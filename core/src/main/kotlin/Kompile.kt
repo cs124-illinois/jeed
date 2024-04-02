@@ -12,21 +12,24 @@ import org.jetbrains.kotlin.cli.common.environment.setIdeaIoUseFallback
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSourceLocation
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
+import org.jetbrains.kotlin.cli.common.modules.ModuleBuilder
+import org.jetbrains.kotlin.cli.common.modules.ModuleChunk
 import org.jetbrains.kotlin.cli.jvm.compiler.EnvironmentConfigFiles
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinToJVMBytecodeCompiler
+import org.jetbrains.kotlin.cli.jvm.compiler.configureFromArgs
+import org.jetbrains.kotlin.cli.jvm.compiler.configureSourceRoots
 import org.jetbrains.kotlin.cli.jvm.config.VirtualJvmClasspathRoot
+import org.jetbrains.kotlin.cli.jvm.config.addJavaSourceRoot
 import org.jetbrains.kotlin.cli.jvm.config.configureJdkClasspathRoots
 import org.jetbrains.kotlin.cli.jvm.configureAdvancedJvmOptions
 import org.jetbrains.kotlin.cli.jvm.configureContentRootsFromClassPath
 import org.jetbrains.kotlin.cli.jvm.configureJavaModulesContentRoots
 import org.jetbrains.kotlin.codegen.GeneratedClassLoader
-import org.jetbrains.kotlin.com.intellij.lang.java.JavaLanguage
 import org.jetbrains.kotlin.com.intellij.openapi.util.Disposer
 import org.jetbrains.kotlin.com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.kotlin.com.intellij.openapi.vfs.VirtualFileListener
 import org.jetbrains.kotlin.com.intellij.openapi.vfs.VirtualFileSystem
-import org.jetbrains.kotlin.com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.com.intellij.psi.PsiFileFactory
 import org.jetbrains.kotlin.com.intellij.psi.impl.PsiFileFactoryImpl
 import org.jetbrains.kotlin.com.intellij.testFramework.LightVirtualFile
@@ -37,6 +40,7 @@ import org.jetbrains.kotlin.config.JVMConfigurationKeys
 import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.konan.file.File
+import org.jetbrains.kotlin.metadata.jvm.deserialization.JvmProtoBufUtil
 import org.jetbrains.kotlin.psi.KtFile
 import java.nio.file.FileSystems
 import java.time.Instant
@@ -90,6 +94,7 @@ data class KompilationArguments(
 
     companion object {
         const val DEFAULT_VERBOSE = false
+
         @Suppress("SpellCheckingInspection")
         const val DEFAULT_ALLWARNINGSASERRORS = false
         const val DEFAULT_PARAMETERS = false
@@ -204,6 +209,7 @@ internal fun kompileToFileManager(
     kompilationArguments: KompilationArguments,
     kotlinSource: Source,
     parentFileManager: JeedFileManager? = kompilationArguments.parentFileManager,
+    parentVirtualFile: VirtualFile? = null,
     javaSource: Source? = null,
 ): Pair<JeedFileManager, JeedMessageCollector> {
     require(kotlinSource.type == Source.FileType.KOTLIN) { "Kotlin compiler needs Kotlin sources" }
@@ -212,6 +218,12 @@ internal fun kompileToFileManager(
     }
 
     val rootDisposable = Disposer.newDisposable()
+
+    val module = ModuleBuilder(JvmProtoBufUtil.DEFAULT_MODULE_NAME, ".", "java-production")
+    val arguments = K2JVMCompilerArguments()
+    arguments.freeArgs = listOf("First.java", "Second.kt")
+    module.configureFromArgs(arguments)
+
     try {
         val messageCollector = JeedMessageCollector(kotlinSource, kompilationArguments.arguments.allWarningsAsErrors)
         val configuration = CompilerConfiguration().apply {
@@ -227,11 +239,19 @@ internal fun kompileToFileManager(
                     VirtualJvmClasspathRoot(kompilationArguments.parentFileManager.toVirtualFile()),
                 )
             }
+            if (parentVirtualFile != null) {
+                add(
+                    CLIConfigurationKeys.CONTENT_ROOTS,
+                    VirtualJvmClasspathRoot(parentVirtualFile),
+                )
+            }
             configureJavaModulesContentRoots(kompilationArguments.arguments)
             configureContentRootsFromClassPath(kompilationArguments.arguments)
             configureAdvancedJvmOptions(kompilationArguments.arguments)
             configureJdkClasspathRoots()
+            add(CLIConfigurationKeys.CONTENT_ROOTS, VirtualJvmClasspathRoot(SimpleVirtualFile("First.java", contents = "public class First {}".toByteArray())))
         }
+        // configuration.configureSourceRoots(ModuleChunk(listOf(module)).modules)
 
         // Silence scaring warning on Windows
         setIdeaIoUseFallback()
@@ -244,14 +264,14 @@ internal fun kompileToFileManager(
 
         val psiFileFactory = PsiFileFactory.getInstance(environment.project) as PsiFileFactoryImpl
         val psiFiles = kotlinSource.sources.map { (name, contents) ->
-            val virtualFile = LightVirtualFile(name, KotlinLanguage.INSTANCE, contents)
-            psiFileFactory.trySetupPsiForFile(virtualFile, KotlinLanguage.INSTANCE, true, false) as KtFile?
+            psiFileFactory.trySetupPsiForFile(
+                LightVirtualFile(name, KotlinLanguage.INSTANCE, contents),
+                KotlinLanguage.INSTANCE,
+                true,
+                false
+            ) as KtFile?
                 ?: error("couldn't parse source to psiFile")
-        }.toMutableList() + (javaSource?.sources?.map { (name, contents) ->
-            val virtualFile = LightVirtualFile(name, JavaLanguage.INSTANCE, contents)
-            psiFileFactory.trySetupPsiForFile(virtualFile, JavaLanguage.INSTANCE, true, false)
-                ?: error("couldn't parse source to psiFile")
-        } ?: mutableListOf<PsiFile>())
+        }.toMutableList()
 
         environment::class.java.getDeclaredField("sourceFiles").also { field ->
             field.isAccessible = true
@@ -381,10 +401,17 @@ class SimpleVirtualFile(
     }
 
     override fun getName() = name
-    override fun getChildren(): Array<VirtualFile> = children.toTypedArray()
+    override fun getChildren(): Array<VirtualFile> {
+        println("""getChildren: "$name' -> (${children.toTypedArray().map { it.name }})""")
+        return children.toTypedArray()
+    }
+
     override fun isValid() = true
     override fun isDirectory() = directory ?: children.isNotEmpty()
-    override fun contentsToByteArray() = contents!!
+    override fun contentsToByteArray(): ByteArray {
+        println("contentsToByteArray $name")
+        return contents!!
+    }
     override fun getModificationStamp() = created
     override fun getFileSystem() = SimpleVirtualFileSystem
 
@@ -398,6 +425,8 @@ class SimpleVirtualFile(
                     paths.addAll(child.prefixedString("$path/$name"))
                 }
             }
+        }.also {
+            println("prefixedString: ${it}")
         }
     }
 
@@ -406,10 +435,25 @@ class SimpleVirtualFile(
 
     override fun getTimeStamp() = TODO("getTimeStamp")
     override fun refresh(p0: Boolean, p1: Boolean, p2: Runnable?) = TODO("refresh")
-    override fun getLength() = TODO("getLength")
+    override fun getLength() = contents!!.size.toLong()
     override fun getInputStream() = TODO("getInputStream")
     override fun isWritable() = TODO("isWritable")
     override fun getOutputStream(p0: Any?, p1: Long, p2: Long) = TODO("getOutputStream")
+
+    override fun findChild(name: String): VirtualFile? {
+        println("findChild $name")
+        return super.findChild(name)
+    }
+
+    override fun findFileByRelativePath(relPath: String): VirtualFile? {
+        println("findFileByRelativePath $relPath")
+        return super.findFileByRelativePath(relPath)
+    }
+
+    override fun findOrCreateChildData(requestor: Any?, name: String): VirtualFile {
+        println("findOrCreateChildData $name")
+        return super.findOrCreateChildData(requestor, name)
+    }
 }
 
 @Suppress("unused")
