@@ -5,13 +5,13 @@ plugins {
     id("org.jmailen.kotlinter") version "4.3.0" apply false
     id("com.github.ben-manes.versions") version "0.51.0"
     id("io.gitlab.arturbosch.detekt") version "1.23.6"
-    id("com.google.devtools.ksp") version "1.9.23-1.0.19" apply false
-    id("io.github.gradle-nexus.publish-plugin") version "1.3.0"
-    id("com.autonomousapps.dependency-analysis") version "1.30.0"
+    id("com.google.devtools.ksp") version "1.9.23-1.0.20" apply false
+    id("io.github.gradle-nexus.publish-plugin") version "2.0.0"
+    id("com.autonomousapps.dependency-analysis") version "1.31.0"
 }
 allprojects {
     group = "org.cs124.jeed"
-    version = "2024.4.0"
+    version = "2024.4.1"
 }
 subprojects {
     tasks.withType<Test> {

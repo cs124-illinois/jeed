@@ -1,4 +1,3 @@
-
 @file:Suppress("MatchingDeclarationName", "ktlint:standard:filename")
 
 package edu.illinois.cs.cs125.jeed.core
@@ -632,7 +631,6 @@ class JavaFeatureListener(val source: Source, entry: Map.Entry<String, String>) 
     }
 
     override fun enterExpression(ctx: ExpressionContext) {
-        @Suppress("SpellCheckingInspection")
         when (ctx.bop?.text) {
             "<", ">", "<=", ">=", "==", "!=" -> count(FeatureName.COMPARISON_OPERATORS, ctx.toLocation())
             "&&", "||" -> count(FeatureName.LOGICAL_OPERATORS, ctx.toLocation())
