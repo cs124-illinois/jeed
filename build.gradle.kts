@@ -21,11 +21,9 @@ subprojects {
         useJUnitPlatform()
         enableAssertions = true
         jvmArgs(
-            "-ea", "--enable-preview", "-Dfile.encoding=UTF-8",
-            "-Djava.security.manager=allow",
+            "-ea", "--enable-preview", "-Dfile.encoding=UTF-8", "-Djava.security.manager=allow",
             "-Xms512m", "-Xmx1500m", "-Xss256k",
-            "-XX:+UseZGC", "-XX:ZCollectionInterval=8",
-            "-XX:-OmitStackTraceInFastThrow",
+            "-XX:+UseZGC", "-XX:ZCollectionInterval=8", "-XX:-OmitStackTraceInFastThrow",
             "--add-opens", "java.base/java.lang=ALL-UNNAMED",
             "--add-exports", "jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED",
             "--add-exports", "jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED",
@@ -36,16 +34,16 @@ subprojects {
         )
     }
     tasks.withType<JavaCompile> {
-        sourceCompatibility = "17"
-        targetCompatibility = "17"
+        sourceCompatibility = "21"
+        targetCompatibility = "21"
     }
     tasks.withType<KotlinCompile> {
         compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_17)
+            jvmTarget.set(JvmTarget.JVM_21)
         }
     }
     tasks.withType<Detekt> {
-        jvmTarget = "17"
+        jvmTarget = "21"
     }
 }
 tasks.dependencyUpdates {

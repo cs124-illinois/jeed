@@ -26,6 +26,7 @@ import java.io.OutputStream
 import java.io.PrintStream
 import java.lang.UnsupportedOperationException
 import java.lang.invoke.LambdaMetafactory
+import java.lang.management.ManagementFactory
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Modifier
 import java.security.AccessControlContext
@@ -74,6 +75,12 @@ object Sandbox {
                 error("the Code Awakening agent is required on this JVM because Thread#stop functionality was removed")
             }
         }
+
+        ManagementFactory.getThreadMXBean().apply {
+            check(isThreadCpuTimeSupported && isCurrentThreadCpuTimeSupported)
+            isThreadCpuTimeEnabled = true
+        }
+
         warmPlatform()
     }
 
@@ -162,7 +169,17 @@ object Sandbox {
         val returnTimeout: Int = DEFAULT_RETURN_TIMEOUT,
         val permissionBlacklist: Boolean = DEFAULT_PERMISSION_BLACKLIST,
         @Transient val systemInStream: InputStream? = null,
+        val cpuTimeout: Long = DEFAULT_CPU_TIMEOUT,
+        val pollInterval: Long = DEFAULT_POLL_INTERVAL,
     ) {
+        init {
+            if (cpuTimeout > 0) {
+                require(pollInterval > 0) {
+                    "Must set pollInterval to use cpuTimeout"
+                }
+            }
+        }
+
         val permissions = if (permissionBlacklist) {
             permissions + BLACKLISTED_PERMISSIONS
         } else {
@@ -177,6 +194,8 @@ object Sandbox {
             const val DEFAULT_WAIT_FOR_SHUTDOWN = false
             const val DEFAULT_RETURN_TIMEOUT = 1
             const val DEFAULT_PERMISSION_BLACKLIST = false
+            const val DEFAULT_CPU_TIMEOUT = 0L
+            const val DEFAULT_POLL_INTERVAL = 10L
         }
     }
 
@@ -206,6 +225,8 @@ object Sandbox {
         val killedClassInitializers: List<String>,
         @Suppress("unused")
         val totalSafetime: Long?,
+        val cpuTime: Long,
+        val cpuTimeout: Boolean,
     ) {
         @JsonClass(generateAdapter = true)
         data class OutputLine(
@@ -360,12 +381,53 @@ object Sandbox {
             @Suppress("TooGenericExceptionCaught")
             try {
                 val confinedTask = confine(callable, sandboxedClassLoader, executionArguments)
-                val executionStarted = Instant.now()
+
                 val safetimeStarted = runtime?.totalSafepointTime
-                val taskResult = try {
-                    confinedTask.thread.start()
-                    TaskResult(confinedTask.task.get(executionArguments.timeout, TimeUnit.MILLISECONDS))
-                } catch (e: TimeoutException) {
+                val executionStarted = Instant.now()
+                var incrementalCpuTime = 0L
+                confinedTask.thread.start()
+
+                var taskResult: TaskResult<T?>? = null
+                fun remainingWallTime() =
+                    executionArguments.timeout - (Instant.now().toEpochMilli() - executionStarted.toEpochMilli())
+
+                fun cpuTimeRemaining() = if (executionArguments.cpuTimeout == 0L) {
+                    true
+                } else {
+                    incrementalCpuTime < executionArguments.cpuTimeout
+                }
+
+                var pollCount = 0
+                val pollInterval = if (executionArguments.cpuTimeout == 0L) {
+                    executionArguments.timeout
+                } else {
+                    executionArguments.pollInterval
+                }
+
+                while (taskResult == null && remainingWallTime() > 0 && cpuTimeRemaining()) {
+                    taskResult = try {
+                        TaskResult(
+                            confinedTask.task.get(
+                                remainingWallTime().coerceAtMost(pollInterval).coerceAtLeast(0),
+                                TimeUnit.MILLISECONDS,
+                            ),
+                        )
+                    } catch (e: TimeoutException) {
+                        pollCount++
+                        incrementalCpuTime =
+                            ManagementFactory.getThreadMXBean().getThreadCpuTime(confinedTask.thread.threadId())
+                        null
+                    } catch (e: CancellationException) {
+                        TaskResult(null, null)
+                    } catch (e: Throwable) {
+                        TaskResult(null, e.cause ?: e)
+                    }
+                }
+
+                check(executionArguments.cpuTimeout == 0L || pollCount == 1)
+                val cpuTimeout = remainingWallTime() > 0 && !cpuTimeRemaining()
+
+                if (taskResult == null) {
                     confinedTask.thread.interrupt()
                     val (returnValue, threw) = try {
                         Pair(
@@ -377,13 +439,9 @@ object Sandbox {
                         Pair(null, null)
                     } catch (e: Throwable) {
                         confinedTask.task.cancel(true)
-                        Pair(null, e)
+                        Pair(null, e.cause ?: e)
                     }
-                    TaskResult(returnValue, threw, true)
-                } catch (e: CancellationException) {
-                    TaskResult(null, null)
-                } catch (e: Throwable) {
-                    TaskResult(null, e.cause ?: e)
+                    taskResult = TaskResult(returnValue, threw, true)
                 }
 
                 val forceEndTime = executionStarted.plusMillis(executionArguments.timeout)
@@ -429,6 +487,8 @@ object Sandbox {
                     }.toMap(),
                     listOf(),
                     totalSafetime,
+                    confinedTask.totalCpuTime,
+                    cpuTimeout,
                 )
                 @Suppress("ThrowingExceptionsWithoutMessageOrCause")
                 runBlocking { resultChannel.send(ExecutorResult(executionResult, Exception())) }
@@ -442,11 +502,24 @@ object Sandbox {
 
     private class ConfinedTask<T>(
         val classLoader: SandboxedClassLoader,
-        val task: FutureTask<T>,
-        val thread: Thread,
+        callable: SandboxCallableArguments<T>,
         executionArguments: ExecutionArguments,
     ) {
-        val threadGroup = thread.threadGroup as? ConfinedThreadGroup ?: error("thread should be confined")
+        val task = object : FutureTask<T>(SandboxedCallable<T>(callable, classLoader)) {
+            override fun done() {
+                super.done()
+                totalCpuTime = ManagementFactory.getThreadMXBean().currentThreadCpuTime
+            }
+        }
+        val threadGroup = ConfinedThreadGroup().apply {
+            task = this@ConfinedTask
+        }
+
+        val started = Instant.now()
+        var totalCpuTime = 0L
+
+        val thread = Thread(threadGroup, task, "main")
+
         val permissionBlacklist = executionArguments.permissionBlacklist
         val permissions: Permissions = Permissions().apply {
             executionArguments.permissions.forEach { add(it) }
@@ -497,8 +570,6 @@ object Sandbox {
         var outputListener: OutputListener? = null
 
         val permissionRequests: MutableList<TaskResults.PermissionRequest> = mutableListOf()
-
-        val started: Instant = Instant.now()
 
         val pluginData = classLoader.pluginInstrumentationData.associate { (plugin, instrumentationData) ->
             plugin to plugin.createInitialData(instrumentationData, executionArguments)
@@ -654,12 +725,7 @@ object Sandbox {
         require(confinedClassLoaders.add(sandboxedClassLoader)) {
             "Duplicate class loader for confined task"
         }
-        val task = FutureTask(SandboxedCallable<T>(callable, sandboxedClassLoader))
-        val threadGroup = ConfinedThreadGroup()
-        val thread = Thread(threadGroup, task, "main")
-        val confinedTask = ConfinedTask(sandboxedClassLoader, task, thread, executionArguments)
-        threadGroup.task = confinedTask
-        return confinedTask
+        return ConfinedTask(sandboxedClassLoader, callable, executionArguments)
     }
 
     @Synchronized

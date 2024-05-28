@@ -33,7 +33,7 @@ dependencies {
     implementation("com.uchuhimo:konf-core:1.1.2")
     implementation("com.uchuhimo:konf-yaml:1.1.2")
     implementation("io.github.microutils:kotlin-logging:3.0.5")
-    implementation("org.cs124:libcs1:2024.4.0")
+    implementation("org.cs124:libcs1:2024.5.0")
     implementation("com.beyondgrader.resource-agent:agent:$agentVersion")
     implementation("com.beyondgrader.resource-agent:jeedplugin:$agentVersion")
 

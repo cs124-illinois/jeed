@@ -522,7 +522,6 @@ letters[-1] = 'X'
         executionFailed.threw!!.getStackTraceForSource(source).lines() shouldHaveSize 2
     }
     "should execute sources that use Java 14 features".config(enabled = systemCompilerVersion >= 14) {
-        @Suppress("SpellCheckingInspection")
         val executionResult = Source(
             mapOf(
                 "Main.java" to """
@@ -549,7 +548,6 @@ public class Main {
         executionResult should haveStdout("10")
     }
     "should execute sources that use Java 21 features".config(enabled = systemCompilerVersion >= 21) {
-        @Suppress("SpellCheckingInspection")
         val executionResult = Source(
             mapOf(
                 "Main.java" to """
@@ -657,12 +655,22 @@ fun haveCompleted() = object : Matcher<Sandbox.TaskResults<out Any?>> {
     }
 }
 
-fun haveTimedOut() = object : Matcher<Sandbox.TaskResults<out Any?>> {
+fun haveTimedOut(idle: Boolean = false) = object : Matcher<Sandbox.TaskResults<out Any?>> {
     override fun test(value: Sandbox.TaskResults<out Any?>): MatcherResult {
         return MatcherResult(
-            value.timeout,
+            value.timeout && (idle || value.cpuTime > 0),
             { "Code should have timed out" },
             { "Code should not have timed out" },
+        )
+    }
+}
+
+fun haveCpuTimedOut() = object : Matcher<Sandbox.TaskResults<out Any?>> {
+    override fun test(value: Sandbox.TaskResults<out Any?>): MatcherResult {
+        return MatcherResult(
+            value.cpuTimeout,
+            { "Code should have CPU timed out" },
+            { "Code should not have CPU timed out" },
         )
     }
 }

@@ -67,11 +67,7 @@ tasks.test {
         environment["JEED_CONTAINER_TMP_DIR"] = "/tmp/"
     }
 
-    if (!project.hasProperty("slowTests")) {
-        exclude("**/TestResourceExhaustion.class")
-        exclude("**/TestParallelism.class")
-        exclude("**/TestContainer.class")
-    } else if (OperatingSystem.current().isWindows) {
+    if (OperatingSystem.current().isWindows) {
         exclude("**/TestContainer.class")
     }
 }
