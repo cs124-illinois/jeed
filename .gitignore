@@ -2,6 +2,7 @@
 /.gradle
 out/
 build/
+gen/
 test-output/
 /email.txt
 *.class
@@ -11,6 +12,7 @@ test-output/
 hs_err_*.log
 *.asm
 .kotlintest/
+.tokens
 
 # User-specific stuff
 .idea/**/workspace.xml
@@ -45,3 +47,4 @@ leaktest/dump/
 .idea/google-java-format.xml
 core/src/main/gen
 
+.kotlin

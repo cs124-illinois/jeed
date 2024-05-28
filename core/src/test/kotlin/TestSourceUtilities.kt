@@ -22,6 +22,20 @@ class TestSourceUtilities : StringSpec({
         Source.fromJava("""System.out.println("Hello, world!"); // test me""").stripComments().contents shouldBe
             """System.out.println("Hello, world!"); """
     }
+    "should strip comments from inside templates".config(enabled = systemCompilerVersion >= 21) {
+        val space = " "
+        """
+        int x = 5;
+        System.out.println(STR."x = \{
+            x // the letter X
+        }.");
+        """.trimIndent().stripComments(Source.FileType.JAVA) shouldBe """
+        int x = 5;
+        System.out.println(STR."x = \{
+            x$space
+        }.");
+        """.trimIndent()
+    }
     "should strip Kotlin line comments" {
         """println("Hello, world!") // test me"""
             .stripComments(Source.FileType.KOTLIN) shouldBe """println("Hello, world!") """
@@ -172,6 +186,22 @@ public class Test {
   }
 }""".trim(),
         ).strings() shouldBe setOf("me", "foo, bar", "Here we go")
+    }
+    "should collect strings from Java 21 string templates".config(enabled = systemCompilerVersion >= 21) {
+        val threeQuotes = "\"\"\""
+        Source.fromJava(
+            """
+            public class Test {
+                public static void main() {
+                    int x = 5;
+                    System.out.println(STR."x=\{x}");
+                    System.out.println(STR.$threeQuotes
+                        The variable named "x" is set to \{x}, an int
+                    $threeQuotes);
+                }
+            }
+            """.trimIndent(),
+        ).strings() shouldBe setOf("x=", "The variable named \"x\" is set to", ", an int")
     }
     "should detect bad words in Java sources" {
         Source.fromJava(

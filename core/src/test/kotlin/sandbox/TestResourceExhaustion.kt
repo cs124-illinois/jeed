@@ -7,6 +7,7 @@ import edu.illinois.cs.cs125.jeed.core.compile
 import edu.illinois.cs.cs125.jeed.core.execute
 import edu.illinois.cs.cs125.jeed.core.fromSnippet
 import edu.illinois.cs.cs125.jeed.core.haveCompleted
+import edu.illinois.cs.cs125.jeed.core.haveCpuTimedOut
 import edu.illinois.cs.cs125.jeed.core.haveOutput
 import edu.illinois.cs.cs125.jeed.core.haveTimedOut
 import io.kotest.core.spec.style.StringSpec
@@ -33,6 +34,21 @@ while (true) {
 
         executionResult shouldNot haveCompleted()
         executionResult should haveTimedOut()
+        executionResult should haveOutput()
+    }
+    "should cpu timeout correctly on snippet" {
+        val executionResult = Source.fromSnippet(
+            """
+int i = 0;
+while (true) {
+    i++;
+}
+        """.trim(),
+        ).compile().execute(SourceExecutionArguments(cpuTimeout = 100))
+
+        executionResult shouldNot haveCompleted()
+        executionResult should haveTimedOut()
+        executionResult should haveCpuTimedOut()
         executionResult should haveOutput()
     }
     "should timeout correctly on sources" {
@@ -622,7 +638,7 @@ public class Main {
         (1..8).forEach { _ -> // Flaky
             val executionResult = compileResult.execute()
             executionResult shouldNot haveCompleted()
-            executionResult should haveTimedOut()
+            executionResult should haveTimedOut(true)
         }
     }
     "should terminate an infinite synchronization wait" {

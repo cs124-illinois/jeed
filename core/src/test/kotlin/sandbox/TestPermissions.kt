@@ -67,6 +67,26 @@ System.exit(2);
         """.trim(),
         ).compile().checkPermissions()
     }
+    "should prevent creating virtual threads".config(enabled = Runtime.version().feature() >= 21) {
+        // Warm virtual thread machinery outside sandbox
+        val virtualBuilder = Thread::class.java.methods.find { it.name == "ofVirtual" }!!.invoke(null)
+        val builderIface = Class.forName("java.lang.Thread\$Builder")
+        val startMethod = builderIface.methods.find { it.name == "start" }!!
+        val thread = startMethod.invoke(virtualBuilder, Runnable { }) as Thread
+        thread.join()
+
+        val executionResult = Source.fromSnippet(
+            """
+            Thread.ofVirtual().start(() -> {
+                while (true);
+            });
+            """.trimIndent(),
+        ).compile().execute()
+
+        executionResult shouldNot haveCompleted()
+        executionResult.threw shouldNot beInstanceOf<ExceptionInInitializerError>()
+        executionResult.permissionDenied shouldBe true
+    }
     "should prevent snippets from redirecting System.out" {
         Source.fromSnippet(
             """
@@ -282,31 +302,31 @@ public class Main {
             executionResult should haveOutput("8")
         }
     }
-    // Not sure this actually works...
-    "!it should not allow snippets to read from the internet" {
+    "it should not allow snippets to contact the internet" {
         Source.fromSnippet(
             """
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
 import java.net.URL;
 
-BufferedReader br = null;
-URL url = new URL("http://neverssl.com/");
-br = new BufferedReader(new InputStreamReader(url.openStream()));
-
-String line;
-StringBuilder sb = new StringBuilder();
-while ((line = br.readLine()) != null) {
-    sb.append(line);
-    sb.append(System.lineSeparator());
-}
-
-System.out.println(sb);
-if (br != null) {
-    br.close();
-}
+URL url = new URL("http://cs124.org");
+var connection = url.openConnection();
+connection.connect();
         """.trim(),
         ).compile().checkPermissions(SourceExecutionArguments(timeout = 10000))
+    }
+    "should not allow serving web requests".config(enabled = Runtime.version().feature() >= 18) {
+        val executionResult = Source.fromSnippet(
+            """
+import com.sun.net.httpserver.*;
+import java.net.*;
+import java.nio.file.*;
+
+SimpleFileServer.createFileServer(new InetSocketAddress(8124), Path.of("/"), SimpleFileServer.OutputLevel.NONE).start();
+        """.trim(),
+        ).compile().execute()
+
+        executionResult shouldNot haveTimedOut()
+        executionResult shouldNot haveCompleted()
+        executionResult.permissionDenied shouldBe true
     }
     "it should not allow snippets to execute commands" {
         Source.fromSnippet(
@@ -325,6 +345,7 @@ while ((line = in.readLine()) != null) {
         ).compile().checkPermissions()
     }
     "it should not allow snippets to examine other processes" {
+        ProcessHandle.current() // Warm (execute static initializers) outside sandbox
         Source.fromSnippet(
             """
 ProcessHandle.allProcesses().forEach(p -> System.out.println(p.info()));
@@ -370,23 +391,22 @@ Object compiledSource = compile.invoke(null, snippet, compileArgs);
         """.trim(),
         ).compile().checkPermissions()
     }
-    "should not allow reflection to disable the sandbox" {
+    "should not allow reflection to control the sandbox" {
         Source.fromSnippet(
             """
 import java.lang.reflect.*;
-import java.util.Map;
 
-Class<?> sandboxClass = Class.forName("edu.illinois.cs.cs125.jeed.core.Sandbox");
-Field field = sandboxClass.getDeclaredField("confinedTasks");
+Class<?> groupClass = Class.forName("edu.illinois.cs.cs125.jeed.core.Sandbox${'$'}ConfinedThreadGroup");
+Field field = groupClass.getDeclaredField("task");
 field.setAccessible(true);
-Map confinedTasks = (Map) field.get(null);
+Object confinedTask = field.get(Thread.currentThread().getThreadGroup());
         """.trim(),
         ).compile().checkPermissions()
     }
     "should not prevent trusted code from using reflection" {
         val executionResult = Sandbox.execute {
-            val sandboxClass = Class.forName("edu.illinois.cs.cs125.jeed.core.Sandbox")
-            val field = sandboxClass.getDeclaredField("confinedTasks")
+            val groupClass = Class.forName("edu.illinois.cs.cs125.jeed.core.Sandbox\$ConfinedThreadGroup")
+            val field = groupClass.getDeclaredField("task")
             field.isAccessible = true
         }
 
@@ -662,6 +682,18 @@ import java.nio.*;
 MappedByteBuffer.allocateDirect(1000);
         """.trim(),
         ).compile().checkPermissions()
+    }
+    "should not allow native memory access".config(enabled = Runtime.version().feature() >= 20) {
+        val executionResult = Source.fromSnippet(
+            """
+import java.lang.foreign.*;
+Linker linker = Linker.nativeLinker();
+MemorySegment segment = MemorySegment.ofAddress(0x200000).reinterpret(2);
+segment.set(ValueLayout.JAVA_BYTE, 0L, (byte) 100);
+        """.trim(),
+        ).compile().execute()
+        executionResult shouldNot haveCompleted()
+        executionResult.permissionDenied shouldBe true
     }
     "should not allow parallel streams to escape the sandbox" {
         repeat(3) {

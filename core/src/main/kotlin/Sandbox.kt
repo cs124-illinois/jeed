@@ -1,4 +1,4 @@
-@file:Suppress("SpellCheckingInspection", "JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE", "DEPRECATION")
+@file:Suppress("SpellCheckingInspection", "JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE", "DEPRECATION", "removal")
 
 package edu.illinois.cs.cs125.jeed.core
 
@@ -24,7 +24,9 @@ import java.io.FilePermission
 import java.io.InputStream
 import java.io.OutputStream
 import java.io.PrintStream
+import java.lang.UnsupportedOperationException
 import java.lang.invoke.LambdaMetafactory
+import java.lang.management.ManagementFactory
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Modifier
 import java.security.AccessControlContext
@@ -51,23 +53,35 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.locks.Condition
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.math.min
-import kotlin.reflect.KProperty
-import kotlin.reflect.full.memberProperties
-import kotlin.reflect.jvm.isAccessible
 import kotlin.reflect.jvm.javaMethod
 
 private typealias SandboxCallableArguments<T> = (Pair<ClassLoader, (() -> Any?) -> JeedOutputCapture>) -> T
 
 object Sandbox {
-    init {
-        warmPlatform()
-    }
-
     private val runtime = try {
         ManagementFactoryHelper.getHotspotRuntimeMBean()
     } catch (e: IllegalAccessError) {
         // Gracefully degrade if deployed without the needed --add-exports
         null
+    }
+    private val threadGroupDestroySupported = Runtime.version().feature() < 19
+    private val legacyThreadStopSupported = Runtime.version().feature() < 20
+
+    init {
+        if (!legacyThreadStopSupported) {
+            try {
+                Thread().stop()
+            } catch (_: UnsupportedOperationException) {
+                error("the Code Awakening agent is required on this JVM because Thread#stop functionality was removed")
+            }
+        }
+
+        ManagementFactory.getThreadMXBean().apply {
+            check(isThreadCpuTimeSupported && isCurrentThreadCpuTimeSupported)
+            isThreadCpuTimeEnabled = true
+        }
+
+        warmPlatform()
     }
 
     @JsonClass(generateAdapter = true)
@@ -114,9 +128,12 @@ object Sandbox {
             val DEFAULT_UNSAFE_EXCEPTIONS = setOf<String>()
             val DEFAULT_ISOLATED_CLASSES = setOf<String>()
             val DEFAULT_BLACKLISTED_METHODS = setOf(
+                MethodFilter("java.lang.foreign.", ""),
                 MethodFilter("java.lang.invoke.MethodHandles.Lookup", ""),
                 MethodFilter("java.lang.Class", "forName"),
                 MethodFilter("java.lang.Module", "add"),
+                MethodFilter("java.lang.Thread", "ofVirtual"),
+                MethodFilter("java.lang.Thread", "startVirtualThread"),
                 // can cause trouble for GC
                 MethodFilter("java.nio.", "allocateDirect"),
                 MethodFilter("java.lang.Class", "getClassLoader", allowInReload = true),
@@ -152,7 +169,17 @@ object Sandbox {
         val returnTimeout: Int = DEFAULT_RETURN_TIMEOUT,
         val permissionBlacklist: Boolean = DEFAULT_PERMISSION_BLACKLIST,
         @Transient val systemInStream: InputStream? = null,
+        val cpuTimeout: Long = DEFAULT_CPU_TIMEOUT,
+        val pollInterval: Long = DEFAULT_POLL_INTERVAL,
     ) {
+        init {
+            if (cpuTimeout > 0) {
+                require(pollInterval > 0) {
+                    "Must set pollInterval to use cpuTimeout"
+                }
+            }
+        }
+
         val permissions = if (permissionBlacklist) {
             permissions + BLACKLISTED_PERMISSIONS
         } else {
@@ -167,6 +194,8 @@ object Sandbox {
             const val DEFAULT_WAIT_FOR_SHUTDOWN = false
             const val DEFAULT_RETURN_TIMEOUT = 1
             const val DEFAULT_PERMISSION_BLACKLIST = false
+            const val DEFAULT_CPU_TIMEOUT = 0L
+            const val DEFAULT_POLL_INTERVAL = 10L
         }
     }
 
@@ -196,6 +225,8 @@ object Sandbox {
         val killedClassInitializers: List<String>,
         @Suppress("unused")
         val totalSafetime: Long?,
+        val cpuTime: Long,
+        val cpuTimeout: Boolean,
     ) {
         @JsonClass(generateAdapter = true)
         data class OutputLine(
@@ -333,8 +364,8 @@ object Sandbox {
     }
 
     private const val MAX_THREAD_SHUTDOWN_RETRIES = 256
+    private const val THREAD_JOIN_ATTEMPTS_PER_SIGNAL = 4
     private const val THREAD_SHUTDOWN_DELAY = 20L
-    private const val MAX_COROUTINE_SHUTDOWN_RETRIES = 3
 
     private data class ExecutorResult<T>(val taskResults: TaskResults<T>?, val executionException: Throwable)
     private class Executor<T>(
@@ -350,12 +381,53 @@ object Sandbox {
             @Suppress("TooGenericExceptionCaught")
             try {
                 val confinedTask = confine(callable, sandboxedClassLoader, executionArguments)
-                val executionStarted = Instant.now()
+
                 val safetimeStarted = runtime?.totalSafepointTime
-                val taskResult = try {
-                    confinedTask.thread.start()
-                    TaskResult(confinedTask.task.get(executionArguments.timeout, TimeUnit.MILLISECONDS))
-                } catch (e: TimeoutException) {
+                val executionStarted = Instant.now()
+                var incrementalCpuTime = 0L
+                confinedTask.thread.start()
+
+                var taskResult: TaskResult<T?>? = null
+                fun remainingWallTime() =
+                    executionArguments.timeout - (Instant.now().toEpochMilli() - executionStarted.toEpochMilli())
+
+                fun cpuTimeRemaining() = if (executionArguments.cpuTimeout == 0L) {
+                    true
+                } else {
+                    incrementalCpuTime < executionArguments.cpuTimeout
+                }
+
+                var pollCount = 0
+                val pollInterval = if (executionArguments.cpuTimeout == 0L) {
+                    executionArguments.timeout
+                } else {
+                    executionArguments.pollInterval
+                }
+
+                while (taskResult == null && remainingWallTime() > 0 && cpuTimeRemaining()) {
+                    taskResult = try {
+                        TaskResult(
+                            confinedTask.task.get(
+                                remainingWallTime().coerceAtMost(pollInterval).coerceAtLeast(0),
+                                TimeUnit.MILLISECONDS,
+                            ),
+                        )
+                    } catch (e: TimeoutException) {
+                        pollCount++
+                        incrementalCpuTime =
+                            ManagementFactory.getThreadMXBean().getThreadCpuTime(confinedTask.thread.threadId())
+                        null
+                    } catch (e: CancellationException) {
+                        TaskResult(null, null)
+                    } catch (e: Throwable) {
+                        TaskResult(null, e.cause ?: e)
+                    }
+                }
+
+                check(executionArguments.cpuTimeout == 0L || pollCount == 1)
+                val cpuTimeout = remainingWallTime() > 0 && !cpuTimeRemaining()
+
+                if (taskResult == null) {
                     confinedTask.thread.interrupt()
                     val (returnValue, threw) = try {
                         Pair(
@@ -367,62 +439,26 @@ object Sandbox {
                         Pair(null, null)
                     } catch (e: Throwable) {
                         confinedTask.task.cancel(true)
-                        Pair(null, e)
+                        Pair(null, e.cause ?: e)
                     }
-                    TaskResult(returnValue, threw, true)
-                } catch (e: CancellationException) {
-                    TaskResult(null, null)
-                } catch (e: Throwable) {
-                    TaskResult(null, e.cause ?: e)
+                    taskResult = TaskResult(returnValue, threw, true)
                 }
 
-                fun threadGroupActive(): Boolean {
-                    val threads = Array<Thread?>(confinedTask.threadGroup.activeCount() * 2) { null }
-                    confinedTask.threadGroup.enumerate(threads)
-                    return threads.filterNotNull().any {
-                        it.state !in setOf(Thread.State.WAITING, Thread.State.TIMED_WAITING)
-                    }
+                val forceEndTime = executionStarted.plusMillis(executionArguments.timeout)
+                fun hasTime(): Boolean {
+                    return Instant.now().isBefore(forceEndTime)
                 }
-
-                val coroutinesUsed = sandboxedClassLoader.loadedClasses.any { it.startsWith("kotlinx.coroutines.") }
-                fun anyActiveCoroutines(): Boolean {
-                    if (!coroutinesUsed) return false
-                    try {
-                        performingSafeUnconstrainedInvocation.set(true)
-                        val defaultExecutorName = "kotlinx.coroutines.DefaultExecutor"
-                        val defaultExecutorClass = sandboxedClassLoader.loadClass(defaultExecutorName)
-                        if (!sandboxedClassLoader.isClassReloaded(defaultExecutorClass)) return false // Shenanigans
-                        val defaultExecutor = defaultExecutorClass.kotlin.objectInstance
-                        val emptyProp = defaultExecutorClass.kotlin.memberProperties
-                            .first { it.name == "isEmpty" }.also { it.isAccessible = true } as KProperty<*>
-                        return emptyProp.getter.call(defaultExecutor) == false
-                    } catch (e: Throwable) {
-                        return false
-                    } finally {
-                        performingSafeUnconstrainedInvocation.set(false)
-                    }
-                }
-
-                fun workPending(): Boolean {
-                    if (threadGroupActive() || anyActiveCoroutines()) return true
-                    if (coroutinesUsed) {
-                        /*
-                         * Our checks might happen right in the time between a coroutine continuation being taken off
-                         * the queue and actually getting started running, in which case we would miss it in both
-                         * places, shutting down the thread pool before it had a chance to run. Check a few times to
-                         * increase the chance of noticing it.
-                         */
-                        repeat(MAX_COROUTINE_SHUTDOWN_RETRIES) {
-                            Thread.yield()
-                            if (threadGroupActive() || anyActiveCoroutines()) return true
+                if (executionArguments.waitForShutdown && hasTime()) {
+                    fun workPending(): Boolean {
+                        val threadsHolder = arrayOfNulls<Thread>(confinedTask.maxExtraThreads + 1)
+                        confinedTask.threadGroup.enumerate(threadsHolder)
+                        val threads = threadsHolder.filterNotNull()
+                        val threadGroupActive = threads.any {
+                            it.state !in setOf(Thread.State.WAITING, Thread.State.TIMED_WAITING)
                         }
+                        return threadGroupActive || coroutinesActive(sandboxedClassLoader, threads)
                     }
-                    return false
-                }
-                if (executionArguments.waitForShutdown && !confinedTask.shuttingDown) {
-                    while (Instant.now().isBefore(executionStarted.plusMillis(executionArguments.timeout)) &&
-                        workPending()
-                    ) {
+                    while (hasTime() && workPending()) {
                         // Give non-main tasks like coroutines a chance to finish
                         Thread.yield()
                     }
@@ -451,6 +487,8 @@ object Sandbox {
                     }.toMap(),
                     listOf(),
                     totalSafetime,
+                    confinedTask.totalCpuTime,
+                    cpuTimeout,
                 )
                 @Suppress("ThrowingExceptionsWithoutMessageOrCause")
                 runBlocking { resultChannel.send(ExecutorResult(executionResult, Exception())) }
@@ -464,11 +502,24 @@ object Sandbox {
 
     private class ConfinedTask<T>(
         val classLoader: SandboxedClassLoader,
-        val task: FutureTask<T>,
-        val thread: Thread,
+        callable: SandboxCallableArguments<T>,
         executionArguments: ExecutionArguments,
     ) {
-        val threadGroup = thread.threadGroup ?: error("thread should be in thread group")
+        val task = object : FutureTask<T>(SandboxedCallable<T>(callable, classLoader)) {
+            override fun done() {
+                super.done()
+                totalCpuTime = ManagementFactory.getThreadMXBean().currentThreadCpuTime
+            }
+        }
+        val threadGroup = ConfinedThreadGroup().apply {
+            task = this@ConfinedTask
+        }
+
+        val started = Instant.now()
+        var totalCpuTime = 0L
+
+        val thread = Thread(threadGroup, task, "main")
+
         val permissionBlacklist = executionArguments.permissionBlacklist
         val permissions: Permissions = Permissions().apply {
             executionArguments.permissions.forEach { add(it) }
@@ -484,6 +535,9 @@ object Sandbox {
 
         @Volatile
         var shuttingDown: Boolean = false
+
+        @Volatile
+        var released: Boolean = false
 
         @Volatile
         var killReason: String? = null
@@ -516,8 +570,6 @@ object Sandbox {
         var outputListener: OutputListener? = null
 
         val permissionRequests: MutableList<TaskResults.PermissionRequest> = mutableListOf()
-
-        val started: Instant = Instant.now()
 
         val pluginData = classLoader.pluginInstrumentationData.associate { (plugin, instrumentationData) ->
             plugin to plugin.createInitialData(instrumentationData, executionArguments)
@@ -654,11 +706,14 @@ object Sandbox {
         }
     }
 
-    private val confinedTasks: MutableMap<ThreadGroup, ConfinedTask<*>> = mutableMapOf()
-    private val confinedClassLoaders: MutableSet<SandboxedClassLoader> = mutableSetOf()
+    private val confinedClassLoaders: MutableSet<SandboxedClassLoader> = Collections.synchronizedSet(mutableSetOf())
 
     private fun confinedTaskByThreadGroup(): ConfinedTask<*>? {
-        return confinedTasks[Thread.currentThread().threadGroup]
+        // CAUTION: Requires ConfinedThreadGroup to already be loaded to avoid StackOverflowError
+        // It would be more solid to use a ThreadLocal to detect reentrancy, but this method is called a lot
+        val confinedThreadGroup = Thread.currentThread().threadGroup as? ConfinedThreadGroup ?: return null
+        check(!confinedThreadGroup.task.released) { "a released task should not be running in any thread" }
+        return confinedThreadGroup.task
     }
 
     @Synchronized
@@ -667,31 +722,17 @@ object Sandbox {
         sandboxedClassLoader: SandboxedClassLoader,
         executionArguments: ExecutionArguments,
     ): ConfinedTask<T> {
-        val threadGroup = object : ThreadGroup("Sandbox") {
-            @Suppress("EmptyFunctionBlock")
-            override fun uncaughtException(t: Thread?, e: Throwable?) {
-            }
-        }
-        require(!confinedClassLoaders.contains(sandboxedClassLoader)) {
+        require(confinedClassLoaders.add(sandboxedClassLoader)) {
             "Duplicate class loader for confined task"
         }
-        require(!confinedTasks.containsKey(threadGroup)) {
-            "Duplicate thread group in confined tasks map"
-        }
-        threadGroup.maxPriority = Thread.MIN_PRIORITY
-        val task = FutureTask(SandboxedCallable<T>(callable, sandboxedClassLoader))
-        val thread = Thread(threadGroup, task, "main")
-        val confinedTask = ConfinedTask(sandboxedClassLoader, task, thread, executionArguments)
-        confinedTasks[threadGroup] = confinedTask
-        confinedClassLoaders.add(sandboxedClassLoader)
-        return confinedTask
+        return ConfinedTask(sandboxedClassLoader, callable, executionArguments)
     }
 
     @Synchronized
     @Suppress("ComplexMethod", "LongMethod")
     private fun <T> release(confinedTask: ConfinedTask<T>) {
         val threadGroup = confinedTask.threadGroup
-        require(confinedTasks.containsKey(threadGroup)) { "thread group is not confined" }
+        require(!confinedTask.released) { "thread group is already released" }
 
         confinedTask.shuttingDown = true
 
@@ -702,16 +743,18 @@ object Sandbox {
         }
 
         val stoppedThreads: MutableSet<Thread> = mutableSetOf()
-        val threadGroupShutdownRetries = (0..MAX_THREAD_SHUTDOWN_RETRIES).find {
+        val threadGroupShutdownRetries = (0..MAX_THREAD_SHUTDOWN_RETRIES).find { attempt ->
             if (threadGroup.activeCount() == 0) {
                 return@find true
+            }
+            if (attempt.mod(THREAD_JOIN_ATTEMPTS_PER_SIGNAL) == 0 && !legacyThreadStopSupported) {
+                stoppedThreads.clear()
             }
             val activeThreads = arrayOfNulls<Thread>(threadGroup.activeCount() * 2)
             threadGroup.enumerate(activeThreads)
             val existingActiveThreads = activeThreads.filterNotNull()
             existingActiveThreads.filter { !stoppedThreads.contains(it) }.forEach {
                 stoppedThreads.add(it)
-                @Suppress("DEPRECATION")
                 it.stop()
             }
             threadGroup.maxPriority = Thread.NORM_PRIORITY
@@ -728,10 +771,12 @@ object Sandbox {
             throw SandboxContainmentFailure("failed to shut down thread group ($threadGroup)")
         }
 
-        @Suppress("DEPRECATION")
-        threadGroup.destroy()
-        @Suppress("DEPRECATION")
-        assert(threadGroup.isDestroyed)
+        if (threadGroupDestroySupported) {
+            threadGroup.destroy()
+            if (!threadGroup.isDestroyed) {
+                throw SandboxContainmentFailure("failed to destroy thread group ($threadGroup)")
+            }
+        }
 
         if (confinedTask.truncatedLines == 0) {
             for (console in TaskResults.OutputLine.Console.entries) {
@@ -762,8 +807,8 @@ object Sandbox {
             plugin.executionFinished(data)
         }
 
-        confinedTasks.remove(threadGroup)
         confinedClassLoaders.remove(confinedTask.classLoader)
+        confinedTask.released = true
     }
 
     private class SandboxedCallable<T>(
@@ -849,7 +894,7 @@ object Sandbox {
         override val providedClasses: MutableSet<String> = mutableSetOf()
         override val loadedClasses: MutableSet<String> = Collections.newSetFromMap(ConcurrentHashMap())
 
-        private val reloadedClasses: MutableMap<String, Class<*>> = mutableMapOf()
+        internal val reloadedClasses: MutableMap<String, Class<*>> = Collections.synchronizedMap(mutableMapOf())
         private val canCacheReloadedClasses = configuredPlugins.none { it.plugin.transformsReloadedClasses }
         private val reloader = TrustedReloader()
         var transformedReloadedClasses: Int = 0 // Not atomic, but used only for statistics purposes
@@ -950,10 +995,6 @@ object Sandbox {
             }
         }
 
-        internal fun isClassReloaded(clazz: Class<*>): Boolean {
-            return reloadedClasses[clazz.name] == clazz
-        }
-
         companion object {
             private val ALWAYS_ALLOWED_CLASS_NAMES =
                 setOf(
@@ -986,7 +1027,8 @@ object Sandbox {
 
             private fun transformFromClasspath(name: String): ByteArray {
                 val originalBytes = sandboxableClassLoader.classLoader.parent
-                    .getResourceAsStream("${name.replace('.', '/')}.class")?.readAllBytes()
+                    .getResourceAsStream("${name.replace('.', '/')}.class")
+                    ?.use { it.readAllBytes() }
                     ?: throw ClassNotFoundException("failed to reload $name")
                 return RewriteBytecode.rewrite(
                     name,
@@ -1024,7 +1066,9 @@ object Sandbox {
             ?: error("should be able to retrieve method signature")
         val enclosureMethodName = RewriteBytecode::checkSandboxEnclosure.javaMethod?.name
             ?: error("should have a method name for the enclosure checker")
-        val enclosureMethodDescriptor =
+        val enclosureReloadedMethodName = RewriteBytecode::checkSandboxEnclosureReloaded.javaMethod?.name
+            ?: error("should have a method name for the reloaded enclosure checker")
+        val enclosureMethodsDescriptor =
             Type.getMethodDescriptor(RewriteBytecode::checkSandboxEnclosure.javaMethod)
                 ?: error("should be able to retrieve method signature for enclosure checker")
         private val syncNotifyMethods = mapOf(
@@ -1111,8 +1155,15 @@ object Sandbox {
 
         @JvmStatic
         fun checkSandboxEnclosure() {
-            if (confinedTaskByThreadGroup() == null && !performingSafeUnconstrainedInvocation.get()) {
+            if (confinedTaskByThreadGroup() == null) {
                 throw SecurityException("invocation of untrusted code outside confined task")
+            }
+        }
+
+        @JvmStatic
+        fun checkSandboxEnclosureReloaded() {
+            if (confinedTaskByThreadGroup() == null && !performingSafeUnconstrainedInvocation.get()) {
+                throw SecurityException("invocation of sandbox-loaded code outside confined task")
             }
         }
 
@@ -1186,6 +1237,7 @@ object Sandbox {
                             access
                         }
                         SandboxingMethodVisitor(
+                            className ?: error("should have visited the class"),
                             unsafeExceptionClasses,
                             blacklistedMethods,
                             preinspection.badTryCatchBlockPositions,
@@ -1230,8 +1282,8 @@ object Sandbox {
                     wrapperMv.visitMethodInsn(
                         Opcodes.INVOKESTATIC,
                         rewriterClassName,
-                        enclosureMethodName,
-                        enclosureMethodDescriptor,
+                        if (context == RewritingContext.RELOADED) enclosureReloadedMethodName else enclosureMethodName,
+                        enclosureMethodsDescriptor,
                         false,
                     )
                     wrapperMv.visitLdcInsn(handle)
@@ -1354,6 +1406,7 @@ object Sandbox {
         }
 
         private class SandboxingMethodVisitor(
+            val containerClassName: String,
             val unsafeExceptionClasses: Set<Class<*>>,
             val blacklistedMethods: Set<MethodFilter>,
             val badTryCatchBlockPositions: Set<Int>,
@@ -1370,8 +1423,8 @@ object Sandbox {
                 super.visitMethodInsn(
                     Opcodes.INVOKESTATIC,
                     rewriterClassName,
-                    enclosureMethodName,
-                    enclosureMethodDescriptor,
+                    if (rewritingContext == RewritingContext.RELOADED) enclosureReloadedMethodName else enclosureMethodName,
+                    enclosureMethodsDescriptor,
                     false,
                 )
             }
@@ -1483,9 +1536,7 @@ object Sandbox {
                 } else {
                     null
                 }
-                if (rewriteTarget == null) {
-                    super.visitMethodInsn(opcode, owner, name, descriptor, isInterface)
-                } else {
+                if (rewriteTarget != null) {
                     super.visitMethodInsn(
                         Opcodes.INVOKESTATIC,
                         rewriterClassName,
@@ -1493,6 +1544,12 @@ object Sandbox {
                         Type.getMethodDescriptor(rewriteTarget.javaMethod),
                         false,
                     )
+                } else if (rewritingContext == RewritingContext.RELOADED &&
+                    isIgnorableSetContextClassLoader(containerClassName, opcode, owner, name, descriptor)
+                ) {
+                    super.visitInsn(Opcodes.POP2)
+                } else {
+                    super.visitMethodInsn(opcode, owner, name, descriptor, isInterface)
                 }
             }
 
@@ -1684,7 +1741,6 @@ object Sandbox {
     private object SandboxSecurityManager : SecurityManager() {
         private val SET_IO_PERMISSION = RuntimePermission("setIO")
         private val GET_CLASSLOADER_PERMISSION = RuntimePermission("getClassLoader")
-        private val SET_CONTEXT_CLASSLOADER_PERMISSION = RuntimePermission("setContextClassLoader")
         private val inReentrantPermissionCheck = ThreadLocal.withInitial { false }
 
         @Suppress("ReturnCount")
@@ -1737,6 +1793,7 @@ object Sandbox {
             if (thread.threadGroup != Thread.currentThread().threadGroup) {
                 confinedTask.addPermissionRequest(RuntimePermission("changeThreadGroup"), false)
             } else {
+                // Called in Thread#start only if the Code Awakening agent is active
                 if (confinedTask.shuttingDown) throw SandboxDeath()
                 systemSecurityManager?.checkAccess(thread)
             }
@@ -1791,26 +1848,8 @@ object Sandbox {
                 else -> confinedTaskByClassLoader()
             } ?: return systemSecurityManager?.checkPermission(permission) ?: return
 
-            val kotlinxWhitelisted = try {
-                if (permission == SET_CONTEXT_CLASSLOADER_PERMISSION) {
-                    val stackTrace = Thread.currentThread().stackTrace
-                    val setContextClassLoaderFrame = stackTrace.indexOfFirst {
-                        it.moduleName == "java.base" &&
-                            it.className == "java.lang.Thread" &&
-                            it.methodName == "setContextClassLoader"
-                    }
-                    val previousFrame = stackTrace[setContextClassLoaderFrame + 1]
-                    previousFrame.className.startsWith("kotlinx.coroutines")
-                } else {
-                    false
-                }
-            } catch (e: Exception) {
-                false
-            }
             try {
-                if (!kotlinxWhitelisted) {
-                    checkTaskPermission(confinedTask, permission)
-                }
+                checkTaskPermission(confinedTask, permission)
                 confinedTask.addPermissionRequest(permission, true)
             } catch (e: SecurityException) {
                 confinedTask.addPermissionRequest(permission, granted = false, throwException = false)
@@ -1934,6 +1973,16 @@ object Sandbox {
             confinedTask.redirectedOutputLines = mutableListOf()
             confinedTask.redirectedInput = StringBuilder()
             confinedTask.redirectingIOBytes = mutableListOf()
+        }
+    }
+
+    @JvmStatic
+    internal fun <T> allowingReloadedCodeInvocation(block: () -> T): T {
+        performingSafeUnconstrainedInvocation.set(true)
+        try {
+            return block()
+        } finally {
+            performingSafeUnconstrainedInvocation.set(false)
         }
     }
 
@@ -2161,6 +2210,18 @@ object Sandbox {
         }
     }
 
+    private class ConfinedThreadGroup : ThreadGroup("Sandbox") {
+        init {
+            maxPriority = Thread.MIN_PRIORITY
+        }
+
+        lateinit var task: ConfinedTask<*>
+
+        @Suppress("EmptyFunctionBlock")
+        override fun uncaughtException(t: Thread?, e: Throwable?) {
+        }
+    }
+
     // Save a bit of time by not filling in the stack trace
     private class SandboxDeath : ThreadDeath() {
         override fun fillInStackTrace() = this
@@ -2209,21 +2270,24 @@ object Sandbox {
         originalStderr = System.err
         originalStdin = System.`in`
 
+        originalPrintStreams = mapOf(
+            TaskResults.OutputLine.Console.STDOUT to originalStdout,
+            TaskResults.OutputLine.Console.STDERR to originalStderr,
+        )
+
         System.setOut(RedirectingPrintStream(TaskResults.OutputLine.Console.STDOUT))
         System.setErr(RedirectingPrintStream(TaskResults.OutputLine.Console.STDERR))
         System.setIn(RedirectingInputStream())
 
         threadPool = Executors.newFixedThreadPool(size)
 
+        // Ensure ConfinedThreadGroup is loaded before any tasks try to get their confined task
+        ConfinedThreadGroup::class.java.toString()
+
         originalSecurityManager = System.getSecurityManager()
         System.setSecurityManager(SandboxSecurityManager)
         originalProperties = System.getProperties()
         System.setProperties(SandboxedProperties(System.getProperties()))
-
-        originalPrintStreams = mapOf(
-            TaskResults.OutputLine.Console.STDOUT to originalStdout,
-            TaskResults.OutputLine.Console.STDERR to originalStderr,
-        )
 
         running = true
     }

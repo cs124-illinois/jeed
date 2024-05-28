@@ -16,17 +16,16 @@ plugins {
     id("com.google.devtools.ksp")
     id("com.ryandens.javaagent-test") version "0.5.1"
 }
+val agentVersion: String by rootProject.extra
 dependencies {
     ksp("com.squareup.moshi:moshi-kotlin-codegen:1.15.1")
 
-    testJavaagent("com.beyondgrader.resource-agent:agent:2023.9.0")
-
     antlr("org.antlr:antlr4:4.13.1")
 
-    implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:1.9.23")
+    implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:2.0.0")
 
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.0")
-    implementation("com.puppycrawl.tools:checkstyle:10.15.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
+    implementation("com.puppycrawl.tools:checkstyle:10.17.0")
     implementation("org.codehaus.plexus:plexus-container-default:2.1.1")
     implementation("com.pinterest.ktlint:ktlint-rule-engine:1.2.1")
     implementation("com.pinterest.ktlint:ktlint-ruleset-standard:1.2.1")
@@ -43,12 +42,13 @@ dependencies {
     implementation("com.google.googlejavaformat:google-java-format:1.22.0")
     implementation("net.sf.extjwnl:extjwnl:2.0.5")
     implementation("net.sf.extjwnl:extjwnl-data-wn31:1.2")
-    implementation("com.beyondgrader.resource-agent:agent:2023.9.0")
 
     api("org.jacoco:org.jacoco.core:0.8.12")
     api("com.github.ben-manes.caffeine:caffeine:3.1.8")
 
-    testImplementation("io.kotest:kotest-runner-junit5:5.8.1")
+    testImplementation("io.kotest:kotest-runner-junit5:5.9.0")
+    testImplementation("com.beyondgrader.resource-agent:agent:$agentVersion")
+    testJavaagent("com.beyondgrader.resource-agent:agent:$agentVersion")
 }
 tasks.test {
     useJUnitPlatform()
@@ -67,13 +67,13 @@ tasks.test {
         environment["JEED_CONTAINER_TMP_DIR"] = "/tmp/"
     }
 
-    if (!project.hasProperty("slowTests")) {
-        exclude("**/TestResourceExhaustion.class")
-        exclude("**/TestParallelism.class")
+    if (OperatingSystem.current().isWindows) {
         exclude("**/TestContainer.class")
     }
 }
 tasks.generateGrammarSource {
+    dependsOn("copyJavaGrammar")
+    exclude("src/main/antlr/edu/illinois/cs/cs125/jeed/antlr/lib")
     outputDirectory = File(projectDir, "src/main/java/edu/illinois/cs/cs125/jeed/core/antlr")
     arguments.addAll(
         listOf(
@@ -119,6 +119,20 @@ task("createProperties") {
             }
     }
 }
+tasks.register<Copy>("copyJavaGrammar") {
+    from(project.file("src/main/antlr/edu/illinois/cs/cs125/jeed/antlr/java"))
+    include("*.g4")
+    into(project.file("src/main/antlr/edu/illinois/cs/cs125/jeed/antlr/lib"))
+    doLast {
+        // ANTLR doesn't notice if library grammars are updated, even if the main grammar's modified date is changed
+        // When the Java grammar was modified (i.e. this task has to run), delete the dependent Snippet outputs
+        project.file("src/main/java/edu/illinois/cs/cs125/jeed/core/antlr").listFiles()?.filter {
+            it.name.startsWith("Snippet")
+        }?.forEach {
+            it.delete()
+        }
+    }
+}
 tasks {
     val sourcesJar by creating(Jar::class) {
         archiveClassifier.set("sources")
@@ -145,7 +159,7 @@ java {
     withJavadocJar()
     withSourcesJar()
     toolchain {
-        languageVersion.set(JavaLanguageVersion.of(17))
+        languageVersion.set(JavaLanguageVersion.of(21))
     }
 }
 tasks.withType<FormatTask> {
@@ -190,6 +204,9 @@ signing {
         gradle.taskGraph.allTasks.any { it is PublishToMavenRepository }
     }
     sign(publishing.publications["core"])
+    setRequired {
+        gradle.taskGraph.hasTask("publishCorePublicationToSonatype")
+    }
 }
 tasks.withType<Javadoc> {
     exclude("edu/illinois/cs/cs125/jeed/core/antlr/**")

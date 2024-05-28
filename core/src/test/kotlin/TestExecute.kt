@@ -304,12 +304,10 @@ public class Main {
         executionResult should haveCompleted()
         executionResult should haveStdout("Inner")
     }
-    "should execute sources that use Java 12 features" {
-        @Suppress("MagicNumber")
-        if (systemCompilerVersion >= 12) {
-            val executionResult = Source(
-                mapOf(
-                    "Main.java" to """
+    "should execute sources that use Java 12 features".config(enabled = systemCompilerVersion >= 12) {
+        val executionResult = Source(
+            mapOf(
+                "Main.java" to """
 public class Main {
     public static String testYieldKeyword(int switchArg) {
         return switch (switchArg) {
@@ -322,20 +320,17 @@ public class Main {
         System.out.println(testYieldKeyword(1));
     }
 }
-                """.trim(),
-                ),
-            ).compile().execute()
+            """.trim(),
+            ),
+        ).compile().execute()
 
-            executionResult should haveCompleted()
-            executionResult should haveStdout("works")
-        }
+        executionResult should haveCompleted()
+        executionResult should haveStdout("works")
     }
-    "should execute sources that use Java 13 features" {
-        @Suppress("MagicNumber")
-        if (systemCompilerVersion >= 13) {
-            val executionResult = Source(
-                mapOf(
-                    "Main.java" to """
+    "should execute sources that use Java 13 features".config(enabled = systemCompilerVersion >= 13) {
+        val executionResult = Source(
+            mapOf(
+                "Main.java" to """
 public class Main {
     public static String testYieldKeyword(int switchArg) {
         return switch (switchArg) {
@@ -348,13 +343,12 @@ public class Main {
         System.out.println(testYieldKeyword(0));
     }
 }
-                """.trim(),
-                ),
-            ).compile().execute()
+            """.trim(),
+            ),
+        ).compile().execute()
 
-            executionResult should haveCompleted()
-            executionResult should haveStdout("testing")
-        }
+        executionResult should haveCompleted()
+        executionResult should haveStdout("testing")
     }
     "should execute Kotlin snippets" {
         val executionMainResult = Source.fromSnippet(
@@ -527,13 +521,10 @@ letters[-1] = 'X'
         val executionFailed = source.kompile().execute()
         executionFailed.threw!!.getStackTraceForSource(source).lines() shouldHaveSize 2
     }
-    "should execute sources that use Java 14 features" {
-        @Suppress("MagicNumber")
-        if (systemCompilerVersion >= 14) {
-            @Suppress("SpellCheckingInspection")
-            val executionResult = Source(
-                mapOf(
-                    "Main.java" to """
+    "should execute sources that use Java 14 features".config(enabled = systemCompilerVersion >= 14) {
+        val executionResult = Source(
+            mapOf(
+                "Main.java" to """
 record Range(int lo, int hi) {
     public Range {
         if (lo > hi) {
@@ -549,13 +540,36 @@ public class Main {
         }
     }
 }
-                """.trim(),
-                ),
-            ).compile().execute()
+            """.trim(),
+            ),
+        ).compile().execute()
 
-            executionResult should haveCompleted()
-            executionResult should haveStdout("10")
+        executionResult should haveCompleted()
+        executionResult should haveStdout("10")
+    }
+    "should execute sources that use Java 21 features".config(enabled = systemCompilerVersion >= 21) {
+        val executionResult = Source(
+            mapOf(
+                "Main.java" to """
+record Point(int x, int y) {}
+record Rectangle(Point upperLeft, Point lowerRight) {}
+public class Main {
+    public static void main() {
+        Object o = new Rectangle(new Point(1, 5), new Point(12, 25));
+        if (o instanceof Rectangle(Point(int left, int top), Point(int right, int bottom))) {
+            System.out.println(left);
+            System.out.println(top);
+            System.out.println(right);
+            System.out.println(bottom);
         }
+    }
+}
+            """.trim(),
+            ),
+        ).compile().execute()
+
+        executionResult should haveCompleted()
+        executionResult should haveStdout("1\n5\n12\n25")
     }
     "should print unicode" {
         val charset = Charset.defaultCharset()
@@ -641,12 +655,22 @@ fun haveCompleted() = object : Matcher<Sandbox.TaskResults<out Any?>> {
     }
 }
 
-fun haveTimedOut() = object : Matcher<Sandbox.TaskResults<out Any?>> {
+fun haveTimedOut(idle: Boolean = false) = object : Matcher<Sandbox.TaskResults<out Any?>> {
     override fun test(value: Sandbox.TaskResults<out Any?>): MatcherResult {
         return MatcherResult(
-            value.timeout,
+            value.timeout && (idle || value.cpuTime > 0),
             { "Code should have timed out" },
             { "Code should not have timed out" },
+        )
+    }
+}
+
+fun haveCpuTimedOut() = object : Matcher<Sandbox.TaskResults<out Any?>> {
+    override fun test(value: Sandbox.TaskResults<out Any?>): MatcherResult {
+        return MatcherResult(
+            value.cpuTimeout,
+            { "Code should have CPU timed out" },
+            { "Code should not have CPU timed out" },
         )
     }
 }

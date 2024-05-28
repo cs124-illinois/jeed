@@ -379,7 +379,7 @@ class JavaFeatureListener(val source: Source, entry: Map.Entry<String, String>) 
         exitMethodOrConstructor()
     }
 
-    override fun enterInterfaceMethodDeclaration(ctx: JavaParser.InterfaceMethodDeclarationContext) {
+    override fun enterInterfaceCommonBodyDeclaration(ctx: JavaParser.InterfaceCommonBodyDeclarationContext) {
         val parameters = ctx.formalParameters().formalParameterList()?.formalParameter()?.joinToString(",") {
             it.typeType().text
         } ?: ""
@@ -419,29 +419,48 @@ class JavaFeatureListener(val source: Source, entry: Map.Entry<String, String>) 
     }
 
     override fun enterLocalVariableDeclaration(ctx: JavaParser.LocalVariableDeclarationContext) {
-        ctx.variableDeclarators().variableDeclarator().forEach { variableContext ->
-            count(FeatureName.LOCAL_VARIABLE_DECLARATIONS, variableContext.toLocation())
+        fun checkFinal() {
             ctx.variableModifier()?.find { it.FINAL() != null }?.also {
                 count(FeatureName.FINAL_VARIABLE, it.toLocation())
             }
         }
-        ctx.variableDeclarators().variableDeclarator().filter {
-            it.variableInitializer() != null
-        }.forEach { count(FeatureName.VARIABLE_ASSIGNMENTS, it.toLocation()) }
 
-        ctx.variableDeclarators().variableDeclarator().filter {
-            it.variableInitializer()?.arrayInitializer() != null
-        }.forEach {
-            count(FeatureName.ARRAY_LITERAL, it.toLocation())
-        }
+        if (ctx.variableDeclarators() != null) {
+            // Explicit type, potentially multiple declarations
 
-        val numBrackets = ctx.typeType().text.filter { it == '[' || it == ']' }.length
-        when {
-            numBrackets > 2 -> count(FeatureName.MULTIDIMENSIONAL_ARRAYS, ctx.toLocation())
-            numBrackets > 0 -> count(FeatureName.ARRAYS, ctx.toLocation())
-        }
-        for (declarator in ctx.variableDeclarators().variableDeclarator()) {
-            currentFeatures.features.identifierList.add(declarator.variableDeclaratorId().identifier().text)
+            ctx.variableDeclarators().variableDeclarator().forEach { variableContext ->
+                count(FeatureName.LOCAL_VARIABLE_DECLARATIONS, variableContext.toLocation())
+                checkFinal()
+            }
+            ctx.variableDeclarators().variableDeclarator().filter {
+                it.variableInitializer() != null
+            }.forEach { count(FeatureName.VARIABLE_ASSIGNMENTS, it.toLocation()) }
+
+            ctx.variableDeclarators().variableDeclarator().filter {
+                it.variableInitializer()?.arrayInitializer() != null
+            }.forEach {
+                count(FeatureName.ARRAY_LITERAL, it.toLocation())
+            }
+
+            val numBrackets = ctx.typeType().text.filter { it == '[' || it == ']' }.length
+            when {
+                numBrackets > 2 -> count(FeatureName.MULTIDIMENSIONAL_ARRAYS, ctx.toLocation())
+                numBrackets > 0 -> count(FeatureName.ARRAYS, ctx.toLocation())
+            }
+            currentFeatures.features.identifierList.addAll(
+                ctx.variableDeclarators().variableDeclarator().mapNotNull {
+                    it.variableDeclaratorId()?.identifier()?.text
+                },
+            )
+        } else if (ctx.identifier() != null) {
+            // Inferred type, single declaration, array literals not supported
+
+            count(FeatureName.TYPE_INFERENCE, ctx.VAR().toLocation())
+            count(FeatureName.LOCAL_VARIABLE_DECLARATIONS, ctx.expression().toLocation())
+            count(FeatureName.VARIABLE_ASSIGNMENTS, ctx.expression().toLocation())
+            checkFinal()
+
+            currentFeatures.features.identifierList.add(ctx.identifier().text)
         }
     }
 
@@ -696,8 +715,8 @@ class JavaFeatureListener(val source: Source, entry: Map.Entry<String, String>) 
                 count(FeatureName.ARRAY_ACCESS, ctx.toLocation())
             }
         }
-        if (ctx.text.startsWith("(" + ctx.typeType()?.text + ")")) {
-            if (ctx.typeType()?.primitiveType() != null) {
+        if (ctx.text.startsWith("(" + ctx.typeType()?.singleOrNull()?.text + ")")) {
+            if (ctx.typeType()?.singleOrNull()?.primitiveType() != null) {
                 count(FeatureName.PRIMITIVE_CASTING, ctx.toLocation())
             } else {
                 count(FeatureName.CASTING, ctx.toLocation())
@@ -723,10 +742,10 @@ class JavaFeatureListener(val source: Source, entry: Map.Entry<String, String>) 
         ctx.lambdaExpression()?.also {
             count(FeatureName.LAMBDA_EXPRESSIONS, ctx.toLocation())
         }
-        ctx.SWITCH()?.also {
+        ctx.switchExpression()?.also {
             count(FeatureName.SWITCH_EXPRESSION, ctx.toLocation())
-            add(FeatureName.BLOCK_START, ctx.LBRACE().toLocation())
-            add(FeatureName.BLOCK_END, ctx.RBRACE().toLocation())
+            add(FeatureName.BLOCK_START, ctx.switchExpression().LBRACE().toLocation())
+            add(FeatureName.BLOCK_END, ctx.switchExpression().RBRACE().toLocation())
         }
     }
 
@@ -737,24 +756,24 @@ class JavaFeatureListener(val source: Source, entry: Map.Entry<String, String>) 
         ctx.classOrInterfaceType()?.also {
             currentFeatures.features.typeList.add(it.text)
         }
-        ctx.classOrInterfaceType()?.identifier()?.filter {
+        ctx.classOrInterfaceType()?.typeIdentifier()?.takeIf {
             it.text == "String"
-        }?.forEach { count(FeatureName.STRING, it.toLocation()) }
+        }?.let { count(FeatureName.STRING, it.toLocation()) }
 
-        ctx.classOrInterfaceType()?.identifier()?.filter {
+        ctx.classOrInterfaceType()?.typeIdentifier()?.takeIf {
             it.text == "Stream"
-        }?.forEach { count(FeatureName.STREAM, it.toLocation()) }
+        }?.let { count(FeatureName.STREAM, it.toLocation()) }
 
-        ctx.classOrInterfaceType()?.identifier()?.filter {
+        ctx.classOrInterfaceType()?.typeIdentifier()?.takeIf {
             it.text == "Comparable"
-        }?.forEach { count(FeatureName.COMPARABLE, it.toLocation()) }
+        }?.let { count(FeatureName.COMPARABLE, it.toLocation()) }
 
-        ctx.classOrInterfaceType()?.identifier()?.filter {
+        ctx.classOrInterfaceType()?.typeIdentifier()?.takeIf {
             when (it.text) {
                 "Boolean", "Byte", "Character", "Float", "Integer", "Long", "Short", "Double" -> true
                 else -> false
             }
-        }?.forEach { count(FeatureName.BOXING_CLASSES, it.toLocation()) }
+        }?.let { count(FeatureName.BOXING_CLASSES, it.toLocation()) }
 
         ctx.classOrInterfaceType()?.typeArguments()?.forEach {
             count(FeatureName.TYPE_PARAMETERS, it.toLocation())
@@ -762,6 +781,16 @@ class JavaFeatureListener(val source: Source, entry: Map.Entry<String, String>) 
 
         if (ctx.text == "var" || ctx.text == "val") {
             count(FeatureName.TYPE_INFERENCE, ctx.toLocation())
+        }
+    }
+
+    override fun enterLambdaLVTIParameter(ctx: JavaParser.LambdaLVTIParameterContext) {
+        count(FeatureName.TYPE_INFERENCE, ctx.VAR().toLocation())
+    }
+
+    override fun enterResource(ctx: JavaParser.ResourceContext) {
+        ctx.VAR()?.let {
+            count(FeatureName.TYPE_INFERENCE, it.toLocation())
         }
     }
 

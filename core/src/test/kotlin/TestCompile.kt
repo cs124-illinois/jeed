@@ -364,11 +364,10 @@ Widget w = new Widget();
         ).compile()
         compiledSource should haveDefinedExactlyTheseClasses(setOf("Main"))
     }
-    "should compile sources that use Java 12 features" {
-        if (systemCompilerVersion >= 12) {
-            val compiledSource = Source(
-                mapOf(
-                    "Test.java" to """
+    "should compile sources that use Java 12 features".config(enabled = systemCompilerVersion >= 12) {
+        val compiledSource = Source(
+            mapOf(
+                "Test.java" to """
 public class Test {
     public static String testYieldKeyword(int switchArg) {
         return switch (switchArg) {
@@ -381,18 +380,16 @@ public class Test {
         System.out.println(testYieldKeyword(1));
     }
 }""".trim(),
-                ),
-            ).compile()
+            ),
+        ).compile()
 
-            compiledSource should haveDefinedExactlyTheseClasses(setOf("Test"))
-            compiledSource should haveProvidedThisManyClasses(0)
-        }
+        compiledSource should haveDefinedExactlyTheseClasses(setOf("Test"))
+        compiledSource should haveProvidedThisManyClasses(0)
     }
-    "should compile sources that use Java 13 features" {
-        if (systemCompilerVersion >= 13) {
-            val compiledSource = Source(
-                mapOf(
-                    "Test.java" to """
+    "should compile sources that use Java 13 features".config(enabled = systemCompilerVersion >= 13) {
+        val compiledSource = Source(
+            mapOf(
+                "Test.java" to """
 public class Test {
     public static String testYieldKeyword(int switchArg) {
         return switch (switchArg) {
@@ -405,12 +402,11 @@ public class Test {
         System.out.println(testYieldKeyword(1));
     }
 }""".trim(),
-                ),
-            ).compile()
+            ),
+        ).compile()
 
-            compiledSource should haveDefinedExactlyTheseClasses(setOf("Test"))
-            compiledSource should haveProvidedThisManyClasses(0)
-        }
+        compiledSource should haveDefinedExactlyTheseClasses(setOf("Test"))
+        compiledSource should haveProvidedThisManyClasses(0)
     }
     "should fail on bare lists" {
         val failedCompilation = shouldThrow<CompilationFailed> {
@@ -447,12 +443,11 @@ public class Test {
             compiledSource should haveProvidedThisManyClasses(0)
         }
     }
-    "should compile sources that use Java 14 preview features" {
-        if (systemCompilerVersion >= 14) {
-            val tripleQuote = "\"\"\""
-            val compiledSource = Source(
-                mapOf(
-                    "Test.java" to """
+    "should compile sources that use Java 14 preview features".config(enabled = systemCompilerVersion >= 14) {
+        val tripleQuote = "\"\"\""
+        val compiledSource = Source(
+            mapOf(
+                "Test.java" to """
 public class Test {
     public static void main() {
         String textBlock = $tripleQuote
@@ -460,34 +455,14 @@ public class Test {
                            $tripleQuote;
     }
 }""".trim(),
-                ),
-            ).compile()
+            ),
+        ).compile()
 
-            compiledSource should haveDefinedExactlyTheseClasses(setOf("Test"))
-            compiledSource should haveProvidedThisManyClasses(0)
-        }
+        compiledSource should haveDefinedExactlyTheseClasses(setOf("Test"))
+        compiledSource should haveProvidedThisManyClasses(0)
     }
-    "should not support Java 14 preview features when preview is disabled" {
-        if (systemCompilerVersion in 14..14) {
-            shouldThrow<CompilationFailed> {
-                val tripleQuote = "\"\"\""
-                Source(
-                    mapOf(
-                        "Test.java" to """
-public class Test {
-    public static void main() {
-        String textBlock = $tripleQuote
-                           Hello world!
-                           $tripleQuote;
-    }
-}""".trim(),
-                    ),
-                ).compile(CompilationArguments(enablePreview = false))
-            }
-        }
-    }
-    "should support Java 15 features" {
-        if (systemCompilerVersion >= 15) {
+    "should not support Java 14 preview features when preview is disabled".config(enabled = systemCompilerVersion == 14) {
+        shouldThrow<CompilationFailed> {
             val tripleQuote = "\"\"\""
             Source(
                 mapOf(
@@ -502,6 +477,67 @@ public class Test {
                 ),
             ).compile(CompilationArguments(enablePreview = false))
         }
+    }
+    "should support Java 15 features".config(enabled = systemCompilerVersion >= 15) {
+        val tripleQuote = "\"\"\""
+        Source(
+            mapOf(
+                "Test.java" to """
+public class Test {
+    public static void main() {
+        String textBlock = $tripleQuote
+                           Hello world!
+                           $tripleQuote;
+    }
+}""".trim(),
+            ),
+        ).compile(CompilationArguments(enablePreview = false))
+    }
+    "should support Java 21 patterns".config(enabled = systemCompilerVersion >= 21) {
+        @Suppress("SpellCheckingInspection")
+        Source(
+            mapOf(
+                "Test.java" to """
+record Point(int x, int y) {}
+public class Test {
+    public void test(Object obj) {
+        if (obj instanceof Point(int x, int y)) {
+            System.out.println(x + ", " + y);
+        }
+    }
+}""".trim(),
+            ),
+        ).compile(CompilationArguments(enablePreview = false))
+    }
+    "should support Java 21 pattern switch".config(enabled = systemCompilerVersion >= 21) {
+        Source(
+            mapOf(
+                "Test.java" to """
+public class Test {
+    public String test(Object obj) {
+        return switch (obj) {
+            case Integer i when i > 0 -> "a positive number: " + i;
+            case Integer i -> "not a positive number: " + i;
+            case String s -> "a string: " + s;
+            default -> "something else";
+        };
+    }
+}""".trim(),
+            ),
+        ).compile(CompilationArguments(enablePreview = false))
+    }
+    "should support Java 21 preview features".config(enabled = systemCompilerVersion == 21) {
+        Source(
+            mapOf(
+                "Test.java" to """
+public class Test {
+    public static void main() {
+        String s = "weird";
+        System.out.println(STR."this syntax is \{s}");
+    }
+}""".trim(),
+            ),
+        ).compile(CompilationArguments(enablePreview = true))
     }
     "should load classes from a separate classloader" {
         val first = Source(

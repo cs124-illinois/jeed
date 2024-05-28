@@ -8,6 +8,7 @@ import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 import java.lang.reflect.Modifier
 import java.lang.reflect.ReflectPermission
+import java.net.SocketPermission
 import java.security.Permission
 import java.util.PropertyPermission
 
@@ -31,6 +32,8 @@ class SourceExecutionArguments(
     internal val plugins: MutableList<ConfiguredSandboxPlugin<*, *>> = mutableListOf(),
     systemInStream: InputStream? = null,
     permissionBlackList: Boolean = DEFAULT_PERMISSION_BLACKLIST,
+    cpuTimeout: Long = DEFAULT_CPU_TIMEOUT,
+    pollInterval: Long = DEFAULT_POLL_INTERVAL,
 ) : Sandbox.ExecutionArguments(
     timeout,
     when (permissionBlackList) {
@@ -45,6 +48,8 @@ class SourceExecutionArguments(
     returnTimeout,
     systemInStream = systemInStream,
     permissionBlacklist = permissionBlackList,
+    cpuTimeout = cpuTimeout,
+    pollInterval = pollInterval,
 ) {
     companion object {
         const val DEFAULT_KLASS = "Main"
@@ -65,10 +70,10 @@ class SourceExecutionArguments(
             RuntimePermission("charsetProvider"),
         )
         val GENERALLY_UNSAFE_PERMISSIONS = setOf(
-            FilePermission("*", "read"),
-            FilePermission("*", "write"),
+            FilePermission("<<ALL FILES>>", "read,write,execute,delete,readlink"),
             RuntimePermission("manageProcess"),
             RuntimePermission("writeFileDescriptor"),
+            SocketPermission("*", "resolve,connect,listen,accept"),
         )
     }
 

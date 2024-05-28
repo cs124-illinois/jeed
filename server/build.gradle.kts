@@ -15,35 +15,31 @@ plugins {
     id("com.google.devtools.ksp")
     id("com.ryandens.javaagent-test") version "0.5.1"
 }
+val agentVersion: String by rootProject.extra
 dependencies {
     ksp("com.squareup.moshi:moshi-kotlin-codegen:1.15.1")
 
-    testJavaagent("com.beyondgrader.resource-agent:agent:2023.9.0")
+    testJavaagent("com.beyondgrader.resource-agent:agent:$agentVersion")
 
     implementation(project(":core"))
 
-    implementation("io.ktor:ktor-server-netty:2.3.10")
-    implementation("io.ktor:ktor-server-cors:2.3.10")
-    implementation("io.ktor:ktor-server-content-negotiation:2.3.10")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.0")
+    implementation("io.ktor:ktor-server-netty:2.3.11")
+    implementation("io.ktor:ktor-server-cors:2.3.11")
+    implementation("io.ktor:ktor-server-content-negotiation:2.3.11")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
     implementation("com.squareup.moshi:moshi-kotlin:1.15.1")
     implementation("org.cs124:ktor-moshi:2024.3.0")
     implementation("ch.qos.logback:logback-classic:1.5.6")
     implementation("com.uchuhimo:konf-core:1.1.2")
     implementation("com.uchuhimo:konf-yaml:1.1.2")
     implementation("io.github.microutils:kotlin-logging:3.0.5")
-    implementation("org.cs124:libcs1:2024.4.0")
+    implementation("org.cs124:libcs1:2024.5.0")
+    implementation("com.beyondgrader.resource-agent:agent:$agentVersion")
+    implementation("com.beyondgrader.resource-agent:jeedplugin:$agentVersion")
 
-    implementation("com.beyondgrader.resource-agent:agent:2023.9.0")  {
-        exclude(group = "com.github.cs124-illinois.jeed", module = "core")
-    }
-    implementation("com.beyondgrader.resource-agent:jeedplugin:2023.9.0")  {
-        exclude(group = "com.github.cs124-illinois.jeed", module = "core")
-    }
-
-    testImplementation("io.kotest:kotest-runner-junit5:5.8.1")
+    testImplementation("io.kotest:kotest-runner-junit5:5.9.0")
     testImplementation("io.kotest:kotest-assertions-ktor:4.4.3")
-    testImplementation("io.ktor:ktor-server-test-host:2.3.10")
+    testImplementation("io.ktor:ktor-server-test-host:2.3.11")
 }
 
 application {
@@ -124,7 +120,7 @@ java {
     withJavadocJar()
     withSourcesJar()
     toolchain {
-        languageVersion.set(JavaLanguageVersion.of(17))
+        languageVersion.set(JavaLanguageVersion.of(21))
     }
 }
 tasks.withType<FormatTask> {

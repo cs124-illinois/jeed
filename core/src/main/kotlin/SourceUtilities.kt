@@ -62,12 +62,12 @@ internal fun Source.ParsedSource.strings(type: Source.FileType): Set<String> {
             JavaLexer(charStream).apply {
                 removeErrorListeners()
             }.allTokens
-                .filter { it.type == JavaLexer.STRING_LITERAL || it.type == JavaLexer.TEXT_BLOCK_LITERAL }
-                .map {
+                .mapNotNull {
                     when (it.type) {
                         JavaLexer.STRING_LITERAL -> it.text.removeSurrounding("\"").trim()
-                        JavaLexer.TEXT_BLOCK_LITERAL -> it.text.removeSurrounding("\"\"\"").trim()
-                        else -> error("Bad token type")
+                        JavaLexer.TEXT_BLOCK -> it.text.removeSurrounding("\"\"\"").trim()
+                        JavaLexer.TEMPLATE_CONSTANT_PART -> it.text.trim()
+                        else -> null
                     }
                 }
                 .toSet()
