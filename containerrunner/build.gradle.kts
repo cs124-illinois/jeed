@@ -10,10 +10,10 @@ plugins {
     id("io.gitlab.arturbosch.detekt")
 }
 dependencies {
-    implementation("ch.qos.logback:logback-classic:1.5.3")
+    implementation("ch.qos.logback:logback-classic:1.5.6")
     implementation("io.github.microutils:kotlin-logging:3.0.5")
-    implementation("com.github.ajalt.clikt:clikt:4.2.2")
-    implementation("io.github.classgraph:classgraph:4.8.167")
+    implementation("com.github.ajalt.clikt:clikt:4.4.0")
+    implementation("io.github.classgraph:classgraph:4.8.172")
 }
 application {
     mainClass.set("edu.illinois.cs.cs125.jeed.containerrunner.MainKt")
