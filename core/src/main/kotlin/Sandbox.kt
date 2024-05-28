@@ -345,7 +345,6 @@ object Sandbox {
     private const val MAX_THREAD_SHUTDOWN_RETRIES = 256
     private const val THREAD_JOIN_ATTEMPTS_PER_SIGNAL = 4
     private const val THREAD_SHUTDOWN_DELAY = 20L
-    private const val MAX_COROUTINE_SHUTDOWN_RETRIES = 3
 
     private data class ExecutorResult<T>(val taskResults: TaskResults<T>?, val executionException: Throwable)
     private class Executor<T>(
@@ -1676,7 +1675,6 @@ object Sandbox {
     private object SandboxSecurityManager : SecurityManager() {
         private val SET_IO_PERMISSION = RuntimePermission("setIO")
         private val GET_CLASSLOADER_PERMISSION = RuntimePermission("getClassLoader")
-        private val SET_CONTEXT_CLASSLOADER_PERMISSION = RuntimePermission("setContextClassLoader")
         private val inReentrantPermissionCheck = ThreadLocal.withInitial { false }
 
         @Suppress("ReturnCount")
@@ -2206,6 +2204,11 @@ object Sandbox {
         originalStderr = System.err
         originalStdin = System.`in`
 
+        originalPrintStreams = mapOf(
+            TaskResults.OutputLine.Console.STDOUT to originalStdout,
+            TaskResults.OutputLine.Console.STDERR to originalStderr,
+        )
+
         System.setOut(RedirectingPrintStream(TaskResults.OutputLine.Console.STDOUT))
         System.setErr(RedirectingPrintStream(TaskResults.OutputLine.Console.STDERR))
         System.setIn(RedirectingInputStream())
@@ -2219,11 +2222,6 @@ object Sandbox {
         System.setSecurityManager(SandboxSecurityManager)
         originalProperties = System.getProperties()
         System.setProperties(SandboxedProperties(System.getProperties()))
-
-        originalPrintStreams = mapOf(
-            TaskResults.OutputLine.Console.STDOUT to originalStdout,
-            TaskResults.OutputLine.Console.STDERR to originalStderr,
-        )
 
         running = true
     }

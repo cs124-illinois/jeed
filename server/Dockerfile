@@ -1,12 +1,13 @@
-FROM openjdk:17-jdk-slim
+FROM openjdk:21-jdk-slim
 
 RUN apt update && \
-    apt install -y --no-install-recommends software-properties-common \
-    ca-certificates gpg-agent curl gnupg
-RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add - && \
-    add-apt-repository "deb [arch=amd64,arm64] https://download.docker.com/linux/ubuntu bionic stable" && \
+    apt install -y --no-install-recommends ca-certificates curl && \
+    install -m 0755 -d /etc/apt/keyrings && \
+    curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc && \
+    chmod a+r /etc/apt/keyrings/docker.asc && \
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null && \
     apt update && \
-    apt install -y --no-install-recommends docker-ce-cli=5:20.10.16~3-0~ubuntu-bionic
+    apt install -y --no-install-recommends docker-ce-cli
 
 ARG TARGETARCH
 ENV TINI_VERSION v0.19.0
@@ -16,8 +17,8 @@ ENTRYPOINT ["/tini", "--"]
 
 WORKDIR /
 COPY *.jar jeed.jar
-CMD java -ea --enable-preview -Dfile.encoding=UTF-8 \
-    -Xss256k -XX:+UseZGC -XX:-OmitStackTraceInFastThrow \
+CMD java -ea --enable-preview -Dfile.encoding=UTF-8 -Djava.security.manager=allow \
+    -Xss256k -XX:+UseZGC -XX:ZCollectionInterval=8 -XX:-OmitStackTraceInFastThrow \
     --add-opens java.base/java.lang=ALL-UNNAMED \
     --add-opens java.base/java.util=ALL-UNNAMED \
     --add-exports jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED \
