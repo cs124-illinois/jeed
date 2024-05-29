@@ -171,12 +171,17 @@ object Sandbox {
         @Transient val systemInStream: InputStream? = null,
         val cpuTimeout: Long = DEFAULT_CPU_TIMEOUT,
         val pollInterval: Long = DEFAULT_POLL_INTERVAL,
+        val maxThreadPriority: Int = Thread.MIN_PRIORITY,
+        val defaultThreadPriority: Int = Thread.MIN_PRIORITY,
     ) {
         init {
             if (cpuTimeout > 0) {
                 require(pollInterval > 0) {
                     "Must set pollInterval to use cpuTimeout"
                 }
+            }
+            require(defaultThreadPriority <= maxThreadPriority) {
+                "defaultThreadPriority must be less than or equal to maxThreadPriority"
             }
         }
 
@@ -415,7 +420,7 @@ object Sandbox {
                     } catch (e: TimeoutException) {
                         pollCount++
                         incrementalCpuTime =
-                            ManagementFactory.getThreadMXBean().getThreadCpuTime(confinedTask.thread.threadId())
+                            ManagementFactory.getThreadMXBean().getThreadCpuTime(confinedTask.thread.id)
                         null
                     } catch (e: CancellationException) {
                         TaskResult(null, null)
@@ -511,14 +516,16 @@ object Sandbox {
                 totalCpuTime = ManagementFactory.getThreadMXBean().currentThreadCpuTime
             }
         }
-        val threadGroup = ConfinedThreadGroup().apply {
+        val threadGroup = ConfinedThreadGroup(executionArguments.maxThreadPriority).apply {
             task = this@ConfinedTask
         }
 
         val started = Instant.now()
         var totalCpuTime = 0L
 
-        val thread = Thread(threadGroup, task, "main")
+        val thread = Thread(threadGroup, task, "main").apply {
+            priority = executionArguments.defaultThreadPriority
+        }
 
         val permissionBlacklist = executionArguments.permissionBlacklist
         val permissions: Permissions = Permissions().apply {
@@ -2210,9 +2217,9 @@ object Sandbox {
         }
     }
 
-    private class ConfinedThreadGroup : ThreadGroup("Sandbox") {
+    private class ConfinedThreadGroup(setMaxPriority: Int) : ThreadGroup("Sandbox") {
         init {
-            maxPriority = Thread.MIN_PRIORITY
+            maxPriority = setMaxPriority
         }
 
         lateinit var task: ConfinedTask<*>

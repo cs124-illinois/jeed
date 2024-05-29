@@ -66,7 +66,6 @@ tasks.test {
         environment["PATH"] = "${environment["PATH"]}:/usr/local/bin/"
         environment["JEED_CONTAINER_TMP_DIR"] = "/tmp/"
     }
-
     if (OperatingSystem.current().isWindows) {
         exclude("**/TestContainer.class")
     }

@@ -12,6 +12,7 @@ import java.io.InputStreamReader
 import java.time.Instant
 import java.util.UUID
 import java.util.concurrent.TimeUnit
+import edu.illinois.cs.cs125.jeed.core.version as JEED_VERSION
 
 private val CONTAINER_TMP_DIR = System.getenv("JEED_CONTAINER_TMP_DIR")
 
@@ -36,7 +37,7 @@ data class ContainerExecutionArguments(
 ) {
     companion object {
         @Suppress("SpellCheckingInspection")
-        const val DEFAULT_IMAGE = "cs125/jeed-containerrunner:latest"
+        val DEFAULT_IMAGE = "cs124/jeed-containerrunner:$JEED_VERSION"
         const val DEFAULT_TIMEOUT = 2000L
     }
 }

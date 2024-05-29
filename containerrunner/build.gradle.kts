@@ -39,7 +39,7 @@ task("createProperties") {
             }
     }
 }
-val dockerName = "cs125/jeed-containerrunner"
+val dockerName = "cs124/jeed-containerrunner"
 tasks.processResources {
     dependsOn("createProperties")
 }
