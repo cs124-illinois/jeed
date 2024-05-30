@@ -1,4 +1,4 @@
 java openjdk-21.0.2
-nodejs 18.19.0
+nodejs 20.13.1
 yarn 1.22.22
-python 3.10.12
+python 3.11.4

@@ -70,6 +70,8 @@ const JeedDemo: React.FC = () => {
   const [response, setResponse] = useState<{ response?: Response; error?: string } | undefined>()
   const { run: runJeed } = useJeed()
   const aceRef = useRef<IAceEditor>()
+  const [loaded, setLoaded] = useState(false)
+  const [outputLoaded, setOutputLoaded] = useState(false)
 
   const run = useCallback(
     async (job: "run" | "lint" | "complexity" | "features" | "disassemble") => {
@@ -200,7 +202,7 @@ const JeedDemo: React.FC = () => {
   return (
     <>
       <AceEditor
-        mode={mode}
+        mode={loaded ? mode : ""}
         theme="github"
         width="100%"
         height="16rem"
@@ -210,14 +212,16 @@ const JeedDemo: React.FC = () => {
         showPrintMargin={false}
         onBeforeLoad={(ace) => {
           ace.config.set("basePath", `https://cdn.jsdelivr.net/npm/ace-builds@${ace.version}/src-min-noconflict`)
+          ace.config.set("modePath", `https://cdn.jsdelivr.net/npm/ace-builds@${ace.version}/src-min-noconflict`)
+          ace.config.set("themePath", `https://cdn.jsdelivr.net/npm/ace-builds@${ace.version}/src-min-noconflict`)
         }}
         onLoad={(ace) => {
-          aceRef.current = ace
+          aceRef.current = ace as IAceEditor
+          setLoaded(true)
         }}
         onChange={setValue}
         commands={commands}
-        setOptions={{ tabSize: 2 }}
-        editorProps={{}}
+        setOptions={{ useSoftTabs: true, tabSize: 2 }}
       />
       <div style={{ marginTop: 8 }}>
         <button
@@ -301,13 +305,14 @@ const JeedDemo: React.FC = () => {
           <AceEditor
             readOnly
             theme="github"
-            mode="json"
+            mode={outputLoaded ? "json" : ""}
             height="32rem"
             width="100%"
             showPrintMargin={false}
             value={JSON.stringify(response.response, null, 2)}
-            setOptions={{}}
-            editorProps={{}}
+            onLoad={() => {
+              setOutputLoaded(true)
+            }}
           />
         </div>
       )}

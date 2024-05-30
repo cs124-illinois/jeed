@@ -151,7 +151,14 @@ export const SourceExecutionArguments = Partial({
   permissions: Array(Permission),
   maxExtraThreads: Number,
   maxOutputLines: Number,
+  maxIOBytes: Number,
   classLoaderConfiguration: ClassLoaderConfiguration,
+  dryRun: Boolean,
+  waitForShutdown: Boolean,
+  returnTimeout: Number,
+  permissionBlackList: Boolean,
+  cpuTimeout: Number,
+  pollInterval: Number,
 })
 export type SourceExecutionArguments = Static<typeof SourceExecutionArguments>
 
