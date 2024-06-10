@@ -421,7 +421,7 @@ try {
 
             executionResult shouldNot haveCompleted()
             executionResult.permissionDenied shouldBe true
-            executionResult should haveTimedOut()
+            executionResult should haveTimedOut(idle = true)
         }
     }
     "should shut down memory exhaustion bombs" {
