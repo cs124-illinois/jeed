@@ -5,9 +5,7 @@ package edu.illinois.cs.cs125.jeed.core
 import com.github.benmanes.caffeine.cache.Cache
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.squareup.moshi.JsonClass
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.decapitalizeAsciiOnly
 import org.objectweb.asm.ClassReader
 import org.objectweb.asm.ClassVisitor
@@ -43,6 +41,7 @@ import java.util.Properties
 import java.util.PropertyPermission
 import java.util.concurrent.Callable
 import java.util.concurrent.CancellationException
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -66,6 +65,19 @@ object Sandbox {
     }
     private val threadGroupDestroySupported = Runtime.version().feature() < 19
     private val legacyThreadStopSupported = Runtime.version().feature() < 20
+
+    private val activeTasks = AtomicInteger(0)
+    val activeTaskCount: Int
+        get() = activeTasks.get()
+    private val busyTasks = AtomicInteger(0)
+    val busyTaskCount: Int
+        get() = busyTasks.get()
+    private val startedTasks = AtomicInteger(0)
+    val startedTaskCount: Int
+        get() = startedTasks.get()
+    private val completedTasks = AtomicInteger(0)
+    val completedTaskCount: Int
+        get() = completedTasks.get()
 
     init {
         if (!legacyThreadStopSupported) {
@@ -348,11 +360,14 @@ object Sandbox {
         }
 
         return coroutineScope {
-            val resultsChannel = Channel<ExecutorResult<T>>()
-            val executor = Executor(callable, sandboxedClassLoader, executionArguments, resultsChannel)
+            val executor = Executor(callable, sandboxedClassLoader, executionArguments)
             threadPool.submit(executor)
-            val result = executor.resultChannel.receive()
-            result.taskResults ?: throw result.executionException
+            activeTasks.incrementAndGet()
+            startedTasks.incrementAndGet()
+            val result = executor.result.get()
+            activeTasks.decrementAndGet()
+            completedTasks.incrementAndGet()
+            result.taskResults ?: throw result.executionException!!
         }
     }
 
@@ -374,17 +389,24 @@ object Sandbox {
     private const val THREAD_JOIN_ATTEMPTS_PER_SIGNAL = 4
     private const val THREAD_SHUTDOWN_DELAY = 20L
 
-    private data class ExecutorResult<T>(val taskResults: TaskResults<T>?, val executionException: Throwable)
+    private data class ExecutorResult<T>(val taskResults: TaskResults<T>?, val executionException: Throwable?) {
+        init {
+            check(taskResults != null || executionException != null)
+        }
+    }
+
     private class Executor<T>(
         val callable: SandboxCallableArguments<T>,
         val sandboxedClassLoader: SandboxedClassLoader,
         val executionArguments: ExecutionArguments,
-        val resultChannel: Channel<ExecutorResult<T>>,
     ) : Callable<Any> {
         private data class TaskResult<T>(val returned: T, val threw: Throwable? = null, val timeout: Boolean = false)
 
+        val result = CompletableFuture<ExecutorResult<T>>()
+
         @Suppress("ComplexMethod", "ReturnCount", "LongMethod")
         override fun call() {
+            busyTasks.incrementAndGet()
             @Suppress("TooGenericExceptionCaught")
             try {
                 val confinedTask = confine(callable, sandboxedClassLoader, executionArguments)
@@ -497,12 +519,11 @@ object Sandbox {
                     confinedTask.totalCpuTime,
                     cpuTimeout,
                 )
-                @Suppress("ThrowingExceptionsWithoutMessageOrCause")
-                runBlocking { resultChannel.send(ExecutorResult(executionResult, Exception())) }
+                result.complete(ExecutorResult(executionResult, null))
             } catch (e: Throwable) {
-                runBlocking { resultChannel.send(ExecutorResult(null, e)) }
+                result.complete(ExecutorResult(null, e))
             } finally {
-                resultChannel.close()
+                busyTasks.decrementAndGet()
             }
         }
     }
@@ -2286,7 +2307,6 @@ object Sandbox {
         System.setIn(RedirectingInputStream())
 
         threadPool = Executors.newFixedThreadPool(size)
-
         // Ensure ConfinedThreadGroup is loaded before any tasks try to get their confined task
         ConfinedThreadGroup::class.java.toString()
 

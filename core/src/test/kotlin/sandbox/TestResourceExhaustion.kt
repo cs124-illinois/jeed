@@ -10,7 +10,10 @@ import edu.illinois.cs.cs125.jeed.core.haveCompleted
 import edu.illinois.cs.cs125.jeed.core.haveCpuTimedOut
 import edu.illinois.cs.cs125.jeed.core.haveOutput
 import edu.illinois.cs.cs125.jeed.core.haveTimedOut
+import io.kotest.core.Tuple2
 import io.kotest.core.spec.style.StringSpec
+import io.kotest.core.test.TestCase
+import io.kotest.core.test.TestResult
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.ints.shouldBeGreaterThan
@@ -21,40 +24,58 @@ import kotlinx.coroutines.async
 import java.lang.IllegalArgumentException
 
 @Suppress("LargeClass")
-class TestResourceExhaustion : StringSpec({
-    "should timeout correctly on snippet" {
-        val executionResult = Source.fromSnippet(
-            """
+class TestResourceExhaustion : StringSpec() {
+    private fun checkCounts(after: Boolean) {
+        Sandbox.activeTaskCount shouldBe 0
+        Sandbox.busyTaskCount shouldBe 0
+        if (after) {
+            Sandbox.startedTaskCount shouldBeGreaterThan 0
+        }
+        Sandbox.completedTaskCount shouldBe Sandbox.startedTaskCount
+    }
+
+    override fun beforeTest(f: suspend (TestCase) -> Unit) {
+        checkCounts(false)
+    }
+
+    override fun afterTest(f: suspend (Tuple2<TestCase, TestResult>) -> Unit) {
+        checkCounts(true)
+    }
+
+    init {
+        "should timeout correctly on snippet" {
+            val executionResult = Source.fromSnippet(
+                """
 int i = 0;
 while (true) {
     i++;
 }
         """.trim(),
-        ).compile().execute()
+            ).compile().execute()
 
-        executionResult shouldNot haveCompleted()
-        executionResult should haveTimedOut()
-        executionResult should haveOutput()
-    }
-    "should cpu timeout correctly on snippet" {
-        val executionResult = Source.fromSnippet(
-            """
+            executionResult shouldNot haveCompleted()
+            executionResult should haveTimedOut()
+            executionResult should haveOutput()
+        }
+        "should cpu timeout correctly on snippet" {
+            val executionResult = Source.fromSnippet(
+                """
 int i = 0;
 while (true) {
     i++;
 }
         """.trim(),
-        ).compile().execute(SourceExecutionArguments(cpuTimeout = 100))
+            ).compile().execute(SourceExecutionArguments(cpuTimeout = 100))
 
-        executionResult shouldNot haveCompleted()
-        executionResult should haveTimedOut()
-        executionResult should haveCpuTimedOut()
-        executionResult should haveOutput()
-    }
-    "should timeout correctly on sources" {
-        val executionResult = Source(
-            mapOf(
-                "Foo.java" to """
+            executionResult shouldNot haveCompleted()
+            executionResult should haveTimedOut()
+            executionResult should haveCpuTimedOut()
+            executionResult should haveOutput()
+        }
+        "should timeout correctly on sources" {
+            val executionResult = Source(
+                mapOf(
+                    "Foo.java" to """
 public class Main {
     public static void main() {
         int i = 0;
@@ -64,30 +85,30 @@ public class Main {
     }
 }
         """.trim(),
-            ),
-        ).compile().execute()
+                ),
+            ).compile().execute()
 
-        executionResult shouldNot haveCompleted()
-        executionResult should haveTimedOut()
-        executionResult should haveOutput()
-    }
-    "should return output after timeout" {
-        val executionResult = Source.fromSnippet(
-            """
+            executionResult shouldNot haveCompleted()
+            executionResult should haveTimedOut()
+            executionResult should haveOutput()
+        }
+        "should return output after timeout" {
+            val executionResult = Source.fromSnippet(
+                """
 System.out.println("Here");
 int i = 0;
 while (true) {
     i++;
 }
             """.trim(),
-        ).compile().execute()
-        executionResult shouldNot haveCompleted()
-        executionResult should haveTimedOut()
-        executionResult should haveOutput("Here")
-    }
-    "should return value after timeout if code is prepared" {
-        val executionResult = Source.fromJava(
-            """
+            ).compile().execute()
+            executionResult shouldNot haveCompleted()
+            executionResult should haveTimedOut()
+            executionResult should haveOutput("Here")
+        }
+        "should return value after timeout if code is prepared" {
+            val executionResult = Source.fromJava(
+                """
 public class Main {
   public static int main() {
     int i = 0;
@@ -98,14 +119,14 @@ public class Main {
   }
 }
             """.trim(),
-        ).compile().execute()
-        executionResult shouldNot haveCompleted()
-        executionResult should haveTimedOut()
-        executionResult.returned shouldBe 1
-    }
-    "should shut down a runaway thread" {
-        val executionResult = Source.fromSnippet(
-            """
+            ).compile().execute()
+            executionResult shouldNot haveCompleted()
+            executionResult should haveTimedOut()
+            executionResult.returned shouldBe 1
+        }
+        "should shut down a runaway thread" {
+            val executionResult = Source.fromSnippet(
+                """
 public class Example implements Runnable {
     public void run() {
         while (true) {
@@ -122,15 +143,15 @@ try {
     thread.join();
 } catch (Throwable e) { }
         """.trim(),
-        ).compile().execute(SourceExecutionArguments(maxExtraThreads = 1))
+            ).compile().execute(SourceExecutionArguments(maxExtraThreads = 1))
 
-        executionResult shouldNot haveCompleted()
-        executionResult should haveTimedOut()
-        executionResult should haveOutput("Started")
-    }
-    "should shut down small thread bombs" {
-        val executionResult = Source.fromSnippet(
-            """
+            executionResult shouldNot haveCompleted()
+            executionResult should haveTimedOut()
+            executionResult should haveOutput("Started")
+        }
+        "should shut down small thread bombs" {
+            val executionResult = Source.fromSnippet(
+                """
 public class Example implements Runnable {
     public void run() {
         for (long j = 0; j < 512 * 1024 * 1024; j++);
@@ -145,19 +166,19 @@ for (long i = 0;; i++) {
     } catch (Throwable e) { }
 }
         """.trim(),
-        ).compile().execute(SourceExecutionArguments(maxExtraThreads = 16, timeout = 1000L))
+            ).compile().execute(SourceExecutionArguments(maxExtraThreads = 16, timeout = 1000L))
 
-        executionResult shouldNot haveCompleted()
-        executionResult.permissionDenied shouldBe true
-        executionResult.permissionRequests.map { it.permission.name } shouldContain "exceedThreadLimit"
-        executionResult should haveTimedOut()
-        // FIXME? If some threads complete their 512M loop new ones can start
-        // executionResult.stdoutLines shouldHaveSize 16
-        executionResult.stdoutLines.map { it.line } shouldContain "15"
-    }
-    "should shut down thread bombs that specify their group" {
-        val executionResult = Source.fromSnippet(
-            """
+            executionResult shouldNot haveCompleted()
+            executionResult.permissionDenied shouldBe true
+            executionResult.permissionRequests.map { it.permission.name } shouldContain "exceedThreadLimit"
+            executionResult should haveTimedOut()
+            // FIXME? If some threads complete their 512M loop new ones can start
+            // executionResult.stdoutLines shouldHaveSize 16
+            executionResult.stdoutLines.map { it.line } shouldContain "15"
+        }
+        "should shut down thread bombs that specify their group" {
+            val executionResult = Source.fromSnippet(
+                """
 public class Example implements Runnable {
     public void run() {
         while (true);
@@ -172,18 +193,18 @@ for (long i = 0;; i++) {
     } catch (Throwable e) {}
 }
         """.trim(),
-        ).compile().execute(SourceExecutionArguments(maxExtraThreads = 16, timeout = 1000L))
+            ).compile().execute(SourceExecutionArguments(maxExtraThreads = 16, timeout = 1000L))
 
-        executionResult shouldNot haveCompleted()
-        executionResult.permissionDenied shouldBe true
-        executionResult.permissionRequests.map { it.permission.name } shouldContain "exceedThreadLimit"
-        executionResult should haveTimedOut()
-        executionResult.stdoutLines shouldHaveSize 16
-        executionResult.stdoutLines.map { it.line } shouldContain "15"
-    }
-    "should shut down nasty thread bombs" {
-        val executionResult = Source.fromSnippet(
-            """
+            executionResult shouldNot haveCompleted()
+            executionResult.permissionDenied shouldBe true
+            executionResult.permissionRequests.map { it.permission.name } shouldContain "exceedThreadLimit"
+            executionResult should haveTimedOut()
+            executionResult.stdoutLines shouldHaveSize 16
+            executionResult.stdoutLines.map { it.line } shouldContain "15"
+        }
+        "should shut down nasty thread bombs" {
+            val executionResult = Source.fromSnippet(
+                """
 public class Example implements Runnable {
     public void run() {
         while (true) {
@@ -201,15 +222,15 @@ while (true) {
     } catch (Throwable e) { }
 }
         """.trim(),
-        ).compile().execute(SourceExecutionArguments(maxExtraThreads = 256, timeout = 1000L))
+            ).compile().execute(SourceExecutionArguments(maxExtraThreads = 256, timeout = 1000L))
 
-        executionResult shouldNot haveCompleted()
-        executionResult.permissionDenied shouldBe true
-        executionResult should haveTimedOut()
-    }
-    "should shut down sleep bombs" {
-        val executionResult = Source.fromSnippet(
-            """
+            executionResult shouldNot haveCompleted()
+            executionResult.permissionDenied shouldBe true
+            executionResult should haveTimedOut()
+        }
+        "should shut down sleep bombs" {
+            val executionResult = Source.fromSnippet(
+                """
 public class Example implements Runnable {
     public void run() {
         while (true) {
@@ -226,14 +247,14 @@ while (true) {
     } catch (Throwable e) { }
 }
         """.trim(),
-        ).compile().execute(SourceExecutionArguments(maxExtraThreads = 256, timeout = 1000L))
+            ).compile().execute(SourceExecutionArguments(maxExtraThreads = 256, timeout = 1000L))
 
-        executionResult shouldNot haveCompleted()
-        executionResult should haveTimedOut()
-    }
-    "should shut down exit bombs" {
-        val executionResult = Source.fromSnippet(
-            """
+            executionResult shouldNot haveCompleted()
+            executionResult should haveTimedOut()
+        }
+        "should shut down exit bombs" {
+            val executionResult = Source.fromSnippet(
+                """
 public class Example implements Runnable {
     public void run() {
         while (true) {
@@ -250,15 +271,15 @@ while (true) {
     } catch (Throwable e) { }
 }
         """.trim(),
-        ).compile().execute(SourceExecutionArguments(maxExtraThreads = 256, timeout = 1000L))
+            ).compile().execute(SourceExecutionArguments(maxExtraThreads = 256, timeout = 1000L))
 
-        executionResult shouldNot haveCompleted()
-        executionResult.permissionDenied shouldBe true
-        executionResult should haveTimedOut()
-    }
-    "should shut down spin bombs" {
-        val executionResult = Source.fromSnippet(
-            """
+            executionResult shouldNot haveCompleted()
+            executionResult.permissionDenied shouldBe true
+            executionResult should haveTimedOut()
+        }
+        "should shut down spin bombs" {
+            val executionResult = Source.fromSnippet(
+                """
 public class Example implements Runnable {
     public void run() {
         while (true) {
@@ -275,14 +296,14 @@ while (true) {
     } catch (Throwable e) { }
 }
         """.trim(),
-        ).compile().execute(SourceExecutionArguments(maxExtraThreads = 256, timeout = 1000L))
+            ).compile().execute(SourceExecutionArguments(maxExtraThreads = 256, timeout = 1000L))
 
-        executionResult shouldNot haveCompleted()
-        executionResult should haveTimedOut()
-    }
-    "should shut down reflection-protected thread bombs" {
-        val executionResult = Source.fromSnippet(
-            """
+            executionResult shouldNot haveCompleted()
+            executionResult should haveTimedOut()
+        }
+        "should shut down reflection-protected thread bombs" {
+            val executionResult = Source.fromSnippet(
+                """
 public class Example implements Runnable {
     public void run() {
         while (true) {
@@ -303,14 +324,14 @@ try {
     Thread.sleep(Long.MAX_VALUE);
 } catch (Throwable e) { }
         """.trim(),
-        ).compile().execute(SourceExecutionArguments(maxExtraThreads = 256, timeout = 1000L))
+            ).compile().execute(SourceExecutionArguments(maxExtraThreads = 256, timeout = 1000L))
 
-        executionResult shouldNot haveCompleted()
-        executionResult should haveTimedOut()
-    }
-    "should shut down recursive thread bombs" {
-        val executionResult = Source.fromSnippet(
-            """
+            executionResult shouldNot haveCompleted()
+            executionResult should haveTimedOut()
+        }
+        "should shut down recursive thread bombs" {
+            val executionResult = Source.fromSnippet(
+                """
 public class Example implements Runnable {
     public void run() {
         while (true) {
@@ -338,15 +359,15 @@ try {
     Thread.sleep(Long.MAX_VALUE);
 } catch (Throwable t) { }
         """.trim(),
-        ).compile().execute(SourceExecutionArguments(maxExtraThreads = 256, timeout = 1000L))
+            ).compile().execute(SourceExecutionArguments(maxExtraThreads = 256, timeout = 1000L))
 
-        executionResult shouldNot haveCompleted()
-        executionResult.permissionDenied shouldBe true
-        executionResult should haveTimedOut()
-    }
-    "should shut down finally-protected thread bombs" {
-        val executionResult = Source.fromSnippet(
-            """
+            executionResult shouldNot haveCompleted()
+            executionResult.permissionDenied shouldBe true
+            executionResult should haveTimedOut()
+        }
+        "should shut down finally-protected thread bombs" {
+            val executionResult = Source.fromSnippet(
+                """
 public class Example implements Runnable {
     public void run() {
         while (true) {
@@ -375,18 +396,18 @@ try {
     Thread.sleep(Long.MAX_VALUE);
 } catch (Throwable e) { }
         """.trim(),
-        ).compile().execute(SourceExecutionArguments(maxExtraThreads = 128, timeout = 1000L))
+            ).compile().execute(SourceExecutionArguments(maxExtraThreads = 128, timeout = 1000L))
 
-        executionResult shouldNot haveCompleted()
-        executionResult should haveTimedOut()
-    }
-    @Suppress("SpellCheckingInspection")
-    "should shut down parallel recursive thread bombs".config(enabled = System.getenv("VERYSLOWTESTS") == "1") {
-        @Suppress("MagicNumber")
-        (0..16).toList().map {
-            async {
-                Source.fromSnippet(
-                    """
+            executionResult shouldNot haveCompleted()
+            executionResult should haveTimedOut()
+        }
+        @Suppress("SpellCheckingInspection")
+        "should shut down parallel recursive thread bombs".config(enabled = System.getenv("VERYSLOWTESTS") == "1") {
+            @Suppress("MagicNumber")
+            (0..16).toList().map {
+                async {
+                    Source.fromSnippet(
+                        """
 public class Example implements Runnable {
     public void run() {
         while (true) {
@@ -414,19 +435,19 @@ try {
     Thread.sleep(Long.MAX_VALUE);
 } catch (Throwable t) { }
         """.trim(),
-                ).compile().execute(SourceExecutionArguments(maxExtraThreads = 256, timeout = 2000L))
-            }
-        }.map {
-            val executionResult = it.await()
+                    ).compile().execute(SourceExecutionArguments(maxExtraThreads = 256, timeout = 2000L))
+                }
+            }.map {
+                val executionResult = it.await()
 
-            executionResult shouldNot haveCompleted()
-            executionResult.permissionDenied shouldBe true
-            executionResult should haveTimedOut(idle = true)
+                executionResult shouldNot haveCompleted()
+                executionResult.permissionDenied shouldBe true
+                executionResult should haveTimedOut(idle = true)
+            }
         }
-    }
-    "should shut down memory exhaustion bombs" {
-        Source.fromSnippet(
-            """
+        "should shut down memory exhaustion bombs" {
+            Source.fromSnippet(
+                """
 import java.util.List;
 import java.util.ArrayList;
 
@@ -449,11 +470,11 @@ while (true) {
     } catch (Throwable e) { }
 }
         """.trim(),
-        ).compile().execute(SourceExecutionArguments(maxExtraThreads = 16, timeout = 1000L))
-    }
-    "should recover from excessive memory usage" {
-        Source.fromSnippet(
-            """
+            ).compile().execute(SourceExecutionArguments(maxExtraThreads = 16, timeout = 1000L))
+        }
+        "should recover from excessive memory usage" {
+            Source.fromSnippet(
+                """
 import java.util.List;
 import java.util.ArrayList;
 
@@ -466,55 +487,55 @@ while (true) {
     } catch (Throwable e) {}
 }
             """.trim(),
-        ).compile().execute(SourceExecutionArguments(maxExtraThreads = 256, timeout = 1000L))
-    }
-    "should recover from excessive console printing" {
-        @Suppress("MagicNumber", "UnusedPrivateMember")
-        for (i in 0..32) {
-            val result = Source.fromSnippet(
-                """
+            ).compile().execute(SourceExecutionArguments(maxExtraThreads = 256, timeout = 1000L))
+        }
+        "should recover from excessive console printing" {
+            @Suppress("MagicNumber", "UnusedPrivateMember")
+            for (i in 0..32) {
+                val result = Source.fromSnippet(
+                    """
 for (long i = 0; i < 10000000L; i++) {
     System.out.println(i);
 }
     """.trim(),
-            ).compile().execute(SourceExecutionArguments(timeout = 100L))
+                ).compile().execute(SourceExecutionArguments(timeout = 100L))
 
-            result.outputLines[0].line shouldBe "0"
-            result.outputLines[Sandbox.ExecutionArguments.DEFAULT_MAX_OUTPUT_LINES - 1]
-                .line shouldBe (Sandbox.ExecutionArguments.DEFAULT_MAX_OUTPUT_LINES - 1).toString()
-            result.outputLines shouldHaveSize Sandbox.ExecutionArguments.DEFAULT_MAX_OUTPUT_LINES
-            result.truncatedLines shouldBeGreaterThan 0
+                result.outputLines[0].line shouldBe "0"
+                result.outputLines[Sandbox.ExecutionArguments.DEFAULT_MAX_OUTPUT_LINES - 1]
+                    .line shouldBe (Sandbox.ExecutionArguments.DEFAULT_MAX_OUTPUT_LINES - 1).toString()
+                result.outputLines shouldHaveSize Sandbox.ExecutionArguments.DEFAULT_MAX_OUTPUT_LINES
+                result.truncatedLines shouldBeGreaterThan 0
+            }
         }
-    }
-    "should print correctly in parallel using coroutines" {
-        @Suppress("MagicNumber")
-        (0..8).toList().map { value ->
-            async {
-                Pair(
-                    Source.fromSnippet(
-                        """
+        "should print correctly in parallel using coroutines" {
+            @Suppress("MagicNumber")
+            (0..8).toList().map { value ->
+                async {
+                    Pair(
+                        Source.fromSnippet(
+                            """
 for (int i = 0; i < (($value + 10) * 10000); i++) {
     System.out.println($value);
 }
                     """.trim(),
-                    ).compile().execute(SourceExecutionArguments(timeout = 100L)),
-                    value,
-                )
+                        ).compile().execute(SourceExecutionArguments(timeout = 100L)),
+                        value,
+                    )
+                }
+            }.map { it ->
+                val (result, value) = it.await()
+                result.stdoutLines shouldHaveSize Sandbox.ExecutionArguments.DEFAULT_MAX_OUTPUT_LINES
+                result.stdoutLines.all { it.line.trim() == value.toString() } shouldBe true
             }
-        }.map { it ->
-            val (result, value) = it.await()
-            result.stdoutLines shouldHaveSize Sandbox.ExecutionArguments.DEFAULT_MAX_OUTPUT_LINES
-            result.stdoutLines.all { it.line.trim() == value.toString() } shouldBe true
         }
-    }
-    "should survive a very large class file" {
-        // What's the right behavior here?
-        // Throwing an exception during compilation/rewriting is probably OK
-        // It's only a problem if it dies at a time that causes a ConfinedTask to be leaked
+        "should survive a very large class file" {
+            // What's the right behavior here?
+            // Throwing an exception during compilation/rewriting is probably OK
+            // It's only a problem if it dies at a time that causes a ConfinedTask to be leaked
 
-        // From https://stackoverflow.com/a/42301131/
-        val compileResult = Source.fromSnippet(
-            """
+            // From https://stackoverflow.com/a/42301131/
+            val compileResult = Source.fromSnippet(
+                """
 class A {
     {
         int a;
@@ -583,17 +604,17 @@ class A {
     A(Character a, Character b) { }
 }
 new A();
-            """.trimIndent(),
-        ).compile()
-        try {
-            compileResult.execute()
-        } catch (e: IllegalArgumentException) {
-            e.message shouldBe "bytecode is over 1 MB"
+                """.trimIndent(),
+            ).compile()
+            try {
+                compileResult.execute()
+            } catch (e: IllegalArgumentException) {
+                e.message shouldBe "bytecode is over 1 MB"
+            }
         }
-    }
-    "should terminate a parked thread" {
-        val executionResult = Source.fromSnippet(
-            """
+        "should terminate a parked thread" {
+            val executionResult = Source.fromSnippet(
+                """
 import java.util.concurrent.locks.LockSupport;
 public class Example implements Runnable {
     public void run() {
@@ -610,16 +631,16 @@ try {
     thread.join();
 } catch (Throwable e) { }
         """.trim(),
-        ).compile().execute(SourceExecutionArguments(maxExtraThreads = 1))
+            ).compile().execute(SourceExecutionArguments(maxExtraThreads = 1))
 
-        executionResult shouldNot haveCompleted()
-        executionResult should haveTimedOut()
-        executionResult should haveOutput("Started")
-    }
-    "should terminate a waiting thread" {
-        val compileResult = Source(
-            mapOf(
-                "Main.java" to """
+            executionResult shouldNot haveCompleted()
+            executionResult should haveTimedOut()
+            executionResult should haveOutput("Started")
+        }
+        "should terminate a waiting thread" {
+            val compileResult = Source(
+                mapOf(
+                    "Main.java" to """
 public class Main {
     public static void main() {
         Object monitor = new Object();
@@ -632,19 +653,19 @@ public class Main {
         }
     }
 }""".trim(),
-            ),
-        ).compile()
+                ),
+            ).compile()
 
-        (1..8).forEach { _ -> // Flaky
-            val executionResult = compileResult.execute()
-            executionResult shouldNot haveCompleted()
-            executionResult should haveTimedOut(true)
+            (1..8).forEach { _ -> // Flaky
+                val executionResult = compileResult.execute()
+                executionResult shouldNot haveCompleted()
+                executionResult should haveTimedOut(true)
+            }
         }
-    }
-    "should terminate an infinite synchronization wait" {
-        val compileResult = Source(
-            mapOf(
-                "Main.java" to """
+        "should terminate an infinite synchronization wait" {
+            val compileResult = Source(
+                mapOf(
+                    "Main.java" to """
 public class Sync {
     public static synchronized void deadlock() {
         while (true);
@@ -662,17 +683,17 @@ public class Main {
         Sync.deadlock();
     }
 }""".trim(),
-            ),
-        ).compile()
-        val executionResult = compileResult.execute(SourceExecutionArguments(maxExtraThreads = 1, timeout = 200L))
-        executionResult shouldNot haveCompleted()
-        executionResult should haveTimedOut()
-        executionResult should haveOutput("Other")
-    }
-    "should terminate a synchronization deadlock" {
-        val compileResult = Source(
-            mapOf(
-                "Main.java" to """
+                ),
+            ).compile()
+            val executionResult = compileResult.execute(SourceExecutionArguments(maxExtraThreads = 1, timeout = 200L))
+            executionResult shouldNot haveCompleted()
+            executionResult should haveTimedOut()
+            executionResult should haveOutput("Other")
+        }
+        "should terminate a synchronization deadlock" {
+            val compileResult = Source(
+                mapOf(
+                    "Main.java" to """
 public class Other implements Runnable {
     public void run() {
         System.out.println("Other");
@@ -695,16 +716,16 @@ public class Main {
         }
     }
 }""".trim(),
-            ),
-        ).compile()
-        val executionResult = compileResult.execute(SourceExecutionArguments(maxExtraThreads = 1, timeout = 200L))
-        executionResult shouldNot haveCompleted()
-        executionResult should haveTimedOut()
-        executionResult should haveOutput("Other")
-    }
-    "should stop long counted loops" {
-        val executionResult = Source.fromSnippet(
-            """
+                ),
+            ).compile()
+            val executionResult = compileResult.execute(SourceExecutionArguments(maxExtraThreads = 1, timeout = 200L))
+            executionResult shouldNot haveCompleted()
+            executionResult should haveTimedOut()
+            executionResult should haveOutput("Other")
+        }
+        "should stop long counted loops" {
+            val executionResult = Source.fromSnippet(
+                """
 void countedLoop(int times) {
     int counter = 0;
     for (int i = 0; i < times; i++) {
@@ -721,15 +742,15 @@ for (int n = 0; n < 10000; n++) {
 System.out.println("Warmed up");
 countedLoop(1000000);
 """.trim(),
-        ).compile().execute()
-        executionResult should haveTimedOut()
-        executionResult shouldNot haveCompleted()
-        executionResult should haveOutput("Warmed up")
-    }
-    "should terminate a console-scanning thread" {
-        val compileResult = Source(
-            mapOf(
-                "Main.java" to """
+            ).compile().execute()
+            executionResult should haveTimedOut()
+            executionResult shouldNot haveCompleted()
+            executionResult should haveOutput("Warmed up")
+        }
+        "should terminate a console-scanning thread" {
+            val compileResult = Source(
+                mapOf(
+                    "Main.java" to """
 import java.util.Scanner;
 public class Main {
     public static void main() {
@@ -737,18 +758,18 @@ public class Main {
         scanner.nextLine();
     }
 }""".trim(),
-            ),
-        ).compile()
+                ),
+            ).compile()
 
-        (1..8).forEach { _ ->
-            val executionResult = compileResult.execute()
-            executionResult shouldNot haveCompleted()
+            (1..8).forEach { _ ->
+                val executionResult = compileResult.execute()
+                executionResult shouldNot haveCompleted()
+            }
         }
-    }
-    "should terminate a console-reading thread" {
-        val compileResult = Source(
-            mapOf(
-                "Main.java" to """
+        "should terminate a console-reading thread" {
+            val compileResult = Source(
+                mapOf(
+                    "Main.java" to """
 public class Main {
     public static void main() throws Exception {
         while (true) {
@@ -758,18 +779,18 @@ public class Main {
         }
     }
 }""".trim(),
-            ),
-        ).compile()
+                ),
+            ).compile()
 
-        (1..8).forEach { _ ->
-            val executionResult = compileResult.execute()
-            executionResult shouldNot haveCompleted()
+            (1..8).forEach { _ ->
+                val executionResult = compileResult.execute()
+                executionResult shouldNot haveCompleted()
+            }
         }
-    }
-    "should terminate a runaway static initializer" {
-        val executionResult = Source(
-            mapOf(
-                "Main.java" to """
+        "should terminate a runaway static initializer" {
+            val executionResult = Source(
+                mapOf(
+                    "Main.java" to """
 public class Main {
     static {
         while ("".hashCode() != 124) {}
@@ -779,10 +800,11 @@ public class Main {
     }
 }
         """.trim(),
-            ),
-        ).compile().execute()
+                ),
+            ).compile().execute()
 
-        executionResult shouldNot haveCompleted()
-        executionResult should haveTimedOut()
+            executionResult shouldNot haveCompleted()
+            executionResult should haveTimedOut()
+        }
     }
-})
+}
