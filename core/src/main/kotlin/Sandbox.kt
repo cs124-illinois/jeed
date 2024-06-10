@@ -215,7 +215,7 @@ object Sandbox {
         val outputLines: MutableList<OutputLine> = mutableListOf(),
         val inputLines: MutableList<InputLine> = mutableListOf(),
         val combinedInputOutput: String = "",
-        val permissionRequests: MutableList<PermissionRequest> = mutableListOf(),
+        val permissionRequests: Set<PermissionRequest>,
         val interval: Interval,
         val executionInterval: Interval,
         @Transient val sandboxedClassLoader: SandboxedClassLoader? = null,
@@ -249,8 +249,10 @@ object Sandbox {
             val timestamp: Instant,
         )
 
+        private data class RecordedPermissionRequest(val permission: Permission, val granted: Boolean)
+
         @JsonClass(generateAdapter = true)
-        data class PermissionRequest(val permission: Permission, val granted: Boolean)
+        data class PermissionRequest(val permission: Permission, val granted: Boolean, var count: Int)
 
         val completed: Boolean
             get() {
@@ -480,7 +482,7 @@ object Sandbox {
                     confinedTask.outputLines,
                     confinedTask.inputLines,
                     confinedTask.ioBytes.toByteArray().decodeToString(),
-                    confinedTask.permissionRequests,
+                    confinedTask.permissionRequests.values.toSet(),
                     Interval(confinedTask.started, Instant.now()),
                     Interval(executionStarted, executionEnded),
                     sandboxedClassLoader,
@@ -520,7 +522,7 @@ object Sandbox {
             task = this@ConfinedTask
         }
 
-        val started = Instant.now()
+        val started: Instant = Instant.now()
         var totalCpuTime = 0L
 
         val thread = Thread(threadGroup, task, "main").apply {
@@ -576,7 +578,7 @@ object Sandbox {
         var redirectingTruncatedLines: Int = 0
         var outputListener: OutputListener? = null
 
-        val permissionRequests: MutableList<TaskResults.PermissionRequest> = mutableListOf()
+        val permissionRequests = ConcurrentHashMap<Pair<Permission, Boolean>, TaskResults.PermissionRequest>()
 
         val pluginData = classLoader.pluginInstrumentationData.associate { (plugin, instrumentationData) ->
             plugin to plugin.createInitialData(instrumentationData, executionArguments)
@@ -595,7 +597,9 @@ object Sandbox {
         }
 
         fun addPermissionRequest(permission: Permission, granted: Boolean, throwException: Boolean = true) {
-            permissionRequests.add(TaskResults.PermissionRequest(permission, granted))
+            permissionRequests.getOrPut(Pair(permission, granted)) {
+                TaskResults.PermissionRequest(permission, granted, 0)
+            }.count++
             if (!granted && throwException) {
                 throw SecurityException()
             }
@@ -1151,11 +1155,10 @@ object Sandbox {
         @JvmStatic
         fun forbiddenMethod() {
             val confinedTask = confinedTaskByThreadGroup() ?: error("only confined tasks should call this method")
-            confinedTask.permissionRequests.add(
-                TaskResults.PermissionRequest(
-                    RuntimePermission("useForbiddenMethod"),
-                    false,
-                ),
+            confinedTask.addPermissionRequest(
+                RuntimePermission("useForbiddenMethod"),
+                granted = false,
+                throwException = false,
             )
             throw SecurityException("use of forbidden method")
         }
@@ -1829,22 +1832,18 @@ object Sandbox {
 
         private fun checkThreadLimits(confinedTask: ConfinedTask<*>, newExtraThreadCount: Int) {
             if (confinedTask.shuttingDown) {
-                confinedTask.permissionRequests.add(
-                    TaskResults.PermissionRequest(
-                        RuntimePermission("createThreadAfterTimeout"),
-                        false,
-                    ),
+                confinedTask.addPermissionRequest(
+                    RuntimePermission("createThreadAfterTimeout"),
+                    granted = false,
+                    throwException = false,
                 )
                 throw SandboxDeath()
             }
             if (newExtraThreadCount > confinedTask.maxExtraThreads) {
-                confinedTask.permissionRequests.add(
-                    TaskResults.PermissionRequest(
-                        RuntimePermission("exceedThreadLimit"),
-                        false,
-                    ),
+                confinedTask.addPermissionRequest(
+                    RuntimePermission("exceedThreadLimit"),
+                    granted = false,
                 )
-                throw SecurityException()
             }
         }
 

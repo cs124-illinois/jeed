@@ -22,8 +22,9 @@ subprojects {
         enableAssertions = true
         jvmArgs(
             "-ea", "--enable-preview", "-Dfile.encoding=UTF-8", "-Djava.security.manager=allow",
-            "-Xms512m", "-Xmx1500m", "-Xss256k",
+            "-Xms512m", "-Xmx2g", "-Xss256k",
             "-XX:+UseZGC", "-XX:ZCollectionInterval=8", "-XX:-OmitStackTraceInFastThrow",
+            "-XX:+UnlockExperimentalVMOptions", "-XX:-VMContinuations", //  "-XX:+CrashOnOutOfMemoryError",
             "--add-opens", "java.base/java.lang=ALL-UNNAMED",
             "--add-exports", "jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED",
             "--add-exports", "jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED",
