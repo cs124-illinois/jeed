@@ -583,7 +583,7 @@ class A {
     A(Character a, Character b) { }
 }
 new A();
-                """.trimIndent(),
+            """.trimIndent(),
         ).compile()
         try {
             compileResult.execute()
