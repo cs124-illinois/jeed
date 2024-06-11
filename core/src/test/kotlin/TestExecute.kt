@@ -655,10 +655,10 @@ fun haveCompleted() = object : Matcher<Sandbox.TaskResults<out Any?>> {
     }
 }
 
-fun haveTimedOut(idle: Boolean = false) = object : Matcher<Sandbox.TaskResults<out Any?>> {
+fun haveTimedOut() = object : Matcher<Sandbox.TaskResults<out Any?>> {
     override fun test(value: Sandbox.TaskResults<out Any?>): MatcherResult {
         return MatcherResult(
-            value.timeout && (idle || value.cpuTime > 0),
+            value.timeout,
             { "Code should have timed out" },
             { "Code should not have timed out" },
         )

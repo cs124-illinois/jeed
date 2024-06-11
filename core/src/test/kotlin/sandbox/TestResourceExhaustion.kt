@@ -442,7 +442,7 @@ try {
 
                 executionResult shouldNot haveCompleted()
                 executionResult.permissionDenied shouldBe true
-                executionResult should haveTimedOut(idle = true)
+                executionResult should haveTimedOut()
             }
         }
         "should shut down memory exhaustion bombs" {
@@ -659,7 +659,7 @@ public class Main {
             (1..8).forEach { _ -> // Flaky
                 val executionResult = compileResult.execute()
                 executionResult shouldNot haveCompleted()
-                executionResult should haveTimedOut(true)
+                executionResult should haveTimedOut()
             }
         }
         "should terminate an infinite synchronization wait" {
