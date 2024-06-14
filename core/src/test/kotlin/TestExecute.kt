@@ -5,6 +5,7 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.Matcher
 import io.kotest.matchers.MatcherResult
 import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.longs.shouldBeGreaterThan
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNot
@@ -641,6 +642,10 @@ for (i in 0..<4) {
 
 fun haveCompleted() = object : Matcher<Sandbox.TaskResults<out Any?>> {
     override fun test(value: Sandbox.TaskResults<out Any?>): MatcherResult {
+        value.cpuTime shouldBeGreaterThan 0
+        value.nanoTime shouldBeGreaterThan 0
+        value.executionNanoTime shouldBeGreaterThan 0
+
         return MatcherResult(
             value.completed,
             {
@@ -657,6 +662,10 @@ fun haveCompleted() = object : Matcher<Sandbox.TaskResults<out Any?>> {
 
 fun haveTimedOut() = object : Matcher<Sandbox.TaskResults<out Any?>> {
     override fun test(value: Sandbox.TaskResults<out Any?>): MatcherResult {
+        value.cpuTime shouldBeGreaterThan 0
+        value.nanoTime shouldBeGreaterThan 0
+        value.executionNanoTime shouldBeGreaterThan 0
+
         return MatcherResult(
             value.timeout,
             { "Code should have timed out" },

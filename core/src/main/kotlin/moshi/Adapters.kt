@@ -357,6 +357,8 @@ data class SourceTaskResults(
     val truncatedLines: Int,
     @Transient
     val taskResults: Sandbox.TaskResults<*>? = null,
+    val nanoTime: Long,
+    val executionNanoTime: Long,
 ) {
     constructor(
         source: Source,
@@ -379,6 +381,8 @@ data class SourceTaskResults(
         taskResults.executionInterval,
         taskResults.truncatedLines,
         taskResults,
+        taskResults.nanoTime,
+        taskResults.executionNanoTime,
     )
 }
 

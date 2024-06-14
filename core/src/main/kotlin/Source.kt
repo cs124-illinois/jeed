@@ -266,11 +266,7 @@ abstract class JeedError(open val errors: List<SourceError>) : Exception() {
 abstract class AlwaysLocatedJeedError(final override val errors: List<AlwaysLocatedSourceError>) : JeedError(errors)
 
 @JsonClass(generateAdapter = true)
-data class Interval(val start: Instant, val end: Instant) {
-    val length by lazy {
-        end.toEpochMilli() - start.toEpochMilli()
-    }
-}
+data class Interval(val start: Instant, val end: Instant, val length: Long = end.toEpochMilli() - start.toEpochMilli())
 
 fun Throwable.getStackTraceAsString(): String {
     val stringWriter = StringWriter()

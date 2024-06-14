@@ -244,6 +244,8 @@ object Sandbox {
         val totalSafetime: Long?,
         val cpuTime: Long,
         val cpuTimeout: Boolean,
+        val nanoTime: Long,
+        val executionNanoTime: Long,
     ) {
         @JsonClass(generateAdapter = true)
         data class OutputLine(
@@ -413,6 +415,7 @@ object Sandbox {
 
                 val safetimeStarted = runtime?.totalSafepointTime
                 val executionStarted = Instant.now()
+                val executionStartedNanos = System.nanoTime()
                 var incrementalCpuTime = 0L
                 confinedTask.thread.start()
 
@@ -457,7 +460,9 @@ object Sandbox {
                 val cpuTimeout = remainingWallTime() > 0 && !cpuTimeRemaining()
 
                 if (taskResult == null) {
+                    confinedTask.updateCpuTime()
                     confinedTask.thread.interrupt()
+
                     val (returnValue, threw) = try {
                         Pair(
                             confinedTask.task.get(executionArguments.returnTimeout.toLong(), TimeUnit.MILLISECONDS),
@@ -494,8 +499,10 @@ object Sandbox {
                 }
 
                 val totalSafetime = runtime?.totalSafepointTime?.let { it - safetimeStarted!! }
-                val executionEnded = Instant.now()
+                confinedTask.updateCpuTime()
                 release(confinedTask)
+                val executionEnded = Instant.now()
+                val executionEndedNanos = System.nanoTime()
 
                 // confinedTask.systemInStream?.close()
 
@@ -518,6 +525,8 @@ object Sandbox {
                     totalSafetime,
                     confinedTask.totalCpuTime,
                     cpuTimeout,
+                    System.nanoTime() - confinedTask.startedNanos,
+                    executionEndedNanos - executionStartedNanos,
                 )
                 result.complete(ExecutorResult(executionResult, null))
             } catch (e: Throwable) {
@@ -533,22 +542,41 @@ object Sandbox {
         callable: SandboxCallableArguments<T>,
         executionArguments: ExecutionArguments,
     ) {
+        var thread: Thread
         val task = object : FutureTask<T>(SandboxedCallable<T>(callable, classLoader)) {
-            override fun done() {
-                super.done()
-                totalCpuTime = ManagementFactory.getThreadMXBean().currentThreadCpuTime
+            override fun set(v: T) {
+                updateCpuTime()
+                super.set(v)
+            }
+
+            override fun run() {
+                try {
+                    super.run()
+                } finally {
+                    updateCpuTime()
+                }
             }
         }
         val threadGroup = ConfinedThreadGroup(executionArguments.maxThreadPriority).apply {
             task = this@ConfinedTask
         }
 
-        val started: Instant = Instant.now()
-        var totalCpuTime = 0L
-
-        val thread = Thread(threadGroup, task, "main").apply {
-            priority = executionArguments.defaultThreadPriority
+        init {
+            thread = Thread(threadGroup, task, "main").apply {
+                priority = executionArguments.defaultThreadPriority
+            }
         }
+
+        fun updateCpuTime() {
+            val newTime = ManagementFactory.getThreadMXBean().getThreadCpuTime(thread.threadId())
+            if (newTime > 0) {
+                totalCpuTime = newTime
+            }
+        }
+
+        val started: Instant = Instant.now()
+        val startedNanos = System.nanoTime()
+        var totalCpuTime = -1L
 
         val permissionBlacklist = executionArguments.permissionBlacklist
         val permissions: Permissions = Permissions().apply {
@@ -785,10 +813,12 @@ object Sandbox {
             val activeThreads = arrayOfNulls<Thread>(threadGroup.activeCount() * 2)
             threadGroup.enumerate(activeThreads)
             val existingActiveThreads = activeThreads.filterNotNull()
-            existingActiveThreads.filter { !stoppedThreads.contains(it) }.forEach {
-                stoppedThreads.add(it)
-                it.stop()
-            }
+            existingActiveThreads
+                .filter { !stoppedThreads.contains(it) }
+                .forEach { runningThread ->
+                    stoppedThreads.add(runningThread)
+                    runningThread.stop()
+                }
             threadGroup.maxPriority = Thread.NORM_PRIORITY
             stoppedThreads.filter { it.isAlive }.forEach {
                 it.priority = Thread.NORM_PRIORITY
@@ -1123,6 +1153,7 @@ object Sandbox {
             }
             // This check is required because of how we handle finally blocks
             if (confinedTask.classLoader.unsafeExceptionClasses.any { it.isAssignableFrom(throwable.javaClass) }) {
+                confinedTask.updateCpuTime()
                 throw throwable
             }
         }
