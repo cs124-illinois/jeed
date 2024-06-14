@@ -676,6 +676,10 @@ fun haveTimedOut() = object : Matcher<Sandbox.TaskResults<out Any?>> {
 
 fun haveCpuTimedOut() = object : Matcher<Sandbox.TaskResults<out Any?>> {
     override fun test(value: Sandbox.TaskResults<out Any?>): MatcherResult {
+        value.cpuTime shouldBeGreaterThan 0
+        value.nanoTime shouldBeGreaterThan 0
+        value.executionNanoTime shouldBeGreaterThan 0
+
         return MatcherResult(
             value.cpuTimeout,
             { "Code should have CPU timed out" },
@@ -686,6 +690,10 @@ fun haveCpuTimedOut() = object : Matcher<Sandbox.TaskResults<out Any?>> {
 
 fun haveBeenKilled() = object : Matcher<Sandbox.TaskResults<out Any?>> {
     override fun test(value: Sandbox.TaskResults<out Any?>): MatcherResult {
+        value.cpuTime shouldBeGreaterThan 0
+        value.nanoTime shouldBeGreaterThan 0
+        value.executionNanoTime shouldBeGreaterThan 0
+
         return MatcherResult(
             value.killReason != null,
             { "Task should have been killed" },
