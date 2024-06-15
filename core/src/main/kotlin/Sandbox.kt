@@ -78,6 +78,7 @@ object Sandbox {
     private val completedTasks = AtomicInteger(0)
     val completedTaskCount: Int
         get() = completedTasks.get()
+    private val createdThreads = AtomicInteger(0)
 
     init {
         if (!legacyThreadStopSupported) {
@@ -456,7 +457,6 @@ object Sandbox {
                     }
                 }
 
-                check(executionArguments.cpuTimeout == 0L || pollCount == 1)
                 val cpuTimeout = remainingWallTime() > 0 && !cpuTimeRemaining()
 
                 if (taskResult == null) {
@@ -562,7 +562,7 @@ object Sandbox {
         }
 
         init {
-            thread = Thread(threadGroup, task, "main").apply {
+            thread = Thread(threadGroup, task, "Jeed Sandbox Thread $startedTaskCount").apply {
                 priority = executionArguments.defaultThreadPriority
             }
         }
@@ -2337,7 +2337,14 @@ object Sandbox {
         System.setErr(RedirectingPrintStream(TaskResults.OutputLine.Console.STDERR))
         System.setIn(RedirectingInputStream())
 
-        threadPool = Executors.newFixedThreadPool(size)
+        threadPool = Executors.newFixedThreadPool(size) { r ->
+            val createdCount = createdThreads.getAndIncrement()
+            Thread(r).apply {
+                name = "Jeed Thread Pool $createdCount"
+                priority = Thread.MAX_PRIORITY
+            }
+        }
+
         // Ensure ConfinedThreadGroup is loaded before any tasks try to get their confined task
         ConfinedThreadGroup::class.java.toString()
 
