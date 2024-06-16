@@ -188,9 +188,14 @@ object Sandbox {
         val defaultThreadPriority: Int = Thread.MIN_PRIORITY,
     ) {
         init {
+            require(timeout > 0) { "Invalid timeout: $timeout" }
+            require(cpuTimeout >= 0) { "Invalid cpuTimeout: $cpuTimeout" }
             if (cpuTimeout > 0) {
                 require(pollInterval > 0) {
                     "Must set pollInterval to use cpuTimeout"
+                }
+                require(cpuTimeout < timeout * 1000 * 1000L) {
+                    "CPU timeout must be less than wall clock timeout"
                 }
             }
             require(defaultThreadPriority <= maxThreadPriority) {
@@ -503,8 +508,6 @@ object Sandbox {
                 release(confinedTask)
                 val executionEnded = Instant.now()
                 val executionEndedNanos = System.nanoTime()
-
-                val cpuTime = confinedTask.totalCpuTime.coerceAtLeast(executionEndedNanos - executionStartedNanos)
                 confinedTask.systemInStream.close()
 
                 val executionResult = TaskResults(
@@ -524,7 +527,7 @@ object Sandbox {
                     }.toMap(),
                     listOf(),
                     totalSafetime,
-                    cpuTime,
+                    confinedTask.totalCpuTime,
                     cpuTimeout,
                     System.nanoTime() - confinedTask.startedNanos,
                     executionEndedNanos - executionStartedNanos,
