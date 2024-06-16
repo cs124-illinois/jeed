@@ -504,7 +504,8 @@ object Sandbox {
                 val executionEnded = Instant.now()
                 val executionEndedNanos = System.nanoTime()
 
-                // confinedTask.systemInStream?.close()
+                val cpuTime = confinedTask.totalCpuTime.coerceAtLeast(executionEndedNanos - executionStartedNanos)
+                confinedTask.systemInStream.close()
 
                 val executionResult = TaskResults(
                     taskResult.returned, taskResult.threw, taskResult.timeout,
@@ -523,7 +524,7 @@ object Sandbox {
                     }.toMap(),
                     listOf(),
                     totalSafetime,
-                    confinedTask.totalCpuTime,
+                    cpuTime,
                     cpuTimeout,
                     System.nanoTime() - confinedTask.startedNanos,
                     executionEndedNanos - executionStartedNanos,
@@ -567,6 +568,7 @@ object Sandbox {
             }
         }
 
+        var totalCpuTime = -1L
         fun updateCpuTime() {
             val newTime = ManagementFactory.getThreadMXBean().getThreadCpuTime(thread.threadId())
             if (newTime > 0) {
@@ -576,7 +578,6 @@ object Sandbox {
 
         val started: Instant = Instant.now()
         val startedNanos = System.nanoTime()
-        var totalCpuTime = -1L
 
         val permissionBlacklist = executionArguments.permissionBlacklist
         val permissions: Permissions = Permissions().apply {
