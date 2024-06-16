@@ -5,7 +5,7 @@ package edu.illinois.cs.cs125.jeed.core
 import com.github.benmanes.caffeine.cache.Cache
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.squareup.moshi.JsonClass
-import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.future.await
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.decapitalizeAsciiOnly
 import org.objectweb.asm.ClassReader
 import org.objectweb.asm.ClassVisitor
@@ -367,16 +367,14 @@ object Sandbox {
             require(running) { "Sandbox not running even after being started" }
         }
 
-        return coroutineScope {
-            val executor = Executor(callable, sandboxedClassLoader, executionArguments)
-            threadPool.submit(executor)
-            activeTasks.incrementAndGet()
-            startedTasks.incrementAndGet()
-            val result = executor.result.get()
-            activeTasks.decrementAndGet()
-            completedTasks.incrementAndGet()
-            result.taskResults ?: throw result.executionException!!
-        }
+        val executor = Executor(callable, sandboxedClassLoader, executionArguments)
+        threadPool.submit(executor)
+        activeTasks.incrementAndGet()
+        startedTasks.incrementAndGet()
+        val result = executor.result.await()
+        activeTasks.decrementAndGet()
+        completedTasks.incrementAndGet()
+        return result.taskResults ?: throw result.executionException!!
     }
 
     suspend fun <T> execute(
