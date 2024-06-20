@@ -36,7 +36,7 @@ dependencies {
     implementation("org.ow2.asm:asm-util:9.7")
     implementation("ch.qos.logback:logback-classic:1.5.6")
     implementation("io.github.microutils:kotlin-logging:3.0.5")
-    implementation("io.github.classgraph:classgraph:4.8.173")
+    implementation("io.github.classgraph:classgraph:4.8.174")
     implementation("net.java.dev.jna:jna:5.14.0")
     implementation("io.github.java-diff-utils:java-diff-utils:4.12")
     implementation("com.google.googlejavaformat:google-java-format:1.22.0")

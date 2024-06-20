@@ -405,6 +405,7 @@ sealed class FeatureValue(
         } as FeatureValue
     }
 
+    @Suppress("removal")
     fun finalize(): FeatureValue {
         features.featureList.sortWith(
             compareBy(

@@ -3,6 +3,7 @@ package edu.illinois.cs.cs125.jeed.core
 import com.pinterest.ktlint.rule.engine.api.Code
 import com.pinterest.ktlint.rule.engine.api.EditorConfigOverride
 import com.pinterest.ktlint.rule.engine.api.KtLintRuleEngine
+import com.pinterest.ktlint.rule.engine.core.api.AutocorrectDecision
 import com.pinterest.ktlint.rule.engine.core.api.RuleProvider
 import com.pinterest.ktlint.rule.engine.core.api.editorconfig.EXPERIMENTAL_RULES_EXECUTION_PROPERTY
 import com.pinterest.ktlint.rule.engine.core.api.editorconfig.INDENT_SIZE_PROPERTY
@@ -17,6 +18,7 @@ import com.pinterest.ktlint.ruleset.standard.rules.IndentationRule
 import com.pinterest.ktlint.ruleset.standard.rules.MaxLineLengthRule
 import com.pinterest.ktlint.ruleset.standard.rules.ModifierOrderRule
 import com.pinterest.ktlint.ruleset.standard.rules.MultiLineIfElseRule
+import com.pinterest.ktlint.ruleset.standard.rules.NoConsecutiveBlankLinesRule
 import com.pinterest.ktlint.ruleset.standard.rules.NoEmptyClassBodyRule
 import com.pinterest.ktlint.ruleset.standard.rules.NoLineBreakAfterElseRule
 import com.pinterest.ktlint.ruleset.standard.rules.NoLineBreakBeforeAssignmentRule
@@ -110,6 +112,7 @@ val jeedRuleProviders = setOf(
     RuleProvider { IfElseBracingRule() },
     RuleProvider { IfElseWrappingRule() },
     RuleProvider { MultiLineIfElseRule() },
+    RuleProvider { NoConsecutiveBlankLinesRule() },
 )
 
 private val limiter = Semaphore(
@@ -164,8 +167,8 @@ suspend fun Source.ktFormat(ktLintArguments: KtLintArguments = KtLintArguments()
                 } else {
                     filename
                 },
-            ] = ktlintRuleEngine.format(code) { e, corrected ->
-                if (!corrected && ktLintArguments.failOnError) {
+            ] = ktlintRuleEngine.format(code) { e ->
+                if (!e.canBeAutoCorrected && ktLintArguments.failOnError) {
                     throw KtLintFailed(
                         listOf(
                             KtLintError(
@@ -176,6 +179,7 @@ suspend fun Source.ktFormat(ktLintArguments: KtLintArguments = KtLintArguments()
                         ),
                     )
                 }
+                AutocorrectDecision.ALLOW_AUTOCORRECT
             }
         }
     }

@@ -90,7 +90,7 @@ class JavaMutationListener(private val parsedSource: Source.ParsedSource) : Java
         return false
     }
 
-    override fun enterLiteral(ctx: JavaParser.LiteralContext) {
+    override fun enterLiteral(ctx: LiteralContext) {
         if (insideAnnotation) {
             return
         }

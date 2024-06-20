@@ -38,6 +38,7 @@ fun KFunction<*>.asAsmMethodInsn(): MethodInsnNode {
     )
 }
 
+@Suppress("unused")
 fun AbstractInsnNode.skipToBeforeRealInsn(): AbstractInsnNode {
     var currentInsn = this
     while ((currentInsn.next?.opcode ?: 0) < 0) {

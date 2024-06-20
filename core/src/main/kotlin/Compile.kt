@@ -319,7 +319,7 @@ class JeedFileManager(private val parentFileManager: JavaFileManager) :
         check(classFiles.keys.intersect(other.classFiles.keys).isEmpty()) {
             "Attempting to merge JeedFileManagers with duplicate keys"
         }
-        other.classFiles.forEach { path, contents ->
+        other.classFiles.forEach { (path, contents) ->
             classFiles[path] = contents
         }
     }

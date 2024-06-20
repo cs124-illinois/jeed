@@ -10,7 +10,9 @@ import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNot
 import io.kotest.matchers.shouldNotBe
+import kotlinx.coroutines.runBlocking
 import java.nio.charset.Charset
+import java.util.stream.Collectors
 
 class TestExecute : StringSpec({
     "should execute snippets" {
@@ -637,6 +639,29 @@ for (i in 0..<4) {
 }""".trim(),
         ).kompile().execute()
         executionMainResult should haveCompleted()
+    }
+    "should execute correctly in parallel using streams" {
+        (0..8).toList().parallelStream().map { value ->
+            runBlocking {
+                repeat(8) {
+                    val result =
+                        Source.fromSnippet(
+                            """
+for (int i = 0; i < 2; i++) {
+    for (long j = 0; j < 1024 * 1024; j++);
+    System.out.println($value);
+}
+                    """.trim(),
+                        ).compile().execute(SourceExecutionArguments(timeout = 128L))
+
+                    result should haveCompleted()
+                    result.stdoutLines shouldHaveSize 2
+                    result.stdoutLines.all { it.line.trim() == value.toString() } shouldBe true
+                    System.gc()
+                    System.gc()
+                }
+            }
+        }.collect(Collectors.toList())
     }
 })
 

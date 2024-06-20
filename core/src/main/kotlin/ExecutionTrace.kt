@@ -701,9 +701,10 @@ object ExecutionTrace : SandboxPluginWithDefaultArguments<ExecutionTraceArgument
         }
     }
 
+    @Suppress("SpellCheckingInspection")
     private class ConstructorPreinspection(
         val chainCallInvokespecialIndex: Int,
-        val uninitializedPutfieldIndexes: Set<Int>,
+        @Suppress("unused") val uninitializedPutfieldIndexes: Set<Int>,
     )
 }
 
@@ -731,7 +732,7 @@ private class ExecutionTraceInstrumentationData(
     class LocalInfo(val localIndex: Int, val name: String, val type: Type)
 
     class MethodInfo(
-        val index: Int,
+        @Suppress("unused") val index: Int,
         val className: String,
         val name: String,
         val type: Type,

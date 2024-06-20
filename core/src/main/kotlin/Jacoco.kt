@@ -103,7 +103,7 @@ object IsolatedJacocoRuntime : IRuntime {
     }
 }
 
-enum class LineCoverage(val description: String) {
+enum class LineCoverage(@Suppress("unused") val description: String) {
     EMPTY("empty"),
     NOT_COVERED("not covered"),
     PARTLY_COVERED("partly covered"),

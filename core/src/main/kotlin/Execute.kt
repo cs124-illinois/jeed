@@ -32,8 +32,8 @@ class SourceExecutionArguments(
     internal val plugins: MutableList<ConfiguredSandboxPlugin<*, *>> = mutableListOf(),
     systemInStream: InputStream? = null,
     permissionBlackList: Boolean = DEFAULT_PERMISSION_BLACKLIST,
-    cpuTimeout: Long = DEFAULT_CPU_TIMEOUT,
-    pollInterval: Long = DEFAULT_POLL_INTERVAL,
+    cpuTimeoutNS: Long = DEFAULT_CPU_TIMEOUT,
+    pollIntervalMS: Long = DEFAULT_POLL_INTERVAL,
 ) : Sandbox.ExecutionArguments(
     timeout,
     when (permissionBlackList) {
@@ -48,8 +48,8 @@ class SourceExecutionArguments(
     returnTimeout,
     systemInStream = systemInStream,
     permissionBlacklist = permissionBlackList,
-    cpuTimeout = cpuTimeout,
-    pollInterval = pollInterval,
+    cpuTimeoutNS = cpuTimeoutNS,
+    pollIntervalMS = pollIntervalMS,
 ) {
     companion object {
         const val DEFAULT_KLASS = "Main"

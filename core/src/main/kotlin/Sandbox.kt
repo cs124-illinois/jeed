@@ -24,7 +24,6 @@ import java.io.OutputStream
 import java.io.PrintStream
 import java.lang.UnsupportedOperationException
 import java.lang.invoke.LambdaMetafactory
-import java.lang.management.ManagementFactory
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Modifier
 import java.security.AccessControlContext
@@ -54,15 +53,29 @@ import java.util.concurrent.locks.ReentrantLock
 import kotlin.math.min
 import kotlin.reflect.jvm.javaMethod
 
-private typealias SandboxCallableArguments<T> = (Pair<ClassLoader, (() -> Any?) -> JeedOutputCapture>) -> T
+interface SandboxControl {
+    fun setTimeoutMS(timeoutMS: Long)
+    fun clearTimeout()
+    fun setCPUTimeoutNS(timeoutNS: Long)
+    fun clearCPUTimeout()
+    fun setTimeouts(wallTimeoutMS: Long, cpuTimeoutNS: Long)
+    fun clearTimeouts()
+}
+
+private typealias SandboxCallableArguments<T> = (Triple<ClassLoader, (() -> Any?) -> JeedOutputCapture, SandboxControl>) -> T
 
 object Sandbox {
-    private val runtime = try {
+    private val runtimeMBean = try {
         ManagementFactoryHelper.getHotspotRuntimeMBean()
     } catch (e: IllegalAccessError) {
         // Gracefully degrade if deployed without the needed --add-exports
         null
     }
+    private val threadMXBean = ManagementFactoryHelper.getThreadMXBean().apply {
+        check(isThreadCpuTimeSupported && isCurrentThreadCpuTimeSupported)
+        isThreadCpuTimeEnabled = true
+    }
+
     private val threadGroupDestroySupported = Runtime.version().feature() < 19
     private val legacyThreadStopSupported = Runtime.version().feature() < 20
 
@@ -87,11 +100,6 @@ object Sandbox {
             } catch (_: UnsupportedOperationException) {
                 error("the Code Awakening agent is required on this JVM because Thread#stop functionality was removed")
             }
-        }
-
-        ManagementFactory.getThreadMXBean().apply {
-            check(isThreadCpuTimeSupported && isCurrentThreadCpuTimeSupported)
-            isThreadCpuTimeEnabled = true
         }
 
         warmPlatform()
@@ -182,19 +190,19 @@ object Sandbox {
         val returnTimeout: Int = DEFAULT_RETURN_TIMEOUT,
         val permissionBlacklist: Boolean = DEFAULT_PERMISSION_BLACKLIST,
         @Transient val systemInStream: InputStream? = null,
-        val cpuTimeout: Long = DEFAULT_CPU_TIMEOUT,
-        val pollInterval: Long = DEFAULT_POLL_INTERVAL,
+        val cpuTimeoutNS: Long = DEFAULT_CPU_TIMEOUT,
+        val pollIntervalMS: Long = DEFAULT_POLL_INTERVAL,
         val maxThreadPriority: Int = Thread.MIN_PRIORITY,
         val defaultThreadPriority: Int = Thread.MIN_PRIORITY,
     ) {
         init {
             require(timeout > 0) { "Invalid timeout: $timeout" }
-            require(cpuTimeout >= 0) { "Invalid cpuTimeout: $cpuTimeout" }
-            if (cpuTimeout > 0) {
-                require(pollInterval > 0) {
+            require(cpuTimeoutNS >= 0) { "Invalid cpuTimeout: $cpuTimeoutNS" }
+            if (cpuTimeoutNS > 0) {
+                require(pollIntervalMS > 0) {
                     "Must set pollInterval to use cpuTimeout"
                 }
-                require(cpuTimeout < timeout * 1000 * 1000L) {
+                require(cpuTimeoutNS < timeout * 1000 * 1000L) {
                     "CPU timeout must be less than wall clock timeout"
                 }
             }
@@ -405,53 +413,86 @@ object Sandbox {
         val callable: SandboxCallableArguments<T>,
         val sandboxedClassLoader: SandboxedClassLoader,
         val executionArguments: ExecutionArguments,
-    ) : Callable<Any> {
+    ) : Callable<Any>, SandboxControl {
         private data class TaskResult<T>(val returned: T, val threw: Throwable? = null, val timeout: Boolean = false)
 
+        private lateinit var confinedTask: ConfinedTask<T>
+
+        @Volatile private var wallTimeStop = 0L
+
+        @Volatile private var cpuTimeStop = 0L
+
         val result = CompletableFuture<ExecutorResult<T>>()
+
+        override fun setTimeoutMS(timeoutMS: Long) {
+            check(executionArguments.pollIntervalMS > 0) { "Must set pollIntervalMS to use setTimeoutMS" }
+            wallTimeStop = System.nanoTime() + (timeoutMS * 1000L * 1000L)
+        }
+
+        override fun clearTimeout() {
+            check(executionArguments.pollIntervalMS > 0) { "Must set pollIntervalMS to use clearTimeout" }
+            wallTimeStop = Long.MAX_VALUE
+        }
+
+        override fun setCPUTimeoutNS(timeoutNS: Long) {
+            check(executionArguments.pollIntervalMS > 0) { "Must set pollIntervalMS to use setCPUTimeoutNS" }
+            cpuTimeStop = confinedTask.updateCpuTime() + timeoutNS
+        }
+
+        override fun clearCPUTimeout() {
+            check(executionArguments.pollIntervalMS > 0) { "Must set pollIntervalMS to use clearCPUTimeout" }
+            cpuTimeStop = Long.MAX_VALUE
+        }
+
+        override fun setTimeouts(wallTimeoutMS: Long, cpuTimeoutNS: Long) {
+            check(executionArguments.pollIntervalMS > 0) { "Must set pollIntervalMS to use setTimeouts" }
+            wallTimeStop = System.nanoTime() + (wallTimeoutMS * 1000L * 1000L)
+            cpuTimeStop = (confinedTask.updateCpuTime() + cpuTimeoutNS)
+        }
+
+        override fun clearTimeouts() {
+            check(executionArguments.pollIntervalMS > 0) { "Must set a pollInterval to use clearTimeouts" }
+            wallTimeStop = Long.MAX_VALUE
+            cpuTimeStop = Long.MAX_VALUE
+        }
 
         @Suppress("ComplexMethod", "ReturnCount", "LongMethod")
         override fun call() {
             busyTasks.incrementAndGet()
             @Suppress("TooGenericExceptionCaught")
             try {
-                val confinedTask = confine(callable, sandboxedClassLoader, executionArguments)
+                confinedTask = confine(
+                    callable,
+                    sandboxedClassLoader,
+                    this,
+                    executionArguments,
+                )
 
-                val safetimeStarted = runtime?.totalSafepointTime
+                val safetimeStarted = runtimeMBean?.totalSafepointTime
                 val executionStarted = Instant.now()
                 val executionStartedNanos = System.nanoTime()
-                var incrementalCpuTime = 0L
+
+                wallTimeStop = executionStartedNanos + (executionArguments.timeout * 1000L * 1000L)
+                cpuTimeStop = executionArguments.cpuTimeoutNS
+
                 confinedTask.thread.start()
 
                 var taskResult: TaskResult<T?>? = null
-                fun remainingWallTime() =
-                    executionArguments.timeout - (Instant.now().toEpochMilli() - executionStarted.toEpochMilli())
 
-                fun cpuTimeRemaining() = if (executionArguments.cpuTimeout == 0L) {
-                    true
-                } else {
-                    incrementalCpuTime < executionArguments.cpuTimeout
-                }
+                fun remainingWallTime() = wallTimeStop - System.nanoTime()
+                fun cpuTimeRemaining() = cpuTimeStop == 0L || confinedTask.updateCpuTime() < cpuTimeStop
 
                 var pollCount = 0
-                val pollInterval = if (executionArguments.cpuTimeout == 0L) {
-                    executionArguments.timeout
-                } else {
-                    executionArguments.pollInterval
-                }
 
                 while (taskResult == null && remainingWallTime() > 0 && cpuTimeRemaining()) {
+                    val nextWait = remainingWallTime().coerceAtMost(executionArguments.pollIntervalMS).coerceAtLeast(0)
                     taskResult = try {
-                        TaskResult(
-                            confinedTask.task.get(
-                                remainingWallTime().coerceAtMost(pollInterval).coerceAtLeast(0),
-                                TimeUnit.MILLISECONDS,
-                            ),
-                        )
+                        TaskResult(confinedTask.task.get(nextWait, TimeUnit.MILLISECONDS))
                     } catch (e: TimeoutException) {
                         pollCount++
-                        incrementalCpuTime =
-                            ManagementFactory.getThreadMXBean().getThreadCpuTime(confinedTask.thread.id)
+                        null
+                    } catch (e: InterruptedException) {
+                        pollCount++
                         null
                     } catch (e: CancellationException) {
                         TaskResult(null, null)
@@ -474,8 +515,9 @@ object Sandbox {
                     } catch (e: TimeoutException) {
                         confinedTask.task.cancel(true)
                         Pair(null, null)
+                    } catch (e: CancellationException) {
+                        Pair(null, null)
                     } catch (e: Throwable) {
-                        confinedTask.task.cancel(true)
                         Pair(null, e.cause ?: e)
                     }
                     taskResult = TaskResult(returnValue, threw, true)
@@ -501,9 +543,10 @@ object Sandbox {
                     }
                 }
 
-                val totalSafetime = runtime?.totalSafepointTime?.let { it - safetimeStarted!! }
+                val totalSafetime = runtimeMBean?.totalSafepointTime?.let { it - safetimeStarted!! }
                 confinedTask.updateCpuTime()
                 release(confinedTask)
+
                 val executionEnded = Instant.now()
                 val executionEndedNanos = System.nanoTime()
                 confinedTask.systemInStream.close()
@@ -542,10 +585,11 @@ object Sandbox {
     private class ConfinedTask<T>(
         val classLoader: SandboxedClassLoader,
         callable: SandboxCallableArguments<T>,
+        sandboxControl: SandboxControl,
         executionArguments: ExecutionArguments,
     ) {
         var thread: Thread
-        val task = object : FutureTask<T>(SandboxedCallable<T>(callable, classLoader)) {
+        val task = object : FutureTask<T>(SandboxedCallable<T>(callable, classLoader, sandboxControl)) {
             override fun set(v: T) {
                 updateCpuTime()
                 super.set(v)
@@ -570,11 +614,12 @@ object Sandbox {
         }
 
         var totalCpuTime = -1L
-        fun updateCpuTime() {
-            val newTime = ManagementFactory.getThreadMXBean().getThreadCpuTime(thread.threadId())
-            if (newTime > 0) {
+        fun updateCpuTime(): Long {
+            val newTime = threadMXBean.getThreadCpuTime(thread.threadId())
+            if (newTime > 0 && newTime > totalCpuTime) {
                 totalCpuTime = newTime
             }
+            return totalCpuTime
         }
 
         val started: Instant = Instant.now()
@@ -652,7 +697,7 @@ object Sandbox {
                 TaskResults.PermissionRequest(permission, granted, 0)
             }.count++
             if (!granted && throwException) {
-                throw SecurityException()
+                throw SecurityException("Bad request for ${permission.name}")
             }
         }
 
@@ -782,12 +827,13 @@ object Sandbox {
     private fun <T> confine(
         callable: SandboxCallableArguments<T>,
         sandboxedClassLoader: SandboxedClassLoader,
+        sandboxControl: SandboxControl,
         executionArguments: ExecutionArguments,
     ): ConfinedTask<T> {
         require(confinedClassLoaders.add(sandboxedClassLoader)) {
             "Duplicate class loader for confined task"
         }
-        return ConfinedTask(sandboxedClassLoader, callable, executionArguments)
+        return ConfinedTask(sandboxedClassLoader, callable, sandboxControl, executionArguments)
     }
 
     @Synchronized
@@ -878,12 +924,13 @@ object Sandbox {
     private class SandboxedCallable<T>(
         val callable: SandboxCallableArguments<T>,
         val sandboxedClassLoader: SandboxedClassLoader,
+        val sandboxControl: SandboxControl,
     ) : Callable<T> {
         override fun call(): T {
             sandboxedClassLoader.pluginInstrumentationData.forEach { (plugin, _) ->
                 plugin.executionStartedInSandbox()
             }
-            return callable(Pair(sandboxedClassLoader, Sandbox::redirectOutput))
+            return callable(Triple(sandboxedClassLoader, Sandbox::redirectOutput, sandboxControl))
         }
     }
 
@@ -1858,7 +1905,9 @@ object Sandbox {
                 confinedTask.addPermissionRequest(RuntimePermission("changeThreadGroup"), false)
             } else {
                 // Called in Thread#start only if the Code Awakening agent is active
-                if (confinedTask.shuttingDown) throw SandboxDeath()
+                if (confinedTask.shuttingDown) {
+                    throw SandboxDeath()
+                }
                 systemSecurityManager?.checkAccess(thread)
             }
         }
@@ -2270,7 +2319,7 @@ object Sandbox {
         }
     }
 
-    private class ConfinedThreadGroup(setMaxPriority: Int) : ThreadGroup("Sandbox") {
+    private class ConfinedThreadGroup(setMaxPriority: Int) : ThreadGroup("Jeed Confined Threads") {
         init {
             maxPriority = setMaxPriority
         }
@@ -2319,6 +2368,8 @@ object Sandbox {
 
     private val performingSafeUnconstrainedInvocation: ThreadLocal<Boolean> = ThreadLocal.withInitial { false }
 
+    private val executorThreadGroup = ThreadGroup("Jeed Thread Pool")
+
     @JvmStatic
     @Synchronized
     fun start(size: Int = min(Runtime.getRuntime().availableProcessors(), MAX_THREAD_POOL_SIZE)) {
@@ -2341,7 +2392,7 @@ object Sandbox {
 
         threadPool = Executors.newFixedThreadPool(size) { r ->
             val createdCount = createdThreads.getAndIncrement()
-            Thread(r).apply {
+            Thread(executorThreadGroup, r).apply {
                 name = "Jeed Thread Pool $createdCount"
                 priority = Thread.MAX_PRIORITY
             }

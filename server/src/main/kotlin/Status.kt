@@ -63,7 +63,7 @@ class Status(
         return this
     }
 
-    fun toJson() = statusAdapter.indent("  ").toJson(this)
+    fun toJson(): String = statusAdapter.indent("  ").toJson(this)
 
     companion object {
         private val statusAdapter: JsonAdapter<Status> = moshi.adapter(Status::class.java)

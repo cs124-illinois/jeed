@@ -1,0 +1,3 @@
+<component name="DependencyValidationManager">
+  <scope name="Core Project Files" pattern="file[jeed.core.main]:kotlin//*||file[jeed.server.main]:kotlin//*" />
+</component>

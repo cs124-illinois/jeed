@@ -65,7 +65,7 @@ while (true) {
     i++;
 }
         """.trim(),
-            ).compile().execute(SourceExecutionArguments(cpuTimeout = 100))
+            ).compile().execute(SourceExecutionArguments(cpuTimeoutNS = 100))
 
             executionResult shouldNot haveCompleted()
             executionResult should haveTimedOut()

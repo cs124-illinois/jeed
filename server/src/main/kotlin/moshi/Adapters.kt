@@ -79,7 +79,6 @@ data class ResponseJson(
 
 class ResultAdapter {
     @Throws(Exception::class)
-    @Suppress("UNUSED_PARAMETER")
     @FromJson
     fun resultFromJson(responseJson: ResponseJson): Response {
         val result = Response(responseJson.request)
