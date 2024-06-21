@@ -20,7 +20,10 @@ class TestTimeout : StringSpec({
 for (int i = 0; ; i++);
             """.trim(),
         ).compile()
-        val executionResult = Sandbox.execute(compiledSource.classLoader, Sandbox.ExecutionArguments(timeout = 100)) { (classLoader, _, sandboxControl) ->
+        val executionResult = Sandbox.execute(
+            compiledSource.classLoader,
+            Sandbox.ExecutionArguments(timeout = 100, pollIntervalMS = 1),
+        ) { (classLoader, _, sandboxControl) ->
             sandboxControl.setTimeoutMS(10)
             classLoader.findClassMethod().invoke(null)
         }
@@ -34,7 +37,10 @@ for (int i = 0; ; i++);
 for (int i = 0; ; i++);
             """.trim(),
         ).compile()
-        val executionResult = Sandbox.execute(compiledSource.classLoader, Sandbox.ExecutionArguments(timeout = 100, pollIntervalMS = 1)) { (classLoader, _, sandboxControl) ->
+        val executionResult = Sandbox.execute(
+            compiledSource.classLoader,
+            Sandbox.ExecutionArguments(timeout = 100, pollIntervalMS = 1),
+        ) { (classLoader, _, sandboxControl) ->
             sandboxControl.setCPUTimeoutNS(10 * 1000L * 1000L)
             classLoader.findClassMethod().invoke(null)
         }
