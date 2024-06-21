@@ -1,13 +1,13 @@
 package edu.illinois.cs.cs125.jeed.server
 
-import com.uchuhimo.konf.Config
-import com.uchuhimo.konf.ConfigSpec
-import com.uchuhimo.konf.source.yaml
 import edu.illinois.cs.cs125.jeed.core.ContainerExecutionArguments
 import edu.illinois.cs.cs125.jeed.core.Sandbox
 import edu.illinois.cs.cs125.jeed.core.SourceExecutionArguments
 import edu.illinois.cs.cs125.jeed.core.moshi.PermissionAdapter
 import edu.illinois.cs.cs125.jeed.core.server.PluginArguments
+import io.github.nhubbard.konf.Config
+import io.github.nhubbard.konf.ConfigSpec
+import io.github.nhubbard.konf.source.yaml.yaml
 import java.io.File
 
 const val DEFAULT_PORT = 8888

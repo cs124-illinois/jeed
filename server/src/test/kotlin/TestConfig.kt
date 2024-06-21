@@ -1,9 +1,9 @@
 package edu.illinois.cs.cs125.jeed.server
 
-import com.uchuhimo.konf.Config
-import com.uchuhimo.konf.source.yaml
 import edu.illinois.cs.cs125.jeed.core.Sandbox
 import edu.illinois.cs.cs125.jeed.core.moshi.PermissionJson
+import io.github.nhubbard.konf.Config
+import io.github.nhubbard.konf.source.yaml.yaml
 import io.kotest.assertions.ktor.shouldHaveStatus
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldHaveSize

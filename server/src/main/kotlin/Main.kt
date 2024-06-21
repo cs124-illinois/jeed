@@ -6,10 +6,10 @@ import com.beyondgrader.resourceagent.Agent
 import com.beyondgrader.resourceagent.StaticFailureDetection
 import com.ryanharter.ktor.moshi.moshi
 import com.squareup.moshi.Moshi
-import com.uchuhimo.konf.source.json.toJson
 import edu.illinois.cs.cs125.jeed.core.getStackTraceAsString
 import edu.illinois.cs.cs125.jeed.core.warm
 import edu.illinois.cs.cs125.jeed.server.moshi.Adapters
+import io.github.nhubbard.konf.source.json.toJson
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
 import io.ktor.server.application.call

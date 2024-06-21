@@ -17,21 +17,22 @@ plugins {
 }
 val agentVersion: String by rootProject.extra
 dependencies {
+    val ktorVersion = "2.3.12"
+
     ksp("com.squareup.moshi:moshi-kotlin-codegen:1.15.1")
 
     testJavaagent("com.beyondgrader.resource-agent:agent:$agentVersion")
 
     implementation(project(":core"))
 
-    implementation("io.ktor:ktor-server-netty:2.3.11")
-    implementation("io.ktor:ktor-server-cors:2.3.11")
-    implementation("io.ktor:ktor-server-content-negotiation:2.3.11")
+    implementation("io.ktor:ktor-server-netty:$ktorVersion")
+    implementation("io.ktor:ktor-server-cors:$ktorVersion")
+    implementation("io.ktor:ktor-server-content-negotiation:$ktorVersion")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
     implementation("com.squareup.moshi:moshi-kotlin:1.15.1")
     implementation("org.cs124:ktor-moshi:2024.3.0")
     implementation("ch.qos.logback:logback-classic:1.5.6")
-    implementation("com.uchuhimo:konf-core:1.1.2")
-    implementation("com.uchuhimo:konf-yaml:1.1.2")
+    implementation("io.github.nhubbard:konf:2.1.0")
     implementation("io.github.microutils:kotlin-logging:3.0.5")
     implementation("org.cs124:libcs1:2024.5.0")
     implementation("com.beyondgrader.resource-agent:agent:$agentVersion")
@@ -39,7 +40,7 @@ dependencies {
 
     testImplementation("io.kotest:kotest-runner-junit5:5.9.1")
     testImplementation("io.kotest:kotest-assertions-ktor:4.4.3")
-    testImplementation("io.ktor:ktor-server-test-host:2.3.11")
+    testImplementation("io.ktor:ktor-server-test-host:$ktorVersion")
 }
 
 application {
