@@ -150,7 +150,8 @@ internal class JeedMessageCollector(val source: Source, private val allWarningsA
     val errors: List<CompilationError>
         get() = messages.filter {
             it.kind == CompilerMessageSeverity.ERROR.presentableName ||
-                allWarningsAsErrors && (
+                allWarningsAsErrors &&
+                (
                     it.kind == CompilerMessageSeverity.WARNING.presentableName ||
                         it.kind == CompilerMessageSeverity.STRONG_WARNING.presentableName
                     )
@@ -177,9 +178,7 @@ internal class JeedMessageCollector(val source: Source, private val allWarningsA
             CompilationMessage("warning", it.location, it.message)
         }
 
-    override fun hasErrors(): Boolean {
-        return errors.isNotEmpty()
-    }
+    override fun hasErrors(): Boolean = errors.isNotEmpty()
 
     override fun report(severity: CompilerMessageSeverity, message: String, location: CompilerMessageSourceLocation?) {
         if (severity == CompilerMessageSeverity.LOGGING || severity == CompilerMessageSeverity.INFO) {
@@ -403,14 +402,12 @@ class SimpleVirtualFile(
     override fun getFileSystem() = SimpleVirtualFileSystem
 
     override fun toString() = prefixedString("").joinToString(separator = "\n")
-    private fun prefixedString(path: String): List<String> {
-        return if (!isDirectory) {
-            listOf("$path$name")
-        } else {
-            mutableListOf<String>().also { paths ->
-                children.forEach { child ->
-                    paths.addAll(child.prefixedString("$path/$name"))
-                }
+    private fun prefixedString(path: String): List<String> = if (!isDirectory) {
+        listOf("$path$name")
+    } else {
+        mutableListOf<String>().also { paths ->
+            children.forEach { child ->
+                paths.addAll(child.prefixedString("$path/$name"))
             }
         }
     }

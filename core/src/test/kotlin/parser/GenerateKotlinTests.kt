@@ -66,24 +66,25 @@ fun generateTemplate(file: String) = """"it should parse $file" {
     Source.fromKotlin(contents).parse()
 }"""
 
-class GenerateKotlinTests : StringSpec({
-    "!it should generate Kotlin parser tests" {
-        val parserDirectory =
-            object {}::class.java.getResource("/parser")?.path ?: error("Can't load parser example directory")
-        val parserFiles = Files
-            .walk(Paths.get(parserDirectory))
-            .filter { Files.isRegularFile(it) && it.name.endsWith(".kt") }
-            .map { it.relativeTo(Path(parserDirectory)) }
-            .map { it.pathString }
-            .toList()
+class GenerateKotlinTests :
+    StringSpec({
+        "!it should generate Kotlin parser tests" {
+            val parserDirectory =
+                object {}::class.java.getResource("/parser")?.path ?: error("Can't load parser example directory")
+            val parserFiles = Files
+                .walk(Paths.get(parserDirectory))
+                .filter { Files.isRegularFile(it) && it.name.endsWith(".kt") }
+                .map { it.relativeTo(Path(parserDirectory)) }
+                .map { it.pathString }
+                .toList()
 
-        val tests = filesToUse.map { parserFile ->
-            check(parserFiles.contains(parserFile)) {
-                "Can't find $parserFile"
-            }
-            generateTemplate(parserFile)
-        }.joinToString("\n")
+            val tests = filesToUse.map { parserFile ->
+                check(parserFiles.contains(parserFile)) {
+                    "Can't find $parserFile"
+                }
+                generateTemplate(parserFile)
+            }.joinToString("\n")
 
-        println(tests)
-    }
-})
+            println(tests)
+        }
+    })

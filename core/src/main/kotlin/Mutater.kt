@@ -307,29 +307,32 @@ fun Source.mutate(
 
 fun SourceMutation.suppressed(contents: String) = mutation.location.line.lines().any { line ->
     line.split("""//""").let { parts ->
-        parts.size == 2 && (
-            parts[1].split(" ").contains("mutate-disable") ||
-                parts[1].split(" ").contains(mutation.mutationType.suppressionComment())
-            )
+        parts.size == 2 &&
+            (
+                parts[1].split(" ").contains("mutate-disable") ||
+                    parts[1].split(" ").contains(mutation.mutationType.suppressionComment())
+                )
     }
-} || contents.lines().let { lines ->
-    for (lineNumber in mutation.location.startLine - 1 downTo 1) {
-        val line = lines[lineNumber - 1].trim()
-        if (!line.startsWith("""//""")) {
-            break
-        }
-        line.split("""//""").also { parts ->
-            if (parts.size == 2 && (
-                    parts[1].split(" ").contains("mutate-disable") ||
-                        parts[1].split(" ").contains(mutation.mutationType.suppressionComment())
-                    )
-            ) {
-                return@let true
+} ||
+    contents.lines().let { lines ->
+        for (lineNumber in mutation.location.startLine - 1 downTo 1) {
+            val line = lines[lineNumber - 1].trim()
+            if (!line.startsWith("""//""")) {
+                break
+            }
+            line.split("""//""").also { parts ->
+                if (parts.size == 2 &&
+                    (
+                        parts[1].split(" ").contains("mutate-disable") ||
+                            parts[1].split(" ").contains(mutation.mutationType.suppressionComment())
+                        )
+                ) {
+                    return@let true
+                }
             }
         }
+        false
     }
-    false
-}
 
 fun Source.allMutations(
     suppressWithComments: Boolean = true,
@@ -472,9 +475,7 @@ fun Source.allFixedMutations(
 data class MutationsArguments(val limit: Int = 4, val suppressWithComments: Boolean = true)
 
 class MutationsFailed(errors: List<SourceError>) : JeedError(errors) {
-    override fun toString(): String {
-        return "errors were encountered while mutating sources: ${errors.joinToString(separator = ",")}"
-    }
+    override fun toString(): String = "errors were encountered while mutating sources: ${errors.joinToString(separator = ",")}"
 }
 
 @JsonClass(generateAdapter = true)

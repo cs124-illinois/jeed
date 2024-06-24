@@ -21,9 +21,7 @@ object Jacoco : SandboxPlugin<Unit, CoverageBuilder> {
         arguments: Unit,
         classLoaderConfiguration: Sandbox.ClassLoaderConfiguration,
         allPlugins: List<ConfiguredSandboxPlugin<*, *>>,
-    ): Any {
-        return JacocoInstrumentationData()
-    }
+    ): Any = JacocoInstrumentationData()
 
     override fun transformBeforeSandbox(
         bytecode: ByteArray,
@@ -40,9 +38,7 @@ object Jacoco : SandboxPlugin<Unit, CoverageBuilder> {
     override val requiredClasses: Set<Class<*>>
         get() = setOf(IsolatedJacocoRuntime.RuntimeDataAccessor::class.java)
 
-    override fun createInitialData(instrumentationData: Any?, executionArguments: Sandbox.ExecutionArguments): Any {
-        return JacocoWorkingData(instrumentationData as JacocoInstrumentationData)
-    }
+    override fun createInitialData(instrumentationData: Any?, executionArguments: Sandbox.ExecutionArguments): Any = JacocoWorkingData(instrumentationData as JacocoInstrumentationData)
 
     override fun createFinalData(workingData: Any?): CoverageBuilder {
         workingData as JacocoWorkingData

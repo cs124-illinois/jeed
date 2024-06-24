@@ -8,8 +8,7 @@ import edu.illinois.cs.cs125.jeed.core.antlr.KotlinParserBaseListener
 import org.antlr.v4.runtime.tree.ParseTreeWalker
 
 @Suppress("TooManyFunctions")
-class KotlinComplexityListener(val source: Source, entry: Map.Entry<String, String>) :
-    KotlinParserBaseListener() {
+class KotlinComplexityListener(val source: Source, entry: Map.Entry<String, String>) : KotlinParserBaseListener() {
     private val filename = entry.key
     private var currentClass = ""
 

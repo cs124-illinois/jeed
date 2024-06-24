@@ -84,23 +84,19 @@ public class Test {
 }
 
 fun containerHaveCompleted() = object : Matcher<ContainerExecutionResults> {
-    override fun test(value: ContainerExecutionResults): MatcherResult {
-        return MatcherResult(
-            value.completed,
-            { "Code should have run" },
-            { "Code should not have run" },
-        )
-    }
+    override fun test(value: ContainerExecutionResults): MatcherResult = MatcherResult(
+        value.completed,
+        { "Code should have run" },
+        { "Code should not have run" },
+    )
 }
 
 fun containerHaveTimedOut() = object : Matcher<ContainerExecutionResults> {
-    override fun test(value: ContainerExecutionResults): MatcherResult {
-        return MatcherResult(
-            value.timeout,
-            { "Code should have timed out" },
-            { "Code should not have timed out" },
-        )
-    }
+    override fun test(value: ContainerExecutionResults): MatcherResult = MatcherResult(
+        value.timeout,
+        { "Code should have timed out" },
+        { "Code should not have timed out" },
+    )
 }
 
 fun containerHaveOutput(output: String = "") = object : Matcher<ContainerExecutionResults> {

@@ -11,73 +11,74 @@ import io.kotest.matchers.string.shouldNotContain
 import kotlin.random.Random
 
 @Suppress("LargeClass")
-class TestJavaMutater : StringSpec({
-    "it should find boolean literals to mutate" {
-        Source.fromJava(
-            """
+class TestJavaMutater :
+    StringSpec({
+        "it should find boolean literals to mutate" {
+            Source.fromJava(
+                """
 public class Example {
   public static void example() {
     boolean first = true;
     boolean second = false;
   }
 }""",
-        ).checkMutations<BooleanLiteral> { mutations, contents ->
-            mutations shouldHaveSize 2
-            mutations[0].check(contents, "true", "false")
-            mutations[1].check(contents, "false", "true")
+            ).checkMutations<BooleanLiteral> { mutations, contents ->
+                mutations shouldHaveSize 2
+                mutations[0].check(contents, "true", "false")
+                mutations[1].check(contents, "false", "true")
+            }
         }
-    }
-    "it should find char literals to mutate" {
-        Source.fromJava(
-            """
+        "it should find char literals to mutate" {
+            Source.fromJava(
+                """
 public class Example {
   public static void example() {
     char first = 'a';
     char second = '!';
   }
 }""",
-        ).checkMutations<CharLiteral> { mutations, contents ->
-            mutations shouldHaveSize 2
-            mutations[0].check(contents, "'a'")
-            mutations[1].check(contents, "'!'")
+            ).checkMutations<CharLiteral> { mutations, contents ->
+                mutations shouldHaveSize 2
+                mutations[0].check(contents, "'a'")
+                mutations[1].check(contents, "'!'")
+            }
         }
-    }
-    "it should find string literals to mutate" {
-        Source.fromJava(
-            """
+        "it should find string literals to mutate" {
+            Source.fromJava(
+                """
 public class Example {
   public static void example() {
     System.out.println("Hello, world!");
     String s = "";
   }
 }""",
-        ).checkMutations<StringLiteral> { mutations, contents ->
-            mutations shouldHaveSize 2
-            mutations[0].check(contents, "\"Hello, world!\"").also {
-                it shouldMatch ".*println\\(\".*".toRegex(RegexOption.DOT_MATCHES_ALL)
+            ).checkMutations<StringLiteral> { mutations, contents ->
+                mutations shouldHaveSize 2
+                mutations[0].check(contents, "\"Hello, world!\"").also {
+                    it shouldMatch ".*println\\(\".*".toRegex(RegexOption.DOT_MATCHES_ALL)
+                }
+                mutations[1].check(contents, "\"\"")
             }
-            mutations[1].check(contents, "\"\"")
         }
-    }
-    "it should find lookalike string literals to mutate" {
-        Source.fromJava(
-            """
+        "it should find lookalike string literals to mutate" {
+            Source.fromJava(
+                """
 public class Example {
   public static void example() {
     System.out.println("Hello, world");
     String s = "";
   }
 }""",
-        ).checkMutations<StringLiteralLookalike> { mutations, contents ->
-            mutations shouldHaveSize 1
-            mutations[0].check(contents, "\"Hello, world\"").also {
-                it shouldMatch ".*0.*".toRegex(RegexOption.DOT_MATCHES_ALL)
+            ).checkMutations<StringLiteralLookalike> { mutations, contents ->
+                mutations shouldHaveSize 1
+                mutations[0].check(contents, "\"Hello, world\"").also {
+                    it shouldMatch ".*0.*".toRegex(RegexOption.DOT_MATCHES_ALL)
+                }
             }
         }
-    }
-    "it should find lookalike string cases to mutate" {
-        Source.fromJava(
-            """
+        "it should find lookalike string cases to mutate" {
+            Source.fromJava(
+                """
 public class Example {
   public static void example() {
     System.out.println("Hello, world");
@@ -86,100 +87,100 @@ public class Example {
     String s = "";
   }
 }""",
-        ).checkMutations<StringLiteralCase> { mutations, contents ->
-            mutations shouldHaveSize 2
-            mutations[0].check(contents, "\"Hello, world\"").also {
-                it shouldMatch ".*ello.*".toRegex(RegexOption.DOT_MATCHES_ALL)
-                it shouldMatch ".*orld.*".toRegex(RegexOption.DOT_MATCHES_ALL)
+            ).checkMutations<StringLiteralCase> { mutations, contents ->
+                mutations shouldHaveSize 2
+                mutations[0].check(contents, "\"Hello, world\"").also {
+                    it shouldMatch ".*ello.*".toRegex(RegexOption.DOT_MATCHES_ALL)
+                    it shouldMatch ".*orld.*".toRegex(RegexOption.DOT_MATCHES_ALL)
+                }
             }
         }
-    }
-    "it should find string literals to trim" {
-        Source.fromJava(
-            """
+        "it should find string literals to trim" {
+            Source.fromJava(
+                """
 public class Example {
   public static void example() {
     System.out.println("Hello, world!");
     String s = "";
   }
 }""",
-        ).checkMutations<StringLiteralTrim> { mutations, contents ->
-            mutations shouldHaveSize 1
-            mutations[0].check(contents, """"Hello, world!"""".trimMargin())
+            ).checkMutations<StringLiteralTrim> { mutations, contents ->
+                mutations shouldHaveSize 1
+                mutations[0].check(contents, """"Hello, world!"""".trimMargin())
+            }
         }
-    }
-    "it should not mutate string escapes" {
-        Source.fromJava(
-            """
+        "it should not mutate string escapes" {
+            Source.fromJava(
+                """
 public class Example {
   public static void example() {
     System.out.println("\\\\");
   }
 }""",
-        ).checkMutations<StringLiteral> { mutations, contents ->
-            mutations shouldHaveSize 1
-            mutations[0].check(contents, """"\\\\"""").also {
-                it shouldMatch ".*\\\\.*".toRegex(RegexOption.DOT_MATCHES_ALL)
+            ).checkMutations<StringLiteral> { mutations, contents ->
+                mutations shouldHaveSize 1
+                mutations[0].check(contents, """"\\\\"""").also {
+                    it shouldMatch ".*\\\\.*".toRegex(RegexOption.DOT_MATCHES_ALL)
+                }
             }
-        }
-        Source.fromJava(
-            """
+            Source.fromJava(
+                """
 public class Example {
   public static void example() {
     System.out.println("\\t\\");
   }
 }""",
-        ).checkMutations<StringLiteral> { mutations, contents ->
-            mutations shouldHaveSize 1
-            mutations[0].check(contents, """"\\t\\"""").also {
-                it shouldMatch ".*\\\\.*".toRegex(RegexOption.DOT_MATCHES_ALL)
+            ).checkMutations<StringLiteral> { mutations, contents ->
+                mutations shouldHaveSize 1
+                mutations[0].check(contents, """"\\t\\"""").also {
+                    it shouldMatch ".*\\\\.*".toRegex(RegexOption.DOT_MATCHES_ALL)
+                }
             }
-        }
-        Source.fromJava(
-            """
+            Source.fromJava(
+                """
 public class Example {
   public static void example() {
     System.out.println("\\t\\");
   }
 }""",
-        ).checkMutations<StringLiteral> { mutations, contents ->
-            mutations shouldHaveSize 1
-            mutations[0].check(contents, """"\\t\\"""").also {
-                it shouldMatch ".*\\\\.*".toRegex(RegexOption.DOT_MATCHES_ALL)
+            ).checkMutations<StringLiteral> { mutations, contents ->
+                mutations shouldHaveSize 1
+                mutations[0].check(contents, """"\\t\\"""").also {
+                    it shouldMatch ".*\\\\.*".toRegex(RegexOption.DOT_MATCHES_ALL)
+                }
             }
-        }
-        Source.fromJava(
-            """
+            Source.fromJava(
+                """
 public class Example {
   public static void example() {
     System.out.println("\\t\\te");
   }
 }""",
-        ).checkMutations<StringLiteral> { mutations, contents ->
-            mutations shouldHaveSize 1
-            mutations[0].check(contents, """"\\t\\te"""").also {
-                it shouldMatch """.*println\("\\\\t\\\\t.*""".toRegex(RegexOption.DOT_MATCHES_ALL)
+            ).checkMutations<StringLiteral> { mutations, contents ->
+                mutations shouldHaveSize 1
+                mutations[0].check(contents, """"\\t\\te"""").also {
+                    it shouldMatch """.*println\("\\\\t\\\\t.*""".toRegex(RegexOption.DOT_MATCHES_ALL)
+                }
             }
         }
-    }
-    "it should find number literals to mutate" {
-        Source.fromJava(
-            """
+        "it should find number literals to mutate" {
+            Source.fromJava(
+                """
 public class Example {
   public static void example() {
     System.out.println(1234);
     float f = 1.01f;
   }
 }""",
-        ).checkMutations<NumberLiteral> { mutations, contents ->
-            mutations shouldHaveSize 2
-            mutations[0].check(contents, "1234")
-            mutations[1].check(contents, "1.01f")
+            ).checkMutations<NumberLiteral> { mutations, contents ->
+                mutations shouldHaveSize 2
+                mutations[0].check(contents, "1234")
+                mutations[1].check(contents, "1.01f")
+            }
         }
-    }
-    "it should find number literals to trim" {
-        Source.fromJava(
-            """
+        "it should find number literals to trim" {
+            Source.fromJava(
+                """
 public class Example {
   public static void example() {
     System.out.println(1234);
@@ -191,14 +192,14 @@ public class Example {
     int third = 0b101010;
   }
 }""",
-        ).checkMutations<NumberLiteralTrim> { mutations, contents ->
-            mutations shouldHaveSize 4
-            mutations[0].check(contents, "1234")
+            ).checkMutations<NumberLiteralTrim> { mutations, contents ->
+                mutations shouldHaveSize 4
+                mutations[0].check(contents, "1234")
+            }
         }
-    }
-    "it should not trim to zeroes" {
-        Source.fromJava(
-            """
+        "it should not trim to zeroes" {
+            Source.fromJava(
+                """
 public class Example {
   public static void example() {
     int first = 1000;
@@ -207,31 +208,31 @@ public class Example {
     int fourth = -10;
   }
 }""",
-        ).checkMutations<NumberLiteralTrim> { mutations, contents ->
-            mutations shouldHaveSize 2
-            mutations[0].shouldNotBe(contents, "1000", "000")
-            mutations[0].estimatedCount shouldBe 1
-            mutations[1].shouldNotBe(contents, "10", "0")
-            mutations[1].estimatedCount shouldBe 1
+            ).checkMutations<NumberLiteralTrim> { mutations, contents ->
+                mutations shouldHaveSize 2
+                mutations[0].shouldNotBe(contents, "1000", "000")
+                mutations[0].estimatedCount shouldBe 1
+                mutations[1].shouldNotBe(contents, "10", "0")
+                mutations[1].estimatedCount shouldBe 1
+            }
         }
-    }
-    "it should not mutate negatives to zeroes" {
-        Source.fromJava(
-            """
+        "it should not mutate negatives to zeroes" {
+            Source.fromJava(
+                """
 public class Example {
   public static void example() {
     int first = -1;
   }
 }""",
-        ).checkMutations<NumberLiteral> { mutations, contents ->
-            mutations shouldHaveSize 1
-            mutations[0].shouldNotBe(contents, "1", "0")
-            mutations[0].estimatedCount shouldBe 1
+            ).checkMutations<NumberLiteral> { mutations, contents ->
+                mutations shouldHaveSize 1
+                mutations[0].shouldNotBe(contents, "1", "0")
+                mutations[0].estimatedCount shouldBe 1
+            }
         }
-    }
-    "it should find increments and decrements to mutate" {
-        Source.fromJava(
-            """
+        "it should find increments and decrements to mutate" {
+            Source.fromJava(
+                """
 public class Example {
   public static void example() {
     int i = 0;
@@ -240,15 +241,15 @@ public class Example {
     --j;
   }
 }""",
-        ).checkMutations<IncrementDecrement> { mutations, contents ->
-            mutations shouldHaveSize 2
-            mutations[0].check(contents, "++", "--")
-            mutations[1].check(contents, "--", "++")
+            ).checkMutations<IncrementDecrement> { mutations, contents ->
+                mutations shouldHaveSize 2
+                mutations[0].check(contents, "++", "--")
+                mutations[1].check(contents, "--", "++")
+            }
         }
-    }
-    "it should find negatives to invert" {
-        Source.fromJava(
-            """
+        "it should find negatives to invert" {
+            Source.fromJava(
+                """
 public class Example {
   public static void example() {
     int i = 0;
@@ -256,15 +257,15 @@ public class Example {
     int k = -j;
   }
 }""",
-        ).checkMutations<InvertNegation> { mutations, contents ->
-            mutations shouldHaveSize 2
-            mutations[0].check(contents, "-", "")
-            mutations[1].check(contents, "-", "")
+            ).checkMutations<InvertNegation> { mutations, contents ->
+                mutations shouldHaveSize 2
+                mutations[0].check(contents, "-", "")
+                mutations[1].check(contents, "-", "")
+            }
         }
-    }
-    "it should find math to mutate" {
-        Source.fromJava(
-            """
+        "it should find math to mutate" {
+            Source.fromJava(
+                """
 public class Example {
   public static void example() {
     int i = 0;
@@ -282,23 +283,23 @@ public class Example {
     k = i >>> j;
   }
 }""",
-        ).checkMutations<MutateMath> { mutations, contents ->
-            mutations shouldHaveSize 10
-            mutations[0].check(contents, "-", "+")
-            mutations[1].check(contents, "*", "/")
-            mutations[2].check(contents, "/", "*")
-            mutations[3].check(contents, "%", "*")
-            mutations[4].check(contents, "&", "|")
-            mutations[5].check(contents, "|", "&")
-            mutations[6].check(contents, "^", "&")
-            mutations[7].check(contents, "<<", ">>")
-            mutations[8].check(contents, ">>", "<<")
-            mutations[9].check(contents, ">>>", "<<")
+            ).checkMutations<MutateMath> { mutations, contents ->
+                mutations shouldHaveSize 10
+                mutations[0].check(contents, "-", "+")
+                mutations[1].check(contents, "*", "/")
+                mutations[2].check(contents, "/", "*")
+                mutations[3].check(contents, "%", "*")
+                mutations[4].check(contents, "&", "|")
+                mutations[5].check(contents, "|", "&")
+                mutations[6].check(contents, "^", "&")
+                mutations[7].check(contents, "<<", ">>")
+                mutations[8].check(contents, ">>", "<<")
+                mutations[9].check(contents, ">>>", "<<")
+            }
         }
-    }
-    "it should mutate plus separately" {
-        Source.fromJava(
-            """
+        "it should mutate plus separately" {
+            Source.fromJava(
+                """
 public class Example {
   public static void example() {
     int i = 0;
@@ -306,14 +307,14 @@ public class Example {
     int k = i + j;
   }
 }""",
-        ).checkMutations<PlusToMinus> { mutations, contents ->
-            mutations shouldHaveSize 1
-            mutations[0].check(contents, "+", "-")
+            ).checkMutations<PlusToMinus> { mutations, contents ->
+                mutations shouldHaveSize 1
+                mutations[0].check(contents, "+", "-")
+            }
         }
-    }
-    "it should find conditional boundaries to mutate" {
-        Source.fromJava(
-            """
+        "it should find conditional boundaries to mutate" {
+            Source.fromJava(
+                """
 public class Example {
   public static void example() {
     int i = 0;
@@ -324,15 +325,15 @@ public class Example {
     }
   }
 }""",
-        ).checkMutations<ConditionalBoundary> { mutations, contents ->
-            mutations shouldHaveSize 2
-            mutations[0].check(contents, "<", "<=")
-            mutations[1].check(contents, ">=", ">")
+            ).checkMutations<ConditionalBoundary> { mutations, contents ->
+                mutations shouldHaveSize 2
+                mutations[0].check(contents, "<", "<=")
+                mutations[1].check(contents, ">=", ">")
+            }
         }
-    }
-    "it should find conditionals to negate" {
-        Source.fromJava(
-            """
+        "it should find conditionals to negate" {
+            Source.fromJava(
+                """
 public class Example {
   public static void example() {
     int i = 0;
@@ -345,16 +346,16 @@ public class Example {
     }
   }
 }""",
-        ).checkMutations<NegateConditional> { mutations, contents ->
-            mutations shouldHaveSize 3
-            mutations[0].check(contents, "<", ">=")
-            mutations[1].check(contents, ">=", "<")
-            mutations[2].check(contents, "==", "!=")
+            ).checkMutations<NegateConditional> { mutations, contents ->
+                mutations shouldHaveSize 3
+                mutations[0].check(contents, "<", ">=")
+                mutations[1].check(contents, ">=", "<")
+                mutations[2].check(contents, "==", "!=")
+            }
         }
-    }
-    "it should find primitive returns to mutate" {
-        Source.fromJava(
-            """
+        "it should find primitive returns to mutate" {
+            Source.fromJava(
+                """
                     public class Example {
   public static void first() {}
   public static int second() {
@@ -379,15 +380,15 @@ public class Example {
     return 0.0f;
   }
 }""",
-        ).checkMutations<PrimitiveReturn> { mutations, contents ->
-            mutations shouldHaveSize 2
-            mutations[0].check(contents, "1", "0")
-            mutations[1].check(contents, "'A'", "0")
+            ).checkMutations<PrimitiveReturn> { mutations, contents ->
+                mutations shouldHaveSize 2
+                mutations[0].check(contents, "1", "0")
+                mutations[1].check(contents, "'A'", "0")
+            }
         }
-    }
-    "it should find true returns to mutate" {
-        Source.fromJava(
-            """
+        "it should find true returns to mutate" {
+            Source.fromJava(
+                """
 public class Example {
   public static void first() {}
   public static boolean second() {
@@ -401,15 +402,15 @@ public class Example {
     return true;
   }
 }""",
-        ).checkMutations<TrueReturn> { mutations, contents ->
-            mutations shouldHaveSize 2
-            mutations[0].check(contents, "it", "true")
-            mutations[1].check(contents, "false", "true")
+            ).checkMutations<TrueReturn> { mutations, contents ->
+                mutations shouldHaveSize 2
+                mutations[0].check(contents, "it", "true")
+                mutations[1].check(contents, "false", "true")
+            }
         }
-    }
-    "it should find false returns to mutate" {
-        Source.fromJava(
-            """
+        "it should find false returns to mutate" {
+            Source.fromJava(
+                """
 public class Example {
   public static void first() {}
   public static boolean second() {
@@ -423,15 +424,15 @@ public class Example {
     return true;
   }
 }""",
-        ).checkMutations<FalseReturn> { mutations, contents ->
-            mutations shouldHaveSize 2
-            mutations[0].check(contents, "it", "false")
-            mutations[1].check(contents, "true", "false")
+            ).checkMutations<FalseReturn> { mutations, contents ->
+                mutations shouldHaveSize 2
+                mutations[0].check(contents, "it", "false")
+                mutations[1].check(contents, "true", "false")
+            }
         }
-    }
-    "it should find null returns to mutate" {
-        Source.fromJava(
-            """
+        "it should find null returns to mutate" {
+            Source.fromJava(
+                """
 public class Example {
   public static void first() {}
   public static boolean second() {
@@ -448,30 +449,30 @@ public class Example {
     return new int[] {};
   }
 }""",
-        ).checkMutations<NullReturn> { mutations, contents ->
-            mutations shouldHaveSize 2
-            mutations[0].check(contents, "new Object()", "null")
-            mutations[1].check(contents, "new int[] {}", "null")
+            ).checkMutations<NullReturn> { mutations, contents ->
+                mutations shouldHaveSize 2
+                mutations[0].check(contents, "new Object()", "null")
+                mutations[1].check(contents, "new int[] {}", "null")
+            }
         }
-    }
-    "it should find asserts to mutate" {
-        Source.fromJava(
-            """
+        "it should find asserts to mutate" {
+            Source.fromJava(
+                """
 public class Example {
   public static void test(int first, int second) {
     assert first > 0;
     assert second >= 0 : "Bad second value";
   }
 }""",
-        ).checkMutations<RemoveRuntimeCheck> { mutations, contents ->
-            mutations shouldHaveSize 2
-            mutations[0].check(contents, "assert first > 0;", "")
-            mutations[1].check(contents, """assert second >= 0 : "Bad second value";""", "")
+            ).checkMutations<RemoveRuntimeCheck> { mutations, contents ->
+                mutations shouldHaveSize 2
+                mutations[0].check(contents, "assert first > 0;", "")
+                mutations[1].check(contents, """assert second >= 0 : "Bad second value";""", "")
+            }
         }
-    }
-    "it should remove entire methods" {
-        Source.fromJava(
-            """
+        "it should remove entire methods" {
+            Source.fromJava(
+                """
 public class Example {
   public static int test(int first, int second) {
     if (first > second) {
@@ -484,13 +485,13 @@ public class Example {
     return new long[] {1L, 2L, 4L};
   }
 }""",
-        ).checkMutations<RemoveMethod> { mutations, _ ->
-            mutations shouldHaveSize 2
+            ).checkMutations<RemoveMethod> { mutations, _ ->
+                mutations shouldHaveSize 2
+            }
         }
-    }
-    "it should not remove entire methods if they are already blank" {
-        Source.fromJava(
-            """
+        "it should not remove entire methods if they are already blank" {
+            Source.fromJava(
+                """
 public class Example {
   public static void test(int first, int second) {
   }
@@ -504,13 +505,13 @@ public class Example {
 return ;
 }
 }""",
-        ).checkMutations<RemoveMethod> { mutations, _ ->
-            mutations shouldHaveSize 0
+            ).checkMutations<RemoveMethod> { mutations, _ ->
+                mutations shouldHaveSize 0
+            }
         }
-    }
-    "it should negate if statements" {
-        Source.fromJava(
-            """
+        "it should negate if statements" {
+            Source.fromJava(
+                """
 public class Example {
   public static int test(int first, int second) {
     if (first > second) {
@@ -520,14 +521,14 @@ public class Example {
     }
   }
 }""",
-        ).checkMutations<NegateIf> { mutations, contents ->
-            mutations shouldHaveSize 1
-            mutations[0].check(contents, "(first > second)", "(!(first > second))")
+            ).checkMutations<NegateIf> { mutations, contents ->
+                mutations shouldHaveSize 1
+                mutations[0].check(contents, "(first > second)", "(!(first > second))")
+            }
         }
-    }
-    "it should negate while statements" {
-        Source.fromJava(
-            """
+        "it should negate while statements" {
+            Source.fromJava(
+                """
 public class Example {
   public static int test(int first) {
     int i = 0;
@@ -536,14 +537,14 @@ public class Example {
     }
   }
 }""",
-        ).checkMutations<NegateWhile> { mutations, contents ->
-            mutations shouldHaveSize 1
-            mutations[0].check(contents, "(i < first)", "(!(i < first))")
+            ).checkMutations<NegateWhile> { mutations, contents ->
+                mutations shouldHaveSize 1
+                mutations[0].check(contents, "(i < first)", "(!(i < first))")
+            }
         }
-    }
-    "it should remove if statements" {
-        Source.fromJava(
-            """
+        "it should remove if statements" {
+            Source.fromJava(
+                """
 public class Example {
   public static int test(int first) {
     if (first > 0) {
@@ -568,20 +569,20 @@ public class Example {
     }
   }
 }""",
-        ).checkMutations<RemoveIf> { mutations, contents ->
-            mutations shouldHaveSize 8
-            mutations[0].check(
-                contents,
-                """if (first > 0) {
+            ).checkMutations<RemoveIf> { mutations, contents ->
+                mutations shouldHaveSize 8
+                mutations[0].check(
+                    contents,
+                    """if (first > 0) {
       System.out.println(1);
     }""",
-                "",
-            )
+                    "",
+                )
+            }
         }
-    }
-    "it should flip and and or" {
-        Source.fromJava(
-            """
+        "it should flip and and or" {
+            Source.fromJava(
+                """
 public class Example {
   public static int test(int first) {
     if (first > 0 && first < 0) {
@@ -589,14 +590,14 @@ public class Example {
     }
   }
 }""",
-        ).checkMutations<SwapAndOr> { mutations, contents ->
-            mutations shouldHaveSize 1
-            mutations[0].check(contents, "&&", "||")
+            ).checkMutations<SwapAndOr> { mutations, contents ->
+                mutations shouldHaveSize 1
+                mutations[0].check(contents, "&&", "||")
+            }
         }
-    }
-    "it should swap break and continue" {
-        Source.fromJava(
-            """
+        "it should swap break and continue" {
+            Source.fromJava(
+                """
 public class Example {
   public static int test(int first) {
     for (int i = 0; i < 10; i++) {
@@ -609,14 +610,14 @@ public class Example {
     }
   }
 }""",
-        ).checkMutations<SwapBreakContinue> { mutations, contents ->
-            mutations shouldHaveSize 2
-            mutations[0].check(contents, "continue", "break")
+            ).checkMutations<SwapBreakContinue> { mutations, contents ->
+                mutations shouldHaveSize 2
+                mutations[0].check(contents, "continue", "break")
+            }
         }
-    }
-    "it should remove plus and minus 1" {
-        Source.fromJava(
-            """
+        "it should remove plus and minus 1" {
+            Source.fromJava(
+                """
 public class Example {
   public static int test(int first) {
     int i = 0;
@@ -625,30 +626,30 @@ public class Example {
     int j = j - 1;
   }
 }""",
-        ).checkMutations<PlusOrMinusOneToZero> { mutations, contents ->
-            mutations shouldHaveSize 2
-            mutations[0].check(contents, "1", "0")
-            mutations[1].check(contents, "1", "0")
+            ).checkMutations<PlusOrMinusOneToZero> { mutations, contents ->
+                mutations shouldHaveSize 2
+                mutations[0].check(contents, "1", "0")
+                mutations[1].check(contents, "1", "0")
+            }
         }
-    }
-    "it should remove plus and minus 1 with number literal" {
-        Source.fromJava(
-            """
+        "it should remove plus and minus 1 with number literal" {
+            Source.fromJava(
+                """
 public class Example {
   public static int test(int first) {
     int i = i + 1;
     int j = j - 1;
   }
 }""",
-        ).checkMutations<NumberLiteral> { mutations, contents ->
-            mutations shouldHaveSize 2
-            mutations[0].check(contents, "1", "0")
-            mutations[1].check(contents, "1", "0")
+            ).checkMutations<NumberLiteral> { mutations, contents ->
+                mutations shouldHaveSize 2
+                mutations[0].check(contents, "1", "0")
+                mutations[1].check(contents, "1", "0")
+            }
         }
-    }
-    "it should remove loops correctly" {
-        Source.fromJava(
-            """
+        "it should remove loops correctly" {
+            Source.fromJava(
+                """
 public class Example {
   public static int test(int first) {
     for (int i = 0; i < first; i++) { }
@@ -657,14 +658,14 @@ public class Example {
     do {} while (true);
   }
 }""",
-        ).checkMutations<RemoveLoop> { mutations, contents ->
-            mutations shouldHaveSize 4
-            mutations[0].check(contents, "for (int i = 0; i < first; i++) { }", "")
+            ).checkMutations<RemoveLoop> { mutations, contents ->
+                mutations shouldHaveSize 4
+                mutations[0].check(contents, "for (int i = 0; i < first; i++) { }", "")
+            }
         }
-    }
-    "it should add breaks to for loops correctly" {
-        Source.fromJava(
-            """
+        "it should add breaks to for loops correctly" {
+            Source.fromJava(
+                """
 public class Example {
   public static int test(int first) {
     for (int i = 0; i < first; i++) {
@@ -673,16 +674,16 @@ public class Example {
     for (int i : new int[] {1, 2, 4}) { }
   }
 }""",
-        ).checkMutations<AddBreak> { mutations, contents ->
-            mutations shouldHaveSize 2
-            mutations.forEach {
-                it.check(contents, "}", "break; }")
+            ).checkMutations<AddBreak> { mutations, contents ->
+                mutations shouldHaveSize 2
+                mutations.forEach {
+                    it.check(contents, "}", "break; }")
+                }
             }
         }
-    }
-    "it should add breaks to for loops with nesting correctly" {
-        Source.fromJava(
-            """
+        "it should add breaks to for loops with nesting correctly" {
+            Source.fromJava(
+                """
 public class Example {
   public static int test(int first) {
     for (int i = 0; i < first; i++) {
@@ -694,16 +695,16 @@ public class Example {
     for (int i : new int[] {1, 2, 4}) { }
   }
 }""",
-        ).checkMutations<AddBreak> { mutations, contents ->
-            mutations shouldHaveSize 3
-            mutations.forEach {
-                it.check(contents, "}", "break; }")
+            ).checkMutations<AddBreak> { mutations, contents ->
+                mutations shouldHaveSize 3
+                mutations.forEach {
+                    it.check(contents, "}", "break; }")
+                }
             }
         }
-    }
-    "it should add breaks to for loops with nesting correctly and avoid double break" {
-        Source.fromJava(
-            """
+        "it should add breaks to for loops with nesting correctly and avoid double break" {
+            Source.fromJava(
+                """
 public class Example {
   public static int test(int first) {
     for (int i = 0; i < first; i++) {
@@ -722,16 +723,16 @@ public class Example {
     for (int i : new int[] {1, 2, 4}) { }
   }
 }""",
-        ).checkMutations<AddBreak> { mutations, contents ->
-            mutations shouldHaveSize 3
-            mutations.forEach {
-                it.check(contents, "}", "break; }")
+            ).checkMutations<AddBreak> { mutations, contents ->
+                mutations shouldHaveSize 3
+                mutations.forEach {
+                    it.check(contents, "}", "break; }")
+                }
             }
         }
-    }
-    "it should add continue to for loops with nesting correctly and avoid double continue" {
-        Source.fromJava(
-            """
+        "it should add continue to for loops with nesting correctly and avoid double continue" {
+            Source.fromJava(
+                """
 public class Example {
   public static int test(int first) {
     for (int i = 0; i < first; i++) {
@@ -750,16 +751,16 @@ public class Example {
     for (int i : new int[] {1, 2, 4}) { }
   }
 }""",
-        ).checkMutations<AddContinue> { mutations, contents ->
-            mutations shouldHaveSize 1
-            mutations.forEach {
-                it.check(contents, "}", "continue; }")
+            ).checkMutations<AddContinue> { mutations, contents ->
+                mutations shouldHaveSize 1
+                mutations.forEach {
+                    it.check(contents, "}", "continue; }")
+                }
             }
         }
-    }
-    "it should not add continue in last statement in for loop" {
-        Source.fromJava(
-            """
+        "it should not add continue in last statement in for loop" {
+            Source.fromJava(
+                """
 public class Example {
   public static int test(int first) {
     for (int i = 0; i < first; i++) {
@@ -780,16 +781,16 @@ public class Example {
     for (int i : new int[] {1, 2, 4}) { }
   }
 }""",
-        ).checkMutations<AddContinue> { mutations, contents ->
-            mutations shouldHaveSize 1
-            mutations.forEach {
-                it.check(contents, "}", "continue; }")
+            ).checkMutations<AddContinue> { mutations, contents ->
+                mutations shouldHaveSize 1
+                mutations.forEach {
+                    it.check(contents, "}", "continue; }")
+                }
             }
         }
-    }
-    "it should not add continue in last try statement in for loop" {
-        Source.fromJava(
-            """
+        "it should not add continue in last try statement in for loop" {
+            Source.fromJava(
+                """
 public class Example {
   public static int test(int first) {
     for (int i = 0; i < first; i++) {
@@ -810,16 +811,16 @@ public class Example {
     for (int i : new int[] {1, 2, 4}) { }
   }
 }""",
-        ).checkMutations<AddContinue> { mutations, contents ->
-            mutations shouldHaveSize 1
-            mutations.forEach {
-                it.check(contents, "}", "continue; }")
+            ).checkMutations<AddContinue> { mutations, contents ->
+                mutations shouldHaveSize 1
+                mutations.forEach {
+                    it.check(contents, "}", "continue; }")
+                }
             }
         }
-    }
-    "it should not add continue in last statement in while loop" {
-        Source.fromJava(
-            """
+        "it should not add continue in last statement in while loop" {
+            Source.fromJava(
+                """
 public class Example {
   public static int test(int first) {
     while (i < 10) {
@@ -838,16 +839,16 @@ public class Example {
     for (int i : new int[] {1, 2, 4}) { }
   }
 }""",
-        ).checkMutations<AddContinue> { mutations, contents ->
-            mutations shouldHaveSize 1
-            mutations.forEach {
-                it.check(contents, "}", "continue; }")
+            ).checkMutations<AddContinue> { mutations, contents ->
+                mutations shouldHaveSize 1
+                mutations.forEach {
+                    it.check(contents, "}", "continue; }")
+                }
             }
         }
-    }
-    "it should add breaks to while loops correctly" {
-        Source.fromJava(
-            """
+        "it should add breaks to while loops correctly" {
+            Source.fromJava(
+                """
 public class Example {
   public static int test(int first) {
     int i = 0;
@@ -859,15 +860,15 @@ public class Example {
     } while (true);
   }
 }""",
-        ).checkMutations<AddBreak> { mutations, contents ->
-            mutations shouldHaveSize 2
-            mutations[0].check(contents, "}", "break; }")
-            mutations[1].check(contents, "}", "break; }")
+            ).checkMutations<AddBreak> { mutations, contents ->
+                mutations shouldHaveSize 2
+                mutations[0].check(contents, "}", "break; }")
+                mutations[1].check(contents, "}", "break; }")
+            }
         }
-    }
-    "it should mutate nested loops correctly" {
-        Source.fromJava(
-            """
+        "it should mutate nested loops correctly" {
+            Source.fromJava(
+                """
 public class Question {
   boolean arrayContainsDuplicate(int[] values) {
     if (values == null) {
@@ -883,26 +884,26 @@ public class Question {
     return false;
   }
 }""",
-        ).allMutations()
-    }
-    "it should remove and-ors correctly" {
-        Source.fromJava(
-            """
+            ).allMutations()
+        }
+        "it should remove and-ors correctly" {
+            Source.fromJava(
+                """
 public class Example {
   public static int test(int first) {
     if (true && false) { }
     if (false || true) { }
   }
 }""",
-        ).checkMutations<RemoveAndOr> { mutations, contents ->
-            mutations shouldHaveSize 4
-            mutations[0].check(contents, "true && ", "")
-            mutations[1].check(contents, " && false", "")
+            ).checkMutations<RemoveAndOr> { mutations, contents ->
+                mutations shouldHaveSize 4
+                mutations[0].check(contents, "true && ", "")
+                mutations[1].check(contents, " && false", "")
+            }
         }
-    }
-    "it should remove try correctly" {
-        Source.fromJava(
-            """
+        "it should remove try correctly" {
+            Source.fromJava(
+                """
 public class Example {
   public static int test(int first) {
     try {
@@ -910,13 +911,13 @@ public class Example {
     } catch (Exception e) { }
   }
 }""",
-        ).checkMutations<RemoveTry> { mutations, _ ->
-            mutations shouldHaveSize 1
+            ).checkMutations<RemoveTry> { mutations, _ ->
+                mutations shouldHaveSize 1
+            }
         }
-    }
-    "it should remove statements correctly" {
-        Source.fromJava(
-            """
+        "it should remove statements correctly" {
+            Source.fromJava(
+                """
 public class Example {
   public static int test(int first) {
     int i = 0;
@@ -927,28 +928,28 @@ public class Example {
     }
   }
 }""",
-        ).checkMutations<RemoveStatement> { mutations, _ ->
-            mutations shouldHaveSize 3
+            ).checkMutations<RemoveStatement> { mutations, _ ->
+                mutations shouldHaveSize 3
+            }
         }
-    }
-    "it should remove plus correctly" {
-        Source.fromJava(
-            """
+        "it should remove plus correctly" {
+            Source.fromJava(
+                """
 public class Example {
   public static int test(int first) {
     int i = 1 + 2;
     i = 3 + 4;
   }
 }""",
-        ).checkMutations<RemovePlus> { mutations, contents ->
-            mutations shouldHaveSize 4
-            mutations[0].check(contents, "1 + ", "")
-            mutations[1].check(contents, " + 2", "")
+            ).checkMutations<RemovePlus> { mutations, contents ->
+                mutations shouldHaveSize 4
+                mutations[0].check(contents, "1 + ", "")
+                mutations[1].check(contents, " + 2", "")
+            }
         }
-    }
-    "it should remove binary operators" {
-        Source.fromJava(
-            """
+        "it should remove binary operators" {
+            Source.fromJava(
+                """
 public class Example {
   public static void example() {
     int i = 0;
@@ -966,13 +967,13 @@ public class Example {
     k = i >>> j;
   }
 }""",
-        ).checkMutations<RemoveBinary> { mutations, _ ->
-            mutations shouldHaveSize 20
+            ).checkMutations<RemoveBinary> { mutations, _ ->
+                mutations shouldHaveSize 20
+            }
         }
-    }
-    "it should complete the change equals mutation" {
-        Source.fromJava(
-            """
+        "it should complete the change equals mutation" {
+            Source.fromJava(
+                """
 public class Example {
   public void equalsTester() {
     String example1 = "test";
@@ -984,15 +985,15 @@ public class Example {
   }
 }
 """.trim(),
-        ).checkMutations<ChangeEquals> { mutations, contents ->
-            mutations shouldHaveSize 2
-            mutations[0].check(contents, "example1 == example3", "(example1).equals(example3)")
-            mutations[1].check(contents, "example2.equals(example3)", "(example2) == (example3)")
+            ).checkMutations<ChangeEquals> { mutations, contents ->
+                mutations shouldHaveSize 2
+                mutations[0].check(contents, "example1 == example3", "(example1).equals(example3)")
+                mutations[1].check(contents, "example2.equals(example3)", "(example2) == (example3)")
+            }
         }
-    }
-    "it should change length and size" {
-        Source.fromJava(
-            """
+        "it should change length and size" {
+            Source.fromJava(
+                """
 public class Example {
   public void equalsTester() {
     int[] array = new int[10];
@@ -1012,16 +1013,16 @@ public class Example {
   }
 }
 """.trim(),
-        ).checkMutations<ChangeLengthAndSize> { mutations, contents ->
-            mutations shouldHaveSize 3
-            mutations[0].check(contents, "length")
-            mutations[1].check(contents, "length()")
-            mutations[2].check(contents, "size()")
+            ).checkMutations<ChangeLengthAndSize> { mutations, contents ->
+                mutations shouldHaveSize 3
+                mutations[0].check(contents, "length")
+                mutations[1].check(contents, "length()")
+                mutations[2].check(contents, "size()")
+            }
         }
-    }
-    "it should mutate array literals" {
-        Source.fromJava(
-            """
+        "it should mutate array literals" {
+            Source.fromJava(
+                """
 public class Example {
   public void test() {
     int[] ignore = new int[] {1};
@@ -1030,35 +1031,35 @@ public class Example {
   }
 }
 """.trim(),
-        ).checkMutations<ModifyArrayLiteral> { mutations, contents ->
-            mutations shouldHaveSize 4
-            mutations[0].check(contents, "1, 2, 4")
-            mutations[1].check(contents, "{1, 2}, {4, 5}").also {
-                it shouldMatch ".*\\{1, 2}.*".toRegex(RegexOption.DOT_MATCHES_ALL)
+            ).checkMutations<ModifyArrayLiteral> { mutations, contents ->
+                mutations shouldHaveSize 4
+                mutations[0].check(contents, "1, 2, 4")
+                mutations[1].check(contents, "{1, 2}, {4, 5}").also {
+                    it shouldMatch ".*\\{1, 2}.*".toRegex(RegexOption.DOT_MATCHES_ALL)
+                }
             }
         }
-    }
-    "it should remove blank lines correctly" {
-        val source = Source.fromJava(
-            """
+        "it should remove blank lines correctly" {
+            val source = Source.fromJava(
+                """
 public class Example {
   public static void test(int first, int second) {
     assert first > 0;
     assert second >= 0 : "Bad second value";
   }
 }""".trim(),
-        )
-        source.allMutations(types = setOf(Mutation.Type.REMOVE_RUNTIME_CHECK)).also { mutations ->
-            mutations shouldHaveSize 2
-            mutations[0].contents.lines() shouldHaveSize 5
-            mutations[0].contents.lines().filter { it.isBlank() } shouldHaveSize 0
-            mutations[1].contents.lines() shouldHaveSize 5
-            mutations[1].contents.lines().filter { it.isBlank() } shouldHaveSize 0
+            )
+            source.allMutations(types = setOf(Mutation.Type.REMOVE_RUNTIME_CHECK)).also { mutations ->
+                mutations shouldHaveSize 2
+                mutations[0].contents.lines() shouldHaveSize 5
+                mutations[0].contents.lines().filter { it.isBlank() } shouldHaveSize 0
+                mutations[1].contents.lines() shouldHaveSize 5
+                mutations[1].contents.lines().filter { it.isBlank() } shouldHaveSize 0
+            }
         }
-    }
-    "it should ignore suppressed mutations" {
-        Source.fromJava(
-            """
+        "it should ignore suppressed mutations" {
+            Source.fromJava(
+                """
 public class Example {
   public static Object fourth() {
     if (true) {
@@ -1067,16 +1068,16 @@ public class Example {
     return new Object(); // mutate-disable
   }
 }""",
-        ).allMutations().also { mutations ->
-            mutations shouldHaveSize 7
-            mutations[0].cleaned().also {
-                it["Main.java"] shouldNotContain "mutate-disable"
+            ).allMutations().also { mutations ->
+                mutations shouldHaveSize 7
+                mutations[0].cleaned().also {
+                    it["Main.java"] shouldNotContain "mutate-disable"
+                }
             }
         }
-    }
-    "it should ignore suppressed mutations on next lines" {
-        Source.fromJava(
-            """
+        "it should ignore suppressed mutations on next lines" {
+            Source.fromJava(
+                """
 public class Example {
   public static Object fourth() {
     if (true) {
@@ -1086,16 +1087,16 @@ public class Example {
     return new Object();
   }
 }""",
-        ).allMutations().also { mutations ->
-            mutations shouldHaveSize 7
-            mutations[0].cleaned().also {
-                it["Main.java"] shouldNotContain "mutate-disable"
+            ).allMutations().also { mutations ->
+                mutations shouldHaveSize 7
+                mutations[0].cleaned().also {
+                    it["Main.java"] shouldNotContain "mutate-disable"
+                }
             }
         }
-    }
-    "it should ignore specific suppressed mutations" {
-        Source.fromJava(
-            """
+        "it should ignore specific suppressed mutations" {
+            Source.fromJava(
+                """
 public class Example {
   public static int fourth(int first, int second) {
     if (first > second) { // mutate-disable-conditional-boundary
@@ -1106,110 +1107,110 @@ public class Example {
     }
   }
 }""",
-        ).allMutations().also { mutations ->
-            mutations shouldHaveSize 6
-            mutations[0].cleaned().also {
-                it["Main.java"] shouldNotContain "mutate-disable-conditional-boundary"
-                it["Main.java"] shouldNotContain "mutate-disable-primitive-return"
+            ).allMutations().also { mutations ->
+                mutations shouldHaveSize 6
+                mutations[0].cleaned().also {
+                    it["Main.java"] shouldNotContain "mutate-disable-conditional-boundary"
+                    it["Main.java"] shouldNotContain "mutate-disable-primitive-return"
+                }
             }
         }
-    }
-    "it should apply multiple mutations" {
-        Source.fromJava(
-            """
+        "it should apply multiple mutations" {
+            Source.fromJava(
+                """
 public class Example {
   public static void greeting() {
     int i = 0;
     System.out.println("Hello, world!");
   }
 }""",
-        ).also { source ->
-            source.mutater(seed = 124)
-                .also { mutater ->
-                    mutater.appliedMutations shouldHaveSize 0
-                    val modifiedSource = mutater.apply().contents
-                    source.contents shouldNotBe modifiedSource
-                    mutater.appliedMutations shouldHaveSize 1
-                    mutater.size shouldBe 1
-                    val anotherModifiedSource = mutater.apply().contents
-                    setOf(source.contents, modifiedSource, anotherModifiedSource) shouldHaveSize 3
+            ).also { source ->
+                source.mutater(seed = 124)
+                    .also { mutater ->
+                        mutater.appliedMutations shouldHaveSize 0
+                        val modifiedSource = mutater.apply().contents
+                        source.contents shouldNotBe modifiedSource
+                        mutater.appliedMutations shouldHaveSize 1
+                        mutater.size shouldBe 1
+                        val anotherModifiedSource = mutater.apply().contents
+                        setOf(source.contents, modifiedSource, anotherModifiedSource) shouldHaveSize 3
+                        mutater.size shouldBe 0
+                    }
+                source.mutate().also { mutatedSource ->
+                    source.contents shouldNotBe mutatedSource.contents
+                    mutatedSource.mutations shouldHaveSize 1
+                }
+                source.mutate(limit = Int.MAX_VALUE).also { mutatedSource ->
+                    source.contents shouldNotBe mutatedSource.contents
+                    mutatedSource.unappliedMutations shouldBe 0
+                }
+                source.allMutations(random = Random(124)).also { mutatedSources ->
+                    mutatedSources shouldHaveSize 7
+                    mutatedSources.map { it.contents }.toSet() shouldHaveSize 7
+                }
+            }
+        }
+        "it should handle overlapping mutations" {
+            Source.fromJava(
+                """
+public class Example {
+  public static int testing() {
+    return 10;
+  }
+}""",
+            ).also { source ->
+                source.mutater(types = ALL - setOf(Mutation.Type.REMOVE_METHOD)).also { mutater ->
+                    mutater.size shouldBe 3
+                    mutater.apply()
                     mutater.size shouldBe 0
                 }
-            source.mutate().also { mutatedSource ->
-                source.contents shouldNotBe mutatedSource.contents
-                mutatedSource.mutations shouldHaveSize 1
-            }
-            source.mutate(limit = Int.MAX_VALUE).also { mutatedSource ->
-                source.contents shouldNotBe mutatedSource.contents
-                mutatedSource.unappliedMutations shouldBe 0
-            }
-            source.allMutations(random = Random(124)).also { mutatedSources ->
-                mutatedSources shouldHaveSize 7
-                mutatedSources.map { it.contents }.toSet() shouldHaveSize 7
             }
         }
-    }
-    "it should handle overlapping mutations" {
-        Source.fromJava(
-            """
-public class Example {
-  public static int testing() {
-    return 10;
-  }
-}""",
-        ).also { source ->
-            source.mutater(types = ALL - setOf(Mutation.Type.REMOVE_METHOD)).also { mutater ->
-                mutater.size shouldBe 3
-                mutater.apply()
-                mutater.size shouldBe 0
-            }
-        }
-    }
-    "it should shift mutations correctly" {
-        Source.fromJava(
-            """
+        "it should shift mutations correctly" {
+            Source.fromJava(
+                """
 public class Example {
   public static int testing() {
     boolean it = true;
     return 10;
   }
 }""",
-        ).also { source ->
-            source.mutater(shuffle = false, types = ALL - setOf(Mutation.Type.REMOVE_METHOD)).also { mutater ->
-                mutater.size shouldBe 4
-                mutater.apply()
-                mutater.size shouldBe 3
-                mutater.apply()
-                mutater.size shouldBe 0
-            }
-            source.allMutations(types = ALL - setOf(Mutation.Type.REMOVE_METHOD), random = Random(124))
-                .also { mutations ->
-                    mutations shouldHaveSize 4
-                    mutations.map { it.contents }.toSet() shouldHaveSize 3
+            ).also { source ->
+                source.mutater(shuffle = false, types = ALL - setOf(Mutation.Type.REMOVE_METHOD)).also { mutater ->
+                    mutater.size shouldBe 4
+                    mutater.apply()
+                    mutater.size shouldBe 3
+                    mutater.apply()
+                    mutater.size shouldBe 0
                 }
+                source.allMutations(types = ALL - setOf(Mutation.Type.REMOVE_METHOD), random = Random(124))
+                    .also { mutations ->
+                        mutations shouldHaveSize 4
+                        mutations.map { it.contents }.toSet() shouldHaveSize 3
+                    }
+            }
         }
-    }
-    "it should return predictable mutations" {
-        Source.fromJava(
-            """
+        "it should return predictable mutations" {
+            Source.fromJava(
+                """
 public class Example {
   public static int testing() {
     boolean it = true;
     return 10;
   }
 }""",
-        ).also { source ->
-            val first = source.allMutations(random = Random(seed = 10))
-            val second = source.allMutations(random = Random(seed = 10))
-            first.size shouldBe second.size
-            first.zip(second).forEach { (first, second) ->
-                first.contents shouldBe second.contents
+            ).also { source ->
+                val first = source.allMutations(random = Random(seed = 10))
+                val second = source.allMutations(random = Random(seed = 10))
+                first.size shouldBe second.size
+                first.zip(second).forEach { (first, second) ->
+                    first.contents shouldBe second.contents
+                }
             }
         }
-    }
-    "it should apply mutations correctly with Strings" {
-        Source.fromJava(
-            """
+        "it should apply mutations correctly with Strings" {
+            Source.fromJava(
+                """
 public class Example {
   String reformatName(String input) {
     if (input == null) {
@@ -1219,26 +1220,26 @@ public class Example {
     return parts[1].trim() + " " + parts[0].trim();
   }
 }""",
-        ).also { source ->
-            source.allMutations()
+            ).also { source ->
+                source.allMutations()
+            }
         }
-    }
-    "it should apply stream mutations" {
-        Source.fromJava(
-            """
+        "it should apply stream mutations" {
+            Source.fromJava(
+                """
 public class Example {
   String testStream() {
     String test = "foobarfoobarfoobarfoobar";
     return test;
   }
 }""",
-        ).also { source ->
-            source.mutationStream(random = Random(124)).toList().size shouldBe 987
+            ).also { source ->
+                source.mutationStream(random = Random(124)).toList().size shouldBe 987
+            }
         }
-    }
-    "it should apply all fixed mutations" {
-        Source.fromJava(
-            """
+        "it should apply all fixed mutations" {
+            Source.fromJava(
+                """
 public class Example {
   String testStream() {
     String test = "foobarfoobarfoobarfoobar"; // 5 mutations
@@ -1248,13 +1249,13 @@ public class Example {
     return test; // 1 mutation
   }
 }""",
-        ).allFixedMutations(random = Random(124)).also { mutations ->
-            mutations.size shouldBe 29
+            ).allFixedMutations(random = Random(124)).also { mutations ->
+                mutations.size shouldBe 29
+            }
         }
-    }
-    "it should end stream mutations when out of things to mutate" {
-        Source.fromJava(
-            """
+        "it should end stream mutations when out of things to mutate" {
+            Source.fromJava(
+                """
 public class Example {
   int testStream() {
     int i = 0;
@@ -1262,26 +1263,26 @@ public class Example {
     return i;
   }
 }""",
-        ).also { source ->
-            source.mutationStream().take(1024).toList().size shouldBe 5
+            ).also { source ->
+                source.mutationStream().take(1024).toList().size shouldBe 5
+            }
         }
-    }
-    "it should not mutate annotations" {
-        Source.fromJava(
-            """
+        "it should not mutate annotations" {
+            Source.fromJava(
+                """
 public class Example {
   @Suppress("unused")
   void reformatName(String input) {
     return;
   }
 }""",
-        ).also { source ->
-            source.allMutations() shouldHaveSize 0
+            ).also { source ->
+                source.allMutations() shouldHaveSize 0
+            }
         }
-    }
-    "it should mark mutations cleanly" {
-        Source.fromJava(
-            """
+        "it should mark mutations cleanly" {
+            Source.fromJava(
+                """
 public class Example {
   void reformatName(String input) {
     if (input == null) {
@@ -1290,16 +1291,16 @@ public class Example {
     System.out.println("Hello, " + input);
   }
 }""",
-        ).allMutations().also { mutations ->
-            mutations shouldHaveSize 13
-            mutations.forEach { mutatedSource ->
-                mutatedSource.marked().checkstyle(CheckstyleArguments(failOnError = true))
+            ).allMutations().also { mutations ->
+                mutations shouldHaveSize 13
+                mutations.forEach { mutatedSource ->
+                    mutatedSource.marked().checkstyle(CheckstyleArguments(failOnError = true))
+                }
             }
         }
-    }
-    "it should mark mutations cleanly part 2" {
-        Source.fromJava(
-            """
+        "it should mark mutations cleanly part 2" {
+            Source.fromJava(
+                """
 public class Example {
     int[] example(int[] values) {
         int larger = values[0];
@@ -1312,16 +1313,16 @@ public class Example {
         return values;
     }
 }""",
-        ).allMutations().also { mutations ->
-            mutations shouldHaveSize 16
-            mutations.forEach { mutatedSource ->
-                mutatedSource.marked()
+            ).allMutations().also { mutations ->
+                mutations shouldHaveSize 16
+                mutations.forEach { mutatedSource ->
+                    mutatedSource.marked()
+                }
             }
         }
-    }
-    "it should handle double marks" {
-        Source.fromJava(
-            """
+        "it should handle double marks" {
+            Source.fromJava(
+                """
 public class Example {
   public String startWord(String input, String word) {
     if (input.length > 4
@@ -1336,16 +1337,16 @@ public class Example {
     }
   }
 }""",
-        ).allMutations().onEach { mutatedSource ->
-            mutatedSource.marked().checkstyle().also { errors ->
-                errors.errors.filter { it.key != "block.noStatement" } shouldHaveSize 0
+            ).allMutations().onEach { mutatedSource ->
+                mutatedSource.marked().checkstyle().also { errors ->
+                    errors.errors.filter { it.key != "block.noStatement" } shouldHaveSize 0
+                }
             }
         }
-    }
 
-    "should not fail with new switch syntax" {
-        Source.fromJava(
-            """
+        "should not fail with new switch syntax" {
+            Source.fromJava(
+                """
 public class Example {
     public boolean shouldMakeCoffee(String situation) {
         return switch (situation) {
@@ -1355,20 +1356,20 @@ public class Example {
         };
     }
 }""",
-        ).allMutations().map {
-            try {
-                Source.fromJava(it.contents).complexity()
-            } catch (e: Exception) {
-                println(it.mutations.first().mutation.mutationType)
-                println(it.contents)
-                throw e
+            ).allMutations().map {
+                try {
+                    Source.fromJava(it.contents).complexity()
+                } catch (e: Exception) {
+                    println(it.mutations.first().mutation.mutationType)
+                    println(it.contents)
+                    throw e
+                }
             }
         }
-    }
 
-    "should not fail with another new switch syntax" {
-        Source.fromJava(
-            """
+        "should not fail with another new switch syntax" {
+            Source.fromJava(
+                """
 public class Example {
     public void test() {
         int foo = 3;
@@ -1378,20 +1379,20 @@ public class Example {
         };
     }
 }""",
-        ).allMutations().map {
-            try {
-                Source.fromJava(it.contents).complexity()
-            } catch (e: Exception) {
-                println(it.mutations.first().mutation.mutationType)
-                println(it.contents)
-                throw e
+            ).allMutations().map {
+                try {
+                    Source.fromJava(it.contents).complexity()
+                } catch (e: Exception) {
+                    println(it.mutations.first().mutation.mutationType)
+                    println(it.contents)
+                    throw e
+                }
             }
         }
-    }
 
-    "should not fail on unused variables" {
-        Source.fromJava(
-            """
+        "should not fail on unused variables" {
+            Source.fromJava(
+                """
             public class Example {
                 public void test() {
                     var _ = 5;
@@ -1408,15 +1409,15 @@ public class Example {
                     BiConsumer<String, Integer> b3 = (var _, var i) -> count(i);
                 }
             }
-            """.trimIndent(),
-        ).allMutations().map {
-            Source.fromJava(it.contents).complexity()
+                """.trimIndent(),
+            ).allMutations().map {
+                Source.fromJava(it.contents).complexity()
+            }
         }
-    }
 
-    "it should handle double marks again" {
-        Source.fromJava(
-            """
+        "it should handle double marks again" {
+            Source.fromJava(
+                """
 public class Question {
   char gameOver(char[][] board) {
     for (int i = 0; i < 3; i++) {
@@ -1437,17 +1438,17 @@ public class Question {
   }
 }
 """,
-        ).allMutations().forEach { mutatedSource ->
-            mutatedSource.marked().checkstyle(CheckstyleArguments()).also { errors ->
-                errors.errors.filter {
-                    it.key != "block.noStatement" && it.key != "indentation.child.error" && it.key != "line.break.before"
-                } shouldHaveSize 0
+            ).allMutations().forEach { mutatedSource ->
+                mutatedSource.marked().checkstyle(CheckstyleArguments()).also { errors ->
+                    errors.errors.filter {
+                        it.key != "block.noStatement" && it.key != "indentation.child.error" && it.key != "line.break.before"
+                    } shouldHaveSize 0
+                }
             }
         }
-    }
-    "it should work on for without braces" {
-        Source.fromJava(
-            """
+        "it should work on for without braces" {
+            Source.fromJava(
+                """
 public class Question {
   public static void test() {
     int x = 1;
@@ -1456,12 +1457,12 @@ public class Question {
     System.out.println(x);
   }
 }
-            """.trimMargin(),
-        ).allMutations()
-    }
-    "it should work on if-else without braces" {
-        Source.fromJava(
-            """
+                """.trimMargin(),
+            ).allMutations()
+        }
+        "it should work on if-else without braces" {
+            Source.fromJava(
+                """
 public class Question {
   public static void test() {
     if (friendsCount > 500)
@@ -1470,24 +1471,24 @@ public class Question {
       System.out.println("Buy Cat Food At 20% Off");
   }
 }
-            """.trimMargin(),
-        ).allMutations()
-    }
-    "it should work on exponents" {
-        Source.fromJava(
-            """
+                """.trimMargin(),
+            ).allMutations()
+        }
+        "it should work on exponents" {
+            Source.fromJava(
+                """
 public class Question {
   public static void test() {
     int test = (int) 2e32;
     float another = 2e-20F;
   }
 }
-            """.trimMargin(),
-        ).also { it.compile() }.allMutations()
-    }
-    "it should work on equals v dot-equals" {
-        Source.fromJava(
-            """
+                """.trimMargin(),
+            ).also { it.compile() }.allMutations()
+        }
+        "it should work on equals v dot-equals" {
+            Source.fromJava(
+                """
 public class Question {
   public static int whatever(int value) {
     if (value % 2 == 0) {
@@ -1497,15 +1498,15 @@ public class Question {
     return -1;
   }
 }
-            """.trimMargin(),
-        ).checkMutations<ChangeEquals> { mutations, contents ->
-            mutations shouldHaveSize 1
-            mutations[0].apply(contents).googleFormat()
+                """.trimMargin(),
+            ).checkMutations<ChangeEquals> { mutations, contents ->
+                mutations shouldHaveSize 1
+                mutations[0].apply(contents).googleFormat()
+            }
         }
-    }
-    "it should work on negative numbers" {
-        Source.fromJava(
-            """
+        "it should work on negative numbers" {
+            Source.fromJava(
+                """
 public class Question {
   public static void conditional(double latitude, double longitude) {
     if (longitude == -122.076817) {
@@ -1522,140 +1523,140 @@ public class Question {
     double additionalTest = 1.01;
   }
 }
-            """.trimMargin(),
-        ).checkMutations<NumberLiteralTrim> { mutations, contents ->
-            mutations shouldHaveSize 3
-            mutations.forEach { mutation ->
-                mutation.apply(contents, Random(124)).also {
-                    it.googleFormat()
+                """.trimMargin(),
+            ).checkMutations<NumberLiteralTrim> { mutations, contents ->
+                mutations shouldHaveSize 3
+                mutations.forEach { mutation ->
+                    mutation.apply(contents, Random(124)).also {
+                        it.googleFormat()
+                    }
                 }
             }
         }
-    }
-    "it should not mutate modulo to zero with number literal" {
-        Source.fromJava(
-            """
+        "it should not mutate modulo to zero with number literal" {
+            Source.fromJava(
+                """
 public class Question {
   public static void test() {
     int value = value % 1;
   }
 }
-            """.trimMargin(),
-        ).checkMutations<NumberLiteral> { mutations, contents ->
-            mutations shouldHaveSize 1
-            repeat(32) {
-                mutations.first().apply(contents).also { mutated ->
-                    mutated shouldNotContain "value % 0"
+                """.trimMargin(),
+            ).checkMutations<NumberLiteral> { mutations, contents ->
+                mutations shouldHaveSize 1
+                repeat(32) {
+                    mutations.first().apply(contents).also { mutated ->
+                        mutated shouldNotContain "value % 0"
+                    }
+                    mutations.first().reset()
                 }
-                mutations.first().reset()
             }
-        }
-        Source.fromJava(
-            """
+            Source.fromJava(
+                """
 public class Question {
   public static void test() {
     value /= 1;
   }
 }
-            """.trimMargin(),
-        ).checkMutations<NumberLiteral> { mutations, contents ->
-            mutations shouldHaveSize 1
-            repeat(32) {
-                mutations.first().apply(contents).also { mutated ->
-                    mutated shouldNotContain "value /= 0"
+                """.trimMargin(),
+            ).checkMutations<NumberLiteral> { mutations, contents ->
+                mutations shouldHaveSize 1
+                repeat(32) {
+                    mutations.first().apply(contents).also { mutated ->
+                        mutated shouldNotContain "value /= 0"
+                    }
+                    mutations.first().reset()
                 }
-                mutations.first().reset()
             }
-        }
-        Source.fromJava(
-            """
+            Source.fromJava(
+                """
 public class Question {
   public static void test() {
     int value = value / 1;
   }
 }
-            """.trimMargin(),
-        ).checkMutations<NumberLiteral> { mutations, contents ->
-            mutations shouldHaveSize 1
-            repeat(32) {
-                mutations.first().apply(contents).also { mutated ->
-                    mutated shouldNotContain "value / 0"
+                """.trimMargin(),
+            ).checkMutations<NumberLiteral> { mutations, contents ->
+                mutations shouldHaveSize 1
+                repeat(32) {
+                    mutations.first().apply(contents).also { mutated ->
+                        mutated shouldNotContain "value / 0"
+                    }
+                    mutations.first().reset()
                 }
-                mutations.first().reset()
             }
-        }
-        Source.fromJava(
-            """
+            Source.fromJava(
+                """
 public class Question {
   public static void test() {
     int value = value % ((1));
   }
 }
-            """.trimMargin(),
-        ).checkMutations<NumberLiteral> { mutations, contents ->
-            mutations shouldHaveSize 1
-            repeat(32) {
-                mutations.first().apply(contents).also { mutated ->
-                    mutated shouldNotContain "value % ((0))"
+                """.trimMargin(),
+            ).checkMutations<NumberLiteral> { mutations, contents ->
+                mutations shouldHaveSize 1
+                repeat(32) {
+                    mutations.first().apply(contents).also { mutated ->
+                        mutated shouldNotContain "value % ((0))"
+                    }
+                    mutations.first().reset()
                 }
-                mutations.first().reset()
             }
         }
-    }
-    "it should not mutate modulo to zero with number literal trim" {
-        Source.fromJava(
-            """
+        "it should not mutate modulo to zero with number literal trim" {
+            Source.fromJava(
+                """
 public class Question {
   public static void test() {
     int value = value % 10;
   }
 }
-            """.trimMargin(),
-        ).checkMutations<NumberLiteralTrim> { mutations, contents ->
-            mutations shouldHaveSize 1
-            repeat(32) {
-                mutations.first().apply(contents).also { mutated ->
-                    mutated shouldNotContain "value % 0"
+                """.trimMargin(),
+            ).checkMutations<NumberLiteralTrim> { mutations, contents ->
+                mutations shouldHaveSize 1
+                repeat(32) {
+                    mutations.first().apply(contents).also { mutated ->
+                        mutated shouldNotContain "value % 0"
+                    }
+                    mutations.first().reset()
                 }
-                mutations.first().reset()
             }
-        }
-        Source.fromJava(
-            """
+            Source.fromJava(
+                """
 public class Question {
   public static void test() {
     int value = value / 10;
   }
 }
-            """.trimMargin(),
-        ).checkMutations<NumberLiteralTrim> { mutations, contents ->
-            mutations shouldHaveSize 1
-            repeat(32) {
-                mutations.first().apply(contents).also { mutated ->
-                    mutated shouldNotContain "value / 0"
+                """.trimMargin(),
+            ).checkMutations<NumberLiteralTrim> { mutations, contents ->
+                mutations shouldHaveSize 1
+                repeat(32) {
+                    mutations.first().apply(contents).also { mutated ->
+                        mutated shouldNotContain "value / 0"
+                    }
+                    mutations.first().reset()
                 }
-                mutations.first().reset()
             }
-        }
-        Source.fromJava(
-            """
+            Source.fromJava(
+                """
 public class Question {
   public static void test() {
     int value = value % (10);
   }
 }
-            """.trimMargin(),
-        ).checkMutations<NumberLiteralTrim> { mutations, contents ->
-            mutations shouldHaveSize 1
-            repeat(32) {
-                mutations.first().apply(contents).also { mutated ->
-                    mutated shouldNotContain "value % (0)"
+                """.trimMargin(),
+            ).checkMutations<NumberLiteralTrim> { mutations, contents ->
+                mutations shouldHaveSize 1
+                repeat(32) {
+                    mutations.first().apply(contents).also { mutated ->
+                        mutated shouldNotContain "value % (0)"
+                    }
+                    mutations.first().reset()
                 }
-                mutations.first().reset()
             }
         }
-    }
-})
+    })
 
 inline fun <reified T : Mutation> Source.checkMutations(
     checker: (mutations: List<Mutation>, contents: String) -> Unit,

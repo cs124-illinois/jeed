@@ -17,27 +17,28 @@ import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldNot
 
-class TestInputDelivery : StringSpec({
-    "should deliver stdin" {
-        val executionResult = Source.fromSnippet(
-            """
+class TestInputDelivery :
+    StringSpec({
+        "should deliver stdin" {
+            val executionResult = Source.fromSnippet(
+                """
 import java.util.Scanner;
 
 Scanner scanner = new Scanner(System.in);
 String nextLine = scanner.nextLine();
 System.out.println("Echo: " + nextLine);
             """.trim(),
-        ).compile().execute(SourceExecutionArguments(systemInStream = "Here\n".toSystemIn()))
+            ).compile().execute(SourceExecutionArguments(systemInStream = "Here\n".toSystemIn()))
 
-        executionResult should haveCompleted()
-        executionResult shouldNot haveTimedOut()
+            executionResult should haveCompleted()
+            executionResult shouldNot haveTimedOut()
 
-        executionResult.inputLines shouldHaveSize 1
-        executionResult.combinedInputOutput.lines() shouldHaveSize 3
+            executionResult.inputLines shouldHaveSize 1
+            executionResult.combinedInputOutput.lines() shouldHaveSize 3
 
-        executionResult should haveStdout("Echo: Here")
-        executionResult should haveStderr("")
-        executionResult should haveStdin("Here")
-        executionResult should haveCombinedInputOutput("Here\nEcho: Here")
-    }
-})
+            executionResult should haveStdout("Echo: Here")
+            executionResult should haveStderr("")
+            executionResult should haveStdin("Here")
+            executionResult should haveCombinedInputOutput("Here\nEcho: Here")
+        }
+    })

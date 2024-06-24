@@ -46,17 +46,13 @@ object LineTrace : SandboxPluginWithDefaultArguments<LineTraceArguments, LineTra
         initializedThreadLocals.set(true)
     }
 
-    private inline fun <R> synchronizedIfNeeded(lock: Any, crossinline block: () -> R): R {
-        return if (threadInSingleThreadTask.get()) {
-            block()
-        } else {
-            synchronized(lock, block)
-        }
+    private inline fun <R> synchronizedIfNeeded(lock: Any, crossinline block: () -> R): R = if (threadInSingleThreadTask.get()) {
+        block()
+    } else {
+        synchronized(lock, block)
     }
 
-    override fun createDefaultArguments(): LineTraceArguments {
-        return LineTraceArguments()
-    }
+    override fun createDefaultArguments(): LineTraceArguments = LineTraceArguments()
 
     override fun createInstrumentationData(
         arguments: LineTraceArguments,
@@ -158,9 +154,7 @@ object LineTrace : SandboxPluginWithDefaultArguments<LineTraceArguments, LineTra
     }
 
     @Suppress("unused") // For trusted code inside the task
-    fun getCurrentReport(): LineTraceResult {
-        return createFinalData(Sandbox.CurrentTask.getWorkingData(this))
-    }
+    fun getCurrentReport(): LineTraceResult = createFinalData(Sandbox.CurrentTask.getWorkingData(this))
 
     @Suppress("unused") // For trusted code inside the task
     fun resetLineCounts() {
@@ -325,9 +319,7 @@ object LineTrace : SandboxPluginWithDefaultArguments<LineTraceArguments, LineTra
             }
         }
 
-        fun getPreinspection(): ClassPreinspection {
-            return ClassPreinspection(sourceFile, inspectedMethods)
-        }
+        fun getPreinspection(): ClassPreinspection = ClassPreinspection(sourceFile, inspectedMethods)
     }
 
     private class TracingClassVisitor(

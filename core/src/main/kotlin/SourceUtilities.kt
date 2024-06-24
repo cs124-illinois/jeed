@@ -55,41 +55,39 @@ fun Source.identifiers() = mutableSetOf<String>().apply {
     sources.mapValues { (_, contents) -> addAll(contents.identifiers(type.toFileType())) }
 }.toSet()
 
-internal fun Source.ParsedSource.strings(type: Source.FileType): Set<String> {
-    return when (type) {
-        Source.FileType.JAVA -> {
-            val charStream = CharStreams.fromString(contents)
-            JavaLexer(charStream).apply {
-                removeErrorListeners()
-            }.allTokens
-                .mapNotNull {
-                    when (it.type) {
-                        JavaLexer.STRING_LITERAL -> it.text.removeSurrounding("\"").trim()
-                        JavaLexer.TEXT_BLOCK -> it.text.removeSurrounding("\"\"\"").trim()
-                        JavaLexer.TEMPLATE_CONSTANT_PART -> it.text.trim()
-                        else -> null
-                    }
+internal fun Source.ParsedSource.strings(type: Source.FileType): Set<String> = when (type) {
+    Source.FileType.JAVA -> {
+        val charStream = CharStreams.fromString(contents)
+        JavaLexer(charStream).apply {
+            removeErrorListeners()
+        }.allTokens
+            .mapNotNull {
+                when (it.type) {
+                    JavaLexer.STRING_LITERAL -> it.text.removeSurrounding("\"").trim()
+                    JavaLexer.TEXT_BLOCK -> it.text.removeSurrounding("\"\"\"").trim()
+                    JavaLexer.TEMPLATE_CONSTANT_PART -> it.text.trim()
+                    else -> null
                 }
-                .toSet()
-        }
+            }
+            .toSet()
+    }
 
-        Source.FileType.KOTLIN -> {
-            object : KotlinParserBaseListener() {
-                val strings = mutableSetOf<String>()
-                override fun enterStringLiteral(ctx: KotlinParser.StringLiteralContext) {
-                    ctx.lineStringLiteral()?.also {
-                        strings += it.text.removeSurrounding("\"").trim()
-                    }
-                    ctx.multiLineStringLiteral()?.also {
-                        strings += it.text.removeSurrounding("\"\"\"").trim()
-                    }
+    Source.FileType.KOTLIN -> {
+        object : KotlinParserBaseListener() {
+            val strings = mutableSetOf<String>()
+            override fun enterStringLiteral(ctx: KotlinParser.StringLiteralContext) {
+                ctx.lineStringLiteral()?.also {
+                    strings += it.text.removeSurrounding("\"").trim()
                 }
+                ctx.multiLineStringLiteral()?.also {
+                    strings += it.text.removeSurrounding("\"\"\"").trim()
+                }
+            }
 
-                init {
-                    ParseTreeWalker.DEFAULT.walk(this, tree)
-                }
-            }.strings
-        }
+            init {
+                ParseTreeWalker.DEFAULT.walk(this, tree)
+            }
+        }.strings
     }
 }
 

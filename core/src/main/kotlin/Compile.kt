@@ -89,23 +89,18 @@ data class CompilationArguments(
         return true
     }
 
-    override fun hashCode(): Int {
-        return Objects.hash(wError, enablePreview, Xlint, useCache, waitForCache, parameters, debugInfo)
-    }
+    override fun hashCode(): Int = Objects.hash(wError, enablePreview, Xlint, useCache, waitForCache, parameters, debugInfo)
 }
 
 @JsonClass(generateAdapter = true)
 class CompilationError(location: SourceLocation?, message: String) : SourceError(location, message)
 
 class CompilationFailed(errors: List<CompilationError>) : JeedError(errors) {
-    override fun toString(): String {
-        return "compilation errors were encountered: ${errors.joinToString(separator = ",")}"
-    }
+    override fun toString(): String = "compilation errors were encountered: ${errors.joinToString(separator = ",")}"
 }
 
 @JsonClass(generateAdapter = true)
-class CompilationMessage(@Suppress("unused") val kind: String, location: SourceLocation?, message: String) :
-    SourceError(location, message)
+class CompilationMessage(@Suppress("unused") val kind: String, location: SourceLocation?, message: String) : SourceError(location, message)
 
 @Suppress("LongParameterList")
 class CompiledSource(
@@ -161,12 +156,10 @@ internal fun compileToFileManager(
         }
     }
 
-    fun getMappedLocation(diagnostic: Diagnostic<out JavaFileObject>): SourceLocation? {
-        return diagnostic
-            .let { if (it.source == null) null else it }
-            ?.let { msg -> SourceLocation(msg.source.name, msg.lineNumber.toInt(), msg.columnNumber.toInt()) }
-            ?.let { loc -> source.mapLocation(loc) }
-    }
+    fun getMappedLocation(diagnostic: Diagnostic<out JavaFileObject>): SourceLocation? = diagnostic
+        .let { if (it.source == null) null else it }
+        ?.let { msg -> SourceLocation(msg.source.name, msg.lineNumber.toInt(), msg.columnNumber.toInt()) }
+        ?.let { loc -> source.mapLocation(loc) }
 
     val errors = results.diagnostics.filter {
         it.kind == Diagnostic.Kind.ERROR || (it.kind == Diagnostic.Kind.WARNING && compilationArguments.wError)
@@ -244,9 +237,7 @@ private fun compile(
 
 fun Source.compile(
     compilationArguments: CompilationArguments = CompilationArguments(),
-): CompiledSource {
-    return compile(this, compilationArguments)
-}
+): CompiledSource = compile(this, compilationArguments)
 
 fun Source.compileWith(
     compiledSource: CompiledSource,
@@ -261,19 +252,12 @@ fun Source.compileWith(
     return compile(this, compilationArguments, compiledSource.fileManager, compiledSource.classLoader)
 }
 
-private class Unit(val entry: Map.Entry<String, String>) :
-    SimpleJavaFileObject(URI(entry.key), JavaFileObject.Kind.SOURCE) {
-    override fun isNameCompatible(simpleName: String?, kind: JavaFileObject.Kind?): Boolean {
-        return kind != JavaFileObject.Kind.SOURCE || (simpleName != "module-info" && simpleName != "package-info")
-    }
+private class Unit(val entry: Map.Entry<String, String>) : SimpleJavaFileObject(URI(entry.key), JavaFileObject.Kind.SOURCE) {
+    override fun isNameCompatible(simpleName: String?, kind: JavaFileObject.Kind?): Boolean = kind != JavaFileObject.Kind.SOURCE || (simpleName != "module-info" && simpleName != "package-info")
 
-    override fun getCharContent(ignoreEncodingErrors: Boolean): CharSequence {
-        return entry.value
-    }
+    override fun getCharContent(ignoreEncodingErrors: Boolean): CharSequence = entry.value
 
-    override fun toString(): String {
-        return entry.key
-    }
+    override fun toString(): String = entry.key
 }
 
 class Results : DiagnosticListener<JavaFileObject> {
@@ -283,24 +267,15 @@ class Results : DiagnosticListener<JavaFileObject> {
     }
 }
 
-fun classNameToPathWithClass(className: String): String {
-    return className.replace(".", "/") + ".class"
-}
+fun classNameToPathWithClass(className: String): String = className.replace(".", "/") + ".class"
 
-fun classNameToPath(className: String): String {
-    return className.replace(".", "/")
-}
+fun classNameToPath(className: String): String = className.replace(".", "/")
 
-fun pathToClassName(path: String): String {
-    return path.removeSuffix(".class").replace("/", ".")
-}
+fun pathToClassName(path: String): String = path.removeSuffix(".class").replace("/", ".")
 
-fun binaryNameToClassName(binaryClassName: String): String {
-    return binaryClassName.replace('/', '.').replace('$', '.')
-}
+fun binaryNameToClassName(binaryClassName: String): String = binaryClassName.replace('/', '.').replace('$', '.')
 
-class JeedFileManager(private val parentFileManager: JavaFileManager) :
-    ForwardingJavaFileManager<JavaFileManager>(parentFileManager) {
+class JeedFileManager(private val parentFileManager: JavaFileManager) : ForwardingJavaFileManager<JavaFileManager>(parentFileManager) {
     val classFiles: MutableMap<String, JavaFileObject> = mutableMapOf()
 
     val allClassFiles: Map<String, JavaFileObject>
@@ -323,8 +298,7 @@ class JeedFileManager(private val parentFileManager: JavaFileManager) :
             classFiles[path] = contents
         }
     }
-    private class ByteSource(path: String) :
-        SimpleJavaFileObject(URI.create("bytearray:///$path"), JavaFileObject.Kind.CLASS) {
+    private class ByteSource(path: String) : SimpleJavaFileObject(URI.create("bytearray:///$path"), JavaFileObject.Kind.CLASS) {
         init {
             check(path.endsWith(".class")) { "incorrect suffix for ByteSource path: $path" }
         }
@@ -376,12 +350,10 @@ class JeedFileManager(private val parentFileManager: JavaFileManager) :
         location: JavaFileManager.Location?,
         className: String,
         kind: JavaFileObject.Kind,
-    ): JavaFileObject? {
-        return if (location != StandardLocation.CLASS_OUTPUT) {
-            super.getJavaFileForInput(location, className, kind)
-        } else {
-            classFiles[classNameToPathWithClass(className)]
-        }
+    ): JavaFileObject? = if (location != StandardLocation.CLASS_OUTPUT) {
+        super.getJavaFileForInput(location, className, kind)
+    } else {
+        classFiles[classNameToPathWithClass(className)]
     }
 
     override fun list(
@@ -413,31 +385,27 @@ class JeedFileManager(private val parentFileManager: JavaFileManager) :
         }
     }
 
-    override fun inferBinaryName(location: JavaFileManager.Location?, file: JavaFileObject): String {
-        return if (file is ByteSource) {
-            file.name.substring(0, file.name.lastIndexOf('.')).replace('/', '.')
-        } else {
-            super.inferBinaryName(location, file)
-        }
+    override fun inferBinaryName(location: JavaFileManager.Location?, file: JavaFileObject): String = if (file is ByteSource) {
+        file.name.substring(0, file.name.lastIndexOf('.')).replace('/', '.')
+    } else {
+        super.inferBinaryName(location, file)
     }
 
     @Suppress("SpellCheckingInspection")
-    override fun handleOption(current: String?, remaining: MutableIterator<String>?): Boolean {
-        return if (parentFileManager === standardFileManager && current == "--multi-release") {
-            val operand = remaining?.next() ?: error("MULTIRELEASE should have an operand")
-            synchronized(standardFileManagerSyncRoot) {
-                if (operand != lastMultireleaseOperand) {
-                    require(lastMultireleaseOperand == null) { "MULTIRELEASE should not have changed" }
-                    lastMultireleaseOperand = operand
-                    super.handleOption(current, listOf(operand).iterator())
-                } else {
-                    // Prevent JavacFileManager from clearing its caches, which would break concurrent tasks
-                    true
-                }
+    override fun handleOption(current: String?, remaining: MutableIterator<String>?): Boolean = if (parentFileManager === standardFileManager && current == "--multi-release") {
+        val operand = remaining?.next() ?: error("MULTIRELEASE should have an operand")
+        synchronized(standardFileManagerSyncRoot) {
+            if (operand != lastMultireleaseOperand) {
+                require(lastMultireleaseOperand == null) { "MULTIRELEASE should not have changed" }
+                lastMultireleaseOperand = operand
+                super.handleOption(current, listOf(operand).iterator())
+            } else {
+                // Prevent JavacFileManager from clearing its caches, which would break concurrent tasks
+                true
             }
-        } else {
-            super.handleOption(current, remaining)
         }
+    } else {
+        super.handleOption(current, remaining)
     }
 
     override fun flush() {
@@ -448,7 +416,9 @@ class JeedFileManager(private val parentFileManager: JavaFileManager) :
 }
 
 class JeedClassLoader(private val fileManager: JeedFileManager, parentClassLoader: ClassLoader?) :
-    ClassLoader(parentClassLoader), Sandbox.SandboxableClassLoader, Sandbox.EnumerableClassLoader {
+    ClassLoader(parentClassLoader),
+    Sandbox.SandboxableClassLoader,
+    Sandbox.EnumerableClassLoader {
 
     override val bytecodeForClasses = fileManager.bytecodeForPaths.mapKeys { pathToClassName(it.key) }.toMap()
     override val classLoader: ClassLoader = this

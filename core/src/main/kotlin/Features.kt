@@ -446,9 +446,7 @@ class UnitFeatures(
 ) : FeatureValue(name, range, methods, classes, features)
 
 class FeaturesFailed(errors: List<SourceError>) : JeedError(errors) {
-    override fun toString(): String {
-        return "errors were encountered while performing feature analysis: ${errors.joinToString(separator = ",")}"
-    }
+    override fun toString(): String = "errors were encountered while performing feature analysis: ${errors.joinToString(separator = ",")}"
 }
 
 class FeaturesResults(val source: Source, val results: Map<String, Map<String, UnitFeatures>>) {

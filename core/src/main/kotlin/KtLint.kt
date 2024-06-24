@@ -77,9 +77,7 @@ class KtLintError(
 }
 
 class KtLintFailed(errors: List<KtLintError>) : AlwaysLocatedJeedError(errors) {
-    override fun toString(): String {
-        return "ktlint errors were encountered: ${errors.joinToString(separator = ",")}"
-    }
+    override fun toString(): String = "ktlint errors were encountered: ${errors.joinToString(separator = ",")}"
 }
 
 @JsonClass(generateAdapter = true)

@@ -88,9 +88,7 @@ class SourceExecutionArguments(
         return this
     }
 
-    fun <A : Any> addPlugin(plugin: SandboxPluginWithDefaultArguments<A, *>): SourceExecutionArguments {
-        return addPlugin(plugin, plugin.createDefaultArguments())
-    }
+    fun <A : Any> addPlugin(plugin: SandboxPluginWithDefaultArguments<A, *>): SourceExecutionArguments = addPlugin(plugin, plugin.createDefaultArguments())
 }
 
 class ExecutionFailed(
@@ -213,7 +211,8 @@ fun ClassLoader.findClassMethod(
         } else {
             val nameToFind = name ?: defaultMethod
             loadedKlass.declaredMethods.filter {
-                Modifier.isPublic(it.modifiers) && Modifier.isStatic(it.modifiers) &&
+                Modifier.isPublic(it.modifiers) &&
+                    Modifier.isStatic(it.modifiers) &&
                     (
                         it.parameterTypes.isEmpty() ||
                             (it.parameterTypes.size == 1 && it.parameterTypes[0].canonicalName == "java.lang.String[]")

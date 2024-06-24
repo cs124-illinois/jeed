@@ -10,33 +10,34 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNot
 import io.kotest.matchers.string.shouldContain
 
-class TestCheckstyle : StringSpec({
-    "should retrieve the indentation level properly" {
-        defaultChecker!!.indentation shouldBe 2
-    }
-    "should check strings without errors" {
-        val checkstyleResult = Source.fromSnippet(
-            """
+class TestCheckstyle :
+    StringSpec({
+        "should retrieve the indentation level properly" {
+            defaultChecker!!.indentation shouldBe 2
+        }
+        "should check strings without errors" {
+            val checkstyleResult = Source.fromSnippet(
+                """
 int i = 0;
 """.trim(),
-        ).checkstyle()
+            ).checkstyle()
 
-        checkstyleResult shouldNot haveCheckstyleErrors()
-    }
-    "it should identify checkstyle errors in strings" {
-        val checkstyleErrors = Source.fromSnippet(
-            """
+            checkstyleResult shouldNot haveCheckstyleErrors()
+        }
+        "it should identify checkstyle errors in strings" {
+            val checkstyleErrors = Source.fromSnippet(
+                """
 int i = 0;
 int y =1;
 """.trim(),
-        ).checkstyle()
+            ).checkstyle()
 
-        checkstyleErrors should haveCheckstyleErrors()
-        checkstyleErrors should haveCheckstyleErrorAt(line = 2)
-    }
-    "should identify checkstyle errors in snippet results" {
-        val checkstyleErrors = Source.fromSnippet(
-            """
+            checkstyleErrors should haveCheckstyleErrors()
+            checkstyleErrors should haveCheckstyleErrorAt(line = 2)
+        }
+        "should identify checkstyle errors in snippet results" {
+            val checkstyleErrors = Source.fromSnippet(
+                """
 int i = 0;
 int y = 1;
 int add(int a, int b) {
@@ -44,14 +45,14 @@ int add(int a, int b) {
 }
 add(i, y);
 """.trim(),
-        ).checkstyle()
+            ).checkstyle()
 
-        checkstyleErrors should haveCheckstyleErrors()
-        checkstyleErrors should haveCheckstyleErrorAt(line = 4)
-    }
-    "should identify checkstyle errors in snippet static results" {
-        val checkstyleErrors = Source.fromSnippet(
-            """
+            checkstyleErrors should haveCheckstyleErrors()
+            checkstyleErrors should haveCheckstyleErrorAt(line = 4)
+        }
+        "should identify checkstyle errors in snippet static results" {
+            val checkstyleErrors = Source.fromSnippet(
+                """
 int i = 0;
 int y = 1;
 static int add(int a, int b) {
@@ -59,14 +60,14 @@ static int add(int a, int b) {
 }
 add(i, y);
 """.trim(),
-        ).checkstyle()
+            ).checkstyle()
 
-        checkstyleErrors should haveCheckstyleErrors()
-        checkstyleErrors should haveCheckstyleErrorAt(line = 4)
-    }
-    "should identify checkstyle errors in snippet results with modifiers" {
-        val checkstyleErrors = Source.fromSnippet(
-            """
+            checkstyleErrors should haveCheckstyleErrors()
+            checkstyleErrors should haveCheckstyleErrorAt(line = 4)
+        }
+        "should identify checkstyle errors in snippet results with modifiers" {
+            val checkstyleErrors = Source.fromSnippet(
+                """
 int i = 0;
 int y = 1;
 public int add(int a, int b) {
@@ -74,123 +75,123 @@ public int add(int a, int b) {
 }
 add(i, y);
 """.trim(),
-        ).checkstyle()
+            ).checkstyle()
 
-        checkstyleErrors should haveCheckstyleErrors()
-        checkstyleErrors should haveCheckstyleErrorAt(line = 4)
-    }
-    "should check all sources by default" {
-        val checkstyleErrors = Source(
-            mapOf(
-                "First.java" to """
+            checkstyleErrors should haveCheckstyleErrors()
+            checkstyleErrors should haveCheckstyleErrorAt(line = 4)
+        }
+        "should check all sources by default" {
+            val checkstyleErrors = Source(
+                mapOf(
+                    "First.java" to """
 class public First{
 }
                 """.trim(),
-                "Second.java" to """
+                    "Second.java" to """
 public class Second {
 }
                 """.trim(),
-            ),
-        ).checkstyle()
+                ),
+            ).checkstyle()
 
-        checkstyleErrors should haveCheckstyleErrors()
-        checkstyleErrors.errors shouldHaveSize 1
-        checkstyleErrors should haveCheckstyleErrorAt(source = "First.java", line = 1)
-    }
-    "should ignore sources not configured to check" {
-        val checkstyleErrors = Source(
-            mapOf(
-                "First.java" to """
+            checkstyleErrors should haveCheckstyleErrors()
+            checkstyleErrors.errors shouldHaveSize 1
+            checkstyleErrors should haveCheckstyleErrorAt(source = "First.java", line = 1)
+        }
+        "should ignore sources not configured to check" {
+            val checkstyleErrors = Source(
+                mapOf(
+                    "First.java" to """
 public class First{
 }
                 """.trim(),
-                "Second.java" to """
+                    "Second.java" to """
 public class Second {
 }
                 """.trim(),
-            ),
-        ).checkstyle(CheckstyleArguments(sources = setOf("Second.java")))
+                ),
+            ).checkstyle(CheckstyleArguments(sources = setOf("Second.java")))
 
-        checkstyleErrors shouldNot haveCheckstyleErrors()
-    }
-    "should check indentation properly" {
-        val checkstyleErrors = Source.fromSnippet(
-            """
+            checkstyleErrors shouldNot haveCheckstyleErrors()
+        }
+        "should check indentation properly" {
+            val checkstyleErrors = Source.fromSnippet(
+                """
 public int add(int a, int b) {
    return a + b;
  }
 """.trim(),
-        ).checkstyle()
-        checkstyleErrors should haveCheckstyleErrors()
-        checkstyleErrors.errors shouldHaveSize 2
-        checkstyleErrors should haveCheckstyleErrorAt(line = 2)
-        checkstyleErrors should haveCheckstyleErrorAt(line = 3)
-    }
-    "should adjust indentation properly for snippets" {
-        val checkstyleErrors = Source.fromSnippet(
-            """ public int add(int a, int b) {
+            ).checkstyle()
+            checkstyleErrors should haveCheckstyleErrors()
+            checkstyleErrors.errors shouldHaveSize 2
+            checkstyleErrors should haveCheckstyleErrorAt(line = 2)
+            checkstyleErrors should haveCheckstyleErrorAt(line = 3)
+        }
+        "should adjust indentation properly for snippets" {
+            val checkstyleErrors = Source.fromSnippet(
+                """ public int add(int a, int b) {
    return a + b;
  }
 """,
-            trim = false,
-        ).checkstyle()
-        checkstyleErrors should haveCheckstyleErrors()
-        checkstyleErrors.errors shouldHaveSize 3
-        checkstyleErrors should haveCheckstyleErrorAt(line = 1)
-        checkstyleErrors.errors[0].let {
-            it.message shouldContain "indentation level 1"
-            it.message shouldContain "should be 0"
+                trim = false,
+            ).checkstyle()
+            checkstyleErrors should haveCheckstyleErrors()
+            checkstyleErrors.errors shouldHaveSize 3
+            checkstyleErrors should haveCheckstyleErrorAt(line = 1)
+            checkstyleErrors.errors[0].let {
+                it.message shouldContain "indentation level 1"
+                it.message shouldContain "should be 0"
+            }
+            checkstyleErrors should haveCheckstyleErrorAt(line = 2)
+            checkstyleErrors.errors[1].let {
+                it.message shouldContain "indentation level 3"
+                it.message shouldContain "should be 2"
+            }
+            checkstyleErrors should haveCheckstyleErrorAt(line = 3)
+            checkstyleErrors.errors[2].let {
+                it.message shouldContain "indentation level 1"
+                it.message shouldContain "should be 0"
+            }
         }
-        checkstyleErrors should haveCheckstyleErrorAt(line = 2)
-        checkstyleErrors.errors[1].let {
-            it.message shouldContain "indentation level 3"
-            it.message shouldContain "should be 2"
-        }
-        checkstyleErrors should haveCheckstyleErrorAt(line = 3)
-        checkstyleErrors.errors[2].let {
-            it.message shouldContain "indentation level 1"
-            it.message shouldContain "should be 0"
-        }
-    }
-    "should adjust indentation properly for templates" {
-        val checkstyleErrors = Source.fromTemplates(
-            mapOf(
-                "Test.java" to " int i = 0;",
-            ),
-            mapOf(
-                "Test.java.hbs" to """
+        "should adjust indentation properly for templates" {
+            val checkstyleErrors = Source.fromTemplates(
+                mapOf(
+                    "Test.java" to " int i = 0;",
+                ),
+                mapOf(
+                    "Test.java.hbs" to """
 public class Question {
   {{{ contents }}}
 }
 """,
-            ),
-        ).checkstyle()
-        checkstyleErrors should haveCheckstyleErrors()
-        checkstyleErrors.errors shouldHaveSize 1
-        checkstyleErrors should haveCheckstyleErrorAt(source = "Test.java", line = 1)
-        checkstyleErrors.errors[0].let {
-            it.message shouldContain "indentation level 1"
-            it.message shouldContain "should be 0"
+                ),
+            ).checkstyle()
+            checkstyleErrors should haveCheckstyleErrors()
+            checkstyleErrors.errors shouldHaveSize 1
+            checkstyleErrors should haveCheckstyleErrorAt(source = "Test.java", line = 1)
+            checkstyleErrors.errors[0].let {
+                it.message shouldContain "indentation level 1"
+                it.message shouldContain "should be 0"
+            }
         }
-    }
-    "should throw when configured" {
-        val checkstyleError = shouldThrow<CheckstyleFailed> {
-            Source.fromSnippet(
-                """
+        "should throw when configured" {
+            val checkstyleError = shouldThrow<CheckstyleFailed> {
+                Source.fromSnippet(
+                    """
 public int add(int a,int b) {
   return a+ b;
 }
 """.trim(),
-            ).checkstyle(CheckstyleArguments(failOnError = true))
+                ).checkstyle(CheckstyleArguments(failOnError = true))
+            }
+            checkstyleError.errors shouldHaveSize 2
+            checkstyleError.errors[0].location.line shouldBe 1
+            checkstyleError.errors[1].location.line shouldBe 2
         }
-        checkstyleError.errors shouldHaveSize 2
-        checkstyleError.errors[0].location.line shouldBe 1
-        checkstyleError.errors[1].location.line shouldBe 2
-    }
-    "should not fail on Java switch" {
-        val checkstyleResult = Source(
-            mapOf(
-                "Test.java" to """
+        "should not fail on Java switch" {
+            val checkstyleResult = Source(
+                mapOf(
+                    "Test.java" to """
 public class Test {
   public static String testYieldKeyword(int switchArg) {
     return switch (switchArg) {
@@ -204,15 +205,15 @@ public class Test {
   }
 }
                 """.trim(),
-            ),
-        ).checkstyle()
+                ),
+            ).checkstyle()
 
-        checkstyleResult shouldNot haveCheckstyleErrors()
-    }
-    "should not fail on Java instanceof pattern" {
-        val checkstyleResult = Source(
-            mapOf(
-                "Test.java" to """
+            checkstyleResult shouldNot haveCheckstyleErrors()
+        }
+        "should not fail on Java instanceof pattern" {
+            val checkstyleResult = Source(
+                mapOf(
+                    "Test.java" to """
 public class Test {
   public static void main() {
     Object o = new String("");
@@ -222,15 +223,15 @@ public class Test {
   }
 }
                 """.trim(),
-            ),
-        ).checkstyle()
+                ),
+            ).checkstyle()
 
-        checkstyleResult shouldNot haveCheckstyleErrors()
-    }
-    "should not fail on Java records" {
-        val checkstyleResult = Source(
-            mapOf(
-                "Test.java" to """
+            checkstyleResult shouldNot haveCheckstyleErrors()
+        }
+        "should not fail on Java records" {
+            val checkstyleResult = Source(
+                mapOf(
+                    "Test.java" to """
 record Range(int lo, int hi) {
   public Range {
     if (lo > hi) {
@@ -244,95 +245,91 @@ public class Test {
   }
 }
                 """.trim(),
-            ),
-        ).checkstyle()
+                ),
+            ).checkstyle()
 
-        checkstyleResult shouldNot haveCheckstyleErrors()
-    }
-    "should ignore errors on unmapped lines when configured" {
-        val templatedSource = Source.fromTemplates(
-            mapOf(
-                "Test.java" to "  int i = 0;",
-            ),
-            mapOf(
-                "Test.java.hbs" to """
+            checkstyleResult shouldNot haveCheckstyleErrors()
+        }
+        "should ignore errors on unmapped lines when configured" {
+            val templatedSource = Source.fromTemplates(
+                mapOf(
+                    "Test.java" to "  int i = 0;",
+                ),
+                mapOf(
+                    "Test.java.hbs" to """
   public class Question {
 {{{ contents }}}
 }
 """,
-            ),
-        )
-        val checkstyleResult = templatedSource.checkstyle()
-        checkstyleResult shouldNot haveCheckstyleErrors()
-        shouldThrow<SourceMappingException> {
-            templatedSource.checkstyle(CheckstyleArguments(skipUnmapped = false))
+                ),
+            )
+            val checkstyleResult = templatedSource.checkstyle()
+            checkstyleResult shouldNot haveCheckstyleErrors()
+            shouldThrow<SourceMappingException> {
+                templatedSource.checkstyle(CheckstyleArguments(skipUnmapped = false))
+            }
         }
-    }
-    "should load checkers from files" {
-        val otherChecker = ConfiguredChecker(object {}::class.java.getResource("/checkstyle/indent2.xml")!!.readText())
-        otherChecker.indentation shouldBe 2
-    }
-    "should work with alternate checkers" {
-        val otherChecker = ConfiguredChecker(object {}::class.java.getResource("/checkstyle/indent2.xml")!!.readText())
-        Source.fromSnippet(
-            """
+        "should load checkers from files" {
+            val otherChecker = ConfiguredChecker(object {}::class.java.getResource("/checkstyle/indent2.xml")!!.readText())
+            otherChecker.indentation shouldBe 2
+        }
+        "should work with alternate checkers" {
+            val otherChecker = ConfiguredChecker(object {}::class.java.getResource("/checkstyle/indent2.xml")!!.readText())
+            Source.fromSnippet(
+                """
 public int add(int a, int b) {
   return a + b;
 }
 """.trim(),
-            SnippetArguments(indent = 2),
-        ).checkstyle(checker = otherChecker).also {
-            it shouldNot haveCheckstyleErrors()
+                SnippetArguments(indent = 2),
+            ).checkstyle(checker = otherChecker).also {
+                it shouldNot haveCheckstyleErrors()
+            }
         }
-    }
-    "should allow suppressions" {
-        // Old syntax
-        Source.fromSnippet(
-            """
+        "should allow suppressions" {
+            // Old syntax
+            Source.fromSnippet(
+                """
 for (int i = 0; i < 10; i++);
 """.trim(),
-        ).checkstyle(CheckstyleArguments(suppressions = setOf("empty.statement"))).also {
-            it shouldNot haveCheckstyleErrors()
-        }
-        // New syntax
-        Source.fromSnippet(
-            """
+            ).checkstyle(CheckstyleArguments(suppressions = setOf("empty.statement"))).also {
+                it shouldNot haveCheckstyleErrors()
+            }
+            // New syntax
+            Source.fromSnippet(
+                """
 for (int i = 0; i < 10; i++);
 """.trim(),
-        ).checkstyle(CheckstyleArguments(suppressions = setOf("emptystatement"))).also {
-            it shouldNot haveCheckstyleErrors()
-        }
-        // Filter method
-        Source.fromSnippet(
-            """
+            ).checkstyle(CheckstyleArguments(suppressions = setOf("emptystatement"))).also {
+                it shouldNot haveCheckstyleErrors()
+            }
+            // Filter method
+            Source.fromSnippet(
+                """
 for (int i = 0; i < 10; i++);
 """.trim(),
-        ).checkstyle(
-            CheckstyleArguments(filterErrors = { error ->
-                error.location.line != 1
-            }),
-        ).also {
-            it shouldNot haveCheckstyleErrors()
+            ).checkstyle(
+                CheckstyleArguments(filterErrors = { error ->
+                    error.location.line != 1
+                }),
+            ).also {
+                it shouldNot haveCheckstyleErrors()
+            }
         }
-    }
-})
+    })
 
 fun haveCheckstyleErrors() = object : Matcher<CheckstyleResults> {
-    override fun test(value: CheckstyleResults): MatcherResult {
-        return MatcherResult(
-            value.errors.isNotEmpty(),
-            { "should have checkstyle errors" },
-            { "should not have checkstyle errors" },
-        )
-    }
+    override fun test(value: CheckstyleResults): MatcherResult = MatcherResult(
+        value.errors.isNotEmpty(),
+        { "should have checkstyle errors" },
+        { "should not have checkstyle errors" },
+    )
 }
 
 fun haveCheckstyleErrorAt(source: String = SNIPPET_SOURCE, line: Int) = object : Matcher<CheckstyleResults> {
-    override fun test(value: CheckstyleResults): MatcherResult {
-        return MatcherResult(
-            value.errors.any { it.location.source == source && it.location.line == line },
-            { "should have checkstyle error on line $line" },
-            { "should not have checkstyle error on line $line" },
-        )
-    }
+    override fun test(value: CheckstyleResults): MatcherResult = MatcherResult(
+        value.errors.any { it.location.source == source && it.location.line == line },
+        { "should have checkstyle error on line $line" },
+        { "should not have checkstyle error on line $line" },
+    )
 }

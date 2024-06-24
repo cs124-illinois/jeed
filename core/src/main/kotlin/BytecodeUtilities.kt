@@ -63,9 +63,7 @@ fun AbstractInsnNode.previousRealInsn(): AbstractInsnNode? {
     return currentInsn
 }
 
-fun Type.toArrayType(): Type {
-    return Type.getType("[" + this.descriptor)
-}
+fun Type.toArrayType(): Type = Type.getType("[" + this.descriptor)
 
 val ConstantDynamic.bootstrapArguments: Array<Any?>
     get() = Array(this.bootstrapMethodArgumentCount) {
@@ -79,9 +77,7 @@ class NewLabelSplittingClassVisitor(visitor: ClassVisitor) : ClassVisitor(Opcode
         descriptor: String?,
         signature: String?,
         exceptions: Array<out String>?,
-    ): MethodVisitor {
-        return NewLabelSplittingMethodVisitor(super.visitMethod(access, name, descriptor, signature, exceptions))
-    }
+    ): MethodVisitor = NewLabelSplittingMethodVisitor(super.visitMethod(access, name, descriptor, signature, exceptions))
 }
 
 private class NewLabelSplittingMethodVisitor(visitor: MethodVisitor) : MethodVisitor(Opcodes.ASM9, visitor) {

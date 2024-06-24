@@ -13,41 +13,42 @@ import io.kotest.matchers.longs.shouldBeLessThan
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldNot
 
-class TestTimeout : StringSpec({
-    "should timeout runaway task properly" {
-        val compiledSource = Source.fromSnippet(
-            """
+class TestTimeout :
+    StringSpec({
+        "should timeout runaway task properly" {
+            val compiledSource = Source.fromSnippet(
+                """
 for (int i = 0; ; i++);
             """.trim(),
-        ).compile()
-        val executionResult = Sandbox.execute(
-            compiledSource.classLoader,
-            Sandbox.ExecutionArguments(timeout = 100, pollIntervalMS = 1),
-        ) { (classLoader, _, sandboxControl) ->
-            sandboxControl.setTimeoutMS(10)
-            classLoader.findClassMethod().invoke(null)
+            ).compile()
+            val executionResult = Sandbox.execute(
+                compiledSource.classLoader,
+                Sandbox.ExecutionArguments(timeout = 100, pollIntervalMS = 1),
+            ) { (classLoader, _, sandboxControl) ->
+                sandboxControl.setTimeoutMS(10)
+                classLoader.findClassMethod().invoke(null)
+            }
+            executionResult shouldNot haveCompleted()
+            executionResult should haveTimedOut()
+            executionResult.executionInterval.length shouldBeLessThan 20
         }
-        executionResult shouldNot haveCompleted()
-        executionResult should haveTimedOut()
-        executionResult.executionInterval.length shouldBeLessThan 20
-    }
-    "should timeout runaway task properly with CPU timeout" {
-        val compiledSource = Source.fromSnippet(
-            """
+        "should timeout runaway task properly with CPU timeout" {
+            val compiledSource = Source.fromSnippet(
+                """
 for (int i = 0; ; i++);
             """.trim(),
-        ).compile()
-        val executionResult = Sandbox.execute(
-            compiledSource.classLoader,
-            Sandbox.ExecutionArguments(timeout = 100, pollIntervalMS = 1),
-        ) { (classLoader, _, sandboxControl) ->
-            sandboxControl.setCPUTimeoutNS(10 * 1000L * 1000L)
-            classLoader.findClassMethod().invoke(null)
-        }
-        executionResult shouldNot haveCompleted()
-        executionResult should haveTimedOut()
-        executionResult should haveCpuTimedOut()
+            ).compile()
+            val executionResult = Sandbox.execute(
+                compiledSource.classLoader,
+                Sandbox.ExecutionArguments(timeout = 100, pollIntervalMS = 1),
+            ) { (classLoader, _, sandboxControl) ->
+                sandboxControl.setCPUTimeoutNS(10 * 1000L * 1000L)
+                classLoader.findClassMethod().invoke(null)
+            }
+            executionResult shouldNot haveCompleted()
+            executionResult should haveTimedOut()
+            executionResult should haveCpuTimedOut()
 
-        executionResult.cpuTime shouldBeLessThan 20 * 1000L * 1000L
-    }
-})
+            executionResult.cpuTime shouldBeLessThan 20 * 1000L * 1000L
+        }
+    })

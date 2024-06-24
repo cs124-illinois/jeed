@@ -9,154 +9,155 @@ import io.kotest.matchers.ints.shouldBeGreaterThan
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 
-class TestCompile : StringSpec({
-    "should compile simple snippets" {
-        val compiledSource = Source.fromJavaSnippet("int i = 1;").compile()
+class TestCompile :
+    StringSpec({
+        "should compile simple snippets" {
+            val compiledSource = Source.fromJavaSnippet("int i = 1;").compile()
 
-        compiledSource should haveDefinedExactlyTheseClasses(setOf("Main"))
-        compiledSource should haveProvidedThisManyClasses(0)
-    }
-    "should compile snippets that include method definitions" {
-        val compiledSource = Source.fromSnippet(
-            """
+            compiledSource should haveDefinedExactlyTheseClasses(setOf("Main"))
+            compiledSource should haveProvidedThisManyClasses(0)
+        }
+        "should compile snippets that include method definitions" {
+            val compiledSource = Source.fromSnippet(
+                """
 int i = 0;
 private static int main() {
     return 0;
 }""".trim(),
-        ).compile()
+            ).compile()
 
-        compiledSource should haveDefinedExactlyTheseClasses(setOf("Main"))
-        compiledSource should haveProvidedThisManyClasses(0)
-    }
-    "should compile snippets that include class definitions" {
-        val compiledSource = Source.fromJavaSnippet(
-            """
+            compiledSource should haveDefinedExactlyTheseClasses(setOf("Main"))
+            compiledSource should haveProvidedThisManyClasses(0)
+        }
+        "should compile snippets that include class definitions" {
+            val compiledSource = Source.fromJavaSnippet(
+                """
 int i = 0;
 public class Foo {
     int i;
 }
 Foo foo = new Foo();
 """.trim(),
-        ).compile()
+            ).compile()
 
-        compiledSource should haveDefinedExactlyTheseClasses(setOf("Main", "Foo"))
-        compiledSource should haveProvidedThisManyClasses(0)
-    }
-    "should compile multiple sources" {
-        val compiledSource = Source(
-            mapOf(
-                "Test.java" to "public class Test {}",
-                "Me.java" to "public class Me {}",
-            ),
-        ).compile()
+            compiledSource should haveDefinedExactlyTheseClasses(setOf("Main", "Foo"))
+            compiledSource should haveProvidedThisManyClasses(0)
+        }
+        "should compile multiple sources" {
+            val compiledSource = Source(
+                mapOf(
+                    "Test.java" to "public class Test {}",
+                    "Me.java" to "public class Me {}",
+                ),
+            ).compile()
 
-        compiledSource should haveDefinedExactlyTheseClasses(setOf("Test", "Me"))
-        compiledSource should haveProvidedThisManyClasses(0)
-    }
-    "should compile sources that use the record keyword" {
-        val compiledSource = Source(
-            mapOf(
-                "Test.java" to """
+            compiledSource should haveDefinedExactlyTheseClasses(setOf("Test", "Me"))
+            compiledSource should haveProvidedThisManyClasses(0)
+        }
+        "should compile sources that use the record keyword" {
+            val compiledSource = Source(
+                mapOf(
+                    "Test.java" to """
 public class Test {
   public static void main() {
     String record = "record";
   }
 }""".trim(),
-            ),
-        ).compile()
+                ),
+            ).compile()
 
-        compiledSource should haveDefinedExactlyTheseClasses(setOf("Test"))
-        compiledSource should haveProvidedThisManyClasses(0)
-    }
-    "should compile snippets that use the record keyword" {
-        val compiledSource = Source.fromJavaSnippet(
-            """
+            compiledSource should haveDefinedExactlyTheseClasses(setOf("Test"))
+            compiledSource should haveProvidedThisManyClasses(0)
+        }
+        "should compile snippets that use the record keyword" {
+            val compiledSource = Source.fromJavaSnippet(
+                """
 String record = "record";
 int record() {
   return 0;
 }
 """.trim(),
-        ).compile()
+            ).compile()
 
-        compiledSource should haveDefinedExactlyTheseClasses(setOf("Main"))
-        compiledSource should haveProvidedThisManyClasses(0)
-    }
-    "should compile sources with dependencies" {
-        val compiledSource = Source(
-            mapOf(
-                "Test.java" to "public class Test {}",
-                "Me.java" to "public class Me extends Test {}",
-            ),
-        ).compile()
+            compiledSource should haveDefinedExactlyTheseClasses(setOf("Main"))
+            compiledSource should haveProvidedThisManyClasses(0)
+        }
+        "should compile sources with dependencies" {
+            val compiledSource = Source(
+                mapOf(
+                    "Test.java" to "public class Test {}",
+                    "Me.java" to "public class Me extends Test {}",
+                ),
+            ).compile()
 
-        compiledSource should haveDefinedExactlyTheseClasses(setOf("Test", "Me"))
-        compiledSource should haveProvidedThisManyClasses(0)
-    }
-    "should compile sources with dependencies in wrong order" {
-        val compiledSource = Source(
-            mapOf(
-                "Test.java" to "public class Test extends Me {}",
-                "Me.java" to "public class Me {}",
-            ),
-        ).compile()
+            compiledSource should haveDefinedExactlyTheseClasses(setOf("Test", "Me"))
+            compiledSource should haveProvidedThisManyClasses(0)
+        }
+        "should compile sources with dependencies in wrong order" {
+            val compiledSource = Source(
+                mapOf(
+                    "Test.java" to "public class Test extends Me {}",
+                    "Me.java" to "public class Me {}",
+                ),
+            ).compile()
 
-        compiledSource should haveDefinedExactlyTheseClasses(setOf("Test", "Me"))
-        compiledSource should haveProvidedThisManyClasses(0)
-    }
-    "should compile sources in multiple packages" {
-        val compiledSource = Source(
-            mapOf(
-                "test/Test.java" to """
+            compiledSource should haveDefinedExactlyTheseClasses(setOf("Test", "Me"))
+            compiledSource should haveProvidedThisManyClasses(0)
+        }
+        "should compile sources in multiple packages" {
+            val compiledSource = Source(
+                mapOf(
+                    "test/Test.java" to """
 package test;
 public class Test {}
                 """.trim(),
-                "me/Me.java" to """
+                    "me/Me.java" to """
 package me;
 public class Me {}
 """.trim(),
-            ),
-        ).compile()
+                ),
+            ).compile()
 
-        compiledSource should haveDefinedExactlyTheseClasses(setOf("test.Test", "me.Me"))
-        compiledSource should haveProvidedThisManyClasses(0)
-    }
-    "should compile sources in multiple packages with dependencies in wrong order" {
-        val compiledSource = Source(
-            mapOf(
-                "test/Test.java" to """
+            compiledSource should haveDefinedExactlyTheseClasses(setOf("test.Test", "me.Me"))
+            compiledSource should haveProvidedThisManyClasses(0)
+        }
+        "should compile sources in multiple packages with dependencies in wrong order" {
+            val compiledSource = Source(
+                mapOf(
+                    "test/Test.java" to """
 package test;
 import me.Me;
 public class Test extends Me {}
 """.trim(),
-                "me/Me.java" to """
+                    "me/Me.java" to """
 package me;
 public class Me {}
 """.trim(),
-            ),
-        ).compile()
+                ),
+            ).compile()
 
-        compiledSource should haveDefinedExactlyTheseClasses(setOf("test.Test", "me.Me"))
-        compiledSource should haveProvidedThisManyClasses(0)
-    }
-    "should compile sources that use Java 10 features" {
-        val compiledSource = Source(
-            mapOf(
-                "Test.java" to """
+            compiledSource should haveDefinedExactlyTheseClasses(setOf("test.Test", "me.Me"))
+            compiledSource should haveProvidedThisManyClasses(0)
+        }
+        "should compile sources that use Java 10 features" {
+            val compiledSource = Source(
+                mapOf(
+                    "Test.java" to """
 public class Test {
     public static void main() {
         var i = 0;
     }
 }""".trim(),
-            ),
-        ).compile()
+                ),
+            ).compile()
 
-        compiledSource should haveDefinedExactlyTheseClasses(setOf("Test"))
-        compiledSource should haveProvidedThisManyClasses(0)
-    }
-    "should compile sources that use inner classes" {
-        val compiledSource = Source(
-            mapOf(
-                "Test.java" to """
+            compiledSource should haveDefinedExactlyTheseClasses(setOf("Test"))
+            compiledSource should haveProvidedThisManyClasses(0)
+        }
+        "should compile sources that use inner classes" {
+            val compiledSource = Source(
+                mapOf(
+                    "Test.java" to """
 public class Test {
     class Inner { }
     Test() {
@@ -166,59 +167,59 @@ public class Test {
         Test test = new Test();
     }
 }""".trim(),
-            ),
-        ).compile()
+                ),
+            ).compile()
 
-        compiledSource should haveDefinedExactlyTheseClasses(setOf("Test", "Test\$Inner"))
-        compiledSource should haveProvidedThisManyClasses(0)
-    }
-    "should identify compilation errors in simple snippets" {
-        val failedCompilation = shouldThrow<CompilationFailed> {
-            Source.fromSnippet("int i = a;").compile()
+            compiledSource should haveDefinedExactlyTheseClasses(setOf("Test", "Test\$Inner"))
+            compiledSource should haveProvidedThisManyClasses(0)
         }
-        failedCompilation should haveCompilationErrorAt(line = 1)
-    }
-    "should identify compilation errors in simple snippets when static is added" {
-        val failedCompilation = shouldThrow<CompilationFailed> {
-            Source.fromSnippet(
-                """
+        "should identify compilation errors in simple snippets" {
+            val failedCompilation = shouldThrow<CompilationFailed> {
+                Source.fromSnippet("int i = a;").compile()
+            }
+            failedCompilation should haveCompilationErrorAt(line = 1)
+        }
+        "should identify compilation errors in simple snippets when static is added" {
+            val failedCompilation = shouldThrow<CompilationFailed> {
+                Source.fromSnippet(
+                    """
 void test(blah it) {
   System.out.println(it);
 }
             """.trim(),
-            ).compile()
+                ).compile()
+            }
+            failedCompilation should haveCompilationErrorAt(line = 1, column = 11)
         }
-        failedCompilation should haveCompilationErrorAt(line = 1, column = 11)
-    }
-    "should identify compilation errors in simple snippets when static is added to public" {
-        val failedCompilation = shouldThrow<CompilationFailed> {
-            Source.fromSnippet(
-                """
+        "should identify compilation errors in simple snippets when static is added to public" {
+            val failedCompilation = shouldThrow<CompilationFailed> {
+                Source.fromSnippet(
+                    """
 public void test(blah it) {
   System.out.println(it);
 }
             """.trim(),
-            ).compile()
+                ).compile()
+            }
+            failedCompilation should haveCompilationErrorAt(line = 1, column = 18)
         }
-        failedCompilation should haveCompilationErrorAt(line = 1, column = 18)
-    }
-    "should identify multiple compilation errors in simple snippets" {
-        val failedCompilation = shouldThrow<CompilationFailed> {
-            Source.fromSnippet(
-                """
+        "should identify multiple compilation errors in simple snippets" {
+            val failedCompilation = shouldThrow<CompilationFailed> {
+                Source.fromSnippet(
+                    """
 int i = a;
 Foo f = new Foo();
 """.trim(),
-            ).compile()
-        }
+                ).compile()
+            }
 
-        failedCompilation should haveCompilationErrorAt(line = 1)
-        failedCompilation should haveCompilationErrorAt(line = 2)
-    }
-    "should identify multiple compilation errors in reordered simple snippets" {
-        val failedCompilation = shouldThrow<CompilationFailed> {
-            Source.fromSnippet(
-                """
+            failedCompilation should haveCompilationErrorAt(line = 1)
+            failedCompilation should haveCompilationErrorAt(line = 2)
+        }
+        "should identify multiple compilation errors in reordered simple snippets" {
+            val failedCompilation = shouldThrow<CompilationFailed> {
+                Source.fromSnippet(
+                    """
 public void foo() {
     return;
 }
@@ -226,148 +227,148 @@ public class Bar { }
 int i = a;
 Foo f = new Foo();
 """.trim(),
-            ).compile()
+                ).compile()
+            }
+
+            failedCompilation should haveCompilationErrorAt(line = 5)
+            failedCompilation should haveCompilationErrorAt(line = 6)
         }
-
-        failedCompilation should haveCompilationErrorAt(line = 5)
-        failedCompilation should haveCompilationErrorAt(line = 6)
-    }
-    "should identify warnings in snippets" {
-        val compiledSource = Source.fromSnippet(
-            """
-import java.util.List;
-import java.util.ArrayList;
-List test = new ArrayList();
-""".trim(),
-        ).compile()
-
-        compiledSource.messages shouldHaveSize 2
-        compiledSource should haveCompilationMessageAt(line = 3)
-    }
-    "should not identify warnings in snippets when warnings are disabled" {
-        val compiledSource = Source.fromSnippet(
-            """
-import java.util.List;
-import java.util.ArrayList;
-List test = new ArrayList();
-""".trim(),
-        ).compile(CompilationArguments(Xlint = "none"))
-
-        compiledSource.messages shouldHaveSize 0
-    }
-    "should fail when warnings are treated as errors" {
-        val exception = shouldThrow<CompilationFailed> {
-            Source.fromSnippet(
+        "should identify warnings in snippets" {
+            val compiledSource = Source.fromSnippet(
                 """
 import java.util.List;
 import java.util.ArrayList;
 List test = new ArrayList();
 """.trim(),
-            ).compile(CompilationArguments(wError = true))
-        }
+            ).compile()
 
-        exception should haveCompilationErrorAt(line = 3)
-    }
-    "should enumerate and load classes correctly after execution" {
-        val compiledSource = Source.fromSnippet(
-            """
+            compiledSource.messages shouldHaveSize 2
+            compiledSource should haveCompilationMessageAt(line = 3)
+        }
+        "should not identify warnings in snippets when warnings are disabled" {
+            val compiledSource = Source.fromSnippet(
+                """
+import java.util.List;
+import java.util.ArrayList;
+List test = new ArrayList();
+""".trim(),
+            ).compile(CompilationArguments(Xlint = "none"))
+
+            compiledSource.messages shouldHaveSize 0
+        }
+        "should fail when warnings are treated as errors" {
+            val exception = shouldThrow<CompilationFailed> {
+                Source.fromSnippet(
+                    """
+import java.util.List;
+import java.util.ArrayList;
+List test = new ArrayList();
+""".trim(),
+                ).compile(CompilationArguments(wError = true))
+            }
+
+            exception should haveCompilationErrorAt(line = 3)
+        }
+        "should enumerate and load classes correctly after execution" {
+            val compiledSource = Source.fromSnippet(
+                """
 class Test {}
 class Me {}
 Test test = new Test();
 Me me = new Me();
 """.trim(),
-        ).compile()
+            ).compile()
 
-        compiledSource should haveDefinedExactlyTheseClasses(setOf("Test", "Me", "Main"))
-        compiledSource should haveProvidedThisManyClasses(0)
-        val executionResult = compiledSource.execute()
+            compiledSource should haveDefinedExactlyTheseClasses(setOf("Test", "Me", "Main"))
+            compiledSource should haveProvidedThisManyClasses(0)
+            val executionResult = compiledSource.execute()
 
-        executionResult should haveCompleted()
-        executionResult should haveDefinedExactlyTheseClasses(setOf("Test", "Me", "Main"))
-        executionResult should haveProvidedExactlyTheseClasses(setOf("Test", "Me", "Main"))
-        executionResult should haveLoadedAtLeastTheseClasses(setOf("java.lang.Object", "Test", "Me", "Main"))
-        compiledSource.classLoader.bytecodeForClass("Test").size shouldBeGreaterThan 0
-    }
-    "should correctly accept previously compiled source argument" {
-        val compiledTestSource = Source(
-            mapOf(
-                "Test.java" to """
+            executionResult should haveCompleted()
+            executionResult should haveDefinedExactlyTheseClasses(setOf("Test", "Me", "Main"))
+            executionResult should haveProvidedExactlyTheseClasses(setOf("Test", "Me", "Main"))
+            executionResult should haveLoadedAtLeastTheseClasses(setOf("java.lang.Object", "Test", "Me", "Main"))
+            compiledSource.classLoader.bytecodeForClass("Test").size shouldBeGreaterThan 0
+        }
+        "should correctly accept previously compiled source argument" {
+            val compiledTestSource = Source(
+                mapOf(
+                    "Test.java" to """
 public class Test {}
             """.trim(),
-            ),
-        ).compile()
-        val compiledFooSource = Source(
-            mapOf(
-                "Foo.java" to """
+                ),
+            ).compile()
+            val compiledFooSource = Source(
+                mapOf(
+                    "Foo.java" to """
     public class Foo extends Test { }
             """.trim(),
-            ),
-        ).compileWith(compiledTestSource)
+                ),
+            ).compileWith(compiledTestSource)
 
-        compiledFooSource should haveDefinedExactlyTheseClasses(setOf("Foo"))
-        compiledFooSource should haveProvidedThisManyClasses(0)
-    }
-    "should correctly accept previously compiled source argument in another package" {
-        val compiledMeSource = Source(
-            mapOf(
-                "test/Me.java" to """
+            compiledFooSource should haveDefinedExactlyTheseClasses(setOf("Foo"))
+            compiledFooSource should haveProvidedThisManyClasses(0)
+        }
+        "should correctly accept previously compiled source argument in another package" {
+            val compiledMeSource = Source(
+                mapOf(
+                    "test/Me.java" to """
 package test;
 public class Me {}
             """.trim(),
-            ),
-        ).compile()
+                ),
+            ).compile()
 
-        val compiledFooSource = Source(
-            mapOf(
-                "another/Foo.java" to """
+            val compiledFooSource = Source(
+                mapOf(
+                    "another/Foo.java" to """
 package another;
 import test.Me;
 public class Foo extends Me { }
             """.trim(),
-            ),
-        ).compileWith(compiledMeSource)
+                ),
+            ).compileWith(compiledMeSource)
 
-        compiledFooSource should haveDefinedExactlyTheseClasses(setOf("another.Foo"))
-        compiledFooSource should haveProvidedThisManyClasses(0)
-    }
-    "should compile with classes from Java standard libraries" {
-        val compiledSource = Source.fromSnippet(
-            """
+            compiledFooSource should haveDefinedExactlyTheseClasses(setOf("another.Foo"))
+            compiledFooSource should haveProvidedThisManyClasses(0)
+        }
+        "should compile with classes from Java standard libraries" {
+            val compiledSource = Source.fromSnippet(
+                """
 import java.util.List;
 import java.util.ArrayList;
 
 List list = new ArrayList();
 """.trim(),
-        ).compile()
+            ).compile()
 
-        compiledSource should haveDefinedExactlyTheseClasses(setOf("Main"))
-        compiledSource should haveProvidedThisManyClasses(0)
-    }
-    "should compile with classes from nonstandard libraries" {
-        val compiledSource = Source.fromSnippet(
-            """
+            compiledSource should haveDefinedExactlyTheseClasses(setOf("Main"))
+            compiledSource should haveProvidedThisManyClasses(0)
+        }
+        "should compile with classes from nonstandard libraries" {
+            val compiledSource = Source.fromSnippet(
+                """
 import com.puppycrawl.tools.checkstyle.Checker;
 
 System.out.println(new Checker());
 """.trim(),
-        ).compile()
-        compiledSource should haveDefinedExactlyTheseClasses(setOf("Main"))
-    }
-    "should compile with classes from .class files" {
-        @Suppress("SpellCheckingInspection")
-        val compiledSource = Source.fromSnippet(
-            """
+            ).compile()
+            compiledSource should haveDefinedExactlyTheseClasses(setOf("Main"))
+        }
+        "should compile with classes from .class files" {
+            @Suppress("SpellCheckingInspection")
+            val compiledSource = Source.fromSnippet(
+                """
 import edu.illinois.cs.cs125.testingjeed.importable.*;
 
 Widget w = new Widget();
 """.trim(),
-        ).compile()
-        compiledSource should haveDefinedExactlyTheseClasses(setOf("Main"))
-    }
-    "should compile sources that use Java 12 features".config(enabled = systemCompilerVersion >= 12) {
-        val compiledSource = Source(
-            mapOf(
-                "Test.java" to """
+            ).compile()
+            compiledSource should haveDefinedExactlyTheseClasses(setOf("Main"))
+        }
+        "should compile sources that use Java 12 features".config(enabled = systemCompilerVersion >= 12) {
+            val compiledSource = Source(
+                mapOf(
+                    "Test.java" to """
 public class Test {
     public static String testYieldKeyword(int switchArg) {
         return switch (switchArg) {
@@ -380,16 +381,16 @@ public class Test {
         System.out.println(testYieldKeyword(1));
     }
 }""".trim(),
-            ),
-        ).compile()
+                ),
+            ).compile()
 
-        compiledSource should haveDefinedExactlyTheseClasses(setOf("Test"))
-        compiledSource should haveProvidedThisManyClasses(0)
-    }
-    "should compile sources that use Java 13 features".config(enabled = systemCompilerVersion >= 13) {
-        val compiledSource = Source(
-            mapOf(
-                "Test.java" to """
+            compiledSource should haveDefinedExactlyTheseClasses(setOf("Test"))
+            compiledSource should haveProvidedThisManyClasses(0)
+        }
+        "should compile sources that use Java 13 features".config(enabled = systemCompilerVersion >= 13) {
+            val compiledSource = Source(
+                mapOf(
+                    "Test.java" to """
 public class Test {
     public static String testYieldKeyword(int switchArg) {
         return switch (switchArg) {
@@ -402,29 +403,29 @@ public class Test {
         System.out.println(testYieldKeyword(1));
     }
 }""".trim(),
-            ),
-        ).compile()
+                ),
+            ).compile()
 
-        compiledSource should haveDefinedExactlyTheseClasses(setOf("Test"))
-        compiledSource should haveProvidedThisManyClasses(0)
-    }
-    "should fail on bare lists" {
-        val failedCompilation = shouldThrow<CompilationFailed> {
-            Source.fromJavaSnippet(
-                """
+            compiledSource should haveDefinedExactlyTheseClasses(setOf("Test"))
+            compiledSource should haveProvidedThisManyClasses(0)
+        }
+        "should fail on bare lists" {
+            val failedCompilation = shouldThrow<CompilationFailed> {
+                Source.fromJavaSnippet(
+                    """
 import java.util.List;
 import java.util.ArrayList;
 List first = new ArrayList();
-                """.trimIndent(),
-            ).compile(CompilationArguments(wError = true))
+                    """.trimIndent(),
+                ).compile(CompilationArguments(wError = true))
+            }
+            failedCompilation should haveCompilationErrorAt(line = 3)
         }
-        failedCompilation should haveCompilationErrorAt(line = 3)
-    }
-    "should compile sources that use Java 14 features" {
-        if (systemCompilerVersion >= 14) {
-            val compiledSource = Source(
-                mapOf(
-                    "Test.java" to """
+        "should compile sources that use Java 14 features" {
+            if (systemCompilerVersion >= 14) {
+                val compiledSource = Source(
+                    mapOf(
+                        "Test.java" to """
 public class Test {
     public static void testInstanceOfPatternMatching() {
         Object o = "Test";
@@ -436,18 +437,18 @@ public class Test {
         testInstanceOfPatternMatching();
     }
 }""".trim(),
-                ),
-            ).compile()
+                    ),
+                ).compile()
 
-            compiledSource should haveDefinedExactlyTheseClasses(setOf("Test"))
-            compiledSource should haveProvidedThisManyClasses(0)
+                compiledSource should haveDefinedExactlyTheseClasses(setOf("Test"))
+                compiledSource should haveProvidedThisManyClasses(0)
+            }
         }
-    }
-    "should compile sources that use Java 14 preview features".config(enabled = systemCompilerVersion >= 14) {
-        val tripleQuote = "\"\"\""
-        val compiledSource = Source(
-            mapOf(
-                "Test.java" to """
+        "should compile sources that use Java 14 preview features".config(enabled = systemCompilerVersion >= 14) {
+            val tripleQuote = "\"\"\""
+            val compiledSource = Source(
+                mapOf(
+                    "Test.java" to """
 public class Test {
     public static void main() {
         String textBlock = $tripleQuote
@@ -455,14 +456,30 @@ public class Test {
                            $tripleQuote;
     }
 }""".trim(),
-            ),
-        ).compile()
+                ),
+            ).compile()
 
-        compiledSource should haveDefinedExactlyTheseClasses(setOf("Test"))
-        compiledSource should haveProvidedThisManyClasses(0)
+            compiledSource should haveDefinedExactlyTheseClasses(setOf("Test"))
+            compiledSource should haveProvidedThisManyClasses(0)
+        }
+        "should not support Java 14 preview features when preview is disabled".config(enabled = systemCompilerVersion == 14) {
+            shouldThrow<CompilationFailed> {
+                val tripleQuote = "\"\"\""
+                Source(
+                    mapOf(
+                        "Test.java" to """
+public class Test {
+    public static void main() {
+        String textBlock = $tripleQuote
+                           Hello world!
+                           $tripleQuote;
     }
-    "should not support Java 14 preview features when preview is disabled".config(enabled = systemCompilerVersion == 14) {
-        shouldThrow<CompilationFailed> {
+}""".trim(),
+                    ),
+                ).compile(CompilationArguments(enablePreview = false))
+            }
+        }
+        "should support Java 15 features".config(enabled = systemCompilerVersion >= 15) {
             val tripleQuote = "\"\"\""
             Source(
                 mapOf(
@@ -477,27 +494,11 @@ public class Test {
                 ),
             ).compile(CompilationArguments(enablePreview = false))
         }
-    }
-    "should support Java 15 features".config(enabled = systemCompilerVersion >= 15) {
-        val tripleQuote = "\"\"\""
-        Source(
-            mapOf(
-                "Test.java" to """
-public class Test {
-    public static void main() {
-        String textBlock = $tripleQuote
-                           Hello world!
-                           $tripleQuote;
-    }
-}""".trim(),
-            ),
-        ).compile(CompilationArguments(enablePreview = false))
-    }
-    "should support Java 21 patterns".config(enabled = systemCompilerVersion >= 21) {
-        @Suppress("SpellCheckingInspection")
-        Source(
-            mapOf(
-                "Test.java" to """
+        "should support Java 21 patterns".config(enabled = systemCompilerVersion >= 21) {
+            @Suppress("SpellCheckingInspection")
+            Source(
+                mapOf(
+                    "Test.java" to """
 record Point(int x, int y) {}
 public class Test {
     public void test(Object obj) {
@@ -506,13 +507,13 @@ public class Test {
         }
     }
 }""".trim(),
-            ),
-        ).compile(CompilationArguments(enablePreview = false))
-    }
-    "should support Java 21 pattern switch".config(enabled = systemCompilerVersion >= 21) {
-        Source(
-            mapOf(
-                "Test.java" to """
+                ),
+            ).compile(CompilationArguments(enablePreview = false))
+        }
+        "should support Java 21 pattern switch".config(enabled = systemCompilerVersion >= 21) {
+            Source(
+                mapOf(
+                    "Test.java" to """
 public class Test {
     public String test(Object obj) {
         return switch (obj) {
@@ -523,38 +524,38 @@ public class Test {
         };
     }
 }""".trim(),
-            ),
-        ).compile(CompilationArguments(enablePreview = false))
-    }
-    "should support Java 21 preview features".config(enabled = systemCompilerVersion == 21) {
-        Source(
-            mapOf(
-                "Test.java" to """
+                ),
+            ).compile(CompilationArguments(enablePreview = false))
+        }
+        "should support Java 21 preview features".config(enabled = systemCompilerVersion == 21) {
+            Source(
+                mapOf(
+                    "Test.java" to """
 public class Test {
     public static void main() {
         String s = "weird";
         System.out.println(STR."this syntax is \{s}");
     }
 }""".trim(),
-            ),
-        ).compile(CompilationArguments(enablePreview = true))
-    }
-    "should load classes from a separate classloader" {
-        val first = Source(
-            mapOf(
-                "Test.java" to """
+                ),
+            ).compile(CompilationArguments(enablePreview = true))
+        }
+        "should load classes from a separate classloader" {
+            val first = Source(
+                mapOf(
+                    "Test.java" to """
 public class Test {
   public void print() {
     System.out.println("test");
   }
 }
 """.trim(),
-            ),
-        ).compile()
+                ),
+            ).compile()
 
-        Source(
-            mapOf(
-                "Example.java" to """
+            Source(
+                mapOf(
+                    "Example.java" to """
 public class Example {
   public static void main() {
     Test test = new Test();
@@ -562,40 +563,40 @@ public class Example {
   }
 }
 """.trim(),
-            ),
-        ).compile(compilationArguments = CompilationArguments(parentFileManager = first.fileManager))
-    }
-    "should not crash when compiling in parallel" {
-        (0 until 32).toList().parallelStream().map {
-            Source.fromSnippet(
-                """
+                ),
+            ).compile(compilationArguments = CompilationArguments(parentFileManager = first.fileManager))
+        }
+        "should not crash when compiling in parallel" {
+            (0 until 32).toList().parallelStream().map {
+                Source.fromSnippet(
+                    """
                 synchronized (Object.class) {
                     System.out.println($it);
                 }
-                """.trimIndent(),
-            ).compile()
-        }.allMatch { true }
-    }
-    "should compile in parallel with external classes" {
-        (0 until 32).toList().parallelStream().map {
-            Source.fromSnippet(
-                """
+                    """.trimIndent(),
+                ).compile()
+            }.allMatch { true }
+        }
+        "should compile in parallel with external classes" {
+            (0 until 32).toList().parallelStream().map {
+                Source.fromSnippet(
+                    """
                 import com.puppycrawl.tools.checkstyle.Checker;
                 import edu.illinois.cs.cs125.testingjeed.importable.*;
                 
                 System.out.println(new Checker());
                 System.out.println(new Widget());
                 System.out.println($it);
-                """.trimIndent(),
-            ).compile()
-        }.allMatch {
-            it.classLoader.definedClasses == setOf("Main")
+                    """.trimIndent(),
+                ).compile()
+            }.allMatch {
+                it.classLoader.definedClasses == setOf("Main")
+            }
         }
-    }
-    "should isolate classes correctly when requested" {
-        val source = Source(
-            mapOf(
-                "Test.java" to """
+        "should isolate classes correctly when requested" {
+            val source = Source(
+                mapOf(
+                    "Test.java" to """
 package examples;
 
 public class Test {
@@ -604,66 +605,62 @@ public class Test {
     }
 }
             """.trim(),
-            ),
-        )
-        source.compile().also {
-            // Incorrectly loads the class from the classpath when not isolated
-            it.classLoader.loadClass("examples.Test")
-                .getDeclaredMethod("welcome").invoke(null) shouldBe "Classpath"
+                ),
+            )
+            source.compile().also {
+                // Incorrectly loads the class from the classpath when not isolated
+                it.classLoader.loadClass("examples.Test")
+                    .getDeclaredMethod("welcome").invoke(null) shouldBe "Classpath"
+            }
+            source.compile(CompilationArguments(isolatedClassLoader = true, useCache = false)).also {
+                it.cached shouldBe false
+                it.classLoader.loadClass("examples.Test")
+                    .getDeclaredMethod("welcome").invoke(null) shouldBe "Jeed"
+            }
         }
-        source.compile(CompilationArguments(isolatedClassLoader = true, useCache = false)).also {
-            it.cached shouldBe false
-            it.classLoader.loadClass("examples.Test")
-                .getDeclaredMethod("welcome").invoke(null) shouldBe "Jeed"
-        }
-    }
-    "should compile with parameter names when requested" {
-        val source = Source(
-            mapOf(
-                "Test.java" to """
+        "should compile with parameter names when requested" {
+            val source = Source(
+                mapOf(
+                    "Test.java" to """
 public class Test {
     public static void method(int first, String second) { }
 }
             """.trim(),
-            ),
-        )
-        source.compile().also { compiledSource ->
-            val klass = compiledSource.classLoader.loadClass("Test")
-            klass.declaredMethods.find { it.name == "method" }?.parameters?.map { it.name }?.first() shouldBe "arg0"
+                ),
+            )
+            source.compile().also { compiledSource ->
+                val klass = compiledSource.classLoader.loadClass("Test")
+                klass.declaredMethods.find { it.name == "method" }?.parameters?.map { it.name }?.first() shouldBe "arg0"
+            }
+            source.compile(CompilationArguments(parameters = true)).also { compiledSource ->
+                val klass = compiledSource.classLoader.loadClass("Test")
+                klass.declaredMethods.find { it.name == "method" }?.parameters?.map { it.name }?.first() shouldBe "first"
+            }
         }
-        source.compile(CompilationArguments(parameters = true)).also { compiledSource ->
-            val klass = compiledSource.classLoader.loadClass("Test")
-            klass.declaredMethods.find { it.name == "method" }?.parameters?.map { it.name }?.first() shouldBe "first"
+        "should compute empty klass size" {
+            getEmptyJavaClassSize() shouldBeGreaterThan 0
         }
-    }
-    "should compute empty klass size" {
-        getEmptyJavaClassSize() shouldBeGreaterThan 0
-    }
-})
+    })
 
 fun haveCompilationErrorAt(source: String = SNIPPET_SOURCE, line: Int, column: Int? = null) =
     object : Matcher<CompilationFailed> {
-        override fun test(value: CompilationFailed): MatcherResult {
-            return MatcherResult(
-                value.errors.any {
-                    it.location?.source == source &&
-                        it.location?.line == line &&
-                        (column == null || it.location?.column == column)
-                },
-                { "should have compilation error on line $line" },
-                { "should not have compilation error on line $line" },
-            )
-        }
+        override fun test(value: CompilationFailed): MatcherResult = MatcherResult(
+            value.errors.any {
+                it.location?.source == source &&
+                    it.location?.line == line &&
+                    (column == null || it.location?.column == column)
+            },
+            { "should have compilation error on line $line" },
+            { "should not have compilation error on line $line" },
+        )
     }
 
 fun haveCompilationMessageAt(source: String = SNIPPET_SOURCE, line: Int) = object : Matcher<CompiledSource> {
-    override fun test(value: CompiledSource): MatcherResult {
-        return MatcherResult(
-            value.messages.any { it.location?.source == source && it.location?.line == line },
-            { "should have compilation message on line $line" },
-            { "should not have compilation message on line $line" },
-        )
-    }
+    override fun test(value: CompiledSource): MatcherResult = MatcherResult(
+        value.messages.any { it.location?.source == source && it.location?.line == line },
+        { "should have compilation message on line $line" },
+        { "should not have compilation message on line $line" },
+    )
 }
 
 fun <T> haveDefinedExactlyTheseClasses(classes: Set<String>) = object : Matcher<T> {

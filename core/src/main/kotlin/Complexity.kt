@@ -39,9 +39,7 @@ class MethodComplexity(
 ) : ComplexityValue(name, range, classes, methods, complexity)
 
 class ComplexityFailed(errors: List<SourceError>) : JeedError(errors) {
-    override fun toString(): String {
-        return "errors were encountered while computing complexity: ${errors.joinToString(separator = ",")}"
-    }
+    override fun toString(): String = "errors were encountered while computing complexity: ${errors.joinToString(separator = ",")}"
 }
 
 class ComplexityResults(val source: Source, val results: Map<String, Map<String, ComplexityValue>>) {

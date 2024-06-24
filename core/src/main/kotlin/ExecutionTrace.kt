@@ -64,9 +64,7 @@ object ExecutionTrace : SandboxPluginWithDefaultArguments<ExecutionTraceArgument
         Sandbox.CurrentTask.getWorkingData(this)
     }
 
-    override fun createDefaultArguments(): ExecutionTraceArguments {
-        return ExecutionTraceArguments()
-    }
+    override fun createDefaultArguments(): ExecutionTraceArguments = ExecutionTraceArguments()
 
     override fun createInstrumentationData(
         arguments: ExecutionTraceArguments,
@@ -637,30 +635,26 @@ object ExecutionTrace : SandboxPluginWithDefaultArguments<ExecutionTraceArgument
         }
 
         @JvmStatic
-        private fun serializeValue(value: Any?, type: Type): ExecutionTraceResults.Value {
-            return when (type.sort) {
-                Type.OBJECT, Type.ARRAY -> {
-                    val objId = value?.let { findObjectId(it) }
-                    ExecutionTraceResults.Value(ExecutionTraceResults.ValueType.REFERENCE, objId)
-                }
-                Type.VOID -> {
-                    ExecutionTraceResults.Value(ExecutionTraceResults.ValueType.VOID, null)
-                }
-                Type.METHOD -> {
-                    error("instances of method types are impossible")
-                }
-                else -> {
-                    val publishableType = PRIMITIVE_TYPES[type] ?: error("unknown type $type")
-                    val box = value ?: error("primitives cannot be null")
-                    ExecutionTraceResults.Value(publishableType, box)
-                }
+        private fun serializeValue(value: Any?, type: Type): ExecutionTraceResults.Value = when (type.sort) {
+            Type.OBJECT, Type.ARRAY -> {
+                val objId = value?.let { findObjectId(it) }
+                ExecutionTraceResults.Value(ExecutionTraceResults.ValueType.REFERENCE, objId)
+            }
+            Type.VOID -> {
+                ExecutionTraceResults.Value(ExecutionTraceResults.ValueType.VOID, null)
+            }
+            Type.METHOD -> {
+                error("instances of method types are impossible")
+            }
+            else -> {
+                val publishableType = PRIMITIVE_TYPES[type] ?: error("unknown type $type")
+                val box = value ?: error("primitives cannot be null")
+                ExecutionTraceResults.Value(publishableType, box)
             }
         }
 
         @JvmStatic
-        private fun findObjectId(obj: Any): Int {
-            return lookupOrTrackObject(obj).id
-        }
+        private fun findObjectId(obj: Any): Int = lookupOrTrackObject(obj).id
 
         @JvmStatic
         private fun lookupOrTrackObject(obj: Any): ExecutionTraceWorkingData.TrackedObject {
@@ -725,9 +719,7 @@ private class ExecutionTraceInstrumentationData(
 ) {
     private var nextIndex = 1
 
-    fun nextUniqueId(): Int {
-        return nextIndex.also { nextIndex += 1 }
-    }
+    fun nextUniqueId(): Int = nextIndex.also { nextIndex += 1 }
 
     class LocalInfo(val localIndex: Int, val name: String, val type: Type)
 
@@ -758,13 +750,9 @@ private class ExecutionTraceWorkingData(
 ) {
     private var nextObjectId = 1
 
-    fun atCapacity(): Boolean {
-        return steps.size >= instrumentationData.arguments.recordedStepLimit
-    }
+    fun atCapacity(): Boolean = steps.size >= instrumentationData.arguments.recordedStepLimit
 
-    fun nextUniqueId(): Int {
-        return nextObjectId.also { nextObjectId++ }
-    }
+    fun nextUniqueId(): Int = nextObjectId.also { nextObjectId++ }
 
     class Frame(
         val method: ExecutionTraceInstrumentationData.MethodInfo,
@@ -783,16 +771,14 @@ private class ExecutionTraceWorkingData(
         var indexedComponents: MutableList<ExecutionTraceResults.Value>? = null,
         var unorderedRowsValue: Set<List<ExecutionTraceResults.Value>>? = null,
     ) {
-        fun asPublishableState(): ExecutionTraceResults.ObjectState {
-            return ExecutionTraceResults.ObjectState(
-                type.name,
-                stringRepresentation,
-                primaryValue,
-                namedComponents?.toMap(),
-                indexedComponents?.toList(),
-                unorderedRowsValue,
-            )
-        }
+        fun asPublishableState(): ExecutionTraceResults.ObjectState = ExecutionTraceResults.ObjectState(
+            type.name,
+            stringRepresentation,
+            primaryValue,
+            namedComponents?.toMap(),
+            indexedComponents?.toList(),
+            unorderedRowsValue,
+        )
     }
 }
 

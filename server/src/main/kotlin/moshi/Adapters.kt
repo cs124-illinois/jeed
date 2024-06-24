@@ -117,17 +117,15 @@ class ResultAdapter {
     }
 
     @ToJson
-    fun resultToJson(response: Response): ResponseJson {
-        return ResponseJson(
-            response.email,
-            response.audience,
-            response.request,
-            response.status,
-            response.completed,
-            response.completedTasks,
-            response.failed,
-            response.failedTasks,
-            response.interval,
-        )
-    }
+    fun resultToJson(response: Response): ResponseJson = ResponseJson(
+        response.email,
+        response.audience,
+        response.request,
+        response.status,
+        response.completed,
+        response.completedTasks,
+        response.failed,
+        response.failedTasks,
+        response.interval,
+    )
 }

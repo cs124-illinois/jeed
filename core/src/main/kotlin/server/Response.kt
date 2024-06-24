@@ -75,9 +75,7 @@ fun List<FlatSource>.toSource(): Map<String, String> {
     return this.associate { it.path to it.contents }
 }
 
-fun Map<String, String>.toFlatSources(): List<FlatSource> {
-    return this.map { FlatSource(it.key, it.value) }
-}
+fun Map<String, String>.toFlatSources(): List<FlatSource> = this.map { FlatSource(it.key, it.value) }
 
 @JsonClass(generateAdapter = true)
 data class FlatClassComplexity(val name: String, val path: String, val range: SourceRange, val complexity: Int) {

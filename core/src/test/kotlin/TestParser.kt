@@ -5,11 +5,12 @@ import io.kotest.matchers.comparables.shouldBeLessThan
 import io.kotest.matchers.shouldBe
 import kotlin.time.measureTime
 
-class TestParser : StringSpec({
-    "it should parse kotlin code" {
-        Source(
-            mapOf(
-                "Main.kt" to """
+class TestParser :
+    StringSpec({
+        "it should parse kotlin code" {
+            Source(
+                mapOf(
+                    "Main.kt" to """
 class Person {
   val name: String = ""
   val age: Double
@@ -18,31 +19,31 @@ class Person {
   }
 }
 """.trim(),
-            ),
-        ).getParsed("Main.kt").tree
-    }
-    "it should distinguish between different kinds of sources" {
-        val javaSnippet =
-            """System.out.println("Hello, world!");"""
-        val javaSource =
-            """
+                ),
+            ).getParsed("Main.kt").tree
+        }
+        "it should distinguish between different kinds of sources" {
+            val javaSnippet =
+                """System.out.println("Hello, world!");"""
+            val javaSource =
+                """
 public class Example {}
-            """.trimIndent()
-        val kotlinSnippet =
-            """println("Hello, world!")"""
-        val kotlinSource =
-            """
+                """.trimIndent()
+            val kotlinSnippet =
+                """println("Hello, world!")"""
+            val kotlinSource =
+                """
 fun main() {
   println("Hello, world!")
 }
-            """.trimIndent()
-        javaSnippet.distinguish("java") shouldBe SourceType.JAVA_SNIPPET
-        javaSource.distinguish("java") shouldBe SourceType.JAVA_SOURCE
-        kotlinSnippet.distinguish("kotlin") shouldBe SourceType.KOTLIN_SNIPPET
-        kotlinSource.distinguish("kotlin") shouldBe SourceType.KOTLIN_SOURCE
-    }
-    "it should identify a snippet" {
-        """
+                """.trimIndent()
+            javaSnippet.distinguish("java") shouldBe SourceType.JAVA_SNIPPET
+            javaSource.distinguish("java") shouldBe SourceType.JAVA_SOURCE
+            kotlinSnippet.distinguish("kotlin") shouldBe SourceType.KOTLIN_SNIPPET
+            kotlinSource.distinguish("kotlin") shouldBe SourceType.KOTLIN_SOURCE
+        }
+        "it should identify a snippet" {
+            """
 class Flip {
   boolean state;
   Flip(boolean start) {
@@ -56,9 +57,9 @@ class Flip {
 Flip f = new Flip(true);
 System.out.println(f.flop());
 System.out.println(f.flop());""".trim().distinguish("java") shouldBe SourceType.JAVA_SNIPPET
-    }
-    "it should identify a source with records" {
-        """
+        }
+        "it should identify a source with records" {
+            """
 record State(int value) {
   State {
     if (value < 0) {
@@ -67,44 +68,44 @@ record State(int value) {
   }
 }
 """.trim().distinguish("java") shouldBe SourceType.JAVA_SOURCE
-    }
-    "it should parse long if statements" {
-        fun makeSource(repeats: Int) = """fun mystery(a: Int): Int {
+        }
+        "it should parse long if statements" {
+            fun makeSource(repeats: Int) = """fun mystery(a: Int): Int {
   if (a == -1) {
     return 0
   }""" + (0..repeats).joinToString("") {
-            """ else if (a == 0) {
+                """ else if (a == 0) {
     return 1
   }"""
-        } + """
+            } + """
   return 0
 }
   """
 
-        val sourceBaseline = 16
-        val originalAsSource = measureTime {
-            Source.fromKotlin(makeSource(sourceBaseline)).getParsed("Main.kt").tree
-        }
-
-        repeat(8) {
-            measureTime {
+            val sourceBaseline = 16
+            val originalAsSource = measureTime {
                 Source.fromKotlin(makeSource(sourceBaseline)).getParsed("Main.kt").tree
-            } shouldBeLessThan originalAsSource * 2
-        }
+            }
 
-        val snippetBaseline = 16
-        val originalAsSnippet = measureTime {
-            Source.fromKotlinSnippet(makeSource(snippetBaseline)).parse()
-        }
+            repeat(8) {
+                measureTime {
+                    Source.fromKotlin(makeSource(sourceBaseline)).getParsed("Main.kt").tree
+                } shouldBeLessThan originalAsSource * 2
+            }
 
-        repeat(8) {
-            measureTime {
+            val snippetBaseline = 16
+            val originalAsSnippet = measureTime {
                 Source.fromKotlinSnippet(makeSource(snippetBaseline)).parse()
-            } shouldBeLessThan originalAsSnippet * 2
+            }
+
+            repeat(8) {
+                measureTime {
+                    Source.fromKotlinSnippet(makeSource(snippetBaseline)).parse()
+                } shouldBeLessThan originalAsSnippet * 2
+            }
         }
-    }
-    "it should parse an actual file" {
-        val source = """
+        "it should parse an actual file" {
+            val source = """
 fun getPronunciation(word: String): String {
   var pron = ""
   var charArray = word.lowercase().toCharArray()
@@ -174,38 +175,38 @@ fun getPronunciation(word: String): String {
   return pron
 }
 """
-        val original = measureTime {
-            Source.fromKotlin(source).getParsed("Main.kt").tree
-        }
-
-        repeat(8) {
-            measureTime {
+            val original = measureTime {
                 Source.fromKotlin(source).getParsed("Main.kt").tree
-            } shouldBeLessThan original * 2
+            }
+
+            repeat(8) {
+                measureTime {
+                    Source.fromKotlin(source).getParsed("Main.kt").tree
+                } shouldBeLessThan original * 2
+            }
         }
-    }
-    "it should parse lambda assignment" {
-        Source.fromKotlin(
-            """
+        "it should parse lambda assignment" {
+            Source.fromKotlin(
+                """
 val t = {
   true
 }
 """,
-        ).parse()
-    }
-    "it should parse lambda passed with enclosing parentheses" {
-        Source.fromKotlin(
-            """
+            ).parse()
+        }
+        "it should parse lambda passed with enclosing parentheses" {
+            Source.fromKotlin(
+                """
 fun invert(swap: Map<String, Int>): Map<Int, String> {
   var reverse = swap.entries.associateBy({ it.value }) { it.key }
   return reverse
 }
 """,
-        ).parse()
-    }
-    "it should parse class with blank line after declaration" {
-        Source.fromKotlin(
-            """
+            ).parse()
+        }
+        "it should parse class with blank line after declaration" {
+            Source.fromKotlin(
+                """
 class Test(
   val input: Int
 )
@@ -213,11 +214,11 @@ class Test(
   fun test(): Int = 1
 }
 """,
-        ).parse()
-    }
-    "it should parse lambda assignment to function" {
-        Source.fromKotlin(
-            """
+            ).parse()
+        }
+        "it should parse lambda assignment to function" {
+            Source.fromKotlin(
+                """
 fun test() = {
     try {
         1
@@ -228,11 +229,11 @@ fun test() = {
     }
 }
 """,
-        ).parse()
-    }
-    "it should handle call site trailing commas" {
-        Source.fromKotlin(
-            """
+            ).parse()
+        }
+        "it should handle call site trailing commas" {
+            Source.fromKotlin(
+                """
 fun main() {
     FooWrapper(
         Foo(
@@ -242,11 +243,11 @@ fun main() {
     )
 }
 """,
-        ).parse()
-    }
-    "it should handle declaration site trailing commas" {
-        Source.fromKotlin(
-            """
+            ).parse()
+        }
+        "it should handle declaration site trailing commas" {
+            Source.fromKotlin(
+                """
 class FooWrapper(
     val foo: Foo = Foo(
         a = 3,
@@ -254,11 +255,11 @@ class FooWrapper(
     ),
 )
 """,
-        ).parse()
-    }
-    "it should handle more call site trailing commas" {
-        Source.fromKotlin(
-            """
+            ).parse()
+        }
+        "it should handle more call site trailing commas" {
+            Source.fromKotlin(
+                """
 fun main() {
     merge(
         mergesort(copyOfRange(values, 0, values.size / 2)),
@@ -266,17 +267,17 @@ fun main() {
     )
 }
 """,
-        ).complexity()
-    }
-    "it should handle new range syntax" {
-        Source.fromKotlin(
-            """
+            ).complexity()
+        }
+        "it should handle new range syntax" {
+            Source.fromKotlin(
+                """
 fun main() {
     for (i in 0..<4) {
         println(i)
     }
 }
 """,
-        ).complexity()
-    }
-})
+            ).complexity()
+        }
+    })

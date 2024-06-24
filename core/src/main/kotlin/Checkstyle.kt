@@ -52,9 +52,7 @@ class CheckstyleError(
 }
 
 class CheckstyleFailed(errors: List<CheckstyleError>) : AlwaysLocatedJeedError(errors) {
-    override fun toString(): String {
-        return "checkstyle errors were encountered: ${errors.joinToString(separator = ",")}"
-    }
+    override fun toString(): String = "checkstyle errors were encountered: ${errors.joinToString(separator = ",")}"
 }
 
 @JsonClass(generateAdapter = true)
@@ -111,10 +109,8 @@ class ConfiguredChecker(configurationString: String) {
         checker.configure(configuration)
     }
 
-    suspend fun check(sources: Map<String, String>): Map<String, List<CheckstyleError>> {
-        return sources.mapValues { source ->
-            this.checker.processString(source.key, source.value)
-        }
+    suspend fun check(sources: Map<String, String>): Map<String, List<CheckstyleError>> = sources.mapValues { source ->
+        this.checker.processString(source.key, source.value)
     }
 }
 

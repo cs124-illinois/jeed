@@ -656,7 +656,8 @@ public class Main {
                 ),
             ).compile()
 
-            (1..8).forEach { _ -> // Flaky
+            (1..8).forEach { _ ->
+                // Flaky
                 val executionResult = compileResult.execute()
                 executionResult shouldNot haveCompleted()
                 executionResult should haveTimedOut()

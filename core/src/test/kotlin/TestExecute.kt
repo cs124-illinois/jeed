@@ -14,44 +14,45 @@ import kotlinx.coroutines.runBlocking
 import java.nio.charset.Charset
 import java.util.stream.Collectors
 
-class TestExecute : StringSpec({
-    "should execute snippets" {
-        val executeMainResult = Source.fromSnippet(
-            """
+class TestExecute :
+    StringSpec({
+        "should execute snippets" {
+            val executeMainResult = Source.fromSnippet(
+                """
 int i = 0;
 i++;
 System.out.println(i);
             """.trim(),
-        ).compile().execute()
-        executeMainResult should haveCompleted()
-        executeMainResult should haveOutput("1")
-    }
-    "should execute cached snippets" {
-        Source.fromSnippet(
-            """
-int i = 0;
-i++;
-System.out.println(i);
-            """.trim(),
-        ).compile(CompilationArguments(useCache = true)).execute()
-
-        val executeMainResult = Source.fromSnippet(
-            """
-int i = 0;
-i++;
-System.out.println(i);
-            """.trim(),
-        ).compile(CompilationArguments(useCache = true)).let {
-            it.cached shouldBe true
-            it.execute()
+            ).compile().execute()
+            executeMainResult should haveCompleted()
+            executeMainResult should haveOutput("1")
         }
+        "should execute cached snippets" {
+            Source.fromSnippet(
+                """
+int i = 0;
+i++;
+System.out.println(i);
+            """.trim(),
+            ).compile(CompilationArguments(useCache = true)).execute()
 
-        executeMainResult should haveCompleted()
-        executeMainResult should haveOutput("1")
-    }
-    "should execute snippets that include class definitions" {
-        val executeMainResult = Source.fromSnippet(
-            """
+            val executeMainResult = Source.fromSnippet(
+                """
+int i = 0;
+i++;
+System.out.println(i);
+            """.trim(),
+            ).compile(CompilationArguments(useCache = true)).let {
+                it.cached shouldBe true
+                it.execute()
+            }
+
+            executeMainResult should haveCompleted()
+            executeMainResult should haveOutput("1")
+        }
+        "should execute snippets that include class definitions" {
+            val executeMainResult = Source.fromSnippet(
+                """
 public class Foo {
     int i = 0;
 }
@@ -59,13 +60,13 @@ Foo foo = new Foo();
 foo.i = 4;
 System.out.println(foo.i);
             """.trim(),
-        ).compile().execute()
-        executeMainResult should haveCompleted()
-        executeMainResult should haveOutput("4")
-    }
-    "should execute the right class in snippets that include multiple class definitions" {
-        val compiledSource = Source.fromSnippet(
-            """
+            ).compile().execute()
+            executeMainResult should haveCompleted()
+            executeMainResult should haveOutput("4")
+        }
+        "should execute the right class in snippets that include multiple class definitions" {
+            val compiledSource = Source.fromSnippet(
+                """
 public class Bar {
     public static void main() {
         System.out.println("Bar");
@@ -78,29 +79,29 @@ public class Foo {
 }
 System.out.println("Main");
             """.trim(),
-        ).compile()
+            ).compile()
 
-        val executeBarResult = compiledSource.execute(SourceExecutionArguments(klass = "Bar"))
-        executeBarResult should haveCompleted()
-        executeBarResult should haveOutput("Bar")
+            val executeBarResult = compiledSource.execute(SourceExecutionArguments(klass = "Bar"))
+            executeBarResult should haveCompleted()
+            executeBarResult should haveOutput("Bar")
 
-        val executeFooResult = compiledSource.execute(SourceExecutionArguments(klass = "Foo"))
-        executeFooResult should haveCompleted()
-        executeFooResult should haveOutput("Foo")
+            val executeFooResult = compiledSource.execute(SourceExecutionArguments(klass = "Foo"))
+            executeFooResult should haveCompleted()
+            executeFooResult should haveOutput("Foo")
 
-        val executeMainResult = compiledSource.execute(SourceExecutionArguments(klass = "Main"))
-        executeMainResult should haveCompleted()
-        executeMainResult should haveOutput("Main")
+            val executeMainResult = compiledSource.execute(SourceExecutionArguments(klass = "Main"))
+            executeMainResult should haveCompleted()
+            executeMainResult should haveOutput("Main")
 
-        val executionFailed = shouldThrow<ExecutionFailed> {
-            compiledSource.execute(SourceExecutionArguments(klass = "Baz"))
+            val executionFailed = shouldThrow<ExecutionFailed> {
+                compiledSource.execute(SourceExecutionArguments(klass = "Baz"))
+            }
+            executionFailed.classNotFound shouldNotBe null
+            executionFailed.methodNotFound shouldBe null
         }
-        executionFailed.classNotFound shouldNotBe null
-        executionFailed.methodNotFound shouldBe null
-    }
-    "should execute the right method in snippets that include multiple method definitions" {
-        val compiledSource = Source.fromSnippet(
-            """
+        "should execute the right method in snippets that include multiple method definitions" {
+            val compiledSource = Source.fromSnippet(
+                """
 public static void foo() {
     System.out.println("foo");
 }
@@ -109,43 +110,43 @@ public static void bar() {
 }
 System.out.println("main");
             """.trim(),
-        ).compile()
+            ).compile()
 
-        val executeFooResult = compiledSource.execute(SourceExecutionArguments(method = "foo()"))
-        executeFooResult should haveCompleted()
-        executeFooResult should haveOutput("foo")
+            val executeFooResult = compiledSource.execute(SourceExecutionArguments(method = "foo()"))
+            executeFooResult should haveCompleted()
+            executeFooResult should haveOutput("foo")
 
-        val executeBarResult = compiledSource.execute(SourceExecutionArguments(method = "bar()"))
-        executeBarResult should haveCompleted()
-        executeBarResult should haveOutput("bar")
+            val executeBarResult = compiledSource.execute(SourceExecutionArguments(method = "bar()"))
+            executeBarResult should haveCompleted()
+            executeBarResult should haveOutput("bar")
 
-        val executeMainResult = compiledSource.execute(SourceExecutionArguments(method = "main()"))
-        executeMainResult should haveCompleted()
-        executeMainResult should haveOutput("main")
-    }
-    "should not execute private methods" {
-        val compiledSource = Source.fromSnippet(
-            """
+            val executeMainResult = compiledSource.execute(SourceExecutionArguments(method = "main()"))
+            executeMainResult should haveCompleted()
+            executeMainResult should haveOutput("main")
+        }
+        "should not execute private methods" {
+            val compiledSource = Source.fromSnippet(
+                """
 private static void foo() {
     System.out.println("foo");
 }
 System.out.println("main");
             """.trim(),
-        ).compile()
+            ).compile()
 
-        val executionFailed = shouldThrow<ExecutionFailed> {
-            compiledSource.execute(SourceExecutionArguments(method = "foo()"))
+            val executionFailed = shouldThrow<ExecutionFailed> {
+                compiledSource.execute(SourceExecutionArguments(method = "foo()"))
+            }
+            executionFailed.methodNotFound shouldNotBe null
+            executionFailed.classNotFound shouldBe null
+
+            val executeMainResult = compiledSource.execute(SourceExecutionArguments(method = "main()"))
+            executeMainResult should haveCompleted()
+            executeMainResult should haveOutput("main")
         }
-        executionFailed.methodNotFound shouldNotBe null
-        executionFailed.classNotFound shouldBe null
-
-        val executeMainResult = compiledSource.execute(SourceExecutionArguments(method = "main()"))
-        executeMainResult should haveCompleted()
-        executeMainResult should haveOutput("main")
-    }
-    "should not execute non-static methods" {
-        val compiledSource = Source.fromSnippet(
-            """
+        "should not execute non-static methods" {
+            val compiledSource = Source.fromSnippet(
+                """
 class Test {
     public void foo() {
         System.out.println("foo");
@@ -153,42 +154,42 @@ class Test {
 }
 System.out.println("main");
             """.trim(),
-        ).compile()
+            ).compile()
 
-        val executionFailed = shouldThrow<ExecutionFailed> {
-            compiledSource.execute(SourceExecutionArguments(klass = "Test", method = "foo()"))
+            val executionFailed = shouldThrow<ExecutionFailed> {
+                compiledSource.execute(SourceExecutionArguments(klass = "Test", method = "foo()"))
+            }
+            executionFailed.methodNotFound shouldNotBe null
+            executionFailed.classNotFound shouldBe null
+
+            val executeMainResult = compiledSource.execute(SourceExecutionArguments(method = "main()"))
+            executeMainResult should haveCompleted()
+            executeMainResult should haveOutput("main")
         }
-        executionFailed.methodNotFound shouldNotBe null
-        executionFailed.classNotFound shouldBe null
-
-        val executeMainResult = compiledSource.execute(SourceExecutionArguments(method = "main()"))
-        executeMainResult should haveCompleted()
-        executeMainResult should haveOutput("main")
-    }
-    "should not execute methods that require arguments" {
-        val compiledSource = Source.fromSnippet(
-            """
+        "should not execute methods that require arguments" {
+            val compiledSource = Source.fromSnippet(
+                """
 public static void foo(int i) {
     System.out.println("foo");
 }
 System.out.println("main");
             """.trim(),
-        ).compile()
+            ).compile()
 
-        val executionFailed = shouldThrow<ExecutionFailed> {
-            compiledSource.execute(SourceExecutionArguments(method = "foo()"))
+            val executionFailed = shouldThrow<ExecutionFailed> {
+                compiledSource.execute(SourceExecutionArguments(method = "foo()"))
+            }
+            executionFailed.methodNotFound shouldNotBe null
+            executionFailed.classNotFound shouldBe null
+
+            val executeMainResult = compiledSource.execute(SourceExecutionArguments(method = "main()"))
+            executeMainResult should haveCompleted()
+            executeMainResult should haveOutput("main")
         }
-        executionFailed.methodNotFound shouldNotBe null
-        executionFailed.classNotFound shouldBe null
-
-        val executeMainResult = compiledSource.execute(SourceExecutionArguments(method = "main()"))
-        executeMainResult should haveCompleted()
-        executeMainResult should haveOutput("main")
-    }
-    "should execute sources" {
-        val executionMainResult = Source(
-            mapOf(
-                "Main.java" to """
+        "should execute sources" {
+            val executionMainResult = Source(
+                mapOf(
+                    "Main.java" to """
 public class Main {
     public static void main() {
         var i = 0;
@@ -196,16 +197,16 @@ public class Main {
     }
 }
                 """.trim(),
-            ),
-        ).compile().execute()
-        executionMainResult should haveCompleted()
-        executionMainResult shouldNot haveTimedOut()
-        executionMainResult should haveStdout("Here")
-    }
-    "should special case main with string array" {
-        val executionMainResult = Source(
-            mapOf(
-                "Main.java" to """
+                ),
+            ).compile().execute()
+            executionMainResult should haveCompleted()
+            executionMainResult shouldNot haveTimedOut()
+            executionMainResult should haveStdout("Here")
+        }
+        "should special case main with string array" {
+            val executionMainResult = Source(
+                mapOf(
+                    "Main.java" to """
 public class Main {
     public static void main(String[] unused) {
         var i = 0;
@@ -213,16 +214,16 @@ public class Main {
     }
 }
                 """.trim(),
-            ),
-        ).compile().execute(SourceExecutionArguments(method = "main(String[])"))
-        executionMainResult should haveCompleted()
-        executionMainResult shouldNot haveTimedOut()
-        executionMainResult should haveStdout("Here")
-    }
-    "should execute multiple sources with dependencies" {
-        val executionMainResult = Source(
-            mapOf(
-                "Main.java" to """
+                ),
+            ).compile().execute(SourceExecutionArguments(method = "main(String[])"))
+            executionMainResult should haveCompleted()
+            executionMainResult shouldNot haveTimedOut()
+            executionMainResult should haveStdout("Here")
+        }
+        "should execute multiple sources with dependencies" {
+            val executionMainResult = Source(
+                mapOf(
+                    "Main.java" to """
 public class Main {
     public static void main() {
         var i = 0;
@@ -230,48 +231,48 @@ public class Main {
     }
 }
                 """.trim(),
-                "Foo.java" to """
+                    "Foo.java" to """
 public class Foo {
     public static void foo() {
         System.out.println("Foo");
     }
 }
                 """.trim(),
-            ),
-        ).compile().execute()
-        executionMainResult should haveCompleted()
-        executionMainResult shouldNot haveTimedOut()
-        executionMainResult should haveStdout("Foo")
-    }
-    "should throw missing class exceptions correctly" {
-        val executionFailed = shouldThrow<ExecutionFailed> {
-            Source.fromSnippet(
-                """
+                ),
+            ).compile().execute()
+            executionMainResult should haveCompleted()
+            executionMainResult shouldNot haveTimedOut()
+            executionMainResult should haveStdout("Foo")
+        }
+        "should throw missing class exceptions correctly" {
+            val executionFailed = shouldThrow<ExecutionFailed> {
+                Source.fromSnippet(
+                    """
 int i = 0;
 i++;
 System.out.println(i);
             """.trim(),
-            ).compile().execute(SourceExecutionArguments(klass = "Test"))
+                ).compile().execute(SourceExecutionArguments(klass = "Test"))
+            }
+            executionFailed.classNotFound shouldNotBe null
+            executionFailed.methodNotFound shouldBe null
         }
-        executionFailed.classNotFound shouldNotBe null
-        executionFailed.methodNotFound shouldBe null
-    }
-    "should throw missing method exceptions correctly" {
-        val executionFailed = shouldThrow<ExecutionFailed> {
-            Source.fromSnippet(
-                """
+        "should throw missing method exceptions correctly" {
+            val executionFailed = shouldThrow<ExecutionFailed> {
+                Source.fromSnippet(
+                    """
 int i = 0;
 i++;
 System.out.println(i);
             """.trim(),
-            ).compile().execute(SourceExecutionArguments(method = "test"))
+                ).compile().execute(SourceExecutionArguments(method = "test"))
+            }
+            executionFailed.methodNotFound shouldNotBe null
+            executionFailed.classNotFound shouldBe null
         }
-        executionFailed.methodNotFound shouldNotBe null
-        executionFailed.classNotFound shouldBe null
-    }
-    "should import libraries properly" {
-        val executionResult = Source.fromSnippet(
-            """
+        "should import libraries properly" {
+            val executionResult = Source.fromSnippet(
+                """
 import java.util.List;
 import java.util.ArrayList;
 
@@ -279,15 +280,15 @@ List<Integer> list = new ArrayList<>();
 list.add(8);
 System.out.println(list.get(0));
             """.trim(),
-        ).compile().execute()
+            ).compile().execute()
 
-        executionResult should haveCompleted()
-        executionResult should haveOutput("8")
-    }
-    "should execute sources that use inner classes" {
-        val executionResult = Source(
-            mapOf(
-                "Main.java" to """
+            executionResult should haveCompleted()
+            executionResult should haveOutput("8")
+        }
+        "should execute sources that use inner classes" {
+            val executionResult = Source(
+                mapOf(
+                    "Main.java" to """
 public class Main {
     class Inner {
         Inner() {
@@ -302,15 +303,15 @@ public class Main {
     }
 }
                 """.trim(),
-            ),
-        ).compile().execute()
-        executionResult should haveCompleted()
-        executionResult should haveStdout("Inner")
-    }
-    "should execute sources that use Java 12 features".config(enabled = systemCompilerVersion >= 12) {
-        val executionResult = Source(
-            mapOf(
-                "Main.java" to """
+                ),
+            ).compile().execute()
+            executionResult should haveCompleted()
+            executionResult should haveStdout("Inner")
+        }
+        "should execute sources that use Java 12 features".config(enabled = systemCompilerVersion >= 12) {
+            val executionResult = Source(
+                mapOf(
+                    "Main.java" to """
 public class Main {
     public static String testYieldKeyword(int switchArg) {
         return switch (switchArg) {
@@ -324,16 +325,16 @@ public class Main {
     }
 }
             """.trim(),
-            ),
-        ).compile().execute()
+                ),
+            ).compile().execute()
 
-        executionResult should haveCompleted()
-        executionResult should haveStdout("works")
-    }
-    "should execute sources that use Java 13 features".config(enabled = systemCompilerVersion >= 13) {
-        val executionResult = Source(
-            mapOf(
-                "Main.java" to """
+            executionResult should haveCompleted()
+            executionResult should haveStdout("works")
+        }
+        "should execute sources that use Java 13 features".config(enabled = systemCompilerVersion >= 13) {
+            val executionResult = Source(
+                mapOf(
+                    "Main.java" to """
 public class Main {
     public static String testYieldKeyword(int switchArg) {
         return switch (switchArg) {
@@ -347,78 +348,78 @@ public class Main {
     }
 }
             """.trim(),
-            ),
-        ).compile().execute()
+                ),
+            ).compile().execute()
 
-        executionResult should haveCompleted()
-        executionResult should haveStdout("testing")
-    }
-    "should execute Kotlin snippets" {
-        val executionMainResult = Source.fromSnippet(
-            """
+            executionResult should haveCompleted()
+            executionResult should haveStdout("testing")
+        }
+        "should execute Kotlin snippets" {
+            val executionMainResult = Source.fromSnippet(
+                """
 println("Here")
                 """.trim(),
-            SnippetArguments(fileType = Source.FileType.KOTLIN),
-        ).kompile().execute()
-        executionMainResult should haveCompleted()
-        executionMainResult shouldNot haveTimedOut()
-        executionMainResult should haveStdout("Here")
-    }
-    "should execute kotlin snippets that include class definitions" {
-        val executeMainResult = Source.fromSnippet(
-            """
+                SnippetArguments(fileType = Source.FileType.KOTLIN),
+            ).kompile().execute()
+            executionMainResult should haveCompleted()
+            executionMainResult shouldNot haveTimedOut()
+            executionMainResult should haveStdout("Here")
+        }
+        "should execute kotlin snippets that include class definitions" {
+            val executeMainResult = Source.fromSnippet(
+                """
 data class Foo(var i: Int)
 val foo = Foo(5);
 foo.i = 4;
 println(foo.i);
             """.trim(),
-            SnippetArguments(fileType = Source.FileType.KOTLIN),
-        ).kompile().execute()
-        executeMainResult should haveCompleted()
-        executeMainResult should haveOutput("4")
-    }
-    "should execute kotlin snippets that include method definitions" {
-        val executeMainResult = Source.fromSnippet(
-            """
+                SnippetArguments(fileType = Source.FileType.KOTLIN),
+            ).kompile().execute()
+            executeMainResult should haveCompleted()
+            executeMainResult should haveOutput("4")
+        }
+        "should execute kotlin snippets that include method definitions" {
+            val executeMainResult = Source.fromSnippet(
+                """
 fun test(): String {
     return "Hello, world!"
 }
 println(test())
             """.trim(),
-            SnippetArguments(fileType = Source.FileType.KOTLIN),
-        ).kompile().execute()
-        executeMainResult should haveCompleted()
-        executeMainResult should haveOutput("Hello, world!")
-    }
-    "should execute cached kotlin snippets that include method definitions" {
-        Source.fromSnippet(
-            """
+                SnippetArguments(fileType = Source.FileType.KOTLIN),
+            ).kompile().execute()
+            executeMainResult should haveCompleted()
+            executeMainResult should haveOutput("Hello, world!")
+        }
+        "should execute cached kotlin snippets that include method definitions" {
+            Source.fromSnippet(
+                """
 fun test(): String {
     return "Hello, world!"
 }
 println(test())
             """.trim(),
-            SnippetArguments(fileType = Source.FileType.KOTLIN),
-        ).kompile(KompilationArguments(useCache = true)).execute()
-        val executeMainResult = Source.fromSnippet(
-            """
+                SnippetArguments(fileType = Source.FileType.KOTLIN),
+            ).kompile(KompilationArguments(useCache = true)).execute()
+            val executeMainResult = Source.fromSnippet(
+                """
 fun test(): String {
     return "Hello, world!"
 }
 println(test())
             """.trim(),
-            SnippetArguments(fileType = Source.FileType.KOTLIN),
-        )
-            .kompile(KompilationArguments(useCache = true)).let {
-                it.cached shouldBe true
-                it.execute()
-            }
-        executeMainResult should haveCompleted()
-        executeMainResult should haveOutput("Hello, world!")
-    }
-    "should execute Kotlin snippets that use method references" {
-        val executionMainResult = Source.fromSnippet(
-            """
+                SnippetArguments(fileType = Source.FileType.KOTLIN),
+            )
+                .kompile(KompilationArguments(useCache = true)).let {
+                    it.cached shouldBe true
+                    it.execute()
+                }
+            executeMainResult should haveCompleted()
+            executeMainResult should haveOutput("Hello, world!")
+        }
+        "should execute Kotlin snippets that use method references" {
+            val executionMainResult = Source.fromSnippet(
+                """
 import java.io.PrintStream
 
 val print1: (String) -> Unit = ::println
@@ -428,75 +429,75 @@ print2("There")
 val print3: PrintStream.(String) -> Unit = PrintStream::println
 print3(System.out, "Elsewhere")
                 """.trim(),
-            SnippetArguments(fileType = Source.FileType.KOTLIN),
-        ).kompile().execute()
-        executionMainResult should haveCompleted()
-        executionMainResult shouldNot haveTimedOut()
-        executionMainResult should haveStdout("Here\nThere\nElsewhere")
-    }
-    "should execute simple Kotlin sources" {
-        val executionMainResult = Source(
-            mapOf(
-                "Main.kt" to """
+                SnippetArguments(fileType = Source.FileType.KOTLIN),
+            ).kompile().execute()
+            executionMainResult should haveCompleted()
+            executionMainResult shouldNot haveTimedOut()
+            executionMainResult should haveStdout("Here\nThere\nElsewhere")
+        }
+        "should execute simple Kotlin sources" {
+            val executionMainResult = Source(
+                mapOf(
+                    "Main.kt" to """
 fun main() {
   println("Here")
 }
                 """.trim(),
-            ),
-        ).kompile().execute()
-        executionMainResult should haveCompleted()
-        executionMainResult shouldNot haveTimedOut()
-        executionMainResult should haveStdout("Here")
-    }
-    "should execute simple Kotlin sources with cross-method calls" {
-        val executionMainResult = Source(
-            mapOf(
-                "Main.kt" to """
+                ),
+            ).kompile().execute()
+            executionMainResult should haveCompleted()
+            executionMainResult shouldNot haveTimedOut()
+            executionMainResult should haveStdout("Here")
+        }
+        "should execute simple Kotlin sources with cross-method calls" {
+            val executionMainResult = Source(
+                mapOf(
+                    "Main.kt" to """
 fun main() {
   println(test())
 }
                 """.trim(),
-                "Test.kt" to """
+                    "Test.kt" to """
 fun test(): List<String> {
   return listOf("test", "me")
 }
                 """.trim(),
-            ),
-        ).kompile().execute()
-        executionMainResult should haveCompleted()
-        executionMainResult shouldNot haveTimedOut()
-        executionMainResult should haveStdout("""[test, me]""")
-    }
-    "should trim stack traces properly" {
-        val source = Source.fromSnippet(
-            """
+                ),
+            ).kompile().execute()
+            executionMainResult should haveCompleted()
+            executionMainResult shouldNot haveTimedOut()
+            executionMainResult should haveStdout("""[test, me]""")
+        }
+        "should trim stack traces properly" {
+            val source = Source.fromSnippet(
+                """
 Object o = null;
 o.toString();
         """.trim(),
-        )
+            )
 
-        val executionFailed = source.compile().execute()
-        executionFailed.threw!!.getStackTraceForSource(source).lines() shouldHaveSize 2
-    }
-    "should trim deep stack traces properly" {
-        val source = Source.fromSnippet(
-            """
+            val executionFailed = source.compile().execute()
+            executionFailed.threw!!.getStackTraceForSource(source).lines() shouldHaveSize 2
+        }
+        "should trim deep stack traces properly" {
+            val source = Source.fromSnippet(
+                """
 void test() {
   Object o = null;
   o.toString();
 }
 test();
         """.trim(),
-        )
+            )
 
-        val executionFailed = source.compile().execute()
-        val stacktrace = executionFailed.threw!!.getStackTraceForSource(source).lines()
-        stacktrace shouldHaveSize 3
-        stacktrace[1].trim() shouldBe "at test(:3)"
-    }
-    "should trim deep stack traces from classes properly" {
-        val source = Source.fromSnippet(
-            """
+            val executionFailed = source.compile().execute()
+            val stacktrace = executionFailed.threw!!.getStackTraceForSource(source).lines()
+            stacktrace shouldHaveSize 3
+            stacktrace[1].trim() shouldBe "at test(:3)"
+        }
+        "should trim deep stack traces from classes properly" {
+            val source = Source.fromSnippet(
+                """
 class Test {
   public static void test() {
     Object o = null;
@@ -505,29 +506,29 @@ class Test {
 }
 Test.test();
         """.trim(),
-        )
+            )
 
-        val executionFailed = source.compile().execute()
-        val stacktrace = executionFailed.threw!!.getStackTraceForSource(source).lines()
-        stacktrace shouldHaveSize 3
-        stacktrace[1].trim() shouldBe "at Test.test(:4)"
-    }
-    "should trim Kotlin stack traces properly" {
-        val source = Source.fromSnippet(
-            """
+            val executionFailed = source.compile().execute()
+            val stacktrace = executionFailed.threw!!.getStackTraceForSource(source).lines()
+            stacktrace shouldHaveSize 3
+            stacktrace[1].trim() shouldBe "at Test.test(:4)"
+        }
+        "should trim Kotlin stack traces properly" {
+            val source = Source.fromSnippet(
+                """
 var letters = CharArray(4)
 letters[-1] = 'X'
         """.trim(),
-            SnippetArguments(fileType = Source.FileType.KOTLIN),
-        )
+                SnippetArguments(fileType = Source.FileType.KOTLIN),
+            )
 
-        val executionFailed = source.kompile().execute()
-        executionFailed.threw!!.getStackTraceForSource(source).lines() shouldHaveSize 2
-    }
-    "should execute sources that use Java 14 features".config(enabled = systemCompilerVersion >= 14) {
-        val executionResult = Source(
-            mapOf(
-                "Main.java" to """
+            val executionFailed = source.kompile().execute()
+            executionFailed.threw!!.getStackTraceForSource(source).lines() shouldHaveSize 2
+        }
+        "should execute sources that use Java 14 features".config(enabled = systemCompilerVersion >= 14) {
+            val executionResult = Source(
+                mapOf(
+                    "Main.java" to """
 record Range(int lo, int hi) {
     public Range {
         if (lo > hi) {
@@ -544,16 +545,16 @@ public class Main {
     }
 }
             """.trim(),
-            ),
-        ).compile().execute()
+                ),
+            ).compile().execute()
 
-        executionResult should haveCompleted()
-        executionResult should haveStdout("10")
-    }
-    "should execute sources that use Java 21 features".config(enabled = systemCompilerVersion >= 21) {
-        val executionResult = Source(
-            mapOf(
-                "Main.java" to """
+            executionResult should haveCompleted()
+            executionResult should haveStdout("10")
+        }
+        "should execute sources that use Java 21 features".config(enabled = systemCompilerVersion >= 21) {
+            val executionResult = Source(
+                mapOf(
+                    "Main.java" to """
 record Point(int x, int y) {}
 record Rectangle(Point upperLeft, Point lowerRight) {}
 public class Main {
@@ -568,102 +569,102 @@ public class Main {
     }
 }
             """.trim(),
-            ),
-        ).compile().execute()
+                ),
+            ).compile().execute()
 
-        executionResult should haveCompleted()
-        executionResult should haveStdout("1\n5\n12\n25")
-    }
-    "should print unicode" {
-        val charset = Charset.defaultCharset()
-        if (charset == Charsets.UTF_8 || charset == Charsets.UTF_16) {
-            val executeMainResult = Source.fromSnippet(
-                """
+            executionResult should haveCompleted()
+            executionResult should haveStdout("1\n5\n12\n25")
+        }
+        "should print unicode" {
+            val charset = Charset.defaultCharset()
+            if (charset == Charsets.UTF_8 || charset == Charsets.UTF_16) {
+                val executeMainResult = Source.fromSnippet(
+                    """
 System.out.println("➡️👤 are ❌️ alone");
             """.trim(),
-            ).compile().execute()
-            executeMainResult should haveCompleted()
-            executeMainResult should haveOutput("""➡️👤 are ❌️ alone""")
+                ).compile().execute()
+                executeMainResult should haveCompleted()
+                executeMainResult should haveOutput("""➡️👤 are ❌️ alone""")
+            }
         }
-    }
-    "should not fail on locales" {
-        Source.fromSnippet(
-            """
+        "should not fail on locales" {
+            Source.fromSnippet(
+                """
 import java.util.Date;
 long t = System.currentTimeMillis();
 System.out.println(new Date(t).toString());
             """.trim(),
-        ).compile().execute().also {
-            it should haveCompleted()
+            ).compile().execute().also {
+                it should haveCompleted()
+            }
         }
-    }
-    "should print records" {
-        Source.fromSnippet(
-            """record Person(String name, int age) {}
+        "should print records" {
+            Source.fromSnippet(
+                """record Person(String name, int age) {}
                 |System.out.println(new Person("Geoffrey", 42));
-            """.trimMargin(),
-        ).compile().execute().also {
-            it should haveCompleted()
+                """.trimMargin(),
+            ).compile().execute().also {
+                it should haveCompleted()
+            }
         }
-    }
-    "should executeWith properly" {
-        Source.fromSnippet(
-            """record Person(String name, int age) {}
+        "should executeWith properly" {
+            Source.fromSnippet(
+                """record Person(String name, int age) {}
                 |System.out.println(new Person("Geoffrey", 42));
-            """.trimMargin(),
-        ).compile().executeWith {
-            return@executeWith 10
-        }.also {
-            it should haveCompleted()
-            it.returned shouldBe 10
+                """.trimMargin(),
+            ).compile().executeWith {
+                return@executeWith 10
+            }.also {
+                it should haveCompleted()
+                it.returned shouldBe 10
+            }
         }
-    }
-    "should execute top-level main in Kotlin snippets" {
-        val executionMainResult = Source.fromSnippet(
-            """
+        "should execute top-level main in Kotlin snippets" {
+            val executionMainResult = Source.fromSnippet(
+                """
 fun main() {
   println("Here")
 }
                 """.trim(),
-            SnippetArguments(fileType = Source.FileType.KOTLIN, noEmptyMain = true),
-        ).kompile().execute()
-        executionMainResult should haveCompleted()
-        executionMainResult shouldNot haveTimedOut()
-        executionMainResult should haveStdout("Here")
-    }
-    "should execute Kotlin for-until syntax" {
-        val executionMainResult = Source.fromKotlinSnippet(
-            """
+                SnippetArguments(fileType = Source.FileType.KOTLIN, noEmptyMain = true),
+            ).kompile().execute()
+            executionMainResult should haveCompleted()
+            executionMainResult shouldNot haveTimedOut()
+            executionMainResult should haveStdout("Here")
+        }
+        "should execute Kotlin for-until syntax" {
+            val executionMainResult = Source.fromKotlinSnippet(
+                """
 for (i in 0..<4) {
     println(i)
 }""".trim(),
-        ).kompile().execute()
-        executionMainResult should haveCompleted()
-    }
-    "should execute correctly in parallel using streams" {
-        (0..8).toList().parallelStream().map { value ->
-            runBlocking {
-                repeat(8) {
-                    val result =
-                        Source.fromSnippet(
-                            """
+            ).kompile().execute()
+            executionMainResult should haveCompleted()
+        }
+        "should execute correctly in parallel using streams" {
+            (0..8).toList().parallelStream().map { value ->
+                runBlocking {
+                    repeat(8) {
+                        val result =
+                            Source.fromSnippet(
+                                """
 for (int i = 0; i < 2; i++) {
     for (long j = 0; j < 1024 * 1024; j++);
     System.out.println($value);
 }
                     """.trim(),
-                        ).compile().execute(SourceExecutionArguments(timeout = 128L))
+                            ).compile().execute(SourceExecutionArguments(timeout = 128L))
 
-                    result should haveCompleted()
-                    result.stdoutLines shouldHaveSize 2
-                    result.stdoutLines.all { it.line.trim() == value.toString() } shouldBe true
-                    System.gc()
-                    System.gc()
+                        result should haveCompleted()
+                        result.stdoutLines shouldHaveSize 2
+                        result.stdoutLines.all { it.line.trim() == value.toString() } shouldBe true
+                        System.gc()
+                        System.gc()
+                    }
                 }
-            }
-        }.collect(Collectors.toList())
-    }
-})
+            }.collect(Collectors.toList())
+        }
+    })
 
 fun haveCompleted() = object : Matcher<Sandbox.TaskResults<out Any?>> {
     override fun test(value: Sandbox.TaskResults<out Any?>): MatcherResult {

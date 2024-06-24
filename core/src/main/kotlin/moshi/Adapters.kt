@@ -61,14 +61,10 @@ val Adapters = setOf(
 
 class InstantAdapter {
     @FromJson
-    fun instantFromJson(timestamp: String): Instant {
-        return Instant.parse(timestamp)
-    }
+    fun instantFromJson(timestamp: String): Instant = Instant.parse(timestamp)
 
     @ToJson
-    fun instantToJson(instant: Instant): String {
-        return instant.toString()
-    }
+    fun instantToJson(instant: Instant): String = instant.toString()
 }
 
 @JsonClass(generateAdapter = true)
@@ -83,9 +79,7 @@ class PermissionAdapter {
     }
 
     @ToJson
-    fun permissionToJson(permission: Permission): PermissionJson {
-        return PermissionJson(permission.javaClass.name, permission.name, permission.actions)
-    }
+    fun permissionToJson(permission: Permission): PermissionJson = PermissionJson(permission.javaClass.name, permission.name, permission.actions)
 }
 
 @JsonClass(generateAdapter = true)
@@ -93,15 +87,11 @@ data class CheckstyleFailedJson(val errors: List<CheckstyleError>)
 
 class CheckstyleFailedAdapter {
     @FromJson
-    fun checkstyleFailedFromJson(checkstyleFailedJson: CheckstyleFailedJson): CheckstyleFailed {
-        return CheckstyleFailed(checkstyleFailedJson.errors)
-    }
+    fun checkstyleFailedFromJson(checkstyleFailedJson: CheckstyleFailedJson): CheckstyleFailed = CheckstyleFailed(checkstyleFailedJson.errors)
 
     @Suppress("UNCHECKED_CAST")
     @ToJson
-    fun checkstyleFailedToJson(checkstyleFailed: CheckstyleFailed): CheckstyleFailedJson {
-        return CheckstyleFailedJson(checkstyleFailed.errors as List<CheckstyleError>)
-    }
+    fun checkstyleFailedToJson(checkstyleFailed: CheckstyleFailed): CheckstyleFailedJson = CheckstyleFailedJson(checkstyleFailed.errors as List<CheckstyleError>)
 }
 
 @JsonClass(generateAdapter = true)
@@ -109,15 +99,11 @@ data class KtLintFailedJson(val errors: List<KtLintError>)
 
 class KtLintFailedAdapter {
     @FromJson
-    fun ktLintFailedFromJson(ktLintFailedJson: KtLintFailedJson): KtLintFailed {
-        return KtLintFailed(ktLintFailedJson.errors)
-    }
+    fun ktLintFailedFromJson(ktLintFailedJson: KtLintFailedJson): KtLintFailed = KtLintFailed(ktLintFailedJson.errors)
 
     @Suppress("UNCHECKED_CAST")
     @ToJson
-    fun ktLintFailedToJson(ktLintFailed: KtLintFailed): KtLintFailedJson {
-        return KtLintFailedJson(ktLintFailed.errors as List<KtLintError>)
-    }
+    fun ktLintFailedToJson(ktLintFailed: KtLintFailed): KtLintFailedJson = KtLintFailedJson(ktLintFailed.errors as List<KtLintError>)
 }
 
 @JsonClass(generateAdapter = true)
@@ -125,14 +111,10 @@ data class ComplexityFailedJson(val errors: List<SourceError>)
 
 class ComplexityFailedAdapter {
     @FromJson
-    fun complexityFailedFromJson(complexityFailedJson: ComplexityFailedJson): ComplexityFailed {
-        return ComplexityFailed(complexityFailedJson.errors)
-    }
+    fun complexityFailedFromJson(complexityFailedJson: ComplexityFailedJson): ComplexityFailed = ComplexityFailed(complexityFailedJson.errors)
 
     @ToJson
-    fun complexityFailedToJson(complexityFailed: ComplexityFailed): ComplexityFailedJson {
-        return ComplexityFailedJson(complexityFailed.errors)
-    }
+    fun complexityFailedToJson(complexityFailed: ComplexityFailed): ComplexityFailedJson = ComplexityFailedJson(complexityFailed.errors)
 }
 
 @JsonClass(generateAdapter = true)
@@ -140,15 +122,11 @@ data class CompilationFailedJson(val errors: List<CompilationError>)
 
 class CompilationFailedAdapter {
     @FromJson
-    fun compilationFailedFromJson(compilationFailedJson: CompilationFailedJson): CompilationFailed {
-        return CompilationFailed(compilationFailedJson.errors)
-    }
+    fun compilationFailedFromJson(compilationFailedJson: CompilationFailedJson): CompilationFailed = CompilationFailed(compilationFailedJson.errors)
 
     @Suppress("UNCHECKED_CAST")
     @ToJson
-    fun compilationFailedToJson(compilationFailed: CompilationFailed): CompilationFailedJson {
-        return CompilationFailedJson(compilationFailed.errors as List<CompilationError>)
-    }
+    fun compilationFailedToJson(compilationFailed: CompilationFailed): CompilationFailedJson = CompilationFailedJson(compilationFailed.errors as List<CompilationError>)
 }
 
 @JsonClass(generateAdapter = true)
@@ -158,24 +136,20 @@ class SnippetTransformationErrorAdapter {
     @FromJson
     fun snippetTransformationErrorFromJson(
         snippetParseErrorJson: SnippetTransformationErrorJson,
-    ): SnippetTransformationError {
-        return SnippetTransformationError(
-            snippetParseErrorJson.line,
-            snippetParseErrorJson.column,
-            snippetParseErrorJson.message,
-        )
-    }
+    ): SnippetTransformationError = SnippetTransformationError(
+        snippetParseErrorJson.line,
+        snippetParseErrorJson.column,
+        snippetParseErrorJson.message,
+    )
 
     @ToJson
     fun snippetTransformationErrorToJson(
         snippetTransformationError: SnippetTransformationError,
-    ): SnippetTransformationErrorJson {
-        return SnippetTransformationErrorJson(
-            snippetTransformationError.location.line,
-            snippetTransformationError.location.column,
-            snippetTransformationError.message,
-        )
-    }
+    ): SnippetTransformationErrorJson = SnippetTransformationErrorJson(
+        snippetTransformationError.location.line,
+        snippetTransformationError.location.column,
+        snippetTransformationError.message,
+    )
 }
 
 @JsonClass(generateAdapter = true)
@@ -185,17 +159,13 @@ class SnippetTransformationFailedAdapter {
     @FromJson
     fun snippetParsingFailedFromJson(
         snippetParsingFailedJson: SnippetTransformationFailedJson,
-    ): SnippetTransformationFailed {
-        return SnippetTransformationFailed(snippetParsingFailedJson.errors)
-    }
+    ): SnippetTransformationFailed = SnippetTransformationFailed(snippetParsingFailedJson.errors)
 
     @Suppress("UNCHECKED_CAST")
     @ToJson
     fun snippetParsingFailedToJson(
         snippetTransformationFailed: SnippetTransformationFailed,
-    ): SnippetTransformationFailedJson {
-        return SnippetTransformationFailedJson(snippetTransformationFailed.errors as List<SnippetTransformationError>)
-    }
+    ): SnippetTransformationFailedJson = SnippetTransformationFailedJson(snippetTransformationFailed.errors as List<SnippetTransformationError>)
 }
 
 @JsonClass(generateAdapter = true)
@@ -203,24 +173,20 @@ data class TemplatingErrorJson(val name: String, val line: Int, val column: Int,
 
 class TemplatingErrorAdapter {
     @FromJson
-    fun templatingErrorFromJson(templatingErrorJson: TemplatingErrorJson): TemplatingError {
-        return TemplatingError(
-            templatingErrorJson.name,
-            templatingErrorJson.line,
-            templatingErrorJson.column,
-            templatingErrorJson.message,
-        )
-    }
+    fun templatingErrorFromJson(templatingErrorJson: TemplatingErrorJson): TemplatingError = TemplatingError(
+        templatingErrorJson.name,
+        templatingErrorJson.line,
+        templatingErrorJson.column,
+        templatingErrorJson.message,
+    )
 
     @ToJson
-    fun templatingErrorToJson(templatingError: TemplatingError): TemplatingErrorJson {
-        return TemplatingErrorJson(
-            templatingError.location.source,
-            templatingError.location.line,
-            templatingError.location.column,
-            templatingError.message,
-        )
-    }
+    fun templatingErrorToJson(templatingError: TemplatingError): TemplatingErrorJson = TemplatingErrorJson(
+        templatingError.location.source,
+        templatingError.location.line,
+        templatingError.location.column,
+        templatingError.message,
+    )
 }
 
 @JsonClass(generateAdapter = true)
@@ -228,15 +194,11 @@ data class TemplatingFailedJson(val errors: List<TemplatingError>)
 
 class TemplatingFailedAdapter {
     @FromJson
-    fun templatingFailedFromJson(templatingFailedJson: TemplatingFailedJson): TemplatingFailed {
-        return TemplatingFailed(templatingFailedJson.errors)
-    }
+    fun templatingFailedFromJson(templatingFailedJson: TemplatingFailedJson): TemplatingFailed = TemplatingFailed(templatingFailedJson.errors)
 
     @Suppress("UNCHECKED_CAST")
     @ToJson
-    fun templatingFailedToJson(templatingFailed: TemplatingFailed): TemplatingFailedJson {
-        return TemplatingFailedJson(templatingFailed.errors as List<TemplatingError>)
-    }
+    fun templatingFailedToJson(templatingFailed: TemplatingFailed): TemplatingFailedJson = TemplatingFailedJson(templatingFailed.errors as List<TemplatingError>)
 }
 
 @JsonClass(generateAdapter = true)
@@ -253,32 +215,28 @@ data class SnippetJson(
 
 class SnippetAdapter {
     @FromJson
-    fun snippetFromJson(snippetJson: SnippetJson): Snippet {
-        return Snippet(
-            Sources(snippetJson.sources),
-            snippetJson.originalSource,
-            snippetJson.rewrittenSource,
-            snippetJson.snippetRange,
-            snippetJson.wrappedClassName,
-            snippetJson.looseCodeMethodName,
-            Source.FileType.valueOf(snippetJson.fileType),
-            snippetJson.snippetProperties,
-        )
-    }
+    fun snippetFromJson(snippetJson: SnippetJson): Snippet = Snippet(
+        Sources(snippetJson.sources),
+        snippetJson.originalSource,
+        snippetJson.rewrittenSource,
+        snippetJson.snippetRange,
+        snippetJson.wrappedClassName,
+        snippetJson.looseCodeMethodName,
+        Source.FileType.valueOf(snippetJson.fileType),
+        snippetJson.snippetProperties,
+    )
 
     @ToJson
-    fun snippetToJson(snippet: Snippet): SnippetJson {
-        return SnippetJson(
-            snippet.sources,
-            snippet.originalSource,
-            snippet.rewrittenSource,
-            snippet.snippetRange,
-            snippet.wrappedClassName,
-            snippet.looseCodeMethodName,
-            snippet.fileType.name,
-            snippet.snippetProperties,
-        )
-    }
+    fun snippetToJson(snippet: Snippet): SnippetJson = SnippetJson(
+        snippet.sources,
+        snippet.originalSource,
+        snippet.rewrittenSource,
+        snippet.snippetRange,
+        snippet.wrappedClassName,
+        snippet.looseCodeMethodName,
+        snippet.fileType.name,
+        snippet.snippetProperties,
+    )
 }
 
 @JsonClass(generateAdapter = true)
@@ -391,32 +349,24 @@ data class TemplatedSourceResultJson(val sources: List<FlatSource>, val original
 
 class TemplatedSourceResultAdapter {
     @FromJson
-    fun templatedSourceResultFromJson(templatedSourceResultJson: TemplatedSourceResultJson): TemplatedSourceResult {
-        return TemplatedSourceResult(
-            templatedSourceResultJson.sources.toSource(),
-            templatedSourceResultJson.originalSources.toSource(),
-        )
-    }
+    fun templatedSourceResultFromJson(templatedSourceResultJson: TemplatedSourceResultJson): TemplatedSourceResult = TemplatedSourceResult(
+        templatedSourceResultJson.sources.toSource(),
+        templatedSourceResultJson.originalSources.toSource(),
+    )
 
     @ToJson
-    fun templatedSourceResultToJson(templatedSourceResult: TemplatedSourceResult): TemplatedSourceResultJson {
-        return TemplatedSourceResultJson(
-            templatedSourceResult.sources.toFlatSources(),
-            templatedSourceResult.originalSources.toFlatSources(),
-        )
-    }
+    fun templatedSourceResultToJson(templatedSourceResult: TemplatedSourceResult): TemplatedSourceResultJson = TemplatedSourceResultJson(
+        templatedSourceResult.sources.toFlatSources(),
+        templatedSourceResult.originalSources.toFlatSources(),
+    )
 }
 
 class FeatureMapAdapter {
     @FromJson
-    fun featureMapFromJson(map: MutableMap<FeatureName, Int>): FeatureMap {
-        return FeatureMap(map)
-    }
+    fun featureMapFromJson(map: MutableMap<FeatureName, Int>): FeatureMap = FeatureMap(map)
 
     @ToJson
-    fun featureMapToJson(map: FeatureMap): Map<FeatureName, Int> {
-        return map.map
-    }
+    fun featureMapToJson(map: FeatureMap): Map<FeatureName, Int> = map.map
 }
 
 @JsonClass(generateAdapter = true)
@@ -424,14 +374,10 @@ data class FeaturesFailedJson(val errors: List<SourceError>)
 
 class FeaturesFailedAdapter {
     @FromJson
-    fun featuresFailedFromJson(featuresFailedJson: FeaturesFailedJson): FeaturesFailed {
-        return FeaturesFailed(featuresFailedJson.errors)
-    }
+    fun featuresFailedFromJson(featuresFailedJson: FeaturesFailedJson): FeaturesFailed = FeaturesFailed(featuresFailedJson.errors)
 
     @ToJson
-    fun featuresFailedToJson(featuresFailed: FeaturesFailed): FeaturesFailedJson {
-        return FeaturesFailedJson(featuresFailed.errors)
-    }
+    fun featuresFailedToJson(featuresFailed: FeaturesFailed): FeaturesFailedJson = FeaturesFailedJson(featuresFailed.errors)
 }
 
 @JsonClass(generateAdapter = true)
@@ -439,12 +385,8 @@ data class MutationsFailedJson(val errors: List<SourceError>)
 
 class MutationsFailedAdapter {
     @FromJson
-    fun mutationsFailedFromJson(mutationsFailedJson: MutationsFailedJson): MutationsFailed {
-        return MutationsFailed(mutationsFailedJson.errors)
-    }
+    fun mutationsFailedFromJson(mutationsFailedJson: MutationsFailedJson): MutationsFailed = MutationsFailed(mutationsFailedJson.errors)
 
     @ToJson
-    fun mutationsFailedToJson(mutationsFailed: MutationsFailed): MutationsFailedJson {
-        return MutationsFailedJson(mutationsFailed.errors)
-    }
+    fun mutationsFailedToJson(mutationsFailed: MutationsFailed): MutationsFailedJson = MutationsFailedJson(mutationsFailed.errors)
 }

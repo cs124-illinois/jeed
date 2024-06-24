@@ -17,23 +17,24 @@ import io.ktor.server.testing.setBody
 import io.ktor.server.testing.withTestApplication
 
 @Suppress("DEPRECATION")
-class TestConfig : StringSpec({
-    "should load defaults correctly" {
-        configuration[Limits.Execution.timeout] shouldBeExactly Sandbox.ExecutionArguments.DEFAULT_TIMEOUT
-    }
-    "should load simple configuration from a file" {
-        val config = Config { addSpec(Limits) }.from.yaml.string(
-            """
+class TestConfig :
+    StringSpec({
+        "should load defaults correctly" {
+            configuration[Limits.Execution.timeout] shouldBeExactly Sandbox.ExecutionArguments.DEFAULT_TIMEOUT
+        }
+        "should load simple configuration from a file" {
+            val config = Config { addSpec(Limits) }.from.yaml.string(
+                """
 limits:
   execution:
     timeout: 10000
         """.trim(),
-        )
-        config[Limits.Execution.timeout] shouldBeExactly 10000L
-    }
-    "should load complex configuration from a file" {
-        val config = Config { addSpec(Limits) }.from.yaml.string(
-            """
+            )
+            config[Limits.Execution.timeout] shouldBeExactly 10000L
+        }
+        "should load complex configuration from a file" {
+            val config = Config { addSpec(Limits) }.from.yaml.string(
+                """
 limits:
   execution:
     permissions:
@@ -41,22 +42,22 @@ limits:
         name: createClassLoader
     timeout: 10000
         """.trim(),
-        )
+            )
 
-        config[Limits.Execution.timeout] shouldBeExactly 10000L
-        config[Limits.Execution.permissions] shouldHaveSize 1
-        config[Limits.Execution.permissions][0] shouldBe PermissionJson(
-            "java.lang.RuntimePermission",
-            "createClassLoader",
-            null,
-        )
-    }
-    "should reject snippet request with too long timeout" {
-        withTestApplication(Application::jeed) {
-            handleRequest(HttpMethod.Post, "/") {
-                addHeader("content-type", "application/json")
-                setBody(
-                    """
+            config[Limits.Execution.timeout] shouldBeExactly 10000L
+            config[Limits.Execution.permissions] shouldHaveSize 1
+            config[Limits.Execution.permissions][0] shouldBe PermissionJson(
+                "java.lang.RuntimePermission",
+                "createClassLoader",
+                null,
+            )
+        }
+        "should reject snippet request with too long timeout" {
+            withTestApplication(Application::jeed) {
+                handleRequest(HttpMethod.Post, "/") {
+                    addHeader("content-type", "application/json")
+                    setBody(
+                        """
 {
   "label": "test",
   "snippet": "System.out.println(\"Here\");",
@@ -67,15 +68,15 @@ limits:
     }
   }
 }""".trim(),
-                )
-            }.apply {
-                response.shouldHaveStatus(HttpStatusCode.BadRequest.value)
-            }
+                    )
+                }.apply {
+                    response.shouldHaveStatus(HttpStatusCode.BadRequest.value)
+                }
 
-            handleRequest(HttpMethod.Post, "/") {
-                addHeader("content-type", "application/json")
-                setBody(
-                    """
+                handleRequest(HttpMethod.Post, "/") {
+                    addHeader("content-type", "application/json")
+                    setBody(
+                        """
 {
   "label": "test",
   "snippet": "System.out.println(\"Here\");",
@@ -86,18 +87,18 @@ limits:
     }
   }
 }""".trim(),
-                )
-            }.apply {
-                response.shouldHaveStatus(HttpStatusCode.BadRequest.value)
+                    )
+                }.apply {
+                    response.shouldHaveStatus(HttpStatusCode.BadRequest.value)
+                }
             }
         }
-    }
-    "should reject snippet request with too many extra threads" {
-        withTestApplication(Application::jeed) {
-            handleRequest(HttpMethod.Post, "/") {
-                addHeader("content-type", "application/json")
-                setBody(
-                    """
+        "should reject snippet request with too many extra threads" {
+            withTestApplication(Application::jeed) {
+                handleRequest(HttpMethod.Post, "/") {
+                    addHeader("content-type", "application/json")
+                    setBody(
+                        """
 {
   "label": "test",
   "snippet": "System.out.println(\"Here\");",
@@ -108,15 +109,15 @@ limits:
     }
   }
 }""".trim(),
-                )
-            }.apply {
-                response.shouldHaveStatus(HttpStatusCode.BadRequest.value)
-            }
+                    )
+                }.apply {
+                    response.shouldHaveStatus(HttpStatusCode.BadRequest.value)
+                }
 
-            handleRequest(HttpMethod.Post, "/") {
-                addHeader("content-type", "application/json")
-                setBody(
-                    """
+                handleRequest(HttpMethod.Post, "/") {
+                    addHeader("content-type", "application/json")
+                    setBody(
+                        """
 {
   "label": "test",
   "snippet": "System.out.println(\"Here\");",
@@ -127,18 +128,18 @@ limits:
     }
   }
 }""".trim(),
-                )
-            }.apply {
-                response.shouldHaveStatus(HttpStatusCode.BadRequest.value)
+                    )
+                }.apply {
+                    response.shouldHaveStatus(HttpStatusCode.BadRequest.value)
+                }
             }
         }
-    }
-    "should reject snippet request with too many permissions" {
-        withTestApplication(Application::jeed) {
-            handleRequest(HttpMethod.Post, "/") {
-                addHeader("content-type", "application/json")
-                setBody(
-                    """
+        "should reject snippet request with too many permissions" {
+            withTestApplication(Application::jeed) {
+                handleRequest(HttpMethod.Post, "/") {
+                    addHeader("content-type", "application/json")
+                    setBody(
+                        """
 {
   "label": "test",
   "snippet": "System.out.println(\"Here\");",
@@ -155,15 +156,15 @@ limits:
     }
   }
 }""".trim(),
-                )
-            }.apply {
-                response.shouldHaveStatus(HttpStatusCode.OK.value)
-            }
+                    )
+                }.apply {
+                    response.shouldHaveStatus(HttpStatusCode.OK.value)
+                }
 
-            handleRequest(HttpMethod.Post, "/") {
-                addHeader("content-type", "application/json")
-                setBody(
-                    """
+                handleRequest(HttpMethod.Post, "/") {
+                    addHeader("content-type", "application/json")
+                    setBody(
+                        """
 {
   "label": "test",
   "snippet": "System.out.println(\"Here\");",
@@ -180,18 +181,18 @@ limits:
     }
   }
 }""".trim(),
-                )
-            }.apply {
-                response.shouldHaveStatus(HttpStatusCode.BadRequest.value)
+                    )
+                }.apply {
+                    response.shouldHaveStatus(HttpStatusCode.BadRequest.value)
+                }
             }
         }
-    }
-    "should reject snippet request attempting to remove blacklisted classes" {
-        withTestApplication(Application::jeed) {
-            handleRequest(HttpMethod.Post, "/") {
-                addHeader("content-type", "application/json")
-                setBody(
-                    """
+        "should reject snippet request attempting to remove blacklisted classes" {
+            withTestApplication(Application::jeed) {
+                handleRequest(HttpMethod.Post, "/") {
+                    addHeader("content-type", "application/json")
+                    setBody(
+                        """
 {
   "label": "test",
   "snippet": "System.out.println(\"Here\");",
@@ -206,15 +207,15 @@ limits:
     }
   }
 }""".trim(),
-                )
-            }.apply {
-                response.shouldHaveStatus(HttpStatusCode.OK.value)
-            }
+                    )
+                }.apply {
+                    response.shouldHaveStatus(HttpStatusCode.OK.value)
+                }
 
-            handleRequest(HttpMethod.Post, "/") {
-                addHeader("content-type", "application/json")
-                setBody(
-                    """
+                handleRequest(HttpMethod.Post, "/") {
+                    addHeader("content-type", "application/json")
+                    setBody(
+                        """
 {
   "label": "test",
   "snippet": "System.out.println(\"Here\");",
@@ -227,18 +228,18 @@ limits:
     }
   }
 }""".trim(),
-                )
-            }.apply {
-                response.shouldHaveStatus(HttpStatusCode.BadRequest.value)
+                    )
+                }.apply {
+                    response.shouldHaveStatus(HttpStatusCode.BadRequest.value)
+                }
             }
         }
-    }
-    "should reject snippet request attempting to remove forbidden methods" {
-        withTestApplication(Application::jeed) {
-            handleRequest(HttpMethod.Post, "/") {
-                addHeader("content-type", "application/json")
-                setBody(
-                    """
+        "should reject snippet request attempting to remove forbidden methods" {
+            withTestApplication(Application::jeed) {
+                handleRequest(HttpMethod.Post, "/") {
+                    addHeader("content-type", "application/json")
+                    setBody(
+                        """
 {
   "label": "test",
   "snippet": "System.out.println(\"Here\");",
@@ -257,10 +258,10 @@ limits:
     }
   }
 }""".trim(),
-                )
-            }.apply {
-                response.shouldHaveStatus(HttpStatusCode.BadRequest.value)
+                    )
+                }.apply {
+                    response.shouldHaveStatus(HttpStatusCode.BadRequest.value)
+                }
             }
         }
-    }
-})
+    })

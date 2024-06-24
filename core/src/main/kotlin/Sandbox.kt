@@ -413,7 +413,8 @@ object Sandbox {
         val callable: SandboxCallableArguments<T>,
         val sandboxedClassLoader: SandboxedClassLoader,
         val executionArguments: ExecutionArguments,
-    ) : Callable<Any>, SandboxControl {
+    ) : Callable<Any>,
+        SandboxControl {
         private data class TaskResult<T>(val returned: T, val threw: Throwable? = null, val timeout: Boolean = false)
 
         private lateinit var confinedTask: ConfinedTask<T>
@@ -524,9 +525,7 @@ object Sandbox {
                 }
 
                 val forceEndTime = executionStarted.plusMillis(executionArguments.timeout)
-                fun hasTime(): Boolean {
-                    return Instant.now().isBefore(forceEndTime)
-                }
+                fun hasTime(): Boolean = Instant.now().isBefore(forceEndTime)
                 if (executionArguments.waitForShutdown && hasTime()) {
                     fun workPending(): Boolean {
                         val threadsHolder = arrayOfNulls<Thread>(confinedTask.maxExtraThreads + 1)
@@ -972,7 +971,8 @@ object Sandbox {
         private val sandboxableClassLoader: SandboxableClassLoader,
         classLoaderConfiguration: ClassLoaderConfiguration,
         configuredPlugins: List<ConfiguredSandboxPlugin<*, *>>,
-    ) : ClassLoader(sandboxableClassLoader.classLoader.parent), EnumerableClassLoader {
+    ) : ClassLoader(sandboxableClassLoader.classLoader.parent),
+        EnumerableClassLoader {
         private val whitelistedClasses = classLoaderConfiguration.whitelistedClasses
         private val blacklistedClasses = classLoaderConfiguration.blacklistedClasses
         private val isolatedClasses = classLoaderConfiguration.isolatedClasses
@@ -1162,9 +1162,7 @@ object Sandbox {
     object EmptyClassLoader : ClassLoader(getSystemClassLoader()), SandboxableClassLoader {
         override val bytecodeForClasses: Map<String, ByteArray> = mapOf()
         override val classLoader: ClassLoader = this
-        override fun findClass(name: String): Class<*> {
-            throw ClassNotFoundException(name)
-        }
+        override fun findClass(name: String): Class<*> = throw ClassNotFoundException(name)
     }
 
     @Suppress("TooManyFunctions")
@@ -1316,53 +1314,51 @@ object Sandbox {
                     descriptor: String,
                     signature: String?,
                     exceptions: Array<out String>?,
-                ): MethodVisitor? {
-                    return if (name == "finalize" && descriptor == "()V") {
-                        null // Drop the finalizer
-                    } else {
-                        val preinspection = allPreinspections[VisitedMethod(name, descriptor)]
-                            ?: error("missing pre-inspection for $name:$descriptor")
-                        val transformedMethodName = if (Modifier.isSynchronized(access)) {
-                            val transformedNameOfOriginal = "$name\$syncbody"
-                            val nonSynchronizedModifiers = access and Modifier.SYNCHRONIZED.inv()
-                            emitSynchronizedBridge(
-                                super.visitMethod(nonSynchronizedModifiers, name, descriptor, signature, exceptions),
-                                className ?: error("should have visited the class"),
-                                transformedNameOfOriginal,
-                                preinspection.parameters,
-                                access,
-                                descriptor,
-                            )
-                            transformedNameOfOriginal
-                        } else {
-                            name
-                        }
-                        val transformedModifiers = if (Modifier.isSynchronized(access)) {
-                            (
-                                access
-                                    and Modifier.PUBLIC.inv()
-                                    and Modifier.PROTECTED.inv()
-                                    and Modifier.SYNCHRONIZED.inv()
-                                ) or Modifier.PRIVATE
-                        } else {
-                            access
-                        }
-                        SandboxingMethodVisitor(
+                ): MethodVisitor? = if (name == "finalize" && descriptor == "()V") {
+                    null // Drop the finalizer
+                } else {
+                    val preinspection = allPreinspections[VisitedMethod(name, descriptor)]
+                        ?: error("missing pre-inspection for $name:$descriptor")
+                    val transformedMethodName = if (Modifier.isSynchronized(access)) {
+                        val transformedNameOfOriginal = "$name\$syncbody"
+                        val nonSynchronizedModifiers = access and Modifier.SYNCHRONIZED.inv()
+                        emitSynchronizedBridge(
+                            super.visitMethod(nonSynchronizedModifiers, name, descriptor, signature, exceptions),
                             className ?: error("should have visited the class"),
-                            unsafeExceptionClasses,
-                            blacklistedMethods,
-                            preinspection.badTryCatchBlockPositions,
-                            context,
-                            this::getEnclosedHandle,
-                            super.visitMethod(
-                                transformedModifiers,
-                                transformedMethodName,
-                                descriptor,
-                                signature,
-                                exceptions,
-                            ),
+                            transformedNameOfOriginal,
+                            preinspection.parameters,
+                            access,
+                            descriptor,
                         )
+                        transformedNameOfOriginal
+                    } else {
+                        name
                     }
+                    val transformedModifiers = if (Modifier.isSynchronized(access)) {
+                        (
+                            access
+                                and Modifier.PUBLIC.inv()
+                                and Modifier.PROTECTED.inv()
+                                and Modifier.SYNCHRONIZED.inv()
+                            ) or Modifier.PRIVATE
+                    } else {
+                        access
+                    }
+                    SandboxingMethodVisitor(
+                        className ?: error("should have visited the class"),
+                        unsafeExceptionClasses,
+                        blacklistedMethods,
+                        preinspection.badTryCatchBlockPositions,
+                        context,
+                        this::getEnclosedHandle,
+                        super.visitMethod(
+                            transformedModifiers,
+                            transformedMethodName,
+                            descriptor,
+                            signature,
+                            exceptions,
+                        ),
+                    )
                 }
 
                 private fun getEnclosedHandle(handle: Handle) = enclosedHandles.getOrPut(handle) {
@@ -1640,7 +1636,8 @@ object Sandbox {
                     // Adding an extra call instead of replacing the call avoids the need for fiddly stack manipulation
                     addForbiddenMethodTrap()
                 }
-                val rewriteTarget = if (!isInterface && opcode == Opcodes.INVOKEVIRTUAL &&
+                val rewriteTarget = if (!isInterface &&
+                    opcode == Opcodes.INVOKEVIRTUAL &&
                     owner == classNameToPath(Object::class.java.name)
                 ) {
                     syncNotifyMethods["$name:$descriptor"]
@@ -1664,26 +1661,22 @@ object Sandbox {
                 }
             }
 
-            private fun sandboxBootstrapArguments(args: Array<out Any?>): Array<Any?> {
-                return args.map {
-                    if (it is Handle && it.owner.contains('/')) { // Reference to library method
-                        handleEncloser(it)
-                    } else if (it is ConstantDynamic) {
-                        sandboxConstantDynamic(it)
-                    } else {
-                        it
-                    }
-                }.toTypedArray()
-            }
+            private fun sandboxBootstrapArguments(args: Array<out Any?>): Array<Any?> = args.map {
+                if (it is Handle && it.owner.contains('/')) { // Reference to library method
+                    handleEncloser(it)
+                } else if (it is ConstantDynamic) {
+                    sandboxConstantDynamic(it)
+                } else {
+                    it
+                }
+            }.toTypedArray()
 
-            private fun sandboxConstantDynamic(condy: ConstantDynamic): ConstantDynamic {
-                return ConstantDynamic(
-                    condy.name,
-                    condy.descriptor,
-                    condy.bootstrapMethod,
-                    *sandboxBootstrapArguments(condy.bootstrapArguments),
-                )
-            }
+            private fun sandboxConstantDynamic(condy: ConstantDynamic): ConstantDynamic = ConstantDynamic(
+                condy.name,
+                condy.descriptor,
+                condy.bootstrapMethod,
+                *sandboxBootstrapArguments(condy.bootstrapArguments),
+            )
 
             private fun hasBlacklistedBootstrapRef(args: Array<out Any?>) = args.any {
                 when (it) {
@@ -1693,10 +1686,8 @@ object Sandbox {
                 }
             }
 
-            private fun isConstantDynamicBlacklisted(condy: ConstantDynamic): Boolean {
-                return isBlacklistedMethod(condy.bootstrapMethod.owner, condy.bootstrapMethod.name) ||
-                    hasBlacklistedBootstrapRef(condy.bootstrapArguments)
-            }
+            private fun isConstantDynamicBlacklisted(condy: ConstantDynamic): Boolean = isBlacklistedMethod(condy.bootstrapMethod.owner, condy.bootstrapMethod.name) ||
+                hasBlacklistedBootstrapRef(condy.bootstrapArguments)
 
             override fun visitInvokeDynamicInsn(
                 name: String?,
@@ -1731,7 +1722,8 @@ object Sandbox {
                     val sandboxedHandleType = Type.getType(sandboxedHandle.desc)
                     val factoryType = Type.getType(descriptor)
                     val factoryArgTypes = factoryType.argumentTypes
-                    if (originalHandleType.argumentTypes.size != sandboxedHandleType.argumentTypes.size && // instance
+                    if (originalHandleType.argumentTypes.size != sandboxedHandleType.argumentTypes.size &&
+                        // instance
                         factoryArgTypes.isNotEmpty() // bound
                     ) {
                         factoryArgTypes[0] = sandboxedHandleType.argumentTypes[0]
@@ -1796,10 +1788,8 @@ object Sandbox {
                         descriptor: String,
                         signature: String?,
                         exceptions: Array<out String>?,
-                    ): MethodVisitor {
-                        return PreviewingMethodVisitor()
-                            .also { methodVisitors[VisitedMethod(name, descriptor)] = it }
-                    }
+                    ): MethodVisitor = PreviewingMethodVisitor()
+                        .also { methodVisitors[VisitedMethod(name, descriptor)] = it }
                 },
                 0,
             )
@@ -1841,9 +1831,7 @@ object Sandbox {
                 return badPositions
             }
 
-            fun getParameters(): List<VisitedParameter> {
-                return parameters
-            }
+            fun getParameters(): List<VisitedParameter> = parameters
         }
     }
 
@@ -1873,16 +1861,14 @@ object Sandbox {
             }
         }
 
-        private fun confinedTaskByClassLoaderReentrant(): ConfinedTask<*>? {
-            return if (inReentrantPermissionCheck.get()) {
-                null
-            } else {
-                try {
-                    inReentrantPermissionCheck.set(true)
-                    confinedTaskByClassLoader()
-                } finally {
-                    inReentrantPermissionCheck.set(false)
-                }
+        private fun confinedTaskByClassLoaderReentrant(): ConfinedTask<*>? = if (inReentrantPermissionCheck.get()) {
+            null
+        } else {
+            try {
+                inReentrantPermissionCheck.set(true)
+                confinedTaskByClassLoader()
+            } finally {
+                inReentrantPermissionCheck.set(false)
             }
         }
 
@@ -2137,17 +2123,11 @@ object Sandbox {
                 return confinedTask.printStreams[console] ?: error("confined console should exist")
             }
 
-        override fun append(char: Char): PrintStream {
-            return taskPrintStream.append(char)
-        }
+        override fun append(char: Char): PrintStream = taskPrintStream.append(char)
 
-        override fun append(charSequence: CharSequence?): PrintStream {
-            return taskPrintStream.append(charSequence)
-        }
+        override fun append(charSequence: CharSequence?): PrintStream = taskPrintStream.append(charSequence)
 
-        override fun append(charSequence: CharSequence?, start: Int, end: Int): PrintStream {
-            return taskPrintStream.append(charSequence, start, end)
-        }
+        override fun append(charSequence: CharSequence?, start: Int, end: Int): PrintStream = taskPrintStream.append(charSequence, start, end)
 
         override fun close() {
             taskPrintStream.close()
@@ -2157,13 +2137,9 @@ object Sandbox {
             taskPrintStream.flush()
         }
 
-        override fun format(locale: Locale?, format: String, vararg args: Any?): PrintStream {
-            return taskPrintStream.format(locale, format, *args)
-        }
+        override fun format(locale: Locale?, format: String, vararg args: Any?): PrintStream = taskPrintStream.format(locale, format, *args)
 
-        override fun format(format: String, vararg args: Any?): PrintStream {
-            return taskPrintStream.format(format, *args)
-        }
+        override fun format(format: String, vararg args: Any?): PrintStream = taskPrintStream.format(format, *args)
 
         override fun print(boolean: Boolean) {
             taskPrintStream.print(boolean)
@@ -2201,13 +2177,9 @@ object Sandbox {
             taskPrintStream.print(string)
         }
 
-        override fun printf(locale: Locale?, format: String, vararg args: Any?): PrintStream {
-            return taskPrintStream.printf(locale, format, *args)
-        }
+        override fun printf(locale: Locale?, format: String, vararg args: Any?): PrintStream = taskPrintStream.printf(locale, format, *args)
 
-        override fun printf(format: String, vararg args: Any?): PrintStream {
-            return taskPrintStream.printf(format, *args)
-        }
+        override fun printf(format: String, vararg args: Any?): PrintStream = taskPrintStream.printf(format, *args)
 
         override fun println() {
             taskPrintStream.println()
@@ -2336,9 +2308,10 @@ object Sandbox {
         override fun fillInStackTrace() = this
     }
 
-    class UnexpectedExtraThreadError : Error(
-        "An extra thread was detected by a feature not configured to support multiple threads",
-    )
+    class UnexpectedExtraThreadError :
+        Error(
+            "An extra thread was detected by a feature not configured to support multiple threads",
+        )
 
     class SandboxStartFailed(message: String, cause: Throwable? = null) : RuntimeException(message, cause)
     class SandboxContainmentFailure(message: String) : Throwable(message)
@@ -2450,9 +2423,7 @@ fun <T> withSandbox(run: () -> T): T {
 fun Sandbox.SandboxableClassLoader.sandbox(
     classLoaderConfiguration: Sandbox.ClassLoaderConfiguration,
     configuredPlugins: List<ConfiguredSandboxPlugin<*, *>> = listOf(),
-): Sandbox.SandboxedClassLoader {
-    return Sandbox.SandboxedClassLoader(this, classLoaderConfiguration, configuredPlugins)
-}
+): Sandbox.SandboxedClassLoader = Sandbox.SandboxedClassLoader(this, classLoaderConfiguration, configuredPlugins)
 
 data class JeedOutputCapture(
     val returned: Any?,

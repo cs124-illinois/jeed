@@ -23,7 +23,9 @@ val VERSION: String = Properties().also {
 class MethodNotFoundException(method: String) : Exception(method)
 
 fun findMethod(klass: String, method: String) = Class.forName(klass).declaredMethods.find {
-    it.name == method && Modifier.isStatic(it.modifiers) && Modifier.isPublic(it.modifiers) &&
+    it.name == method &&
+        Modifier.isStatic(it.modifiers) &&
+        Modifier.isPublic(it.modifiers) &&
         (
             it.parameterTypes.isEmpty() ||
                 (it.parameterTypes.size == 1 && it.parameterTypes[0].canonicalName == "java.lang.String[]")
@@ -98,9 +100,7 @@ class TestClass {
 
         @JvmStatic
         @Suppress("TooGenericExceptionThrown")
-        fun throws() {
-            throw Exception("Failed")
-        }
+        fun throws(): Unit = throw Exception("Failed")
     }
 }
 

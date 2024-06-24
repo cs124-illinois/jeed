@@ -82,13 +82,9 @@ open class Source(
         type = checkSourceNames(sources)
     }
 
-    fun mapLocation(input: SourceLocation): SourceLocation {
-        return sourceMappingFunction(input)
-    }
+    fun mapLocation(input: SourceLocation): SourceLocation = sourceMappingFunction(input)
 
-    fun leadingIndentation(input: SourceLocation): Int {
-        return leadingIndentationFunction(input)
-    }
+    fun leadingIndentation(input: SourceLocation): Int = leadingIndentationFunction(input)
 
     fun mapLocation(source: String, input: Location): Location {
         val resultSourceLocation = sourceMappingFunction(SourceLocation(source, input.line, input.column))
@@ -157,28 +153,22 @@ open class Source(
         return md5 == other.md5
     }
 
-    override fun hashCode(): Int {
-        return md5.toBigInteger(radix = 16).toInt()
-    }
+    override fun hashCode(): Int = md5.toBigInteger(radix = 16).toInt()
 
     companion object {
         private val moshi by lazy {
             Moshi.Builder().build()
         }
 
-        private fun filenameToFileType(filename: String): FileType {
-            return when (val extension = filename.split("/").last().split(".").last()) {
-                "java" -> FileType.JAVA
-                "kt" -> FileType.KOTLIN
-                else -> error("invalid extension: $extension")
-            }
+        private fun filenameToFileType(filename: String): FileType = when (val extension = filename.split("/").last().split(".").last()) {
+            "java" -> FileType.JAVA
+            "kt" -> FileType.KOTLIN
+            else -> error("invalid extension: $extension")
         }
 
-        fun filenamesToFileTypes(filenames: Set<String>): List<FileType> {
-            return filenames.map { filename ->
-                filenameToFileType(filename)
-            }.distinct()
-        }
+        fun filenamesToFileTypes(filenames: Set<String>): List<FileType> = filenames.map { filename ->
+            filenameToFileType(filename)
+        }.distinct()
 
         private fun defaultCheckSourceNames(sources: Sources): SourceType {
             sources.keys.forEach { name ->
@@ -211,12 +201,10 @@ data class SourceLocation(
     val line: Int,
     val column: Int,
 ) {
-    override fun toString(): String {
-        return if (source != SNIPPET_SOURCE) {
-            "$source ($line:$column)"
-        } else {
-            "($line:$column)"
-        }
+    override fun toString(): String = if (source != SNIPPET_SOURCE) {
+        "$source ($line:$column)"
+    } else {
+        "($line:$column)"
     }
 }
 
@@ -246,9 +234,7 @@ open class SourceError(
     open val location: SourceLocation?,
     val message: String,
 ) {
-    override fun toString(): String {
-        return if (location == null) message else "$location: $message"
-    }
+    override fun toString(): String = if (location == null) message else "$location: $message"
 }
 
 @JsonClass(generateAdapter = true)
@@ -258,9 +244,7 @@ open class AlwaysLocatedSourceError(
 ) : SourceError(location, message)
 
 abstract class JeedError(open val errors: List<SourceError>) : Exception() {
-    override fun toString(): String {
-        return javaClass.name + ":\n" + errors.joinToString(separator = "\n")
-    }
+    override fun toString(): String = javaClass.name + ":\n" + errors.joinToString(separator = "\n")
 }
 
 abstract class AlwaysLocatedJeedError(final override val errors: List<AlwaysLocatedSourceError>) : JeedError(errors)
@@ -323,9 +307,7 @@ fun Throwable.getStackTraceForSource(
     return betterStackTrace.joinToString(separator = "\n")
 }
 
-fun Method.getQualifiedName(): String {
-    return "$name(${parameters.joinToString(separator = ", ")})"
-}
+fun Method.getQualifiedName(): String = "$name(${parameters.joinToString(separator = ", ")})"
 
 class SourceMappingException(message: String) : Exception(message)
 

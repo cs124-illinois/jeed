@@ -251,12 +251,10 @@ class BooleanLiteral(
     override val mightNotCompile = false
     override val fixedCount = true
 
-    override fun applyMutation(random: Random): String {
-        return when (original) {
-            "true" -> "false"
-            "false" -> "true"
-            else -> error("${this.javaClass.name} didn't find expected text")
-        }
+    override fun applyMutation(random: Random): String = when (original) {
+        "true" -> "false"
+        "false" -> "true"
+        else -> error("${this.javaClass.name} didn't find expected text")
     }
 }
 
@@ -311,24 +309,22 @@ class StringLiteral(
     override val fixedCount = false
 
     @Suppress("NestedBlockDepth")
-    override fun applyMutation(random: Random): String {
-        return if (string.isEmpty()) {
-            " "
-        } else {
-            string.toCharArray().let { characters ->
-                val position = characters.indices.random(random)
-                characters[position] =
-                    ALPHANUMERIC_CHARS_AND_SPACE.filter { it != characters[position] }.shuffled(random).first()
-                characters.joinToString("")
-            }.let {
-                StringEscapeUtils.escapeJava(it)
-            }
+    override fun applyMutation(random: Random): String = if (string.isEmpty()) {
+        " "
+    } else {
+        string.toCharArray().let { characters ->
+            val position = characters.indices.random(random)
+            characters[position] =
+                ALPHANUMERIC_CHARS_AND_SPACE.filter { it != characters[position] }.shuffled(random).first()
+            characters.joinToString("")
         }.let {
-            if (withQuotes) {
-                "\"$it\""
-            } else {
-                it
-            }
+            StringEscapeUtils.escapeJava(it)
+        }
+    }.let {
+        if (withQuotes) {
+            "\"$it\""
+        } else {
+            it
         }
     }
 }
@@ -464,19 +460,17 @@ class StringLiteralTrim(
     override val fixedCount = true
 
     @Suppress("NestedBlockDepth")
-    override fun applyMutation(random: Random): String {
-        return if (random.nextBoolean()) {
-            string.substring(1)
+    override fun applyMutation(random: Random): String = if (random.nextBoolean()) {
+        string.substring(1)
+    } else {
+        string.substring(0, string.length - 1)
+    }.let {
+        StringEscapeUtils.escapeJava(it)
+    }.let {
+        if (withQuotes) {
+            "\"$it\""
         } else {
-            string.substring(0, string.length - 1)
-        }.let {
-            StringEscapeUtils.escapeJava(it)
-        }.let {
-            if (withQuotes) {
-                "\"$it\""
-            } else {
-                it
-            }
+            it
         }
     }
 
@@ -664,13 +658,14 @@ class NumberLiteralTrim(
                 else -> listOf(current.substring(1, current.length), current.substring(0, current.length - 1))
             }
                 .filter { string ->
-                    string.length == 1 || !string.toCharArray().filter {
-                        if (base == 16) {
-                            it.isDigit() || hexSet.contains(it)
-                        } else {
-                            it.isDigit()
-                        }
-                    }.all { it == '0' }
+                    string.length == 1 ||
+                        !string.toCharArray().filter {
+                            if (base == 16) {
+                                it.isDigit() || hexSet.contains(it)
+                            } else {
+                                it.isDigit()
+                            }
+                        }.all { it == '0' }
                 }
                 .filter { !((isNegative || isDivision) && it == "0") }
                 .map { "$prefix$it$exponent$suffix" }
@@ -691,12 +686,10 @@ class IncrementDecrement(
     override val mightNotCompile = false
     override val fixedCount = true
 
-    override fun applyMutation(random: Random): String {
-        return when (original) {
-            INC -> DEC
-            DEC -> INC
-            else -> error("${javaClass.name} didn't find the expected text")
-        }
+    override fun applyMutation(random: Random): String = when (original) {
+        INC -> DEC
+        DEC -> INC
+        else -> error("${javaClass.name} didn't find the expected text")
     }
 
     companion object {
@@ -805,14 +798,12 @@ class ConditionalBoundary(
     override val mightNotCompile = false
     override val fixedCount = true
 
-    override fun applyMutation(random: Random): String {
-        return when (original) {
-            Conditionals.LT -> Conditionals.LTE
-            Conditionals.LTE -> Conditionals.LT
-            Conditionals.GT -> Conditionals.GTE
-            Conditionals.GTE -> Conditionals.GT
-            else -> error("${javaClass.name} didn't find the expected text")
-        }
+    override fun applyMutation(random: Random): String = when (original) {
+        Conditionals.LT -> Conditionals.LTE
+        Conditionals.LTE -> Conditionals.LT
+        Conditionals.GT -> Conditionals.GTE
+        Conditionals.GTE -> Conditionals.GT
+        else -> error("${javaClass.name} didn't find the expected text")
     }
 
     companion object {
@@ -835,16 +826,14 @@ class NegateConditional(
     override val mightNotCompile = false
     override val fixedCount = true
 
-    override fun applyMutation(random: Random): String {
-        return when (original) {
-            Conditionals.EQ -> Conditionals.NE
-            Conditionals.NE -> Conditionals.EQ
-            Conditionals.LTE -> Conditionals.GT
-            Conditionals.GT -> Conditionals.LTE
-            Conditionals.GTE -> Conditionals.LT
-            Conditionals.LT -> Conditionals.GTE
-            else -> error("${javaClass.name} didn't find the expected text")
-        }
+    override fun applyMutation(random: Random): String = when (original) {
+        Conditionals.EQ -> Conditionals.NE
+        Conditionals.NE -> Conditionals.EQ
+        Conditionals.LTE -> Conditionals.GT
+        Conditionals.GT -> Conditionals.LTE
+        Conditionals.GTE -> Conditionals.LT
+        Conditionals.LT -> Conditionals.GTE
+        else -> error("${javaClass.name} didn't find the expected text")
     }
 
     companion object {
@@ -869,12 +858,10 @@ class SwapAndOr(
     override val mightNotCompile = false
     override val fixedCount = true
 
-    override fun applyMutation(random: Random): String {
-        return when (original) {
-            "&&" -> "||"
-            "||" -> "&&"
-            else -> error("${javaClass.name} didn't find the expected text")
-        }
+    override fun applyMutation(random: Random): String = when (original) {
+        "&&" -> "||"
+        "||" -> "&&"
+        else -> error("${javaClass.name} didn't find the expected text")
     }
 
     companion object {
@@ -892,12 +879,10 @@ class SwapBreakContinue(
     override val mightNotCompile = false
     override val fixedCount = true
 
-    override fun applyMutation(random: Random): String {
-        return when (original) {
-            "break" -> "continue"
-            "continue" -> "break"
-            else -> error("${javaClass.name} didn't find the expected text")
-        }
+    override fun applyMutation(random: Random): String = when (original) {
+        "break" -> "continue"
+        "continue" -> "break"
+        else -> error("${javaClass.name} didn't find the expected text")
     }
 }
 
@@ -911,11 +896,9 @@ class PlusOrMinusOneToZero(
     override val mightNotCompile = false
     override val fixedCount = true
 
-    override fun applyMutation(random: Random): String {
-        return when (original) {
-            "1" -> "0"
-            else -> error("${javaClass.name} didn't find the expected text: $original")
-        }
+    override fun applyMutation(random: Random): String = when (original) {
+        "1" -> "0"
+        else -> error("${javaClass.name} didn't find the expected text: $original")
     }
 }
 
@@ -994,10 +977,12 @@ class NullReturn(
     companion object {
         @Suppress("DEPRECATION")
         fun matches(contents: String, returnType: String, fileType: Source.FileType) = when (fileType) {
-            Source.FileType.JAVA -> contents != "null" && (
-                returnType == returnType.capitalize() ||
-                    returnType.endsWith("[]")
-                )
+            Source.FileType.JAVA ->
+                contents != "null" &&
+                    (
+                        returnType == returnType.capitalize() ||
+                            returnType.endsWith("[]")
+                        )
 
             Source.FileType.KOTLIN -> contents != "null" && !kotlinPrimitiveTypes.contains(returnType)
         }

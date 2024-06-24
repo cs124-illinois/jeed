@@ -20,17 +20,13 @@ private val DEFAULT_EXECUTOR_INTERNAL_NAME = classNameToPath(DEFAULT_EXECUTOR_NA
 private val COROUTINE_SCHEDULER_WORKER_INTERNAL_NAME = classNameToPath(COROUTINE_SCHEDULER_WORKER_NAME)
 private val THREAD_INTERNAL_NAME = classNameToPath(Thread::class.java.name)
 
-internal fun coroutinesActive(classLoader: Sandbox.SandboxedClassLoader, threads: List<Thread>): Boolean {
-    return try {
-        coroutinesActiveInternal(classLoader, threads)
-    } catch (_: Throwable) {
-        false
-    }
+internal fun coroutinesActive(classLoader: Sandbox.SandboxedClassLoader, threads: List<Thread>): Boolean = try {
+    coroutinesActiveInternal(classLoader, threads)
+} catch (_: Throwable) {
+    false
 }
 
-private fun coroutinesActiveInternal(classLoader: Sandbox.SandboxedClassLoader, threads: List<Thread>): Boolean {
-    return defaultExecutorActive(classLoader) || workerQueuesActive(classLoader, threads)
-}
+private fun coroutinesActiveInternal(classLoader: Sandbox.SandboxedClassLoader, threads: List<Thread>): Boolean = defaultExecutorActive(classLoader) || workerQueuesActive(classLoader, threads)
 
 private fun defaultExecutorActive(classLoader: Sandbox.SandboxedClassLoader): Boolean {
     val defaultExecutorClass = classLoader.reloadedClasses[DEFAULT_EXECUTOR_NAME] ?: return false
@@ -79,10 +75,8 @@ private fun workerQueuesActive(classLoader: Sandbox.SandboxedClassLoader, thread
     }
 }
 
-internal fun isIgnorableSetContextClassLoader(containerClassName: String, opcode: Int, owner: String, methodName: String, desc: String): Boolean {
-    return (containerClassName == DEFAULT_EXECUTOR_INTERNAL_NAME || containerClassName == COROUTINE_SCHEDULER_WORKER_INTERNAL_NAME) &&
-        opcode == Opcodes.INVOKEVIRTUAL &&
-        (owner == THREAD_INTERNAL_NAME || owner == containerClassName) &&
-        methodName == "setContextClassLoader" &&
-        desc == SETCONTEXTCLASSLOADER_DESC
-}
+internal fun isIgnorableSetContextClassLoader(containerClassName: String, opcode: Int, owner: String, methodName: String, desc: String): Boolean = (containerClassName == DEFAULT_EXECUTOR_INTERNAL_NAME || containerClassName == COROUTINE_SCHEDULER_WORKER_INTERNAL_NAME) &&
+    opcode == Opcodes.INVOKEVIRTUAL &&
+    (owner == THREAD_INTERNAL_NAME || owner == containerClassName) &&
+    methodName == "setContextClassLoader" &&
+    desc == SETCONTEXTCLASSLOADER_DESC
