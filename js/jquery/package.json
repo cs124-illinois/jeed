@@ -1,7 +1,7 @@
 {
   "private": true,
   "name": "@cs125/jeed-jquery",
-  "version": "2024.5.0",
+  "version": "2024.6.1",
   "scripts": {
     "build": "babel jeed.js -d build/",
     "jeed": "docker run -p 8888:8888 -e HOSTS=http://localhost:1234 cs125/jeed:latest",
@@ -18,7 +18,7 @@
     "env-cmd": "10.1.0",
     "npm-check-updates": "16.14.20",
     "parcel-bundler": "1.12.5",
-    "prettier": "3.2.5",
+    "prettier": "3.3.2",
     "prettier-package-json": "2.8.0"
   }
 }
