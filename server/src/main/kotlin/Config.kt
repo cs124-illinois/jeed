@@ -11,11 +11,9 @@ import io.github.nhubbard.konf.source.yaml.yaml
 import java.io.File
 
 const val DEFAULT_PORT = 8888
-const val DEFAULT_SENTINEL_DELAY = 5L
 
 object TopLevel : ConfigSpec("") {
     val port by optional(DEFAULT_PORT)
-    val sentinelDelay by optional(DEFAULT_SENTINEL_DELAY)
 }
 
 object Limits : ConfigSpec() {

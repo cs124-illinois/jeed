@@ -4,7 +4,7 @@ package edu.illinois.cs.cs125.jeed.server
 
 import com.beyondgrader.resourceagent.jeed.MemoryLimit
 import edu.illinois.cs.cs125.jeed.core.LineTrace
-import edu.illinois.cs.cs125.jeed.core.isWindows
+import edu.illinois.cs.cs125.jeed.core.checkDockerEnabled
 import io.kotest.assertions.ktor.shouldHaveStatus
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.beEmpty
@@ -167,7 +167,8 @@ public class Main {
                 }
             }
         }
-        "should accept good snippet cexecution request".config(enabled = !isWindows) {
+        "should accept good snippet cexecution request".config(enabled = checkDockerEnabled()) {
+
             withTestApplication(Application::jeed) {
                 handleRequest(HttpMethod.Post, "/") {
                     addHeader("content-type", "application/json")
@@ -817,7 +818,7 @@ public class Main {
                 }
             }
         }
-        "should handle cexecution error" {
+        "should handle cexecution error".config(enabled = checkDockerEnabled()) {
             withTestApplication(Application::jeed) {
                 handleRequest(HttpMethod.Post, "/") {
                     addHeader("content-type", "application/json")

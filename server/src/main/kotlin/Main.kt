@@ -6,6 +6,7 @@ import com.beyondgrader.resourceagent.Agent
 import com.beyondgrader.resourceagent.StaticFailureDetection
 import com.ryanharter.ktor.moshi.moshi
 import com.squareup.moshi.Moshi
+import edu.illinois.cs.cs125.jeed.core.checkDockerEnabled
 import edu.illinois.cs.cs125.jeed.core.getStackTraceAsString
 import edu.illinois.cs.cs125.jeed.core.warm
 import edu.illinois.cs.cs125.jeed.server.moshi.Adapters
@@ -24,17 +25,17 @@ import io.ktor.server.response.respondText
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.time.delay
 import kotlinx.coroutines.withContext
 import mu.KotlinLogging
-import java.time.Duration
 import java.time.Instant
 import java.util.Properties
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 import kotlin.system.exitProcess
 import edu.illinois.cs.cs125.jeed.core.moshi.Adapters as JeedAdapters
 
@@ -50,6 +51,7 @@ val VERSION: String = Properties().also {
 }.getProperty("version")
 
 val currentStatus = Status()
+val warmCompleted = CompletableFuture<Boolean>()
 
 @Suppress("ComplexMethod", "LongMethod")
 fun Application.jeed() {
@@ -71,6 +73,11 @@ fun Application.jeed() {
             call.respond(currentStatus.update())
         }
         get("/version") {
+            try {
+                warmCompleted.get(1, TimeUnit.SECONDS)
+            } catch (e: TimeoutException) {
+                call.respond(HttpStatusCode(404, "Warm didn't complete"))
+            }
             call.respond(VERSION)
         }
         post("/") {
@@ -112,19 +119,28 @@ fun main() = runBlocking<Unit> {
     logger.info { Status().toJson() }
     logger.info(configuration.toJson.toText())
 
-    backgroundScope.launch { warm(2, failLint = false) }
     backgroundScope.launch {
-        delay(Duration.ofMinutes(configuration[TopLevel.sentinelDelay]))
         try {
             warm(2, failLint = false)
-            logger.debug("Sentinel succeeded")
-        } catch (e: CancellationException) {
-            return@launch
-        } catch (err: Throwable) {
-            logger.error("Restarting due to sentinel failure")
-            err.printStackTrace()
+            warmCompleted.complete(true)
+        } catch (e: Exception) {
+            logger.error("Warm failed, restarting: $e")
             exitProcess(-1)
         }
+
+        val dockerEnabled = try {
+            checkDockerEnabled(true)
+        } catch (e: Exception) {
+            logger.warn("Docker check failed: $e")
+            false
+        }
+        logger.info(
+            "Docker " + if (dockerEnabled) {
+                "enabled"
+            } else {
+                "disabled"
+            },
+        )
     }
 
     embeddedServer(Netty, port = configuration[TopLevel.port], module = Application::jeed).start(true)

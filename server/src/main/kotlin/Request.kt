@@ -19,6 +19,7 @@ import edu.illinois.cs.cs125.jeed.core.Source
 import edu.illinois.cs.cs125.jeed.core.SourceType
 import edu.illinois.cs.cs125.jeed.core.TemplatingFailed
 import edu.illinois.cs.cs125.jeed.core.cexecute
+import edu.illinois.cs.cs125.jeed.core.checkDockerEnabled
 import edu.illinois.cs.cs125.jeed.core.checkstyle
 import edu.illinois.cs.cs125.jeed.core.compile
 import edu.illinois.cs.cs125.jeed.core.complexity
@@ -214,6 +215,10 @@ class Request(
 
     @Suppress("ComplexMethod", "LongMethod")
     suspend fun run(): Response {
+        if (tasks.contains(Task.cexecute)) {
+            check(checkDockerEnabled()) { "Docker execution disabled" }
+        }
+
         currentStatus.counts.submitted++
 
         val started = Instant.now()
