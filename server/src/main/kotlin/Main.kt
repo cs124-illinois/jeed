@@ -49,9 +49,6 @@ val currentStatus = Status()
 
 @Suppress("ComplexMethod", "LongMethod")
 fun Application.jeed() {
-    Agent.activate(countLines = false, redirectFiles = false)
-    StaticFailureDetection.recordingFailedClasses = true
-
     install(CORS) {
         anyHost()
         allowNonSimpleContentTypes = true
@@ -106,8 +103,8 @@ fun main(): Unit = runBlocking {
     logger.info { Status().toJson() }
     logger.info(configuration.toJson.toText())
 
-    // Activate the agent before warm
     Agent.activate(countLines = false, redirectFiles = false)
+    StaticFailureDetection.recordingFailedClasses = true
 
     try {
         warm(2, failLint = false)
