@@ -13,7 +13,7 @@ plugins {
     id("org.jmailen.kotlinter")
     id("io.gitlab.arturbosch.detekt")
     id("com.google.devtools.ksp")
-    id("com.ryandens.javaagent-test") version "0.5.1"
+    id("com.ryandens.javaagent-test") version "0.5.2"
 }
 val agentVersion: String by rootProject.extra
 dependencies {
@@ -34,7 +34,7 @@ dependencies {
     implementation("ch.qos.logback:logback-classic:1.5.6")
     implementation("io.github.nhubbard:konf:2.1.0")
     implementation("io.github.microutils:kotlin-logging:3.0.5")
-    implementation("org.cs124:libcs1:2024.6.0")
+    implementation("org.cs124:libcs1:2024.8.0")
     implementation("com.beyondgrader.resource-agent:agent:$agentVersion")
     implementation("com.beyondgrader.resource-agent:jeedplugin:$agentVersion")
 

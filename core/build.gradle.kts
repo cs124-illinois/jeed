@@ -14,13 +14,13 @@ plugins {
     id("org.jmailen.kotlinter")
     id("io.gitlab.arturbosch.detekt")
     id("com.google.devtools.ksp")
-    id("com.ryandens.javaagent-test") version "0.5.1"
+    id("com.ryandens.javaagent-test") version "0.5.2"
 }
 val agentVersion: String by rootProject.extra
 dependencies {
     ksp("com.squareup.moshi:moshi-kotlin-codegen:1.15.1")
 
-    antlr("org.antlr:antlr4:4.13.1")
+    antlr("org.antlr:antlr4:4.13.2")
 
     implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:2.0.0")
 
@@ -39,7 +39,7 @@ dependencies {
     implementation("io.github.classgraph:classgraph:4.8.174")
     implementation("net.java.dev.jna:jna:5.14.0")
     implementation("io.github.java-diff-utils:java-diff-utils:4.12")
-    implementation("com.google.googlejavaformat:google-java-format:1.22.0")
+    implementation("com.google.googlejavaformat:google-java-format:1.23.0")
     implementation("net.sf.extjwnl:extjwnl:2.0.5")
     implementation("net.sf.extjwnl:extjwnl-data-wn31:1.2")
 
