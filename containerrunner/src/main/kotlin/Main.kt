@@ -1,6 +1,8 @@
 package edu.illinois.cs.cs125.jeed.containerrunner
 
 import com.github.ajalt.clikt.core.CliktCommand
+import com.github.ajalt.clikt.core.Context
+import com.github.ajalt.clikt.core.main
 import com.github.ajalt.clikt.core.subcommands
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.default
@@ -57,9 +59,11 @@ fun Throwable.cleanStackTrace(): String {
     return betterStackTrace.joinToString(separator = "\n")
 }
 
-class Run : CliktCommand(help = "Load and run METHOD from KLASS") {
+class Run : CliktCommand() {
     private val klass: String by argument().default("")
     private val method: String by argument().default("")
+
+    override fun help(context: Context) = "Load and run METHOD from KLASS"
 
     override fun run() {
         @Suppress("TooGenericExceptionCaught")
@@ -78,13 +82,15 @@ class Run : CliktCommand(help = "Load and run METHOD from KLASS") {
     }
 }
 
-class Version : CliktCommand(help = "print version and exit") {
+class Version : CliktCommand() {
+    override fun help(context: Context) = "print version and exit"
     override fun run() {
         echo(VERSION)
     }
 }
 
-class List : CliktCommand(help = "list available classes") {
+class List : CliktCommand() {
+    override fun help(context: Context) = "list available classes"
     override fun run() {
         ClassGraph().enableClassInfo().scan().allClasses.forEach { echo(it.name) }
     }
@@ -104,7 +110,8 @@ class TestClass {
     }
 }
 
-class Test : CliktCommand(help = "load test class") {
+class Test : CliktCommand() {
+    override fun help(context: Context) = "load test class"
     override fun run() {
         try {
             findMethod("edu.illinois.cs.cs125.jeed.containerrunner.TestClass", "testing").run()
@@ -122,6 +129,9 @@ class ContainerRunner : CliktCommand() {
     override fun run() = Unit
 }
 
-fun main(args: Array<String>) = ContainerRunner()
-    .subcommands(Version(), Run(), List(), Test())
-    .main(args)
+fun main(args: Array<String>) {
+    System.setProperty("slf4j.internal.verbosity", "WARN")
+    ContainerRunner()
+        .subcommands(Version(), Run(), List(), Test())
+        .main(args)
+}
