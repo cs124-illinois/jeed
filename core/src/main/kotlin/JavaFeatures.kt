@@ -646,39 +646,39 @@ class JavaFeatureListener(val source: Source, entry: Map.Entry<String, String>) 
 
     override fun enterExpression(ctx: ExpressionContext) {
         when (ctx.bop?.text) {
-            "<", ">", "<=", ">=", "==", "!=" -> count(FeatureName.COMPARISON_OPERATORS, ctx.toLocation())
-            "&&", "||" -> count(FeatureName.LOGICAL_OPERATORS, ctx.toLocation())
-            "+", "-", "*", "/", "%" -> count(FeatureName.ARITHMETIC_OPERATORS, ctx.toLocation())
-            "&", "|", "^" -> count(FeatureName.BITWISE_OPERATORS, ctx.toLocation())
+            "<", ">", "<=", ">=", "==", "!=" -> count(FeatureName.COMPARISON_OPERATORS, ctx.bop.toLocation())
+            "&&", "||" -> count(FeatureName.LOGICAL_OPERATORS, ctx.bop.toLocation())
+            "+", "-", "*", "/", "%" -> count(FeatureName.ARITHMETIC_OPERATORS, ctx.bop.toLocation())
+            "&", "|", "^" -> count(FeatureName.BITWISE_OPERATORS, ctx.bop.toLocation())
             "+=", "-=", "*=", "/=", "%=" -> {
-                count(FeatureName.ASSIGNMENT_OPERATORS, ctx.toLocation())
-                count(FeatureName.VARIABLE_REASSIGNMENTS, ctx.toLocation())
+                count(FeatureName.ASSIGNMENT_OPERATORS, ctx.bop.toLocation())
+                count(FeatureName.VARIABLE_REASSIGNMENTS, ctx.bop.toLocation())
             }
 
-            "?" -> count(FeatureName.TERNARY_OPERATOR, ctx.toLocation())
-            "instanceof" -> count(FeatureName.INSTANCEOF, ctx.toLocation())
+            "?" -> count(FeatureName.TERNARY_OPERATOR, ctx.bop.toLocation())
+            "instanceof" -> count(FeatureName.INSTANCEOF, ctx.bop.toLocation())
             "." -> {
                 if (ctx.identifier() != null) {
                     if (ctx.identifier().text != "length") {
                         if (!ctx.inPrintStatement()) {
-                            count(FeatureName.DOT_NOTATION, ctx.toLocation())
-                            count(FeatureName.DOTTED_VARIABLE_ACCESS, ctx.toLocation())
+                            count(FeatureName.DOT_NOTATION, ctx.bop.toLocation())
+                            count(FeatureName.DOTTED_VARIABLE_ACCESS, ctx.bop.toLocation())
                         }
                     }
                 } else {
                     if (!ctx.inPrintStatement()) {
-                        count(FeatureName.DOT_NOTATION, ctx.toLocation())
+                        count(FeatureName.DOT_NOTATION, ctx.bop.toLocation())
                     }
                 }
                 if (ctx.methodCall() != null) {
                     if (!ctx.inPrintStatement()) {
-                        count(FeatureName.DOTTED_METHOD_CALL, ctx.toLocation())
+                        count(FeatureName.DOTTED_METHOD_CALL, ctx.bop.toLocation())
                     }
                     val identifier = ctx.methodCall().identifier()?.text
                     if (identifier != null) {
                         currentFeatures.features.dottedMethodList += identifier
                         if (identifier == "equals") {
-                            count(FeatureName.EQUALITY, ctx.toLocation())
+                            count(FeatureName.EQUALITY, ctx.methodCall().identifier().toLocation())
                         }
                     }
                 }
@@ -686,17 +686,17 @@ class JavaFeatureListener(val source: Source, entry: Map.Entry<String, String>) 
         }
         when (ctx.prefix?.text) {
             "++", "--" -> {
-                count(FeatureName.UNARY_OPERATORS, ctx.toLocation())
-                count(FeatureName.VARIABLE_REASSIGNMENTS, ctx.toLocation())
+                count(FeatureName.UNARY_OPERATORS, ctx.prefix.toLocation())
+                count(FeatureName.VARIABLE_REASSIGNMENTS, ctx.prefix.toLocation())
             }
 
-            "~" -> count(FeatureName.BITWISE_OPERATORS, ctx.toLocation())
-            "!" -> count(FeatureName.LOGICAL_OPERATORS, ctx.toLocation())
+            "~" -> count(FeatureName.BITWISE_OPERATORS, ctx.prefix.toLocation())
+            "!" -> count(FeatureName.LOGICAL_OPERATORS, ctx.prefix.toLocation())
         }
         when (ctx.postfix?.text) {
             "++", "--" -> {
-                count(FeatureName.UNARY_OPERATORS, ctx.toLocation())
-                count(FeatureName.VARIABLE_REASSIGNMENTS, ctx.toLocation())
+                count(FeatureName.UNARY_OPERATORS, ctx.postfix.toLocation())
+                count(FeatureName.VARIABLE_REASSIGNMENTS, ctx.postfix.toLocation())
             }
         }
         if (ctx.text == "null") {
@@ -712,42 +712,46 @@ class JavaFeatureListener(val source: Source, entry: Map.Entry<String, String>) 
         }
         if (ctx.text.startsWith("(" + ctx.typeType()?.singleOrNull()?.text + ")")) {
             if (ctx.typeType()?.singleOrNull()?.primitiveType() != null) {
-                count(FeatureName.PRIMITIVE_CASTING, ctx.toLocation())
+                count(FeatureName.PRIMITIVE_CASTING, ctx.typeType().singleOrNull()!!.primitiveType().toLocation())
             } else {
                 count(FeatureName.CASTING, ctx.toLocation())
             }
         }
         if (ctx.bop?.text == "==" || ctx.bop?.text == "!=") {
-            count(FeatureName.REFERENCE_EQUALITY, ctx.toLocation())
+            count(FeatureName.REFERENCE_EQUALITY, ctx.bop.toLocation())
         }
         ctx.NEW()?.also {
             if (ctx.creator()?.arrayCreatorRest() == null && ctx.creator()?.createdName()?.text != "String") {
-                count(FeatureName.NEW_KEYWORD, ctx.toLocation())
+                count(FeatureName.NEW_KEYWORD, it.toLocation())
             }
             if (ctx.creator()?.arrayCreatorRest() != null) {
-                val numBrackets = ctx.creator().arrayCreatorRest().text.filter { it == '[' || it == ']' }.length
+                val numBrackets =
+                    ctx.creator().arrayCreatorRest().text.filter { char -> char == '[' || char == ']' }.length - (
+                        ctx.creator()
+                            .arrayCreatorRest().arrayInitializer()?.text?.filter { char -> char == '[' || char == ']' }?.length ?: 0
+                        )
                 when {
-                    numBrackets > 2 -> count(FeatureName.MULTIDIMENSIONAL_ARRAYS, ctx.toLocation())
-                    numBrackets > 0 -> count(FeatureName.ARRAYS, ctx.toLocation())
+                    numBrackets > 2 -> count(FeatureName.MULTIDIMENSIONAL_ARRAYS, ctx.creator().arrayCreatorRest().toLocation())
+                    numBrackets > 0 -> count(FeatureName.ARRAYS, ctx.creator().arrayCreatorRest().toLocation())
                 }
             }
         }
         ctx.primary()?.THIS()?.also {
-            count(FeatureName.THIS, ctx.toLocation())
+            count(FeatureName.THIS, it.toLocation())
         }
         ctx.methodCall()?.SUPER()?.also {
-            count(FeatureName.SUPER, ctx.toLocation())
+            count(FeatureName.SUPER, it.toLocation())
         }
         ctx.creator()?.classCreatorRest()?.classBody()?.also {
-            count(FeatureName.ANONYMOUS_CLASSES, ctx.toLocation())
+            count(FeatureName.ANONYMOUS_CLASSES, it.toLocation())
         }
         ctx.lambdaExpression()?.also {
-            count(FeatureName.LAMBDA_EXPRESSIONS, ctx.toLocation())
+            count(FeatureName.LAMBDA_EXPRESSIONS, it.toLocation())
         }
         ctx.switchExpression()?.also {
-            count(FeatureName.SWITCH_EXPRESSION, ctx.toLocation())
-            add(FeatureName.BLOCK_START, ctx.switchExpression().LBRACE().toLocation())
-            add(FeatureName.BLOCK_END, ctx.switchExpression().RBRACE().toLocation())
+            count(FeatureName.SWITCH_EXPRESSION, it.toLocation())
+            add(FeatureName.BLOCK_START, it.LBRACE().toLocation())
+            add(FeatureName.BLOCK_END, it.RBRACE().toLocation())
         }
     }
 

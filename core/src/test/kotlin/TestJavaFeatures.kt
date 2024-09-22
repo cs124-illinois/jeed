@@ -87,6 +87,8 @@ for (int num : arr) {
                 featureMap[FeatureName.ARRAYS] shouldBe 2
                 featureList should haveFeatureAt(FeatureName.ARRAYS, listOf(4, 4))
 
+                featureMap[FeatureName.MULTIDIMENSIONAL_ARRAYS] shouldBe 0
+
                 featureMap[FeatureName.NEW_KEYWORD] shouldBe 0
                 featureList should haveFeatureAt(FeatureName.NEW_KEYWORD, listOf())
 
@@ -426,10 +428,24 @@ char[][] array1 = new char[10][10];
 int test(byte[][] value) {
   return value.length;
 }
+long[] test(short[] value) {
+  return null;
+}
 """,
             ).features().check("") {
                 featureMap[FeatureName.MULTIDIMENSIONAL_ARRAYS] shouldBe 5
                 featureList should haveFeatureAt(FeatureName.MULTIDIMENSIONAL_ARRAYS, listOf(1, 1, 2, 2, 3))
+            }
+        }
+        "should count multidimensional arrays correctly" {
+            Source.fromJavaSnippet(
+                """
+int[] makeEnds(int[] values) {
+  return new int[] {values[0], values[values.length - 1]};
+}
+""",
+            ).features().check("") {
+                featureMap[FeatureName.MULTIDIMENSIONAL_ARRAYS] shouldBe 0
             }
         }
         "should count use of type inference in snippets" {
