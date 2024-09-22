@@ -1,4 +1,3 @@
-
 @file:Suppress("MatchingDeclarationName", "ktlint:standard:filename")
 
 package edu.illinois.cs.cs125.jeed.core
@@ -324,6 +323,8 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
 
     private fun exitMethodOrConstructor() {
         require(featureStack.isNotEmpty())
+        check(arrayDepth == 0)
+        check(arrayTypeDepth == 0)
         val lastFeatures = featureStack.removeAt(0).finalize()
         require(lastFeatures is MethodFeatures)
         assert(featureStack.isNotEmpty())
@@ -593,13 +594,7 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
 
     override fun enterSimpleIdentifier(ctx: KotlinParser.SimpleIdentifierContext) {
         val identifier = ctx.Identifier()?.text
-        if (identifier == "arrayOf" ||
-            identifier == "Array" ||
-            identifier?.endsWith("ArrayOf") == true
-        ) {
-            count(FeatureName.ARRAYS, ctx.toLocation())
-            count(FeatureName.ARRAY_LITERAL, ctx.toLocation())
-        } else if (inForStatement && identifier == "step") {
+        if (inForStatement && identifier == "step") {
             count(FeatureName.FOR_LOOP_STEP, ctx.toLocation())
         } else if (bitwiseOperators.contains(identifier)) {
             count(FeatureName.BITWISE_OPERATORS, ctx.toLocation())
@@ -698,6 +693,11 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
         UNSAFENAV,
     }
 
+    private fun String.isArrayType() = this == "Array" || this == "arrayOf" || basicTypes.any {
+        this == "${it}Array" || this == "${it.lowercase()}ArrayOf"
+    }
+
+    private var arrayDepth = 0
     override fun enterExpression(ctx: KotlinParser.ExpressionContext) {
         ctx.DISJ()?.also {
             count(FeatureName.LOGICAL_OPERATORS, ctx.DISJ().toLocation())
@@ -730,14 +730,24 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
                 count(FeatureName.FOR_LOOP_RANGE, ctx.RANGE_UNTIL().toLocation())
             }
         }
+        val firstSimpleIdentifier = ctx.expression().getOrNull(0)?.primaryExpression()?.simpleIdentifier()?.text
+        if (firstSimpleIdentifier?.isArrayType() == true) {
+            if (arrayDepth == 0) {
+                count(FeatureName.ARRAYS, ctx.toLocation())
+                count(FeatureName.ARRAY_LITERAL, ctx.toLocation())
+            } else if (arrayDepth > 0) {
+                count(FeatureName.MULTIDIMENSIONAL_ARRAYS, ctx.toLocation())
+            }
+            arrayDepth++
+        }
         if (ctx.postfixUnarySuffix().isNotEmpty()) {
             var skipDots = false
-            if (ctx.expression().getOrNull(0)?.primaryExpression()?.simpleIdentifier() != null &&
+            if (firstSimpleIdentifier != null &&
                 ctx.postfixUnarySuffix().isNotEmpty() &&
                 ctx.postfixUnarySuffix().last().callSuffix() != null &&
                 ctx.postfixUnarySuffix().dropLast(1).all { it.navigationSuffix() != null }
             ) {
-                val fullMethodCall = ctx.expression().getOrNull(0)?.primaryExpression()?.simpleIdentifier()?.text +
+                val fullMethodCall = firstSimpleIdentifier +
                     ctx.postfixUnarySuffix()
                         .dropLast(1)
                         .joinToString(".") {
@@ -826,6 +836,31 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
             if (indices.size > 1) {
                 count(FeatureName.MULTILEVEL_COLLECTION_INDEXING, indices.first().toLocation())
             }
+        }
+    }
+
+    override fun exitExpression(ctx: KotlinParser.ExpressionContext) {
+        val firstSimpleIdentifier = ctx.expression().getOrNull(0)?.primaryExpression()?.simpleIdentifier()?.text
+        if (firstSimpleIdentifier?.isArrayType() == true) {
+            arrayDepth--
+        }
+    }
+
+    private var arrayTypeDepth = 0
+    override fun enterSimpleUserType(ctx: KotlinParser.SimpleUserTypeContext) {
+        if (ctx.simpleIdentifier()?.text?.isArrayType() == true) {
+            if (arrayTypeDepth == 0) {
+                count(FeatureName.ARRAYS, ctx.toLocation())
+            } else if (arrayTypeDepth > 0) {
+                count(FeatureName.MULTIDIMENSIONAL_ARRAYS, ctx.toLocation())
+            }
+            arrayTypeDepth++
+        }
+    }
+
+    override fun exitSimpleUserType(ctx: KotlinParser.SimpleUserTypeContext) {
+        if (ctx.simpleIdentifier()?.text?.isArrayType() == true) {
+            arrayTypeDepth--
         }
     }
 

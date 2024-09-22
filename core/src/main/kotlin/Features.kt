@@ -161,7 +161,6 @@ enum class FeatureName(val description: String) {
 val JAVA_ONLY_FEATURES = setOf(
     FeatureName.TERNARY_OPERATOR,
     FeatureName.ARRAY_ACCESS,
-    FeatureName.MULTIDIMENSIONAL_ARRAYS,
     FeatureName.ENHANCED_FOR,
     FeatureName.THROWS,
     FeatureName.NEW_KEYWORD,

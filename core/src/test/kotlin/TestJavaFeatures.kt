@@ -84,8 +84,8 @@ for (int num : arr) {
                 featureMap[FeatureName.FOR_LOOPS] shouldBe 2
                 featureList should haveFeatureAt(FeatureName.FOR_LOOPS, listOf(1, 5))
 
-                featureMap[FeatureName.ARRAYS] shouldBe 1
-                featureList should haveFeatureAt(FeatureName.ARRAYS, listOf(4))
+                featureMap[FeatureName.ARRAYS] shouldBe 2
+                featureList should haveFeatureAt(FeatureName.ARRAYS, listOf(4, 4))
 
                 featureMap[FeatureName.NEW_KEYWORD] shouldBe 0
                 featureList should haveFeatureAt(FeatureName.NEW_KEYWORD, listOf())
@@ -382,8 +382,8 @@ arr[2] = arr[0] + arr[1];
 int[] nums = {1, 2, 4};
 """,
             ).features().check {
-                featureMap[FeatureName.ARRAYS] shouldBe 2
-                featureList should haveFeatureAt(FeatureName.ARRAYS, listOf(1, 5))
+                featureMap[FeatureName.ARRAYS] shouldBe 3
+                featureList should haveFeatureAt(FeatureName.ARRAYS, listOf(1, 1, 5))
 
                 featureMap[FeatureName.NEW_KEYWORD] shouldBe 0
                 featureList should haveFeatureAt(FeatureName.NEW_KEYWORD, listOf())
@@ -423,10 +423,13 @@ Stream<String> stream;
                 """
 int[][] array = new int[5][5];
 char[][] array1 = new char[10][10];
+int test(byte[][] value) {
+  return value.length;
+}
 """,
-            ).features().check {
-                featureMap[FeatureName.MULTIDIMENSIONAL_ARRAYS] shouldBe 2
-                featureList should haveFeatureAt(FeatureName.MULTIDIMENSIONAL_ARRAYS, listOf(1, 2))
+            ).features().check("") {
+                featureMap[FeatureName.MULTIDIMENSIONAL_ARRAYS] shouldBe 5
+                featureList should haveFeatureAt(FeatureName.MULTIDIMENSIONAL_ARRAYS, listOf(1, 1, 2, 2, 3))
             }
         }
         "should count use of type inference in snippets" {

@@ -223,7 +223,7 @@ internal fun kompileToFileManager(
     try {
         val messageCollector = JeedMessageCollector(source, kompilationArguments.arguments.allWarningsAsErrors)
         val configuration = CompilerConfiguration().apply {
-            put(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY, messageCollector)
+            put(CommonConfigurationKeys.MESSAGE_COLLECTOR_KEY, messageCollector)
             put(CommonConfigurationKeys.MODULE_NAME, JvmProtoBufUtil.DEFAULT_MODULE_NAME)
             put(JVMConfigurationKeys.PARAMETERS_METADATA, kompilationArguments.parameters)
             put(JVMConfigurationKeys.JVM_TARGET, kompilationArguments.jvmTarget.toJvmTarget())

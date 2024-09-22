@@ -1275,5 +1275,30 @@ class Question {
                 featureList should haveFeatureAt(FeatureName.PRINT_STATEMENTS, listOf(1))
             }
         }
+        "should count multidimensional arrays in snippets" {
+            Source.fromKotlinSnippet(
+                """
+var array = Array(8) { Array(8) { 0 }}
+""",
+            ).features().check("") {
+                featureMap[FeatureName.MULTIDIMENSIONAL_ARRAYS] shouldBe 1
+                featureList should haveFeatureAt(FeatureName.MULTIDIMENSIONAL_ARRAYS, listOf(1))
+            }
+        }
+        "should count array with initializer" {
+            Source.fromKotlinSnippet(
+                """
+val first = Array<Int>(8) { 0 }
+val second: Array<Array<Int>>? = null
+val third = intArrayOf(intArrayOf(1, 2))
+""",
+            ).features().check {
+                featureMap[FeatureName.ARRAYS] shouldBe 3
+                featureList should haveFeatureAt(FeatureName.ARRAYS, listOf(1, 2, 3))
+
+                featureMap[FeatureName.MULTIDIMENSIONAL_ARRAYS] shouldBe 2
+                featureList should haveFeatureAt(FeatureName.MULTIDIMENSIONAL_ARRAYS, listOf(2, 3))
+            }
+        }
     }
 }

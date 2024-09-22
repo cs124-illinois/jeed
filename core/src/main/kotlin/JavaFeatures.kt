@@ -442,11 +442,6 @@ class JavaFeatureListener(val source: Source, entry: Map.Entry<String, String>) 
                 count(FeatureName.ARRAY_LITERAL, it.toLocation())
             }
 
-            val numBrackets = ctx.typeType().text.filter { it == '[' || it == ']' }.length
-            when {
-                numBrackets > 2 -> count(FeatureName.MULTIDIMENSIONAL_ARRAYS, ctx.toLocation())
-                numBrackets > 0 -> count(FeatureName.ARRAYS, ctx.toLocation())
-            }
             currentFeatures.features.identifierList.addAll(
                 ctx.variableDeclarators().variableDeclarator().mapNotNull {
                     it.variableDeclaratorId()?.identifier()?.text
@@ -729,6 +724,13 @@ class JavaFeatureListener(val source: Source, entry: Map.Entry<String, String>) 
             if (ctx.creator()?.arrayCreatorRest() == null && ctx.creator()?.createdName()?.text != "String") {
                 count(FeatureName.NEW_KEYWORD, ctx.toLocation())
             }
+            if (ctx.creator()?.arrayCreatorRest() != null) {
+                val numBrackets = ctx.creator().arrayCreatorRest().text.filter { it == '[' || it == ']' }.length
+                when {
+                    numBrackets > 2 -> count(FeatureName.MULTIDIMENSIONAL_ARRAYS, ctx.toLocation())
+                    numBrackets > 0 -> count(FeatureName.ARRAYS, ctx.toLocation())
+                }
+            }
         }
         ctx.primary()?.THIS()?.also {
             count(FeatureName.THIS, ctx.toLocation())
@@ -781,6 +783,12 @@ class JavaFeatureListener(val source: Source, entry: Map.Entry<String, String>) 
 
         if (ctx.text == "var" || ctx.text == "val") {
             count(FeatureName.TYPE_INFERENCE, ctx.toLocation())
+        }
+
+        val numBrackets = ctx.text.filter { it == '[' || it == ']' }.length
+        when {
+            numBrackets > 2 -> count(FeatureName.MULTIDIMENSIONAL_ARRAYS, ctx.toLocation())
+            numBrackets > 0 -> count(FeatureName.ARRAYS, ctx.toLocation())
         }
     }
 
