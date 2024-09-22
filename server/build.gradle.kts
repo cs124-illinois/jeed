@@ -13,9 +13,14 @@ plugins {
     id("org.jmailen.kotlinter")
     id("io.gitlab.arturbosch.detekt")
     id("com.google.devtools.ksp")
-    id("com.ryandens.javaagent-test") version "0.5.2"
+    id("com.ryandens.javaagent-test") version "0.6.1"
 }
 val agentVersion: String by rootProject.extra
+configurations.all {
+    resolutionStrategy {
+        force("org.slf4j:slf4j-api:2.0.16")
+    }
+}
 dependencies {
     val ktorVersion = "2.3.12"
 
@@ -28,10 +33,10 @@ dependencies {
     implementation("io.ktor:ktor-server-netty:$ktorVersion")
     implementation("io.ktor:ktor-server-cors:$ktorVersion")
     implementation("io.ktor:ktor-server-content-negotiation:$ktorVersion")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
     implementation("com.squareup.moshi:moshi-kotlin:1.15.1")
     implementation("org.cs124:ktor-moshi:2024.6.0")
-    implementation("ch.qos.logback:logback-classic:1.5.6")
+    implementation("ch.qos.logback:logback-classic:1.5.8")
     implementation("io.github.nhubbard:konf:2.1.0")
     implementation("io.github.microutils:kotlin-logging:3.0.5")
     implementation("org.cs124:libcs1:2024.8.0")

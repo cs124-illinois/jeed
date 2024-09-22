@@ -9,11 +9,16 @@ plugins {
     id("org.jmailen.kotlinter")
     id("io.gitlab.arturbosch.detekt")
 }
+configurations.all {
+    resolutionStrategy {
+        force("org.slf4j:slf4j-api:2.0.16")
+    }
+}
 dependencies {
-    implementation("ch.qos.logback:logback-classic:1.5.6")
+    implementation("ch.qos.logback:logback-classic:1.5.8")
     implementation("io.github.microutils:kotlin-logging:3.0.5")
-    implementation("com.github.ajalt.clikt:clikt:4.4.0")
-    implementation("io.github.classgraph:classgraph:4.8.174")
+    implementation("com.github.ajalt.clikt:clikt:5.0.0")
+    implementation("io.github.classgraph:classgraph:4.8.176")
 }
 application {
     mainClass.set("edu.illinois.cs.cs125.jeed.containerrunner.MainKt")

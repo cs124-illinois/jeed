@@ -14,18 +14,23 @@ plugins {
     id("org.jmailen.kotlinter")
     id("io.gitlab.arturbosch.detekt")
     id("com.google.devtools.ksp")
-    id("com.ryandens.javaagent-test") version "0.5.2"
+    id("com.ryandens.javaagent-test") version "0.6.1"
 }
 val agentVersion: String by rootProject.extra
+configurations.all {
+    resolutionStrategy {
+        force("org.slf4j:slf4j-api:2.0.16")
+    }
+}
 dependencies {
     ksp("com.squareup.moshi:moshi-kotlin-codegen:1.15.1")
 
     antlr("org.antlr:antlr4:4.13.2")
 
-    implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:2.0.0")
+    implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:2.0.20")
 
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
-    implementation("com.puppycrawl.tools:checkstyle:10.17.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
+    implementation("com.puppycrawl.tools:checkstyle:10.18.1")
     implementation("org.codehaus.plexus:plexus-container-default:2.1.1")
     implementation("com.pinterest.ktlint:ktlint-rule-engine:1.3.1")
     implementation("com.pinterest.ktlint:ktlint-ruleset-standard:1.3.1")
@@ -34,10 +39,10 @@ dependencies {
     implementation("org.ow2.asm:asm:9.7")
     implementation("org.ow2.asm:asm-tree:9.7")
     implementation("org.ow2.asm:asm-util:9.7")
-    implementation("ch.qos.logback:logback-classic:1.5.6")
+    implementation("ch.qos.logback:logback-classic:1.5.8")
     implementation("io.github.microutils:kotlin-logging:3.0.5")
-    implementation("io.github.classgraph:classgraph:4.8.174")
-    implementation("net.java.dev.jna:jna:5.14.0")
+    implementation("io.github.classgraph:classgraph:4.8.176")
+    implementation("net.java.dev.jna:jna:5.15.0")
     implementation("io.github.java-diff-utils:java-diff-utils:4.12")
     implementation("com.google.googlejavaformat:google-java-format:1.23.0")
     implementation("net.sf.extjwnl:extjwnl:2.0.5")
