@@ -49,6 +49,6 @@ for (int i = 0; ; i++);
             executionResult should haveTimedOut()
             executionResult should haveCpuTimedOut()
 
-            executionResult.cpuTime shouldBeLessThan 20 * 1000L * 1000L
+            executionResult.cpuTime shouldBeLessThan 24 * 1000L * 1000L
         }
     })

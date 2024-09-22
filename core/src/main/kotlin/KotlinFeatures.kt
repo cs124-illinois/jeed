@@ -693,9 +693,11 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
         UNSAFENAV,
     }
 
-    private fun String.isArrayType() = this == "Array" || this == "arrayOf" || basicTypes.any {
-        this == "${it}Array" || this == "${it.lowercase()}ArrayOf"
-    }
+    private fun String.isArrayType() = this == "Array" ||
+        this == "arrayOf" ||
+        basicTypes.any {
+            this == "${it}Array" || this == "${it.lowercase()}ArrayOf"
+        }
 
     private var arrayDepth = 0
     override fun enterExpression(ctx: KotlinParser.ExpressionContext) {
