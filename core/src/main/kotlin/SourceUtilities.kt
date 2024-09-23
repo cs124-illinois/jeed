@@ -330,7 +330,7 @@ fun String.countLines(type: Source.FileType): LineCounts {
 
     val blank = lines()
         .mapIndexed { index, s -> Pair(index, s) }
-        .filter { (index, s) -> s.isBlank() && index + 1 !in comment }
+        .filter { (index, s) -> s.isBlank() && index + 1 !in comment && index + 1 !in source }
         .map { (index, _) -> index + 1 }
         .toSet()
 

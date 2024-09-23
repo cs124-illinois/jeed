@@ -392,4 +392,31 @@ fun emailToNetID(email: String): String {
                 ).stripAssertionMessages()
             }
         }
+        "should count lines properly" {
+            Source.fromJavaSnippet(
+                """
+    // introduce
+    // - newline character: \n
+    // - text blocks
+    // - csv: comma-separated values
+    // - Integer.parseInt()
+    // apply
+    // - String split method
+    // - accumulator pattern
+    String data = ""${'"'}
+    2020-09-02,5402
+
+    2020-09-03,12042
+    2020-09-04,4637
+    2020-09-05,89054
+    2020-09-06,2033
+    2020-09-07,10238
+    2020-09-08,76452
+    2020-09-09,8902""${'"'};
+    // System.out.println(data);
+    String[] allLines = data.split("\n");
+    System.out.println("Total lines: " + allLines.length);
+                """.trimIndent(),
+            ).countLines()
+        }
     })
