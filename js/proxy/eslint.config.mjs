@@ -9,6 +9,8 @@ export default [
     rules: {
       "@typescript-eslint/no-namespace": "off",
       "no-empty": "off",
+      "@typescript-eslint/no-unused-vars": ["error", { caughtErrors: "none" }],
+      "@typescript-eslint/no-unused-expressions": [2, { allowShortCircuit: true, allowTernary: true }],
     },
   }),
   eslintConfigPrettier,

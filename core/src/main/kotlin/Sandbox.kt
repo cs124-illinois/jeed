@@ -110,12 +110,14 @@ object Sandbox {
         val whitelistedClasses: Set<String> = DEFAULT_WHITELISTED_CLASSES,
         blacklistedClasses: Set<String> = DEFAULT_BLACKLISTED_CLASSES,
         unsafeExceptions: Set<String> = DEFAULT_UNSAFE_EXCEPTIONS,
+        safeErrors: Set<String> = DEFAULT_SAFE_ERRORS,
         isolatedClasses: Set<String> = DEFAULT_ISOLATED_CLASSES,
         val blacklistedMethods: Set<MethodFilter> = DEFAULT_BLACKLISTED_METHODS,
         val isWhiteList: Boolean? = null,
     ) {
         val blacklistedClasses = blacklistedClasses.union(PERMANENTLY_BLACKLISTED_CLASSES)
         val unsafeExceptions = unsafeExceptions.union(ALWAYS_UNSAFE_EXCEPTIONS)
+        val safeErrors = safeErrors.union(ALWAYS_SAFE_ERRORS)
         val isolatedClasses = isolatedClasses.union(ALWAYS_ISOLATED_CLASSES)
 
         init {
@@ -141,11 +143,22 @@ object Sandbox {
                 val klass = Class.forName(name) ?: error("$name does not refer to a Java class")
                 require(Throwable::class.java.isAssignableFrom(klass)) { "$name does not refer to a Java Throwable" }
             }
+            val neverSafeErrors = NEVER_SAFE_ERRORS.map { name ->
+                val klass = Class.forName(name) ?: error("$name does not refer to a Java class")
+                require(Error::class.java.isAssignableFrom(klass)) { "$name does not refer to a Java Error" }
+                klass
+            }
+            safeErrors.forEach { name ->
+                val klass = Class.forName(name) ?: error("$name does not refer to a Java class")
+                require(Error::class.java.isAssignableFrom(klass)) { "$name does not refer to a Java Error" }
+                require(neverSafeErrors.none { it.isAssignableFrom(klass) }) { "$name cannot be a safe error" }
+            }
         }
 
         companion object {
             val DEFAULT_WHITELISTED_CLASSES = setOf<String>()
             val DEFAULT_BLACKLISTED_CLASSES = setOf("java.lang.reflect.")
+            val DEFAULT_SAFE_ERRORS = setOf("java.lang.AssertionError")
             val DEFAULT_UNSAFE_EXCEPTIONS = setOf<String>()
             val DEFAULT_ISOLATED_CLASSES = setOf<String>()
             val DEFAULT_BLACKLISTED_METHODS = setOf(
@@ -171,6 +184,8 @@ object Sandbox {
                 "java.lang.invoke.MethodHandles",
             )
             val ALWAYS_UNSAFE_EXCEPTIONS = setOf("java.lang.Error")
+            val ALWAYS_SAFE_ERRORS = setOf<String>()
+            val NEVER_SAFE_ERRORS = setOf("java.lang.ThreadDeath", "java.lang.VirtualMachineError", "java.io.IOError")
             val ALWAYS_ISOLATED_CLASSES = setOf("kotlin.coroutines.", "kotlinx.coroutines.")
         }
     }
@@ -304,15 +319,15 @@ object Sandbox {
             }
         val stdout: String
             get() {
-                return stdoutLines.joinToString(separator = "\n") { it.line }
+                return stdoutLines.joinToString("\n") { it.line }
             }
         val stderr: String
             get() {
-                return stderrLines.joinToString(separator = "\n") { it.line }
+                return stderrLines.joinToString("\n") { it.line }
             }
         val stdin: String
             get() {
-                return inputLines.joinToString(separator = "\n") { it.line }
+                return inputLines.joinToString("\n") { it.line }
             }
         val output: String
             get() {
@@ -419,9 +434,11 @@ object Sandbox {
 
         private lateinit var confinedTask: ConfinedTask<T>
 
-        @Volatile private var wallTimeStop = 0L
+        @Volatile
+        private var wallTimeStop = 0L
 
-        @Volatile private var cpuTimeStop = 0L
+        @Volatile
+        private var cpuTimeStop = 0L
 
         val result = CompletableFuture<ExecutorResult<T>>()
 
@@ -717,6 +734,32 @@ object Sandbox {
 
         val systemInStream = executionArguments.systemInStream ?: ByteArrayInputStream(byteArrayOf())
 
+        fun finishRedirecting() {
+            check(redirectingOutput) { "Should be redirecting output" }
+
+            for (console in TaskResults.OutputLine.Console.entries) {
+                val currentRedirectingLine = currentRedirectedLines!![console] ?: continue
+                if (redirectedOutputLines.size < (redirectingOutputLimit ?: Int.MAX_VALUE)) {
+                    redirectedOutputLines.add(
+                        TaskResults.OutputLine(
+                            console,
+                            currentRedirectingLine.toString(),
+                            currentRedirectingLine.started,
+                            currentRedirectingLine.startedThread,
+                        ),
+                    )
+                } else {
+                    redirectingTruncatedLines += 1
+                }
+            }
+            if (currentRedirectingInputLine != null) {
+                redirectedInput.append(currentRedirectingInputLine.toString())
+            }
+
+            redirectingOutput = false
+            squashNormalOutput = false
+        }
+
         private fun redirectedWrite(int: Int, console: TaskResults.OutputLine.Console) {
             if (shuttingDown) {
                 return
@@ -763,12 +806,13 @@ object Sandbox {
                         currentLines.remove(console)
                     }
 
-                    if (redirectingOutput && currentRedirectingLine!!.bytes.size > 0) {
+                    if (redirectingOutput) {
+                        check(currentRedirectingLine != null) { "Should have currentRedirectingLine" }
                         if (redirectedOutputLines.size < (redirectingOutputLimit ?: Int.MAX_VALUE)) {
                             redirectedOutputLines.add(
                                 TaskResults.OutputLine(
                                     console,
-                                    currentRedirectingLine.toString() + "\n",
+                                    currentRedirectingLine.toString(),
                                     currentRedirectingLine.started,
                                     currentRedirectingLine.startedThread,
                                 ),
@@ -776,7 +820,7 @@ object Sandbox {
                         } else {
                             redirectingTruncatedLines += 1
                         }
-                        currentRedirectedLines?.remove(console)
+                        currentRedirectedLines!![console] = CurrentLine()
                     }
                 }
 
@@ -983,6 +1027,11 @@ object Sandbox {
         val unsafeExceptionClasses: Set<Class<*>> = classLoaderConfiguration.unsafeExceptions.map { name ->
             val klass = Class.forName(name) ?: error("$name does not refer to a Java class")
             require(Throwable::class.java.isAssignableFrom(klass)) { "$name does not refer to a Java Throwable" }
+            klass
+        }.toSet()
+        val safeErrorClasses = classLoaderConfiguration.safeErrors.map { name ->
+            val klass = Class.forName(name) ?: error("$name does not refer to a Java class")
+            require(Error::class.java.isAssignableFrom(klass)) { "$name does not refer to a Java Error" }
             klass
         }.toSet()
 
@@ -1197,6 +1246,10 @@ object Sandbox {
             val confinedTask = confinedTaskByThreadGroup() ?: error("only confined tasks should call this method")
             if (confinedTask.shuttingDown) {
                 throw SandboxDeath()
+            }
+            // Allow safe errors to be thrown
+            if (confinedTask.classLoader.safeErrorClasses.any { it.isAssignableFrom(throwable.javaClass) }) {
+                return
             }
             // This check is required because of how we handle finally blocks
             if (confinedTask.classLoader.unsafeExceptionClasses.any { it.isAssignableFrom(throwable.javaClass) }) {
@@ -1686,8 +1739,9 @@ object Sandbox {
                 }
             }
 
-            private fun isConstantDynamicBlacklisted(condy: ConstantDynamic): Boolean = isBlacklistedMethod(condy.bootstrapMethod.owner, condy.bootstrapMethod.name) ||
-                hasBlacklistedBootstrapRef(condy.bootstrapArguments)
+            private fun isConstantDynamicBlacklisted(condy: ConstantDynamic): Boolean =
+                isBlacklistedMethod(condy.bootstrapMethod.owner, condy.bootstrapMethod.name) ||
+                    hasBlacklistedBootstrapRef(condy.bootstrapArguments)
 
             override fun visitInvokeDynamicInsn(
                 name: String?,
@@ -2036,27 +2090,17 @@ object Sandbox {
             }
             Pair(null, e)
         } finally {
-            confinedTask.redirectingOutput = false
-            confinedTask.squashNormalOutput = false
+            confinedTask.finishRedirecting()
         }
-
-        val flushedStdout =
-            confinedTask.currentRedirectedLines!![TaskResults.OutputLine.Console.STDOUT]?.toString() ?: ""
-        val flushedStderr =
-            confinedTask.currentRedirectedLines!![TaskResults.OutputLine.Console.STDERR]?.toString() ?: ""
-        val flushedStdin =
-            confinedTask.currentRedirectingInputLine?.toString() ?: ""
 
         return JeedOutputCapture(
             returned,
             threw,
-            confinedTask.redirectedOutputLines
-                .filter { it.console == TaskResults.OutputLine.Console.STDOUT }
-                .joinToString("") { it.line } + flushedStdout,
-            confinedTask.redirectedOutputLines
-                .filter { it.console == TaskResults.OutputLine.Console.STDERR }
-                .joinToString("") { it.line } + flushedStderr,
-            confinedTask.redirectedInput.toString() + flushedStdin,
+            confinedTask.redirectedOutputLines.filter { it.console == TaskResults.OutputLine.Console.STDOUT }
+                .joinToString("\n") { it.line },
+            confinedTask.redirectedOutputLines.filter { it.console == TaskResults.OutputLine.Console.STDERR }
+                .joinToString("\n") { it.line },
+            confinedTask.redirectedInput.toString(),
             confinedTask.redirectingIOBytes.toByteArray().decodeToString(),
             confinedTask.redirectingTruncatedLines,
         ).also {
@@ -2127,7 +2171,8 @@ object Sandbox {
 
         override fun append(charSequence: CharSequence?): PrintStream = taskPrintStream.append(charSequence)
 
-        override fun append(charSequence: CharSequence?, start: Int, end: Int): PrintStream = taskPrintStream.append(charSequence, start, end)
+        override fun append(charSequence: CharSequence?, start: Int, end: Int): PrintStream =
+            taskPrintStream.append(charSequence, start, end)
 
         override fun close() {
             taskPrintStream.close()
@@ -2137,7 +2182,8 @@ object Sandbox {
             taskPrintStream.flush()
         }
 
-        override fun format(locale: Locale?, format: String, vararg args: Any?): PrintStream = taskPrintStream.format(locale, format, *args)
+        override fun format(locale: Locale?, format: String, vararg args: Any?): PrintStream =
+            taskPrintStream.format(locale, format, *args)
 
         override fun format(format: String, vararg args: Any?): PrintStream = taskPrintStream.format(format, *args)
 
@@ -2177,7 +2223,8 @@ object Sandbox {
             taskPrintStream.print(string)
         }
 
-        override fun printf(locale: Locale?, format: String, vararg args: Any?): PrintStream = taskPrintStream.printf(locale, format, *args)
+        override fun printf(locale: Locale?, format: String, vararg args: Any?): PrintStream =
+            taskPrintStream.printf(locale, format, *args)
 
         override fun printf(format: String, vararg args: Any?): PrintStream = taskPrintStream.printf(format, *args)
 
@@ -2266,9 +2313,9 @@ object Sandbox {
                                 )
                                 currentInputLine = null
                             }
-                            if (redirectingOutput && currentRedirectingInputLine!!.bytes.size > 0) {
+                            if (redirectingOutput) {
                                 redirectedInput.append(currentRedirectingInputLine.toString() + "\n")
-                                currentRedirectingInputLine = null
+                                currentRedirectingInputLine = ConfinedTask.CurrentLine()
                             }
                         }
 

@@ -267,4 +267,14 @@ System.out.print("Hello");
             executionResult shouldNot haveTimedOut()
             executionResult should haveStdout("Hello")
         }
+        "should handle print with multiple newlines" {
+            val executionResult = Source.fromSnippet(
+                """
+System.out.println("\nHello\n");
+            """.trim(),
+            ).compile().execute()
+            executionResult should haveCompleted()
+            executionResult shouldNot haveTimedOut()
+            executionResult.stdout shouldBe "\nHello\n"
+        }
     })
