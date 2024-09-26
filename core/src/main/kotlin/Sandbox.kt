@@ -736,6 +736,7 @@ object Sandbox {
 
         fun finishRedirecting() {
             check(redirectingOutput) { "Should be redirecting output" }
+            check(currentRedirectedLines != null) { "Should have currentRedirectedLines" }
 
             for (console in TaskResults.OutputLine.Console.entries) {
                 val currentRedirectingLine = currentRedirectedLines!![console] ?: continue
@@ -757,6 +758,7 @@ object Sandbox {
             }
 
             redirectingOutput = false
+            currentRedirectedLines = null
             squashNormalOutput = false
         }
 
@@ -2085,7 +2087,6 @@ object Sandbox {
             Pair(block(), null)
         } catch (e: Throwable) {
             if (e is ThreadDeath || e is LineLimitExceeded || e is OutOfMemoryError) {
-                confinedTask.currentRedirectedLines = null
                 throw e
             }
             Pair(null, e)
