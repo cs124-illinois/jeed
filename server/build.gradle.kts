@@ -39,9 +39,13 @@ dependencies {
     implementation("ch.qos.logback:logback-classic:1.5.8")
     implementation("io.github.nhubbard:konf:2.1.0")
     implementation("io.github.microutils:kotlin-logging:3.0.5")
-    implementation("org.cs124:libcs1:2024.8.0")
     implementation("com.beyondgrader.resource-agent:agent:$agentVersion")
     implementation("com.beyondgrader.resource-agent:jeedplugin:$agentVersion")
+
+    // Libraries for student use
+    implementation("org.cs124:libcs1:2024.9.0")
+    implementation("io.kotest:kotest-runner-junit5:5.9.1")
+    implementation("com.google.truth:truth:1.4.4")
 
     testImplementation("io.kotest:kotest-runner-junit5:5.9.1")
     testImplementation("io.kotest:kotest-assertions-ktor:4.4.3")
