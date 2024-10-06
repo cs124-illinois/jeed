@@ -124,7 +124,8 @@ fun Source.tryCache(
     started: Instant,
     compilerName: String,
 ): CompiledSource? {
-    if (!kompilationArguments.useCache) {
+    val useCache = kompilationArguments.useCache ?: useCompilationCache
+    if (!useCache) {
         return null
     }
     val cachedResult = compilationCache.getIfPresent(md5)
@@ -155,7 +156,8 @@ fun Source.tryCache(
 }
 
 fun CompiledSource.cache(kompilationArguments: KompilationArguments) {
-    if (cached || !kompilationArguments.useCache) {
+    val useCache = kompilationArguments.useCache ?: useCompilationCache
+    if (cached || !useCache) {
         return
     }
     compilationScope.launch {

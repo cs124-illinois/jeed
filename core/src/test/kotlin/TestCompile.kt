@@ -564,7 +564,11 @@ public class Example {
 }
 """.trim(),
                 ),
-            ).compile(compilationArguments = CompilationArguments(parentFileManager = first.fileManager))
+            ).compile(
+                compilationArguments = CompilationArguments(
+                    parentFileManager = first.fileManager,
+                ),
+            )
         }
         "should not crash when compiling in parallel" {
             (0 until 32).toList().parallelStream().map {
@@ -634,7 +638,8 @@ public class Test {
             }
             source.compile(CompilationArguments(parameters = true)).also { compiledSource ->
                 val klass = compiledSource.classLoader.loadClass("Test")
-                klass.declaredMethods.find { it.name == "method" }?.parameters?.map { it.name }?.first() shouldBe "first"
+                klass.declaredMethods.find { it.name == "method" }?.parameters?.map { it.name }
+                    ?.first() shouldBe "first"
             }
         }
         "should compute empty klass size" {

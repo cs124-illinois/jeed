@@ -1,5 +1,6 @@
 package edu.illinois.cs.cs125.jeed.core
 
+import com.google.common.base.Objects
 import com.squareup.moshi.JsonClass
 import org.jetbrains.kotlin.codegen.GeneratedClassLoader
 import java.io.ByteArrayInputStream
@@ -11,7 +12,6 @@ import java.net.URI
 import java.nio.charset.Charset
 import java.time.Instant
 import java.util.Locale
-import java.util.Objects
 import javax.tools.Diagnostic
 import javax.tools.DiagnosticListener
 import javax.tools.FileObject
@@ -63,6 +63,12 @@ data class CompilationArguments(
     val parameters: Boolean = DEFAULT_PARAMETERS,
     val debugInfo: Boolean = DEFAULT_DEBUG,
 ) {
+    init {
+        check(!waitForCache || useCache == true) {
+            "waitForCache can only be used if useCache is true"
+        }
+    }
+
     companion object {
         const val DEFAULT_WERROR = false
         const val DEFAULT_XLINT = "all"
@@ -72,24 +78,25 @@ data class CompilationArguments(
         const val DEFAULT_DEBUG = false
     }
 
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-
-        other as CompilationArguments
-
-        if (wError != other.wError) return false
-        if (enablePreview != other.enablePreview) return false
-        if (Xlint != other.Xlint) return false
-        if (useCache != other.useCache) return false
-        if (waitForCache != other.waitForCache) return false
-        if (parameters != other.parameters) return false
-        if (debugInfo != other.debugInfo) return false
-
-        return true
+    override fun equals(other: Any?): Boolean = when {
+        this === other -> true
+        javaClass != other?.javaClass -> false
+        else -> {
+            other as CompilationArguments
+            when {
+                wError != other.wError -> false
+                Xlint != other.Xlint -> false
+                enablePreview != other.enablePreview -> false
+                parameters != other.parameters -> false
+                debugInfo != other.debugInfo -> false
+                parentFileManager !== other.parentFileManager -> false
+                else -> true
+            }
+        }
     }
 
-    override fun hashCode(): Int = Objects.hash(wError, enablePreview, Xlint, useCache, waitForCache, parameters, debugInfo)
+    override fun hashCode() =
+        Objects.hashCode(wError, Xlint, enablePreview, parameters, debugInfo, parentFileManager)
 }
 
 @JsonClass(generateAdapter = true)
@@ -253,7 +260,8 @@ fun Source.compileWith(
 }
 
 private class Unit(val entry: Map.Entry<String, String>) : SimpleJavaFileObject(URI(entry.key), JavaFileObject.Kind.SOURCE) {
-    override fun isNameCompatible(simpleName: String?, kind: JavaFileObject.Kind?): Boolean = kind != JavaFileObject.Kind.SOURCE || (simpleName != "module-info" && simpleName != "package-info")
+    override fun isNameCompatible(simpleName: String?, kind: JavaFileObject.Kind?): Boolean =
+        kind != JavaFileObject.Kind.SOURCE || (simpleName != "module-info" && simpleName != "package-info")
 
     override fun getCharContent(ignoreEncodingErrors: Boolean): CharSequence = entry.value
 
@@ -275,8 +283,33 @@ fun pathToClassName(path: String): String = path.removeSuffix(".class").replace(
 
 fun binaryNameToClassName(binaryClassName: String): String = binaryClassName.replace('/', '.').replace('$', '.')
 
-class JeedFileManager(private val parentFileManager: JavaFileManager) : ForwardingJavaFileManager<JavaFileManager>(parentFileManager) {
-    val classFiles: MutableMap<String, JavaFileObject> = mutableMapOf()
+@Suppress("unused")
+class JeedFileManager(
+    private val parentFileManager: JavaFileManager,
+    val allFiles: MutableMap<String, JavaFileObject> = mutableMapOf(),
+) : ForwardingJavaFileManager<JavaFileManager>(parentFileManager) {
+
+    constructor(
+        parentFileManager: JavaFileManager,
+        generatedClassLoader: GeneratedClassLoader,
+    ) :
+        this(
+            parentFileManager,
+            generatedClassLoader.allGeneratedFiles.associate {
+                val kind = when (".${File(it.relativePath).extension}") {
+                    JavaFileObject.Kind.CLASS.extension -> JavaFileObject.Kind.CLASS
+                    else -> JavaFileObject.Kind.OTHER
+                }
+                it.relativePath to ByteSource(it.relativePath, kind).also { simpleJavaFileObject ->
+                    simpleJavaFileObject.openOutputStream().write(it.asByteArray())
+                } as JavaFileObject
+            }.toMutableMap(),
+        )
+
+    constructor(copy: JeedFileManager) : this(copy.parentFileManager, copy.allFiles)
+
+    val classFiles
+        get() = allFiles.filter { it.value.kind == JavaFileObject.Kind.CLASS }
 
     val allClassFiles: Map<String, JavaFileObject>
         get() = classFiles.toMutableMap().also { allClassFiles ->
@@ -291,34 +324,30 @@ class JeedFileManager(private val parentFileManager: JavaFileManager) : Forwardi
         get() = classFiles.values.filterIsInstance<ByteSource>().sumOf { it.buffer.size() }
 
     fun merge(other: JeedFileManager) {
-        check(classFiles.keys.intersect(other.classFiles.keys).isEmpty()) {
+        check(allFiles.keys.intersect(other.allFiles.keys).isEmpty()) {
             "Attempting to merge JeedFileManagers with duplicate keys"
         }
-        other.classFiles.forEach { (path, contents) ->
-            classFiles[path] = contents
+        other.allFiles.forEach { (path, contents) ->
+            allFiles[path] = contents
         }
     }
-    private class ByteSource(path: String) : SimpleJavaFileObject(URI.create("bytearray:///$path"), JavaFileObject.Kind.CLASS) {
+
+    fun replaceClass(name: String, newBytes: ByteArray) {
+        val path = "${name.replace(".", "/")}${JavaFileObject.Kind.CLASS.extension}"
+        check(allFiles[path] != null) { "$path does not exist" }
+        allFiles[path] = ByteSource(path, JavaFileObject.Kind.CLASS).also {
+            it.buffer.writeBytes(newBytes)
+        }
+    }
+
+    private class ByteSource(path: String, kind: JavaFileObject.Kind) : SimpleJavaFileObject(URI.create("bytearray:///$path"), kind) {
         init {
-            check(path.endsWith(".class")) { "incorrect suffix for ByteSource path: $path" }
+            check(kind != JavaFileObject.Kind.CLASS || path.endsWith(".class")) { "incorrect suffix for ByteSource path: $path" }
         }
 
         val buffer: ByteArrayOutputStream = ByteArrayOutputStream()
         override fun openInputStream(): InputStream = ByteArrayInputStream(buffer.toByteArray())
         override fun openOutputStream(): OutputStream = buffer
-    }
-
-    constructor(
-        parentFileManager: JavaFileManager,
-        generatedClassLoader: GeneratedClassLoader,
-    ) : this(parentFileManager) {
-        generatedClassLoader.allGeneratedFiles.filter {
-            ".${File(it.relativePath).extension}" == JavaFileObject.Kind.CLASS.extension
-        }.forEach {
-            classFiles[it.relativePath] = ByteSource(it.relativePath).also { simpleJavaFileObject ->
-                simpleJavaFileObject.openOutputStream().write(it.asByteArray())
-            }
-        }
     }
 
     val bytecodeForPaths: Map<String, ByteArray>
@@ -339,8 +368,8 @@ class JeedFileManager(private val parentFileManager: JavaFileManager) : Forwardi
             location != StandardLocation.CLASS_OUTPUT -> super.getJavaFileForOutput(location, className, kind, sibling)
             kind != JavaFileObject.Kind.CLASS -> throw UnsupportedOperationException()
             else -> {
-                ByteSource(classPath).also {
-                    classFiles[classPath] = it
+                ByteSource(classPath, kind).also {
+                    allFiles[classPath] = it
                 }
             }
         }
@@ -350,10 +379,12 @@ class JeedFileManager(private val parentFileManager: JavaFileManager) : Forwardi
         location: JavaFileManager.Location?,
         className: String,
         kind: JavaFileObject.Kind,
-    ): JavaFileObject? = if (location != StandardLocation.CLASS_OUTPUT) {
-        super.getJavaFileForInput(location, className, kind)
-    } else {
-        classFiles[classNameToPathWithClass(className)]
+    ): JavaFileObject? = when {
+        location != StandardLocation.CLASS_OUTPUT -> super.getJavaFileForInput(location, className, kind)
+        kind != JavaFileObject.Kind.CLASS -> throw UnsupportedOperationException()
+        else -> {
+            allFiles[classNameToPathWithClass(className)]
+        }
     }
 
     override fun list(
@@ -385,28 +416,30 @@ class JeedFileManager(private val parentFileManager: JavaFileManager) : Forwardi
         }
     }
 
-    override fun inferBinaryName(location: JavaFileManager.Location?, file: JavaFileObject): String = if (file is ByteSource) {
-        file.name.substring(0, file.name.lastIndexOf('.')).replace('/', '.')
-    } else {
-        super.inferBinaryName(location, file)
-    }
+    override fun inferBinaryName(location: JavaFileManager.Location?, file: JavaFileObject): String =
+        if (file is ByteSource) {
+            file.name.substring(0, file.name.lastIndexOf('.')).replace('/', '.')
+        } else {
+            super.inferBinaryName(location, file)
+        }
 
     @Suppress("SpellCheckingInspection")
-    override fun handleOption(current: String?, remaining: MutableIterator<String>?): Boolean = if (parentFileManager === standardFileManager && current == "--multi-release") {
-        val operand = remaining?.next() ?: error("MULTIRELEASE should have an operand")
-        synchronized(standardFileManagerSyncRoot) {
-            if (operand != lastMultireleaseOperand) {
-                require(lastMultireleaseOperand == null) { "MULTIRELEASE should not have changed" }
-                lastMultireleaseOperand = operand
-                super.handleOption(current, listOf(operand).iterator())
-            } else {
-                // Prevent JavacFileManager from clearing its caches, which would break concurrent tasks
-                true
+    override fun handleOption(current: String?, remaining: MutableIterator<String>?): Boolean =
+        if (parentFileManager === standardFileManager && current == "--multi-release") {
+            val operand = remaining?.next() ?: error("MULTIRELEASE should have an operand")
+            synchronized(standardFileManagerSyncRoot) {
+                if (operand != lastMultireleaseOperand) {
+                    require(lastMultireleaseOperand == null) { "MULTIRELEASE should not have changed" }
+                    lastMultireleaseOperand = operand
+                    super.handleOption(current, listOf(operand).iterator())
+                } else {
+                    // Prevent JavacFileManager from clearing its caches, which would break concurrent tasks
+                    true
+                }
             }
+        } else {
+            super.handleOption(current, remaining)
         }
-    } else {
-        super.handleOption(current, remaining)
-    }
 
     override fun flush() {
         if (parentFileManager !== standardFileManager) {
@@ -467,6 +500,7 @@ class IsolatingClassLoader(private val klasses: Set<String>) : ClassLoader() {
             return super.loadClass(name)
         }
     }
+
     override fun loadClass(name: String?, resolve: Boolean): Class<*> {
         if (klasses.contains(name)) {
             throw ClassNotFoundException()

@@ -224,6 +224,78 @@ fun main() {
             second should haveCompleted()
             second should haveOutput("test")
         }
+        "should load classes from a separate classloader with null checks" {
+            val first = Source(
+                mapOf(
+                    "Test.kt" to """
+class Test {
+  fun me(input: String) = "me"
+}
+""".trim(),
+                ),
+            ).kompile()
+
+            shouldThrow<CompilationFailed> {
+                Source(
+                    mapOf(
+                        "Main.kt" to """
+fun main() {
+  val test = Test()
+  println(test.me(null))
+}
+""".trim(),
+                    ),
+                ).kompile(
+                    kompilationArguments = KompilationArguments(
+                        parentFileManager = first.fileManager,
+                        parentClassLoader = first.classLoader,
+                    ),
+                )
+            }
+        }
+        "should load top-level methods from a separate classloader" {
+            Source(
+                mapOf(
+                    "Test.kt" to """
+fun blah() = "me"
+""".trim(),
+                    "Main.kt" to """
+fun main() {
+  println(blah())
+}
+""".trim(),
+                ),
+            ).kompile().execute().also {
+                it should haveCompleted()
+                it should haveOutput("me")
+            }
+
+            val first = Source(
+                mapOf(
+                    "Test.kt" to """
+fun blah() = "me"
+""".trim(),
+                ),
+            ).kompile()
+
+            Source(
+                mapOf(
+                    "Main.kt" to """
+fun main() {
+  println(blah())
+}
+""".trim(),
+                ),
+            ).kompile(
+                kompilationArguments = KompilationArguments(
+                    parentFileManager = first.fileManager,
+                    parentClassLoader = first.classLoader,
+                ),
+            ).execute().also {
+                it should haveCompleted()
+                it should haveOutput("me")
+            }
+        }
         "should enumerate classes from multiple file managers" {
             val first = Source(
                 mapOf(
@@ -267,6 +339,32 @@ fun main() {
                 "test/Test.class",
             )
         }
+        "should isolate classes correctly when requested" {
+            val source = Source(
+                mapOf(
+                    "Test.kt" to """
+package examples
+
+class Test {
+  companion object {
+    @JvmStatic
+    fun welcome() = "Jeed"
+  }
+}
+            """.trim(),
+                ),
+            )
+            source.kompile().also {
+                // Incorrectly loads the class from the classpath when not isolated
+                it.classLoader.loadClass("examples.Test")
+                    .getDeclaredMethod("welcome").invoke(null) shouldBe "Classpath"
+            }
+            source.kompile(KompilationArguments(isolatedClassLoader = true, useCache = false)).also {
+                it.cached shouldBe false
+                it.classLoader.loadClass("examples.Test")
+                    .getDeclaredMethod("welcome").invoke(null) shouldBe "Jeed"
+            }
+        }
         "should compile with parameter names when requested" {
             val source = Source(
                 mapOf(
@@ -283,7 +381,8 @@ class Test {
             }
             source.kompile(KompilationArguments(parameters = true)).also { compiledSource ->
                 val klass = compiledSource.classLoader.loadClass("Test")
-                klass.declaredMethods.find { it.name == "method" }?.parameters?.map { it.name }?.first() shouldBe "first"
+                klass.declaredMethods.find { it.name == "method" }?.parameters?.map { it.name }
+                    ?.first() shouldBe "first"
             }
         }
         "should catch recursion errors" {

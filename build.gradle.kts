@@ -9,12 +9,12 @@ plugins {
     id("io.gitlab.arturbosch.detekt") version "1.23.7"
     id("com.google.devtools.ksp") version "2.0.20-1.0.25" apply false
     id("io.github.gradle-nexus.publish-plugin") version "2.0.0"
-    id("com.autonomousapps.dependency-analysis") version "2.1.0"
+    id("com.autonomousapps.dependency-analysis") version "2.1.4"
 }
 val agentVersion by extra { "2024.7.0" }
 allprojects {
     group = "org.cs124.jeed"
-    version = "2024.9.2"
+    version = "2024.10.0"
 }
 subprojects {
     tasks.withType<Test> {

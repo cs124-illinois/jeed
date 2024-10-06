@@ -2,6 +2,7 @@
 
 package edu.illinois.cs.cs125.jeed.core
 
+import com.google.common.base.Objects
 import com.squareup.moshi.JsonClass
 import edu.illinois.cs.cs125.jeed.core.antlr.KotlinParser
 import io.github.classgraph.ClassGraph
@@ -50,14 +51,15 @@ private const val KOTLIN_EMPTY_LOCATION = "/"
 @JsonClass(generateAdapter = true)
 @Suppress("MatchingDeclarationName")
 data class KompilationArguments(
-    @Transient val parentClassLoader: ClassLoader = ClassLoader.getSystemClassLoader(),
+    @Transient var parentClassLoader: ClassLoader? = null,
     val verbose: Boolean = DEFAULT_VERBOSE,
     val allWarningsAsErrors: Boolean = DEFAULT_ALLWARNINGSASERRORS,
-    val useCache: Boolean = useCompilationCache,
+    val useCache: Boolean? = null,
     val waitForCache: Boolean = false,
     @Transient val parentFileManager: JeedFileManager? = null,
     val parameters: Boolean = DEFAULT_PARAMETERS,
     val jvmTarget: String = DEFAULT_JVM_TARGET,
+    val isolatedClassLoader: Boolean = false,
 ) {
     @Suppress("SpellCheckingInspection")
     @Transient
@@ -75,15 +77,19 @@ data class KompilationArguments(
     val arguments: K2JVMCompilerArguments = K2JVMCompilerArguments()
 
     init {
+        check(!waitForCache || useCache == true) {
+            "waitForCache can only be used if useCache is true"
+        }
+
+        if (parentClassLoader == null) {
+            parentClassLoader = ClassLoader.getSystemClassLoader()
+        }
+
         parseCommandLineArguments(additionalCompilerArguments, arguments)
-    }
 
-    init {
         arguments.classpath = classpath
-
         arguments.verbose = verbose
         arguments.allWarningsAsErrors = allWarningsAsErrors
-
         arguments.noStdlib = true
         arguments.javaParameters = parameters
     }
@@ -95,49 +101,28 @@ data class KompilationArguments(
         const val DEFAULT_ALLWARNINGSASERRORS = false
         const val DEFAULT_PARAMETERS = false
 
-        // TODO: Remove limit when Kotlin supports Java 21
-        private const val MAX_KOTLIN_SUPPORTED_JAVA_VERSION = 20
+        private const val MAX_KOTLIN_SUPPORTED_JAVA_VERSION = 21
         val DEFAULT_JVM_TARGET = min(systemCompilerVersion, MAX_KOTLIN_SUPPORTED_JAVA_VERSION).toCompilerVersion()
     }
 
-    @Suppress("RedundantIf")
-    override fun equals(other: Any?): Boolean {
-        if (this === other) {
-            return true
+    override fun equals(other: Any?): Boolean = when {
+        this === other -> true
+        javaClass != other?.javaClass -> false
+        else -> {
+            other as KompilationArguments
+            when {
+                verbose != other.verbose -> false
+                allWarningsAsErrors != other.allWarningsAsErrors -> false
+                parameters != other.parameters -> false
+                jvmTarget != other.jvmTarget -> false
+                parentFileManager !== other.parentFileManager -> false
+                else -> true
+            }
         }
-        if (javaClass != other?.javaClass) {
-            return false
-        }
-
-        other as KompilationArguments
-
-        if (verbose != other.verbose) {
-            return false
-        }
-        if (allWarningsAsErrors != other.allWarningsAsErrors) {
-            return false
-        }
-        if (useCache != other.useCache) {
-            return false
-        }
-        if (parameters != other.parameters) {
-            return false
-        }
-        if (jvmTarget != other.jvmTarget) {
-            return false
-        }
-
-        return true
     }
 
-    override fun hashCode(): Int {
-        var result = verbose.hashCode()
-        result = 31 * result + allWarningsAsErrors.hashCode()
-        result = 31 * result + useCache.hashCode()
-        result = 31 * result + parameters.hashCode()
-        result = 31 * result + jvmTarget.hashCode()
-        return result
-    }
+    override fun hashCode() =
+        Objects.hashCode(verbose, allWarningsAsErrors, parameters, jvmTarget, parentFileManager)
 }
 
 internal class JeedMessageCollector(val source: Source, private val allWarningsAsErrors: Boolean) : MessageCollector {
@@ -306,14 +291,18 @@ private fun kompile(
     source.tryCache(kompilationArguments, started, systemCompilerName)?.let { return it }
 
     val (fileManager, messages) = kompileToFileManager(kompilationArguments, source, parentFileManager)
-    val classLoader = JeedClassLoader(fileManager, parentClassLoader)
+    val actualParentClassloader = if (kompilationArguments.isolatedClassLoader) {
+        IsolatingClassLoader(fileManager.classFiles.keys.map { pathToClassName(it) }.toSet())
+    } else {
+        parentClassLoader
+    }
 
     return CompiledSource(
         source,
         messages,
         started,
         Interval(started, Instant.now()),
-        classLoader,
+        JeedClassLoader(fileManager, actualParentClassloader),
         fileManager,
     ).also { compiledSource ->
         compiledSource.cache(kompilationArguments)
@@ -338,7 +327,7 @@ fun CompiledSource.usesCoroutines(): Boolean = source.sources.keys
 
 fun JeedFileManager.toVirtualFile(): VirtualFile {
     val root = SimpleVirtualFile("", listOf(), true)
-    classFiles.forEach { (path, file) ->
+    allFiles.forEach { (path, file) ->
         var workingDirectory = root
         path.split("/").also { parts ->
             parts.dropLast(1).forEach { directory ->
@@ -440,7 +429,7 @@ private fun String.toJvmTarget() = when (this) {
     "18" -> JvmTarget.JVM_18
     "19" -> JvmTarget.JVM_19
     "20" -> JvmTarget.JVM_20
-    // "21" -> JvmTarget.JVM_21 // TODO: Uncomment when Kotlin supports Java 21
+    "21" -> JvmTarget.JVM_21
     else -> error("Bad JVM target: $this")
 }
 
