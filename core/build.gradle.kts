@@ -14,7 +14,7 @@ plugins {
     id("org.jmailen.kotlinter")
     id("io.gitlab.arturbosch.detekt")
     id("com.google.devtools.ksp")
-    id("com.ryandens.javaagent-test") version "0.6.1"
+    id("com.ryandens.javaagent-test") version "0.7.0"
 }
 val agentVersion: String by rootProject.extra
 configurations.all {
@@ -27,7 +27,7 @@ dependencies {
 
     antlr("org.antlr:antlr4:4.13.2")
 
-    implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:2.0.20")
+    implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:2.0.21")
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
     implementation("com.puppycrawl.tools:checkstyle:10.18.2")
@@ -39,7 +39,7 @@ dependencies {
     implementation("org.ow2.asm:asm:9.7.1")
     implementation("org.ow2.asm:asm-tree:9.7.1")
     implementation("org.ow2.asm:asm-util:9.7.1")
-    implementation("ch.qos.logback:logback-classic:1.5.8")
+    implementation("ch.qos.logback:logback-classic:1.5.11")
     implementation("io.github.microutils:kotlin-logging:3.0.5")
     implementation("io.github.classgraph:classgraph:4.8.177")
     implementation("net.java.dev.jna:jna:5.15.0")

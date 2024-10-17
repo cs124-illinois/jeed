@@ -83,7 +83,7 @@ public class Test(var first: Int, var second: Int) {
             Source(
                 mapOf(
                     "Test.kt" to """
-public class Test() {
+class Test() {
   fun conditional(i: Int): Int {
     if (i < 0) {
       return 1
@@ -98,7 +98,29 @@ public class Test() {
                 it.lookup("Test.conditional(Int):Int", "Test.kt").complexity shouldBe 2
             }
         }
-
+        "should find complexity for compound conditional statements" {
+            Source(
+                mapOf(
+                    "Test.kt" to """
+class Test {
+    fun chooser(i: Int, i: Int): Int {
+        if (i > j && i % 2 == 0) {
+            return i
+        } else if (i < j || i % 2 != 0) {
+            return i
+        } else if ((i == j) && (i < 0 || j > 0) || i == 0) {
+            return i
+        } else {
+            return i
+        }
+    }
+}
+""".trim(),
+                ),
+            ).complexity().also {
+                it.lookup("Test.chooser(Int,Int):Int", "Test.kt").complexity shouldBe 9
+            }
+        }
         "should find complexity of complex if statements" {
             Source(
                 mapOf(

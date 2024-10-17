@@ -193,7 +193,7 @@ class JavaComplexityListener(val source: Source, entry: Map.Entry<String, String
             return
         }
         val bop = ctx.bop?.type ?: return
-        // &&, ||, and ? each represent one new path
+        // ||, &&, and ? each represent one new unit of complexity
         if (complexityExpressionBOPs.contains(bop)) {
             currentComplexity.complexity++
         }

@@ -13,7 +13,7 @@ plugins {
     id("org.jmailen.kotlinter")
     id("io.gitlab.arturbosch.detekt")
     id("com.google.devtools.ksp")
-    id("com.ryandens.javaagent-test") version "0.6.1"
+    id("com.ryandens.javaagent-test") version "0.7.0"
 }
 val agentVersion: String by rootProject.extra
 configurations.all {
@@ -22,7 +22,7 @@ configurations.all {
     }
 }
 dependencies {
-    val ktorVersion = "2.3.12"
+    val ktorVersion = "3.0.0"
 
     ksp("com.squareup.moshi:moshi-kotlin-codegen:1.15.1")
 
@@ -35,8 +35,8 @@ dependencies {
     implementation("io.ktor:ktor-server-content-negotiation:$ktorVersion")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
     implementation("com.squareup.moshi:moshi-kotlin:1.15.1")
-    implementation("org.cs124:ktor-moshi:2024.6.0")
-    implementation("ch.qos.logback:logback-classic:1.5.8")
+    implementation("org.cs124:ktor-moshi:2024.10.0")
+    implementation("ch.qos.logback:logback-classic:1.5.11")
     implementation("io.github.nhubbard:konf:2.1.0")
     implementation("io.github.microutils:kotlin-logging:3.0.5")
     implementation("com.beyondgrader.resource-agent:agent:$agentVersion")
@@ -48,7 +48,6 @@ dependencies {
     implementation("com.google.truth:truth:1.4.4")
 
     testImplementation("io.kotest:kotest-runner-junit5:5.9.1")
-    testImplementation("io.kotest:kotest-assertions-ktor:4.4.3")
     testImplementation("io.ktor:ktor-server-test-host:$ktorVersion")
 }
 

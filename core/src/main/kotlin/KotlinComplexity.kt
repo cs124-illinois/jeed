@@ -212,11 +212,12 @@ class KotlinComplexityListener(val source: Source, entry: Map.Entry<String, Stri
             requireDepth++
         }
 
-        ctx.DISJ()?.also {
+        // &&, ||, and ?: all represent one additional unit of complexity
+        ctx.CONJ()?.also {
             require(complexityStack.isNotEmpty())
             currentComplexity.complexity += 1
         }
-        ctx.CONJ()?.also {
+        ctx.DISJ()?.also {
             require(complexityStack.isNotEmpty())
             currentComplexity.complexity += 1
         }

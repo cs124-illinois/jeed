@@ -4,19 +4,16 @@ import edu.illinois.cs.cs125.jeed.core.Sandbox
 import edu.illinois.cs.cs125.jeed.core.moshi.PermissionJson
 import io.github.nhubbard.konf.Config
 import io.github.nhubbard.konf.source.yaml.yaml
-import io.kotest.assertions.ktor.shouldHaveStatus
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.longs.shouldBeExactly
 import io.kotest.matchers.shouldBe
-import io.ktor.http.HttpMethod
+import io.ktor.client.request.header
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
 import io.ktor.http.HttpStatusCode
-import io.ktor.server.application.Application
-import io.ktor.server.testing.handleRequest
-import io.ktor.server.testing.setBody
-import io.ktor.server.testing.withTestApplication
+import io.ktor.server.testing.testApplication
 
-@Suppress("DEPRECATION")
 class TestConfig :
     StringSpec({
         "should load defaults correctly" {
@@ -53,9 +50,12 @@ limits:
             )
         }
         "should reject snippet request with too long timeout" {
-            withTestApplication(Application::jeed) {
-                handleRequest(HttpMethod.Post, "/") {
-                    addHeader("content-type", "application/json")
+            testApplication {
+                application {
+                    jeed()
+                }
+                client.post("/") {
+                    header("content-type", "application/json")
                     setBody(
                         """
 {
@@ -69,12 +69,12 @@ limits:
   }
 }""".trim(),
                     )
-                }.apply {
-                    response.shouldHaveStatus(HttpStatusCode.BadRequest.value)
+                }.also { response ->
+                    response.status shouldBe HttpStatusCode.BadRequest
                 }
 
-                handleRequest(HttpMethod.Post, "/") {
-                    addHeader("content-type", "application/json")
+                client.post("/") {
+                    header("content-type", "application/json")
                     setBody(
                         """
 {
@@ -88,15 +88,18 @@ limits:
   }
 }""".trim(),
                     )
-                }.apply {
-                    response.shouldHaveStatus(HttpStatusCode.BadRequest.value)
+                }.also { response ->
+                    response.status shouldBe HttpStatusCode.BadRequest
                 }
             }
         }
         "should reject snippet request with too many extra threads" {
-            withTestApplication(Application::jeed) {
-                handleRequest(HttpMethod.Post, "/") {
-                    addHeader("content-type", "application/json")
+            testApplication {
+                application {
+                    jeed()
+                }
+                client.post("/") {
+                    header("content-type", "application/json")
                     setBody(
                         """
 {
@@ -110,12 +113,12 @@ limits:
   }
 }""".trim(),
                     )
-                }.apply {
-                    response.shouldHaveStatus(HttpStatusCode.BadRequest.value)
+                }.also { response ->
+                    response.status shouldBe HttpStatusCode.BadRequest
                 }
 
-                handleRequest(HttpMethod.Post, "/") {
-                    addHeader("content-type", "application/json")
+                client.post("/") {
+                    header("content-type", "application/json")
                     setBody(
                         """
 {
@@ -129,15 +132,18 @@ limits:
   }
 }""".trim(),
                     )
-                }.apply {
-                    response.shouldHaveStatus(HttpStatusCode.BadRequest.value)
+                }.also { response ->
+                    response.status shouldBe HttpStatusCode.BadRequest
                 }
             }
         }
         "should reject snippet request with too many permissions" {
-            withTestApplication(Application::jeed) {
-                handleRequest(HttpMethod.Post, "/") {
-                    addHeader("content-type", "application/json")
+            testApplication {
+                application {
+                    jeed()
+                }
+                client.post("/") {
+                    header("content-type", "application/json")
                     setBody(
                         """
 {
@@ -157,12 +163,12 @@ limits:
   }
 }""".trim(),
                     )
-                }.apply {
-                    response.shouldHaveStatus(HttpStatusCode.OK.value)
+                }.also { response ->
+                    response.status shouldBe HttpStatusCode.OK
                 }
 
-                handleRequest(HttpMethod.Post, "/") {
-                    addHeader("content-type", "application/json")
+                client.post("/") {
+                    header("content-type", "application/json")
                     setBody(
                         """
 {
@@ -182,15 +188,18 @@ limits:
   }
 }""".trim(),
                     )
-                }.apply {
-                    response.shouldHaveStatus(HttpStatusCode.BadRequest.value)
+                }.also { response ->
+                    response.status shouldBe HttpStatusCode.BadRequest
                 }
             }
         }
         "should reject snippet request attempting to remove blacklisted classes" {
-            withTestApplication(Application::jeed) {
-                handleRequest(HttpMethod.Post, "/") {
-                    addHeader("content-type", "application/json")
+            testApplication {
+                application {
+                    jeed()
+                }
+                client.post("/") {
+                    header("content-type", "application/json")
                     setBody(
                         """
 {
@@ -208,12 +217,12 @@ limits:
   }
 }""".trim(),
                     )
-                }.apply {
-                    response.shouldHaveStatus(HttpStatusCode.OK.value)
+                }.also { response ->
+                    response.status shouldBe HttpStatusCode.OK
                 }
 
-                handleRequest(HttpMethod.Post, "/") {
-                    addHeader("content-type", "application/json")
+                client.post("/") {
+                    header("content-type", "application/json")
                     setBody(
                         """
 {
@@ -229,15 +238,18 @@ limits:
   }
 }""".trim(),
                     )
-                }.apply {
-                    response.shouldHaveStatus(HttpStatusCode.BadRequest.value)
+                }.also { response ->
+                    response.status shouldBe HttpStatusCode.BadRequest
                 }
             }
         }
         "should reject snippet request attempting to remove forbidden methods" {
-            withTestApplication(Application::jeed) {
-                handleRequest(HttpMethod.Post, "/") {
-                    addHeader("content-type", "application/json")
+            testApplication {
+                application {
+                    jeed()
+                }
+                client.post("/") {
+                    header("content-type", "application/json")
                     setBody(
                         """
 {
@@ -259,8 +271,8 @@ limits:
   }
 }""".trim(),
                     )
-                }.apply {
-                    response.shouldHaveStatus(HttpStatusCode.BadRequest.value)
+                }.also { response ->
+                    response.status shouldBe HttpStatusCode.BadRequest
                 }
             }
         }

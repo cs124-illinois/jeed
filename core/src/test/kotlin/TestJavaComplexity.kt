@@ -73,6 +73,29 @@ public class Test {
                 it.lookup("Test.int chooser(int,int)", "Test.java").complexity shouldBe 2
             }
         }
+        "should calculate complexity for compound conditional statements" {
+            Source(
+                mapOf(
+                    "Test.java" to """
+public class Test {
+    int chooser(int i, int j) {
+        if (i > j && i % 2 == 0) {
+            return i;
+        } else if (i < j || i % 2 != 0) {
+            return i;
+        } else if ((i == j) && (i < 0 || j > 0) || i == 0) {
+            return i;
+        } else {
+            return i;
+        }
+    }
+}
+""".trim(),
+                ),
+            ).complexity().also {
+                it.lookup("Test.int chooser(int,int)", "Test.java").complexity shouldBe 9
+            }
+        }
         "should calculate complexity for complex conditional statements" {
             Source(
                 mapOf(

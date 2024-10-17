@@ -5,7 +5,6 @@ package edu.illinois.cs.cs125.jeed.server
 import com.beyondgrader.resourceagent.jeed.MemoryLimit
 import edu.illinois.cs.cs125.jeed.core.LineTrace
 import edu.illinois.cs.cs125.jeed.core.checkDockerEnabled
-import io.kotest.assertions.ktor.shouldHaveStatus
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.beEmpty
 import io.kotest.matchers.ints.shouldBeGreaterThan
@@ -14,20 +13,24 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNot
 import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.string.shouldEndWith
-import io.ktor.http.HttpMethod
+import io.ktor.client.request.get
+import io.ktor.client.request.header
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpStatusCode
-import io.ktor.server.application.Application
-import io.ktor.server.testing.handleRequest
-import io.ktor.server.testing.setBody
-import io.ktor.server.testing.withTestApplication
+import io.ktor.server.testing.testApplication
 
-@Suppress("LargeClass", "DEPRECATION")
+@Suppress("LargeClass")
 class TestHTTP : StringSpec() {
     init {
         "should accept good snippet request" {
-            withTestApplication(Application::jeed) {
-                handleRequest(HttpMethod.Post, "/") {
-                    addHeader("content-type", "application/json")
+            testApplication {
+                application {
+                    jeed()
+                }
+                client.post("/") {
+                    header("content-type", "application/json")
                     setBody(
                         """
 {
@@ -36,10 +39,10 @@ class TestHTTP : StringSpec() {
 "tasks": [ "compile", "execute" ]
 }""".trim(),
                     )
-                }.apply {
-                    response.shouldHaveStatus(HttpStatusCode.OK.value)
+                }.also { response ->
+                    response.status shouldBe HttpStatusCode.OK
 
-                    val jeedResponse = Response.from(response.content)
+                    val jeedResponse = Response.from(response.bodyAsText())
                     jeedResponse.completed.execution?.klass shouldBe "Main"
                     jeedResponse.completedTasks.size shouldBe 3
                     jeedResponse.failedTasks.size shouldBe 0
@@ -47,9 +50,12 @@ class TestHTTP : StringSpec() {
             }
         }
         "should timeout a snippet request" {
-            withTestApplication(Application::jeed) {
-                handleRequest(HttpMethod.Post, "/") {
-                    addHeader("content-type", "application/json")
+            testApplication {
+                application {
+                    jeed()
+                }
+                client.post("/") {
+                    header("content-type", "application/json")
                     setBody(
                         """
 {
@@ -62,10 +68,10 @@ while (true) {
 "tasks": [ "compile", "execute" ]
 }""".trim(),
                     )
-                }.apply {
-                    response.shouldHaveStatus(HttpStatusCode.OK.value)
+                }.also { response ->
+                    response.status shouldBe HttpStatusCode.OK
 
-                    val jeedResponse = Response.from(response.content)
+                    val jeedResponse = Response.from(response.bodyAsText())
                     jeedResponse.completed.execution?.klass shouldBe "Main"
                     jeedResponse.completedTasks.size shouldBe 3
                     jeedResponse.failedTasks.size shouldBe 0
@@ -74,9 +80,12 @@ while (true) {
             }
         }
         "should timeout a snippet request with line count limit" {
-            withTestApplication(Application::jeed) {
-                handleRequest(HttpMethod.Post, "/") {
-                    addHeader("content-type", "application/json")
+            testApplication {
+                application {
+                    jeed()
+                }
+                client.post("/") {
+                    header("content-type", "application/json")
                     setBody(
                         """
 {
@@ -94,10 +103,10 @@ while (true) {
 }
 }""".trim(),
                     )
-                }.apply {
-                    response.shouldHaveStatus(HttpStatusCode.OK.value)
+                }.also { response ->
+                    response.status shouldBe HttpStatusCode.OK
 
-                    val jeedResponse = Response.from(response.content)
+                    val jeedResponse = Response.from(response.bodyAsText())
                     jeedResponse.completed.execution?.klass shouldBe "Main"
                     jeedResponse.completedTasks.size shouldBe 3
                     jeedResponse.failedTasks.size shouldBe 0
@@ -107,9 +116,12 @@ while (true) {
             }
         }
         "should reject OOM snippet request properly" {
-            withTestApplication(Application::jeed) {
-                handleRequest(HttpMethod.Post, "/") {
-                    addHeader("content-type", "application/json")
+            testApplication {
+                application {
+                    jeed()
+                }
+                client.post("/") {
+                    header("content-type", "application/json")
                     setBody(
                         """
 {
@@ -121,9 +133,9 @@ values[0] = 0;
 "tasks": [ "compile", "execute" ]
 }""".trim(),
                     )
-                }.apply {
-                    response.shouldHaveStatus(HttpStatusCode.OK.value)
-                    val jeedResponse = Response.from(response.content)
+                }.also { response ->
+                    response.status shouldBe HttpStatusCode.OK
+                    val jeedResponse = Response.from(response.bodyAsText())
                     jeedResponse.completed.execution?.klass shouldBe "Main"
                     jeedResponse.completedTasks.size shouldBe 3
                     jeedResponse.failedTasks.size shouldBe 0
@@ -133,9 +145,12 @@ values[0] = 0;
             }
         }
         "should prevent counterfeiting initialization failures" {
-            withTestApplication(Application::jeed) {
-                handleRequest(HttpMethod.Post, "/") {
-                    addHeader("content-type", "application/json")
+            testApplication {
+                application {
+                    jeed()
+                }
+                client.post("/") {
+                    header("content-type", "application/json")
                     setBody(
                         """
 {
@@ -143,7 +158,7 @@ values[0] = 0;
 "sources": [
   {
     "path": "Main.java",
-    "contents": " 
+    "contents": "
 public class Main {
   public static void main() {
     throw new NoClassDefFoundError(\"Could not initialize class java.lang.invoke.MethodHandles\");
@@ -154,10 +169,10 @@ public class Main {
 "tasks": [ "compile", "execute" ]
 }""".trim(),
                     )
-                }.apply {
-                    response.shouldHaveStatus(HttpStatusCode.OK.value)
+                }.also { response ->
+                    response.status shouldBe HttpStatusCode.OK
 
-                    val jeedResponse = Response.from(response.content)
+                    val jeedResponse = Response.from(response.bodyAsText())
                     jeedResponse.completedTasks.size shouldBe 2
                     jeedResponse.failedTasks.size shouldBe 0
                     jeedResponse.completed.execution?.threw?.klass shouldEndWith "SecurityException"
@@ -168,10 +183,12 @@ public class Main {
             }
         }
         "should accept good snippet cexecution request".config(enabled = checkDockerEnabled()) {
-
-            withTestApplication(Application::jeed) {
-                handleRequest(HttpMethod.Post, "/") {
-                    addHeader("content-type", "application/json")
+            testApplication {
+                application {
+                    jeed()
+                }
+                client.post("/") {
+                    header("content-type", "application/json")
                     setBody(
                         """
 {
@@ -180,10 +197,10 @@ public class Main {
 "tasks": [ "compile", "cexecute" ]
 }""".trim(),
                     )
-                }.apply {
-                    response.shouldHaveStatus(HttpStatusCode.OK.value)
+                }.also { response ->
+                    response.status shouldBe HttpStatusCode.OK
 
-                    val jeedResponse = Response.from(response.content)
+                    val jeedResponse = Response.from(response.bodyAsText())
                     jeedResponse.completed.cexecution?.klass shouldBe "Main"
                     jeedResponse.completedTasks.size shouldBe 3
                     jeedResponse.failedTasks.size shouldBe 0
@@ -191,9 +208,12 @@ public class Main {
             }
         }
         "should accept good kotlin snippet request" {
-            withTestApplication(Application::jeed) {
-                handleRequest(HttpMethod.Post, "/") {
-                    addHeader("content-type", "application/json")
+            testApplication {
+                application {
+                    jeed()
+                }
+                client.post("/") {
+                    header("content-type", "application/json")
                     setBody(
                         """
 {
@@ -202,10 +222,10 @@ public class Main {
 "tasks": [ "kompile", "execute" ]
 }""".trim(),
                     )
-                }.apply {
-                    response.shouldHaveStatus(HttpStatusCode.OK.value)
+                }.also { response ->
+                    response.status shouldBe HttpStatusCode.OK
 
-                    val jeedResponse = Response.from(response.content)
+                    val jeedResponse = Response.from(response.bodyAsText())
                     jeedResponse.completed.execution?.klass shouldBe "MainKt"
                     jeedResponse.completedTasks.size shouldBe 3
                     jeedResponse.failedTasks.size shouldBe 0
@@ -213,9 +233,12 @@ public class Main {
             }
         }
         "should accept good source request" {
-            withTestApplication(Application::jeed) {
-                handleRequest(HttpMethod.Post, "/") {
-                    addHeader("content-type", "application/json")
+            testApplication {
+                application {
+                    jeed()
+                }
+                client.post("/") {
+                    header("content-type", "application/json")
                     setBody(
                         """
 {
@@ -223,7 +246,7 @@ public class Main {
 "sources": [
   {
     "path": "Main.java",
-    "contents": " 
+    "contents": "
 public class Main {
   public static void main() {
     System.out.println(\"Here\");
@@ -234,19 +257,22 @@ public class Main {
 "tasks": [ "compile", "execute" ]
 }""".trim(),
                     )
-                }.apply {
-                    response.shouldHaveStatus(HttpStatusCode.OK.value)
+                }.also { response ->
+                    response.status shouldBe HttpStatusCode.OK
 
-                    val jeedResponse = Response.from(response.content)
+                    val jeedResponse = Response.from(response.bodyAsText())
                     jeedResponse.completedTasks.size shouldBe 2
                     jeedResponse.failedTasks.size shouldBe 0
                 }
             }
         }
         "should accept good kotlin source request" {
-            withTestApplication(Application::jeed) {
-                handleRequest(HttpMethod.Post, "/") {
-                    addHeader("content-type", "application/json")
+            testApplication {
+                application {
+                    jeed()
+                }
+                client.post("/") {
+                    header("content-type", "application/json")
                     setBody(
                         """
 {
@@ -263,10 +289,10 @@ fun main() {
 "tasks": [ "kompile", "execute" ]
 }""".trim(),
                     )
-                }.apply {
-                    response.shouldHaveStatus(HttpStatusCode.OK.value)
+                }.also { response ->
+                    response.status shouldBe HttpStatusCode.OK
 
-                    val jeedResponse = Response.from(response.content)
+                    val jeedResponse = Response.from(response.bodyAsText())
                     jeedResponse.completed.execution?.klass shouldBe "MainKt"
                     jeedResponse.completed.execution?.outputLines?.joinToString(separator = "\n") {
                         it.line
@@ -277,9 +303,12 @@ fun main() {
             }
         }
         "kotlin coroutines should work by default" {
-            withTestApplication(Application::jeed) {
-                handleRequest(HttpMethod.Post, "/") {
-                    addHeader("content-type", "application/json")
+            testApplication {
+                application {
+                    jeed()
+                }
+                client.post("/") {
+                    header("content-type", "application/json")
                     setBody(
                         """
 {
@@ -302,10 +331,10 @@ fun main() {
 "tasks": [ "kompile", "execute" ]
 }""".trim(),
                     )
-                }.apply {
-                    response.shouldHaveStatus(HttpStatusCode.OK.value)
+                }.also { response ->
+                    response.status shouldBe HttpStatusCode.OK
 
-                    val jeedResponse = Response.from(response.content)
+                    val jeedResponse = Response.from(response.bodyAsText())
                     jeedResponse.completed.execution?.klass shouldBe "MainKt"
                     jeedResponse.completed.execution?.outputLines?.joinToString(separator = "\n") {
                         it.line
@@ -316,9 +345,12 @@ fun main() {
             }
         }
         "should accept good source checkstyle request" {
-            withTestApplication(Application::jeed) {
-                handleRequest(HttpMethod.Post, "/") {
-                    addHeader("content-type", "application/json")
+            testApplication {
+                application {
+                    jeed()
+                }
+                client.post("/") {
+                    header("content-type", "application/json")
                     setBody(
                         """
 {
@@ -337,19 +369,22 @@ public static void main() {
 "tasks": [ "checkstyle", "compile", "execute" ]
 }""".trim(),
                     )
-                }.apply {
-                    response.shouldHaveStatus(HttpStatusCode.OK.value)
+                }.also { response ->
+                    response.status shouldBe HttpStatusCode.OK
 
-                    val jeedResponse = Response.from(response.content)
+                    val jeedResponse = Response.from(response.bodyAsText())
                     jeedResponse.completedTasks.size shouldBe 3
                     jeedResponse.failedTasks.size shouldBe 0
                 }
             }
         }
         "should accept good source ktlint request" {
-            withTestApplication(Application::jeed) {
-                handleRequest(HttpMethod.Post, "/") {
-                    addHeader("content-type", "application/json")
+            testApplication {
+                application {
+                    jeed()
+                }
+                client.post("/") {
+                    header("content-type", "application/json")
                     setBody(
                         """
 {
@@ -366,19 +401,22 @@ fun main() {
 "tasks": [ "ktlint", "kompile", "execute" ]
 }""".trim(),
                     )
-                }.apply {
-                    response.shouldHaveStatus(HttpStatusCode.OK.value)
+                }.also { response ->
+                    response.status shouldBe HttpStatusCode.OK
 
-                    val jeedResponse = Response.from(response.content)
+                    val jeedResponse = Response.from(response.bodyAsText())
                     jeedResponse.completedTasks.size shouldBe 3
                     jeedResponse.failedTasks.size shouldBe 0
                 }
             }
         }
         "should reject checkstyle request for non-Java sources" {
-            withTestApplication(Application::jeed) {
-                handleRequest(HttpMethod.Post, "/") {
-                    addHeader("content-type", "application/json")
+            testApplication {
+                application {
+                    jeed()
+                }
+                client.post("/") {
+                    header("content-type", "application/json")
                     setBody(
                         """
 {
@@ -395,15 +433,18 @@ fun main() {
 "tasks": [ "checkstyle", "kompile", "execute" ]
 }""".trim(),
                     )
-                }.apply {
-                    response.shouldHaveStatus(HttpStatusCode.BadRequest.value)
+                }.also { response ->
+                    response.status shouldBe HttpStatusCode.BadRequest
                 }
             }
         }
         "should accept good templated source request" {
-            withTestApplication(Application::jeed) {
-                handleRequest(HttpMethod.Post, "/") {
-                    addHeader("content-type", "application/json")
+            testApplication {
+                application {
+                    jeed()
+                }
+                client.post("/") {
+                    header("content-type", "application/json")
                     setBody(
                         """
 {
@@ -428,19 +469,22 @@ public static void main() {
 "tasks": [ "template", "compile", "execute" ]
 }""".trim(),
                     )
-                }.apply {
-                    response.shouldHaveStatus(HttpStatusCode.OK.value)
+                }.also { response ->
+                    response.status shouldBe HttpStatusCode.OK
 
-                    val jeedResponse = Response.from(response.content)
+                    val jeedResponse = Response.from(response.bodyAsText())
                     jeedResponse.completedTasks.size shouldBe 3
                     jeedResponse.failedTasks.size shouldBe 0
                 }
             }
         }
         "should accept good source complexity request" {
-            withTestApplication(Application::jeed) {
-                handleRequest(HttpMethod.Post, "/") {
-                    addHeader("content-type", "application/json")
+            testApplication {
+                application {
+                    jeed()
+                }
+                client.post("/") {
+                    header("content-type", "application/json")
                     setBody(
                         """
 {
@@ -459,19 +503,22 @@ public class Main {
 "tasks": [ "complexity" ]
 }""".trim(),
                     )
-                }.apply {
-                    response.shouldHaveStatus(HttpStatusCode.OK.value)
+                }.also { response ->
+                    response.status shouldBe HttpStatusCode.OK
 
-                    val jeedResponse = Response.from(response.content)
+                    val jeedResponse = Response.from(response.bodyAsText())
                     jeedResponse.completedTasks.size shouldBe 1
                     jeedResponse.failedTasks.size shouldBe 0
                 }
             }
         }
         "should accept good source features request" {
-            withTestApplication(Application::jeed) {
-                handleRequest(HttpMethod.Post, "/") {
-                    addHeader("content-type", "application/json")
+            testApplication {
+                application {
+                    jeed()
+                }
+                client.post("/") {
+                    header("content-type", "application/json")
                     setBody(
                         """
 {
@@ -490,19 +537,22 @@ public class Main {
 "tasks": [ "features" ]
 }""".trim(),
                     )
-                }.apply {
-                    response.shouldHaveStatus(HttpStatusCode.OK.value)
+                }.also { response ->
+                    response.status shouldBe HttpStatusCode.OK
 
-                    val jeedResponse = Response.from(response.content)
+                    val jeedResponse = Response.from(response.bodyAsText())
                     jeedResponse.completedTasks.size shouldBe 1
                     jeedResponse.failedTasks.size shouldBe 0
                 }
             }
         }
         "should fail bad source features request" {
-            withTestApplication(Application::jeed) {
-                handleRequest(HttpMethod.Post, "/") {
-                    addHeader("content-type", "application/json")
+            testApplication {
+                application {
+                    jeed()
+                }
+                client.post("/") {
+                    header("content-type", "application/json")
                     setBody(
                         """
 {
@@ -521,19 +571,22 @@ public class Main {
 "tasks": [ "features" ]
 }""".trim(),
                     )
-                }.apply {
-                    response.shouldHaveStatus(HttpStatusCode.OK.value)
+                }.also { response ->
+                    response.status shouldBe HttpStatusCode.OK
 
-                    val jeedResponse = Response.from(response.content)
+                    val jeedResponse = Response.from(response.bodyAsText())
                     jeedResponse.completedTasks.size shouldBe 0
                     jeedResponse.failedTasks.size shouldBe 1
                 }
             }
         }
         "should accept good source mutations request" {
-            withTestApplication(Application::jeed) {
-                handleRequest(HttpMethod.Post, "/") {
-                    addHeader("content-type", "application/json")
+            testApplication {
+                application {
+                    jeed()
+                }
+                client.post("/") {
+                    header("content-type", "application/json")
                     setBody(
                         """
 {
@@ -552,10 +605,10 @@ public class Main {
 "tasks": [ "mutations" ]
 }""".trim(),
                     )
-                }.apply {
-                    response.shouldHaveStatus(HttpStatusCode.OK.value)
+                }.also { response ->
+                    response.status shouldBe HttpStatusCode.OK
 
-                    val jeedResponse = Response.from(response.content)
+                    val jeedResponse = Response.from(response.bodyAsText())
                     jeedResponse.completedTasks.size shouldBe 1
                     jeedResponse.completed.mutations shouldNot beNull()
                     jeedResponse.completed.mutations!!.mutatedSources shouldNot beEmpty()
@@ -564,9 +617,12 @@ public class Main {
             }
         }
         "should accept good Kotlin complexity request" {
-            withTestApplication(Application::jeed) {
-                handleRequest(HttpMethod.Post, "/") {
-                    addHeader("content-type", "application/json")
+            testApplication {
+                application {
+                    jeed()
+                }
+                client.post("/") {
+                    header("content-type", "application/json")
                     setBody(
                         """
 {
@@ -585,19 +641,22 @@ class Main {
 "tasks": [ "complexity" ]
 }""".trim(),
                     )
-                }.apply {
-                    response.shouldHaveStatus(HttpStatusCode.OK.value)
+                }.also { response ->
+                    response.status shouldBe HttpStatusCode.OK
 
-                    val jeedResponse = Response.from(response.content)
+                    val jeedResponse = Response.from(response.bodyAsText())
                     jeedResponse.completedTasks.size shouldBe 1
                     jeedResponse.failedTasks.size shouldBe 0
                 }
             }
         }
         "should handle snippet error" {
-            withTestApplication(Application::jeed) {
-                handleRequest(HttpMethod.Post, "/") {
-                    addHeader("content-type", "application/json")
+            testApplication {
+                application {
+                    jeed()
+                }
+                client.post("/") {
+                    header("content-type", "application/json")
                     setBody(
                         """
 {
@@ -606,10 +665,10 @@ class Main {
 "tasks": [ "snippet" ]
 }""".trim(),
                     )
-                }.apply {
-                    response.shouldHaveStatus(HttpStatusCode.OK.value)
+                }.also { response ->
+                    response.status shouldBe HttpStatusCode.OK
 
-                    val jeedResponse = Response.from(response.content)
+                    val jeedResponse = Response.from(response.bodyAsText())
                     jeedResponse.completedTasks.size shouldBe 0
                     jeedResponse.failedTasks.size shouldBe 1
                     (jeedResponse.failed.snippet?.errors?.size ?: 0) shouldBeGreaterThan 0
@@ -617,9 +676,12 @@ class Main {
             }
         }
         "should handle template error" {
-            withTestApplication(Application::jeed) {
-                handleRequest(HttpMethod.Post, "/") {
-                    addHeader("content-type", "application/json")
+            testApplication {
+                application {
+                    jeed()
+                }
+                client.post("/") {
+                    header("content-type", "application/json")
                     setBody(
                         """
 {
@@ -644,10 +706,10 @@ public static void main() {
 "tasks": [ "template" ]
 }""".trim(),
                     )
-                }.apply {
-                    response.shouldHaveStatus(HttpStatusCode.OK.value)
+                }.also { response ->
+                    response.status shouldBe HttpStatusCode.OK
 
-                    val jeedResponse = Response.from(response.content)
+                    val jeedResponse = Response.from(response.bodyAsText())
                     jeedResponse.completedTasks.size shouldBe 0
                     jeedResponse.failedTasks.size shouldBe 1
                     (jeedResponse.failed.template?.errors?.size ?: 0) shouldBeGreaterThan 0
@@ -655,9 +717,12 @@ public static void main() {
             }
         }
         "should handle compilation error" {
-            withTestApplication(Application::jeed) {
-                handleRequest(HttpMethod.Post, "/") {
-                    addHeader("content-type", "application/json")
+            testApplication {
+                application {
+                    jeed()
+                }
+                client.post("/") {
+                    header("content-type", "application/json")
                     setBody(
                         """
 {
@@ -665,7 +730,7 @@ public static void main() {
 "sources": [
   {
     "path": "Main.java",
-    "contents": " 
+    "contents": "
 public class Main {
   public static void main() {
     System.out.println(\"Here\")
@@ -676,10 +741,10 @@ public class Main {
 "tasks": [ "compile" ]
 }""".trim(),
                     )
-                }.apply {
-                    response.shouldHaveStatus(HttpStatusCode.OK.value)
+                }.also { response ->
+                    response.status shouldBe HttpStatusCode.OK
 
-                    val jeedResponse = Response.from(response.content)
+                    val jeedResponse = Response.from(response.bodyAsText())
                     jeedResponse.completedTasks.size shouldBe 0
                     jeedResponse.failedTasks.size shouldBe 1
                     (jeedResponse.failed.compilation?.errors?.size ?: 0) shouldBeGreaterThan 0
@@ -687,9 +752,12 @@ public class Main {
             }
         }
         "should handle kompilation error" {
-            withTestApplication(Application::jeed) {
-                handleRequest(HttpMethod.Post, "/") {
-                    addHeader("content-type", "application/json")
+            testApplication {
+                application {
+                    jeed()
+                }
+                client.post("/") {
+                    header("content-type", "application/json")
                     setBody(
                         """
 {
@@ -706,10 +774,10 @@ fun main() {
 "tasks": [ "kompile" ]
 }""".trim(),
                     )
-                }.apply {
-                    response.shouldHaveStatus(HttpStatusCode.OK.value)
+                }.also { response ->
+                    response.status shouldBe HttpStatusCode.OK
 
-                    val jeedResponse = Response.from(response.content)
+                    val jeedResponse = Response.from(response.bodyAsText())
                     jeedResponse.completedTasks.size shouldBe 0
                     jeedResponse.failedTasks.size shouldBe 1
                     (jeedResponse.failed.kompilation?.errors?.size ?: 0) shouldBeGreaterThan 0
@@ -717,9 +785,12 @@ fun main() {
             }
         }
         "should handle checkstyle error" {
-            withTestApplication(Application::jeed) {
-                handleRequest(HttpMethod.Post, "/") {
-                    addHeader("content-type", "application/json")
+            testApplication {
+                application {
+                    jeed()
+                }
+                client.post("/") {
+                    header("content-type", "application/json")
                     setBody(
                         """
 {
@@ -743,10 +814,10 @@ System.out.println(\"Here\");
 "tasks": [ "checkstyle", "compile", "execute" ]
 }""".trim(),
                     )
-                }.apply {
-                    response.shouldHaveStatus(HttpStatusCode.OK.value)
+                }.also { response ->
+                    response.status shouldBe HttpStatusCode.OK
 
-                    val jeedResponse = Response.from(response.content)
+                    val jeedResponse = Response.from(response.bodyAsText())
                     jeedResponse.completedTasks.size shouldBe 1
                     jeedResponse.failedTasks.size shouldBe 1
                     (jeedResponse.failed.checkstyle?.errors?.size ?: 0) shouldBeGreaterThan 0
@@ -754,9 +825,12 @@ System.out.println(\"Here\");
             }
         }
         "should return checkstyle results when not configured to fail" {
-            withTestApplication(Application::jeed) {
-                handleRequest(HttpMethod.Post, "/") {
-                    addHeader("content-type", "application/json")
+            testApplication {
+                application {
+                    jeed()
+                }
+                client.post("/") {
+                    header("content-type", "application/json")
                     setBody(
                         """
 {
@@ -775,10 +849,10 @@ System.out.println(\"Here\");
 "tasks": [ "checkstyle", "compile", "execute" ]
 }""".trim(),
                     )
-                }.apply {
-                    response.shouldHaveStatus(HttpStatusCode.OK.value)
+                }.also { response ->
+                    response.status shouldBe HttpStatusCode.OK
 
-                    val jeedResponse = Response.from(response.content)
+                    val jeedResponse = Response.from(response.bodyAsText())
                     jeedResponse.completedTasks.size shouldBe 3
                     jeedResponse.failedTasks.size shouldBe 0
                     (jeedResponse.completed.checkstyle?.errors?.size ?: 0) shouldBeGreaterThan 0
@@ -786,9 +860,12 @@ System.out.println(\"Here\");
             }
         }
         "should handle execution error" {
-            withTestApplication(Application::jeed) {
-                handleRequest(HttpMethod.Post, "/") {
-                    addHeader("content-type", "application/json")
+            testApplication {
+                application {
+                    jeed()
+                }
+                client.post("/") {
+                    header("content-type", "application/json")
                     setBody(
                         """
 {
@@ -796,7 +873,7 @@ System.out.println(\"Here\");
 "sources": [
   {
     "path": "Main.java",
-    "contents": " 
+    "contents": "
 public class Main {
   public static void main() {
     Object t = null;
@@ -808,10 +885,10 @@ public class Main {
 "tasks": [ "compile", "execute" ]
 }""".trim(),
                     )
-                }.apply {
-                    response.shouldHaveStatus(HttpStatusCode.OK.value)
+                }.also { response ->
+                    response.status shouldBe HttpStatusCode.OK
 
-                    val jeedResponse = Response.from(response.content)
+                    val jeedResponse = Response.from(response.bodyAsText())
                     jeedResponse.completedTasks.size shouldBe 2
                     jeedResponse.failedTasks.size shouldBe 0
                     jeedResponse.completed.execution?.threw shouldNotBe ""
@@ -819,9 +896,12 @@ public class Main {
             }
         }
         "should handle cexecution error".config(enabled = checkDockerEnabled()) {
-            withTestApplication(Application::jeed) {
-                handleRequest(HttpMethod.Post, "/") {
-                    addHeader("content-type", "application/json")
+            testApplication {
+                application {
+                    jeed()
+                }
+                client.post("/") {
+                    header("content-type", "application/json")
                     setBody(
                         """
 {
@@ -829,7 +909,7 @@ public class Main {
 "sources": [
   {
     "path": "Main.java",
-    "contents": " 
+    "contents": "
 public class Main {
   private static void min() {
     System.out.println(\"Here\");
@@ -840,19 +920,22 @@ public class Main {
 "tasks": [ "compile", "cexecute" ]
 }""".trim(),
                     )
-                }.apply {
-                    response.shouldHaveStatus(HttpStatusCode.OK.value)
+                }.also { response ->
+                    response.status shouldBe HttpStatusCode.OK
 
-                    val jeedResponse = Response.from(response.content)
+                    val jeedResponse = Response.from(response.bodyAsText())
                     jeedResponse.completedTasks.size shouldBe 1
                     jeedResponse.failedTasks.size shouldBe 1
                 }
             }
         }
         "should reject both source and snippet request" {
-            withTestApplication(Application::jeed) {
-                handleRequest(HttpMethod.Post, "/") {
-                    addHeader("content-type", "application/json")
+            testApplication {
+                application {
+                    jeed()
+                }
+                client.post("/") {
+                    header("content-type", "application/json")
                     setBody(
                         """
 {
@@ -861,7 +944,7 @@ public class Main {
 "sources": [
   {
     "path": "Main.java",
-    "contents": " 
+    "contents": "
 public class Main {
   public static void main() {
     Object t = null;
@@ -873,15 +956,18 @@ public class Main {
 "tasks": [ "compile", "execute" ]
 }""".trim(),
                     )
+                }.also { response ->
+                    response.status shouldBe HttpStatusCode.BadRequest
                 }
-            }.apply {
-                response.shouldHaveStatus(HttpStatusCode.BadRequest.value)
             }
         }
         "should handle a java source that is actually a snippet" {
-            withTestApplication(Application::jeed) {
-                handleRequest(HttpMethod.Post, "/") {
-                    addHeader("content-type", "application/json")
+            testApplication {
+                application {
+                    jeed()
+                }
+                client.post("/") {
+                    header("content-type", "application/json")
                     setBody(
                         """
 {
@@ -889,7 +975,7 @@ public class Main {
 "sources": [
   {
     "path": "Main.java",
-    "contents": " 
+    "contents": "
 System.out.println(\"Here\");
 "
   }
@@ -898,23 +984,26 @@ System.out.println(\"Here\");
 "checkForSnippet": true
 }""".trim(),
                     )
+                }.also { response ->
+                    response.status shouldBe HttpStatusCode.OK
+
+                    val jeedResponse = Response.from(response.bodyAsText())
+                    jeedResponse.completedTasks.size shouldBe 3
+                    jeedResponse.failedTasks.size shouldBe 0
+
+                    jeedResponse.completed.execution?.outputLines?.joinToString(separator = "\n") {
+                        it.line
+                    }?.trim() shouldBe "Here"
                 }
-            }.apply {
-                response.shouldHaveStatus(HttpStatusCode.OK.value)
-
-                val jeedResponse = Response.from(response.content)
-                jeedResponse.completedTasks.size shouldBe 3
-                jeedResponse.failedTasks.size shouldBe 0
-
-                jeedResponse.completed.execution?.outputLines?.joinToString(separator = "\n") {
-                    it.line
-                }?.trim() shouldBe "Here"
             }
         }
         "should handle a kotlin source that is actually a snippet" {
-            withTestApplication(Application::jeed) {
-                handleRequest(HttpMethod.Post, "/") {
-                    addHeader("content-type", "application/json")
+            testApplication {
+                application {
+                    jeed()
+                }
+                client.post("/") {
+                    header("content-type", "application/json")
                     setBody(
                         """
 {
@@ -922,7 +1011,7 @@ System.out.println(\"Here\");
 "sources": [
   {
     "path": "Main.kt",
-    "contents": " 
+    "contents": "
 println(\"Here\")
 "
   }
@@ -931,23 +1020,26 @@ println(\"Here\")
 "checkForSnippet": true
 }""".trim(),
                     )
+                }.also { response ->
+                    response.status shouldBe HttpStatusCode.OK
+
+                    val jeedResponse = Response.from(response.bodyAsText())
+                    jeedResponse.completedTasks.size shouldBe 3
+                    jeedResponse.failedTasks.size shouldBe 0
+
+                    jeedResponse.completed.execution?.outputLines?.joinToString(separator = "\n") {
+                        it.line
+                    }?.trim() shouldBe "Here"
                 }
-            }.apply {
-                response.shouldHaveStatus(HttpStatusCode.OK.value)
-
-                val jeedResponse = Response.from(response.content)
-                jeedResponse.completedTasks.size shouldBe 3
-                jeedResponse.failedTasks.size shouldBe 0
-
-                jeedResponse.completed.execution?.outputLines?.joinToString(separator = "\n") {
-                    it.line
-                }?.trim() shouldBe "Here"
             }
         }
         "should reject neither source nor snippet request" {
-            withTestApplication(Application::jeed) {
-                handleRequest(HttpMethod.Post, "/") {
-                    addHeader("content-type", "application/json")
+            testApplication {
+                application {
+                    jeed()
+                }
+                client.post("/") {
+                    header("content-type", "application/json")
                     setBody(
                         """
 {
@@ -955,21 +1047,24 @@ println(\"Here\")
 "tasks": [ "compile", "execute" ]
 }""".trim(),
                     )
+                }.also { response ->
+                    response.status shouldBe HttpStatusCode.BadRequest
                 }
-            }.apply {
-                response.shouldHaveStatus(HttpStatusCode.BadRequest.value)
             }
         }
         "should reject mapped source request" {
-            withTestApplication(Application::jeed) {
-                handleRequest(HttpMethod.Post, "/") {
-                    addHeader("content-type", "application/json")
+            testApplication {
+                application {
+                    jeed()
+                }
+                client.post("/") {
+                    header("content-type", "application/json")
                     setBody(
                         """
 {
 "label": "test",
 "source": {
-  "Main.java": " 
+  "Main.java": "
 public class Main {
   public static void main() {
     System.out.println(\"Here\");
@@ -979,15 +1074,18 @@ public class Main {
 "tasks": [ "compile", "execute" ]
 }""".trim(),
                     )
+                }.also { response ->
+                    response.status shouldBe HttpStatusCode.BadRequest
                 }
-            }.apply {
-                response.shouldHaveStatus(HttpStatusCode.BadRequest.value)
             }
         }
         "should accept good disassemble request" {
-            withTestApplication(Application::jeed) {
-                handleRequest(HttpMethod.Post, "/") {
-                    addHeader("content-type", "application/json")
+            testApplication {
+                application {
+                    jeed()
+                }
+                client.post("/") {
+                    header("content-type", "application/json")
                     setBody(
                         """
 {
@@ -995,7 +1093,7 @@ public class Main {
 "sources": [
   {
     "path": "Main.java",
-    "contents": " 
+    "contents": "
 public class Main {
   public static void main() {
     System.out.println(\"Hi\");
@@ -1006,10 +1104,10 @@ public class Main {
 "tasks": [ "compile", "disassemble" ]
 }""".trim(),
                     )
-                }.apply {
-                    response.shouldHaveStatus(HttpStatusCode.OK.value)
+                }.also { response ->
+                    response.status shouldBe HttpStatusCode.OK
 
-                    val jeedResponse = Response.from(response.content)
+                    val jeedResponse = Response.from(response.bodyAsText())
                     jeedResponse.completedTasks.size shouldBe 2
                     jeedResponse.completed.disassemble!!.disassemblies.keys shouldBe setOf("Main")
                     jeedResponse.failedTasks.size shouldBe 0
@@ -1017,9 +1115,12 @@ public class Main {
             }
         }
         "should accept good kotlin disassemble request" {
-            withTestApplication(Application::jeed) {
-                handleRequest(HttpMethod.Post, "/") {
-                    addHeader("content-type", "application/json")
+            testApplication {
+                application {
+                    jeed()
+                }
+                client.post("/") {
+                    header("content-type", "application/json")
                     setBody(
                         """
 {
@@ -1036,10 +1137,10 @@ fun main() {
 "tasks": [ "kompile", "disassemble" ]
 }""".trim(),
                     )
-                }.apply {
-                    response.shouldHaveStatus(HttpStatusCode.OK.value)
+                }.also { response ->
+                    response.status shouldBe HttpStatusCode.OK
 
-                    val jeedResponse = Response.from(response.content)
+                    val jeedResponse = Response.from(response.bodyAsText())
                     jeedResponse.completedTasks.size shouldBe 2
                     jeedResponse.completed.disassemble!!.disassemblies.keys shouldBe setOf("MainKt")
                     jeedResponse.failedTasks.size shouldBe 0
@@ -1047,32 +1148,41 @@ fun main() {
             }
         }
         "should reject unauthorized request" {
-            withTestApplication(Application::jeed) {
-                handleRequest(HttpMethod.Post, "/") {
-                    addHeader("content-type", "application/json")
+            testApplication {
+                application {
+                    jeed()
+                }
+                client.post("/") {
+                    header("content-type", "application/json")
                     setBody("broken")
-                }.apply {
-                    response.shouldHaveStatus(HttpStatusCode.BadRequest.value)
+                }.also { response ->
+                    response.status shouldBe HttpStatusCode.BadRequest
                 }
             }
         }
         "should reject bad request" {
-            withTestApplication(Application::jeed) {
-                handleRequest(HttpMethod.Post, "/") {
-                    addHeader("content-type", "application/json")
+            testApplication {
+                application {
+                    jeed()
+                }
+                client.post("/") {
+                    header("content-type", "application/json")
                     setBody("broken")
-                }.apply {
-                    response.shouldHaveStatus(HttpStatusCode.BadRequest.value)
+                }.also { response ->
+                    response.status shouldBe HttpStatusCode.BadRequest
                 }
             }
         }
         "should provide info in response to GET" {
-            withTestApplication(Application::jeed) {
-                handleRequest(HttpMethod.Get, "/") {
-                    addHeader("content-type", "application/json")
-                }.apply {
-                    response.shouldHaveStatus(HttpStatusCode.OK.value)
-                    val status = Status.from(response.content)
+            testApplication {
+                application {
+                    jeed()
+                }
+                client.get("/") {
+                    header("content-type", "application/json")
+                }.also { response ->
+                    response.status shouldBe HttpStatusCode.OK
+                    val status = Status.from(response.bodyAsText())
                     status.versions.server shouldBe VERSION
                 }
             }
