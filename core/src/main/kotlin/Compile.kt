@@ -22,9 +22,9 @@ import javax.tools.SimpleJavaFileObject
 import javax.tools.StandardLocation
 import javax.tools.ToolProvider
 
-private val systemCompiler = ToolProvider.getSystemJavaCompiler() ?: error(
-    "systemCompiler not found: you are probably running a JRE, not a JDK",
-)
+private val systemCompiler = ToolProvider.getSystemJavaCompiler()
+    ?: error("systemCompiler not found: you are probably running a JRE, not a JDK")
+
 const val DEFAULT_JAVA_VERSION = 10
 val systemCompilerName = systemCompiler.sourceVersions.maxOrNull().toString()
 val systemCompilerVersion = systemCompilerName.let {
@@ -62,6 +62,7 @@ data class CompilationArguments(
     val isolatedClassLoader: Boolean = false,
     val parameters: Boolean = DEFAULT_PARAMETERS,
     val debugInfo: Boolean = DEFAULT_DEBUG,
+    @Transient val messageFilter: (message: CompilationMessage) -> Boolean = { true },
 ) {
     init {
         check(!waitForCache || useCache == true) {
@@ -203,7 +204,7 @@ internal fun compileToFileManager(
             null
         }
         CompilationMessage(it.kind.toString(), location, it.getMessage(Locale.US))
-    }
+    }.filter(compilationArguments.messageFilter)
 
     return Pair(fileManager, messages)
 }

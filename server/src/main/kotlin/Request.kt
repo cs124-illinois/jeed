@@ -257,7 +257,11 @@ class Request(
 
             val compiledSource = when {
                 tasks.contains(Task.compile) -> {
-                    actualSource.compile(arguments.compilation).also {
+                    actualSource.compile(
+                        arguments.compilation.copy(messageFilter = { compilationMessage ->
+                            !compilationMessage.message.contains("but neither it nor any superclass overrides hashCode method")
+                        }),
+                    ).also {
                         response.completed.compilation = CompiledSourceResult(it)
                         response.completedTasks.add(Task.compile)
                     }

@@ -495,7 +495,6 @@ public class Test {
             ).compile(CompilationArguments(enablePreview = false))
         }
         "should support Java 21 patterns".config(enabled = systemCompilerVersion >= 21) {
-            @Suppress("SpellCheckingInspection")
             Source(
                 mapOf(
                     "Test.java" to """
@@ -644,6 +643,25 @@ public class Test {
         }
         "should compute empty klass size" {
             getEmptyJavaClassSize() shouldBeGreaterThan 0
+        }
+        "should not complain about missing hashCode" {
+            Source(
+                mapOf(
+                    "Test.java" to """
+public class Test {
+    public boolean equals(Object other) {
+        return false;
+    }
+}
+            """.trim(),
+                ),
+            ).compile(
+                CompilationArguments(messageFilter = { compilationMessage ->
+                    !compilationMessage.message.contains("but neither it nor any superclass overrides hashCode method")
+                }),
+            ).also { compiledSource ->
+                compiledSource.messages.size shouldBe 0
+            }
         }
     })
 
