@@ -15,7 +15,7 @@ configurations.all {
     }
 }
 dependencies {
-    implementation("ch.qos.logback:logback-classic:1.5.11")
+    implementation("ch.qos.logback:logback-classic:1.5.12")
     implementation("io.github.microutils:kotlin-logging:3.0.5")
     implementation("com.github.ajalt.clikt:clikt:5.0.1")
     implementation("io.github.classgraph:classgraph:4.8.177")

@@ -22,7 +22,7 @@ configurations.all {
     }
 }
 dependencies {
-    val ktorVersion = "3.0.0"
+    val ktorVersion = "3.0.1"
 
     ksp("com.squareup.moshi:moshi-kotlin-codegen:1.15.1")
 
@@ -36,14 +36,14 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
     implementation("com.squareup.moshi:moshi-kotlin:1.15.1")
     implementation("org.cs124:ktor-moshi:2024.10.0")
-    implementation("ch.qos.logback:logback-classic:1.5.11")
+    implementation("ch.qos.logback:logback-classic:1.5.12")
     implementation("io.github.nhubbard:konf:2.1.0")
     implementation("io.github.microutils:kotlin-logging:3.0.5")
     implementation("com.beyondgrader.resource-agent:agent:$agentVersion")
     implementation("com.beyondgrader.resource-agent:jeedplugin:$agentVersion")
 
     // Libraries for student use
-    implementation("org.cs124:libcs1:2024.9.0")
+    implementation("org.cs124:libcs1:2024.11.0")
     implementation("io.kotest:kotest-runner-junit5:5.9.1")
     implementation("com.google.truth:truth:1.4.4")
 
