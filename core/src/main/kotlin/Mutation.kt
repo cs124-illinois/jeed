@@ -45,11 +45,10 @@ sealed class Mutation(
         override fun hashCode() = Objects.hash(start, end, line)
     }
 
-    fun overlaps(other: Mutation) =
-        (other.location.start in location.start..location.end) ||
-            (other.location.end in location.start..location.end) ||
-            (other.location.start < location.start && location.end < other.location.end) ||
-            (location.start < other.location.start && other.location.end < location.end)
+    fun overlaps(other: Mutation) = (other.location.start in location.start..location.end) ||
+        (other.location.end in location.start..location.end) ||
+        (other.location.start < location.start && location.end < other.location.end) ||
+        (location.start < other.location.start && other.location.end < location.end)
 
     fun after(other: Mutation) = location.start > other.location.end
 
@@ -274,8 +273,7 @@ class CharLiteral(
         check(it.length == 1 || it.startsWith("\\")) { "Character didn't have the correct length: $original" }
     }.first()
 
-    override fun applyMutation(random: Random): String =
-        ALPHANUMERIC_CHARS.filter { it != character }.shuffled(random).first().let { "'$it'" }
+    override fun applyMutation(random: Random): String = ALPHANUMERIC_CHARS.filter { it != character }.shuffled(random).first().let { "'$it'" }
 }
 
 private val ALPHANUMERIC_CHARS_AND_SPACE = (('a'..'z') + ('A'..'Z') + ('0'..'9') + (' ')).toSet()
@@ -671,8 +669,7 @@ class NumberLiteralTrim(
                 .map { "$prefix$it$exponent$suffix" }
         }
 
-        fun matches(contents: String, base: Int, isNegative: Boolean, isDivision: Boolean) =
-            contents.trims(base, isNegative = isNegative, isDivision = isDivision).isNotEmpty()
+        fun matches(contents: String, base: Int, isNegative: Boolean, isDivision: Boolean) = contents.trims(base, isNegative = isNegative, isDivision = isDivision).isNotEmpty()
     }
 }
 
@@ -939,8 +936,7 @@ class TrueReturn(
     override fun applyMutation(random: Random): String = "true"
 
     companion object {
-        fun matches(contents: String, returnType: String) =
-            contents != "true" && returnType in setOf("boolean", "Boolean")
+        fun matches(contents: String, returnType: String) = contents != "true" && returnType in setOf("boolean", "Boolean")
     }
 }
 
@@ -957,8 +953,7 @@ class FalseReturn(
     override fun applyMutation(random: Random): String = "false"
 
     companion object {
-        fun matches(contents: String, returnType: String) =
-            contents != "false" && returnType in setOf("boolean", "Boolean")
+        fun matches(contents: String, returnType: String) = contents != "false" && returnType in setOf("boolean", "Boolean")
     }
 }
 
@@ -1085,12 +1080,11 @@ class RemoveMethod(
             return postfix.reversed()
         }
 
-        fun matches(contents: String, returnType: String, fileType: Source.FileType) =
-            contents.removePrefix(getPrefix(contents)).let {
-                it.removeSuffix(getPostfix(it))
-            }.let {
-                it.isNotBlank() && it.trim().removeSuffix(";").trim() != forReturnType(returnType, fileType)
-            }
+        fun matches(contents: String, returnType: String, fileType: Source.FileType) = contents.removePrefix(getPrefix(contents)).let {
+            it.removeSuffix(getPostfix(it))
+        }.let {
+            it.isNotBlank() && it.trim().removeSuffix(";").trim() != forReturnType(returnType, fileType)
+        }
     }
 }
 

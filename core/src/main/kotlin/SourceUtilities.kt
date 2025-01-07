@@ -155,11 +155,9 @@ fun Source.ParsedSource.stripAssertionMessages(type: Source.FileType): String {
     }
 }
 
-fun Source.stripAssertionMessages() =
-    Source(sources.mapValues { (filename, _) -> getParsed(filename).stripAssertionMessages(type.toFileType()) })
+fun Source.stripAssertionMessages() = Source(sources.mapValues { (filename, _) -> getParsed(filename).stripAssertionMessages(type.toFileType()) })
 
-fun Source.trimLines() =
-    Source(sources.mapValues { (_, contents) -> contents.lines().joinToString("\n") { it.trimEnd() } })
+fun Source.trimLines() = Source(sources.mapValues { (_, contents) -> contents.lines().joinToString("\n") { it.trimEnd() } })
 
 private fun levenshteinDistance(first: List<Int>, second: List<Int>): Int {
     val costs = IntArray(second.size + 1) { it }
@@ -182,8 +180,7 @@ private fun levenshteinDistance(first: List<Int>, second: List<Int>): Int {
     return costs[second.size]
 }
 
-fun String.lineDifferenceCount(other: String) =
-    levenshteinDistance(lines().map { it.trimEnd().hashCode() }, other.lines().map { it.trimEnd().hashCode() })
+fun String.lineDifferenceCount(other: String) = levenshteinDistance(lines().map { it.trimEnd().hashCode() }, other.lines().map { it.trimEnd().hashCode() })
 
 val WORDS by lazy {
     object {}::class.java.getResource("/bad.txt")!!.readText().lines().map { it.trim().lowercase() }.toSet()
@@ -289,11 +286,9 @@ fun Source.getBadWords(whitelist: Set<String> = setOf()): Set<String> {
 
 @JsonClass(generateAdapter = true)
 data class LineCounts(val source: Int, val comment: Int, val blank: Int) {
-    operator fun plus(other: LineCounts) =
-        LineCounts(source + other.source, comment + other.comment, blank + other.blank)
+    operator fun plus(other: LineCounts) = LineCounts(source + other.source, comment + other.comment, blank + other.blank)
 
-    operator fun minus(other: LineCounts) =
-        LineCounts(source - other.source, comment - other.comment, blank - other.blank)
+    operator fun minus(other: LineCounts) = LineCounts(source - other.source, comment - other.comment, blank - other.blank)
 }
 
 @Suppress("NestedBlockDepth")

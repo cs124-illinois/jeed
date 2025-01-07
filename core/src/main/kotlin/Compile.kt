@@ -96,8 +96,7 @@ data class CompilationArguments(
         }
     }
 
-    override fun hashCode() =
-        Objects.hashCode(wError, Xlint, enablePreview, parameters, debugInfo, parentFileManager)
+    override fun hashCode() = Objects.hashCode(wError, Xlint, enablePreview, parameters, debugInfo, parentFileManager)
 }
 
 @JsonClass(generateAdapter = true)
@@ -261,8 +260,7 @@ fun Source.compileWith(
 }
 
 private class Unit(val entry: Map.Entry<String, String>) : SimpleJavaFileObject(URI(entry.key), JavaFileObject.Kind.SOURCE) {
-    override fun isNameCompatible(simpleName: String?, kind: JavaFileObject.Kind?): Boolean =
-        kind != JavaFileObject.Kind.SOURCE || (simpleName != "module-info" && simpleName != "package-info")
+    override fun isNameCompatible(simpleName: String?, kind: JavaFileObject.Kind?): Boolean = kind != JavaFileObject.Kind.SOURCE || (simpleName != "module-info" && simpleName != "package-info")
 
     override fun getCharContent(ignoreEncodingErrors: Boolean): CharSequence = entry.value
 
@@ -417,30 +415,28 @@ class JeedFileManager(
         }
     }
 
-    override fun inferBinaryName(location: JavaFileManager.Location?, file: JavaFileObject): String =
-        if (file is ByteSource) {
-            file.name.substring(0, file.name.lastIndexOf('.')).replace('/', '.')
-        } else {
-            super.inferBinaryName(location, file)
-        }
+    override fun inferBinaryName(location: JavaFileManager.Location?, file: JavaFileObject): String = if (file is ByteSource) {
+        file.name.substring(0, file.name.lastIndexOf('.')).replace('/', '.')
+    } else {
+        super.inferBinaryName(location, file)
+    }
 
     @Suppress("SpellCheckingInspection")
-    override fun handleOption(current: String?, remaining: MutableIterator<String>?): Boolean =
-        if (parentFileManager === standardFileManager && current == "--multi-release") {
-            val operand = remaining?.next() ?: error("MULTIRELEASE should have an operand")
-            synchronized(standardFileManagerSyncRoot) {
-                if (operand != lastMultireleaseOperand) {
-                    require(lastMultireleaseOperand == null) { "MULTIRELEASE should not have changed" }
-                    lastMultireleaseOperand = operand
-                    super.handleOption(current, listOf(operand).iterator())
-                } else {
-                    // Prevent JavacFileManager from clearing its caches, which would break concurrent tasks
-                    true
-                }
+    override fun handleOption(current: String?, remaining: MutableIterator<String>?): Boolean = if (parentFileManager === standardFileManager && current == "--multi-release") {
+        val operand = remaining?.next() ?: error("MULTIRELEASE should have an operand")
+        synchronized(standardFileManagerSyncRoot) {
+            if (operand != lastMultireleaseOperand) {
+                require(lastMultireleaseOperand == null) { "MULTIRELEASE should not have changed" }
+                lastMultireleaseOperand = operand
+                super.handleOption(current, listOf(operand).iterator())
+            } else {
+                // Prevent JavacFileManager from clearing its caches, which would break concurrent tasks
+                true
             }
-        } else {
-            super.handleOption(current, remaining)
         }
+    } else {
+        super.handleOption(current, remaining)
+    }
 
     override fun flush() {
         if (parentFileManager !== standardFileManager) {

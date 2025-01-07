@@ -23,28 +23,28 @@ configurations.all {
     }
 }
 dependencies {
-    ksp("com.squareup.moshi:moshi-kotlin-codegen:1.15.1")
+    ksp("com.squareup.moshi:moshi-kotlin-codegen:1.15.2")
 
     antlr("org.antlr:antlr4:4.13.2")
 
-    implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:2.0.21")
+    implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:2.1.0")
 
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
-    implementation("com.puppycrawl.tools:checkstyle:10.20.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.1")
+    implementation("com.puppycrawl.tools:checkstyle:10.21.1")
     implementation("org.codehaus.plexus:plexus-container-default:2.1.1")
-    implementation("com.pinterest.ktlint:ktlint-rule-engine:1.4.0")
-    implementation("com.pinterest.ktlint:ktlint-ruleset-standard:1.4.0")
+    implementation("com.pinterest.ktlint:ktlint-rule-engine:1.5.0")
+    implementation("com.pinterest.ktlint:ktlint-ruleset-standard:1.5.0")
     implementation("com.github.jknack:handlebars:4.4.0")
-    implementation("com.squareup.moshi:moshi-kotlin:1.15.1")
+    implementation("com.squareup.moshi:moshi-kotlin:1.15.2")
     implementation("org.ow2.asm:asm:9.7.1")
     implementation("org.ow2.asm:asm-tree:9.7.1")
     implementation("org.ow2.asm:asm-util:9.7.1")
-    implementation("ch.qos.logback:logback-classic:1.5.12")
+    implementation("ch.qos.logback:logback-classic:1.5.16")
     implementation("io.github.microutils:kotlin-logging:3.0.5")
-    implementation("io.github.classgraph:classgraph:4.8.177")
-    implementation("net.java.dev.jna:jna:5.15.0")
-    implementation("io.github.java-diff-utils:java-diff-utils:4.12")
-    implementation("com.google.googlejavaformat:google-java-format:1.24.0")
+    implementation("io.github.classgraph:classgraph:4.8.179")
+    implementation("net.java.dev.jna:jna:5.16.0")
+    implementation("io.github.java-diff-utils:java-diff-utils:4.15")
+    implementation("com.google.googlejavaformat:google-java-format:1.25.2")
     implementation("net.sf.extjwnl:extjwnl:2.0.5")
     implementation("net.sf.extjwnl:extjwnl-data-wn31:1.2")
 
@@ -107,6 +107,9 @@ afterEvaluate {
     tasks.named("lintKotlinTest") {
         dependsOn(tasks.generateTestGrammarSource)
     }
+    tasks.named("test") {
+        dependsOn(":containerrunner:dockerBuild")
+    }
 }
 task("createProperties") {
     dependsOn(tasks.processResources)
@@ -138,7 +141,7 @@ tasks.register<Copy>("copyJavaGrammar") {
     }
 }
 tasks {
-    val sourcesJar by creating(Jar::class) {
+    val sourcesJar by registering(Jar::class) {
         archiveClassifier.set("sources")
         from(sourceSets["main"].allSource)
     }
@@ -155,9 +158,6 @@ tasks.lintKotlinMain {
 }
 tasks.formatKotlinMain {
     dependsOn(tasks.generateGrammarSource)
-}
-kotlin {
-    kotlinDaemonJvmArgs = listOf("-Dfile.encoding=UTF-8")
 }
 java {
     withJavadocJar()

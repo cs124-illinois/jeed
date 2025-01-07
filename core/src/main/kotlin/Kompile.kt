@@ -121,8 +121,7 @@ data class KompilationArguments(
         }
     }
 
-    override fun hashCode() =
-        Objects.hashCode(verbose, allWarningsAsErrors, parameters, jvmTarget, parentFileManager)
+    override fun hashCode() = Objects.hashCode(verbose, allWarningsAsErrors, parameters, jvmTarget, parentFileManager)
 }
 
 internal class JeedMessageCollector(val source: Source, private val allWarningsAsErrors: Boolean) : MessageCollector {
@@ -309,8 +308,7 @@ private fun kompile(
     }
 }
 
-fun Source.kompile(kompilationArguments: KompilationArguments = KompilationArguments()) =
-    kompile(this, kompilationArguments)
+fun Source.kompile(kompilationArguments: KompilationArguments = KompilationArguments()) = kompile(this, kompilationArguments)
 
 private val KOTLIN_COROUTINE_IMPORTS = setOf("kotlinx.coroutines", "kotlin.coroutines")
 const val KOTLIN_COROUTINE_MIN_TIMEOUT = 600L

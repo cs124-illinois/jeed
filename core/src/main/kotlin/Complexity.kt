@@ -110,8 +110,7 @@ class ComplexityResults(val source: Source, val results: Map<String, Map<String,
         return currentComplexity
     }
 
-    fun lookupFile(filename: String) =
-        results[filename]?.values?.sumOf { it.complexity } ?: error("results does not contain filename \"$filename\"")
+    fun lookupFile(filename: String) = results[filename]?.values?.sumOf { it.complexity } ?: error("results does not contain filename \"$filename\"")
 }
 
 @Throws(ComplexityFailed::class)

@@ -22,9 +22,9 @@ configurations.all {
     }
 }
 dependencies {
-    val ktorVersion = "3.0.1"
+    val ktorVersion = "3.0.3"
 
-    ksp("com.squareup.moshi:moshi-kotlin-codegen:1.15.1")
+    ksp("com.squareup.moshi:moshi-kotlin-codegen:1.15.2")
 
     testJavaagent("com.beyondgrader.resource-agent:agent:$agentVersion")
 
@@ -33,17 +33,17 @@ dependencies {
     implementation("io.ktor:ktor-server-netty:$ktorVersion")
     implementation("io.ktor:ktor-server-cors:$ktorVersion")
     implementation("io.ktor:ktor-server-content-negotiation:$ktorVersion")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
-    implementation("com.squareup.moshi:moshi-kotlin:1.15.1")
-    implementation("org.cs124:ktor-moshi:2024.10.0")
-    implementation("ch.qos.logback:logback-classic:1.5.12")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.1")
+    implementation("com.squareup.moshi:moshi-kotlin:1.15.2")
+    implementation("org.cs124:ktor-moshi:2025.1.0")
+    implementation("ch.qos.logback:logback-classic:1.5.16")
     implementation("io.github.nhubbard:konf:2.1.0")
     implementation("io.github.microutils:kotlin-logging:3.0.5")
     implementation("com.beyondgrader.resource-agent:agent:$agentVersion")
     implementation("com.beyondgrader.resource-agent:jeedplugin:$agentVersion")
 
     // Libraries for student use
-    implementation("org.cs124:libcs1:2024.11.0")
+    implementation("org.cs124:libcs1:2025.1.0")
     implementation("io.kotest:kotest-runner-junit5:5.9.1")
     implementation("com.google.truth:truth:1.4.4")
 
@@ -73,7 +73,7 @@ tasks.register<Exec>("dockerBuild") {
     workingDir(layout.buildDirectory.dir("docker"))
     environment("DOCKER_BUILDKIT", "1")
     commandLine(
-        ("docker build . " +
+        ("/usr/local/bin/docker build . " +
             "-t ${dockerName}:latest " +
             "-t ${dockerName}:${project.version}").split(" ")
     )
@@ -82,7 +82,7 @@ tasks.register<Exec>("dockerPush") {
     dependsOn("dockerCopyJar", "dockerCopyDockerfile")
     workingDir(layout.buildDirectory.dir("docker"))
     commandLine(
-        ("docker buildx build . --platform=linux/amd64,linux/arm64/v8 " +
+        ("/usr/local/bin/docker buildx build . --platform=linux/amd64,linux/arm64/v8 " +
             "--builder multiplatform " +
             "--tag ${dockerName}:latest " +
             "--tag ${dockerName}:${project.version} --push").split(" ")
@@ -93,7 +93,6 @@ tasks.test {
     systemProperties["logback.configurationFile"] = File(projectDir, "src/test/resources/logback-test.xml").absolutePath
     environment["JEED_USE_CACHE"] = "true"
 }
-
 task("createProperties") {
     doLast {
         val properties = Properties().also {
@@ -108,15 +107,9 @@ task("createProperties") {
             }
     }
 }
-
 tasks.processResources {
     dependsOn("createProperties")
 }
-
-kotlin {
-    kotlinDaemonJvmArgs = listOf("-Dfile.encoding=UTF-8")
-}
-
 tasks.shadowJar {
     isZip64 = true
     manifest {

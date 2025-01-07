@@ -8,14 +8,11 @@ import com.squareup.moshi.JsonClass
 import org.antlr.v4.runtime.misc.Interval
 import kotlin.random.Random
 
-fun Source.ParsedSource.contents(location: Mutation.Location): String =
-    stream.getText(Interval(location.start, location.end))
+fun Source.ParsedSource.contents(location: Mutation.Location): String = stream.getText(Interval(location.start, location.end))
 
-fun MutableList<Mutation.Location.SourcePath>.klass(): String =
-    findLast { it.type == Mutation.Location.SourcePath.Type.CLASS }?.name ?: error("No current class in path")
+fun MutableList<Mutation.Location.SourcePath>.klass(): String = findLast { it.type == Mutation.Location.SourcePath.Type.CLASS }?.name ?: error("No current class in path")
 
-fun MutableList<Mutation.Location.SourcePath>.method(): String =
-    findLast { it.type == Mutation.Location.SourcePath.Type.METHOD }?.name ?: error("No current method in path")
+fun MutableList<Mutation.Location.SourcePath>.method(): String = findLast { it.type == Mutation.Location.SourcePath.Type.METHOD }?.name ?: error("No current method in path")
 
 @JsonClass(generateAdapter = true)
 data class SourceMutation(
@@ -294,16 +291,14 @@ class Mutater(
     }
 }
 
-fun Source.mutater(shuffle: Boolean = true, seed: Int = Random.nextInt(), types: Set<Mutation.Type> = ALL) =
-    Mutater(this, shuffle, seed, types = types)
+fun Source.mutater(shuffle: Boolean = true, seed: Int = Random.nextInt(), types: Set<Mutation.Type> = ALL) = Mutater(this, shuffle, seed, types = types)
 
 fun Source.mutate(
     shuffle: Boolean = true,
     seed: Int = Random.nextInt(),
     limit: Int = 1,
     types: Set<Mutation.Type> = Mutation.Type.entries.toSet(),
-) =
-    Mutater(this, shuffle, seed, types).mutate(limit)
+) = Mutater(this, shuffle, seed, types).mutate(limit)
 
 fun SourceMutation.suppressed(contents: String) = mutation.location.line.lines().any { line ->
     line.split("""//""").let { parts ->

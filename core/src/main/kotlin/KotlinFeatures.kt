@@ -780,6 +780,9 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
                     count(FeatureName.JAVA_EQUALITY, location)
                 } else if (fullMethodCall == "String") {
                     count(FeatureName.STRING, location)
+                } else {
+                    count(FeatureName.METHOD_CALL, location)
+                    currentFeatures.features.methodList += firstSimpleIdentifier
                 }
             }
             if (!skipDots) {

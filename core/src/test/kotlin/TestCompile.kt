@@ -665,18 +665,17 @@ public class Test {
         }
     })
 
-fun haveCompilationErrorAt(source: String = SNIPPET_SOURCE, line: Int, column: Int? = null) =
-    object : Matcher<CompilationFailed> {
-        override fun test(value: CompilationFailed): MatcherResult = MatcherResult(
-            value.errors.any {
-                it.location?.source == source &&
-                    it.location?.line == line &&
-                    (column == null || it.location?.column == column)
-            },
-            { "should have compilation error on line $line" },
-            { "should not have compilation error on line $line" },
-        )
-    }
+fun haveCompilationErrorAt(source: String = SNIPPET_SOURCE, line: Int, column: Int? = null) = object : Matcher<CompilationFailed> {
+    override fun test(value: CompilationFailed): MatcherResult = MatcherResult(
+        value.errors.any {
+            it.location?.source == source &&
+                it.location?.line == line &&
+                (column == null || it.location?.column == column)
+        },
+        { "should have compilation error on line $line" },
+        { "should not have compilation error on line $line" },
+    )
+}
 
 fun haveCompilationMessageAt(source: String = SNIPPET_SOURCE, line: Int) = object : Matcher<CompiledSource> {
     override fun test(value: CompiledSource): MatcherResult = MatcherResult(

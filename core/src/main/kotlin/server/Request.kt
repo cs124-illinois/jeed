@@ -81,17 +81,16 @@ data class ServerSourceExecutionArguments(
         )
     }
 
-    fun toSourceExecutionArguments(): SourceExecutionArguments =
-        SourceExecutionArguments(
-            klass,
-            method,
-            timeout!!,
-            permissions!!,
-            maxExtraThreads!!,
-            maxOutputLines!!,
-            maxIOBytes!!,
-            classLoaderConfiguration!!.toClassloaderConfiguration(),
-        )
+    fun toSourceExecutionArguments(): SourceExecutionArguments = SourceExecutionArguments(
+        klass,
+        method,
+        timeout!!,
+        permissions!!,
+        maxExtraThreads!!,
+        maxOutputLines!!,
+        maxIOBytes!!,
+        classLoaderConfiguration!!.toClassloaderConfiguration(),
+    )
 }
 
 @JsonClass(generateAdapter = true)

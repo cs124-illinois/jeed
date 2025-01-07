@@ -140,13 +140,11 @@ class TestKtLint :
         }
     })
 
-fun KtLintFailed.shouldHaveError(ruleId: String, prefix: String = "standard") =
-    errors.filterIsInstance<KtLintError>().also { ktlintErrors ->
-        ktlintErrors shouldHaveSize 1
-        ktlintErrors.filter { it.ruleId == "$prefix:$ruleId" } shouldHaveSize 1
-    }
+fun KtLintFailed.shouldHaveError(ruleId: String, prefix: String = "standard") = errors.filterIsInstance<KtLintError>().also { ktlintErrors ->
+    ktlintErrors shouldHaveSize 1
+    ktlintErrors.filter { it.ruleId == "$prefix:$ruleId" } shouldHaveSize 1
+}
 
-fun KtLintFailed.shouldHaveOnlyError(ruleId: String, prefix: String = "standard") =
-    errors.filterIsInstance<KtLintError>().also { ktlintErrors ->
-        ktlintErrors.all { it.ruleId == "$prefix:$ruleId" } shouldBe true
-    }
+fun KtLintFailed.shouldHaveOnlyError(ruleId: String, prefix: String = "standard") = errors.filterIsInstance<KtLintError>().also { ktlintErrors ->
+    ktlintErrors.all { it.ruleId == "$prefix:$ruleId" } shouldBe true
+}

@@ -57,26 +57,24 @@ class JavaMutationListener(private val parsedSource: Source.ParsedSource) : Java
         insideAnnotation = false
     }
 
-    private fun ParserRuleContext.toLocation() =
-        Mutation.Location(
-            start.startIndex,
-            stop.stopIndex,
-            lines.filterIndexed { index, _ -> index >= start.line - 1 && index <= stop.line - 1 }
-                .joinToString("\n"),
-            start.line,
-            stop.line,
-        )
+    private fun ParserRuleContext.toLocation() = Mutation.Location(
+        start.startIndex,
+        stop.stopIndex,
+        lines.filterIndexed { index, _ -> index >= start.line - 1 && index <= stop.line - 1 }
+            .joinToString("\n"),
+        start.line,
+        stop.line,
+    )
 
     private fun Token.toLocation() = Mutation.Location(startIndex, stopIndex, lines[line - 1], line, line)
-    private fun List<TerminalNode>.toLocation() =
-        Mutation.Location(
-            first().symbol.startIndex,
-            last().symbol.stopIndex,
-            lines.filterIndexed { index, _ -> index >= first().symbol.line - 1 && index <= last().symbol.line - 1 }
-                .joinToString("\n"),
-            first().symbol.line,
-            last().symbol.line,
-        )
+    private fun List<TerminalNode>.toLocation() = Mutation.Location(
+        first().symbol.startIndex,
+        last().symbol.stopIndex,
+        lines.filterIndexed { index, _ -> index >= first().symbol.line - 1 && index <= last().symbol.line - 1 }
+            .joinToString("\n"),
+        first().symbol.line,
+        last().symbol.line,
+    )
 
     private val divisions = listOf("%", "/", "%=", "/=")
     private fun LiteralContext.checkDivision(): Boolean {

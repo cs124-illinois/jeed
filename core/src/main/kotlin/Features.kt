@@ -52,6 +52,7 @@ enum class FeatureName(val description: String) {
     CONSTRUCTOR("constructor declarations"),
     GETTER("getters"),
     SETTER("setters"),
+    METHOD_CALL("method call"),
 
     // Strings & null
     STRING("Strings"),
@@ -330,6 +331,7 @@ val ORDERED_FEATURES = listOf(
     FeatureName.WHEN_ENTRY,
     FeatureName.LAST_WHEN_ENTRY,
     FeatureName.SWITCH_EXPRESSION,
+    FeatureName.METHOD_CALL,
 ).also {
     val doesExist = it.toSet()
     val shouldExist = FeatureName.entries.toSet() - setOf(FeatureName.EMPTY)
@@ -371,6 +373,7 @@ data class Features(
     val typeList: MutableSet<String> = mutableSetOf(),
     val identifierList: MutableSet<String> = mutableSetOf(),
     val dottedMethodList: MutableSet<String> = mutableSetOf(),
+    val methodList: MutableSet<String> = mutableSetOf(),
 ) {
     operator fun plus(other: Features): Features {
         val map = FeatureMap()
@@ -384,6 +387,7 @@ data class Features(
             (typeList + other.typeList).toMutableSet(),
             (identifierList + other.identifierList).toMutableSet(),
             (dottedMethodList + other.dottedMethodList).toMutableSet(),
+            (methodList + other.methodList).toMutableSet(),
         )
     }
 }

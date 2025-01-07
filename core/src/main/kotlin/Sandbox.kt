@@ -1741,9 +1741,8 @@ object Sandbox {
                 }
             }
 
-            private fun isConstantDynamicBlacklisted(condy: ConstantDynamic): Boolean =
-                isBlacklistedMethod(condy.bootstrapMethod.owner, condy.bootstrapMethod.name) ||
-                    hasBlacklistedBootstrapRef(condy.bootstrapArguments)
+            private fun isConstantDynamicBlacklisted(condy: ConstantDynamic): Boolean = isBlacklistedMethod(condy.bootstrapMethod.owner, condy.bootstrapMethod.name) ||
+                hasBlacklistedBootstrapRef(condy.bootstrapArguments)
 
             override fun visitInvokeDynamicInsn(
                 name: String?,
@@ -2172,8 +2171,7 @@ object Sandbox {
 
         override fun append(charSequence: CharSequence?): PrintStream = taskPrintStream.append(charSequence)
 
-        override fun append(charSequence: CharSequence?, start: Int, end: Int): PrintStream =
-            taskPrintStream.append(charSequence, start, end)
+        override fun append(charSequence: CharSequence?, start: Int, end: Int): PrintStream = taskPrintStream.append(charSequence, start, end)
 
         override fun close() {
             taskPrintStream.close()
@@ -2183,8 +2181,7 @@ object Sandbox {
             taskPrintStream.flush()
         }
 
-        override fun format(locale: Locale?, format: String, vararg args: Any?): PrintStream =
-            taskPrintStream.format(locale, format, *args)
+        override fun format(locale: Locale?, format: String, vararg args: Any?): PrintStream = taskPrintStream.format(locale, format, *args)
 
         override fun format(format: String, vararg args: Any?): PrintStream = taskPrintStream.format(format, *args)
 
@@ -2224,8 +2221,7 @@ object Sandbox {
             taskPrintStream.print(string)
         }
 
-        override fun printf(locale: Locale?, format: String, vararg args: Any?): PrintStream =
-            taskPrintStream.printf(locale, format, *args)
+        override fun printf(locale: Locale?, format: String, vararg args: Any?): PrintStream = taskPrintStream.printf(locale, format, *args)
 
         override fun printf(format: String, vararg args: Any?): PrintStream = taskPrintStream.printf(format, *args)
 

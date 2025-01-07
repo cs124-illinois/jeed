@@ -261,22 +261,21 @@ suspend fun Source.coverage(): CoverageResult = when (type) {
     taskResults.permissionDenied shouldBe false
 }.let { taskResult -> processCoverage(taskResult.pluginResult(Jacoco)) }
 
-fun haveFileCoverageAt(line: Int, expectedCoverage: LineCoverage, filename: String? = null) =
-    object : Matcher<CoverageResult> {
-        override fun test(value: CoverageResult): MatcherResult {
-            val toRetrieve = filename ?: value.byFile.keys.let {
-                check(it.size == 1) { "Must specify a key to retrieve multi-file coverage result" }
-                it.first()
-            }
-            val actualCoverage = value.byFile[toRetrieve]!![line]!!
-
-            return MatcherResult(
-                expectedCoverage == actualCoverage,
-                { "Expected coverage $expectedCoverage at line $line but found $actualCoverage" },
-                { "Expected coverage $expectedCoverage at line $line but found $actualCoverage" },
-            )
+fun haveFileCoverageAt(line: Int, expectedCoverage: LineCoverage, filename: String? = null) = object : Matcher<CoverageResult> {
+    override fun test(value: CoverageResult): MatcherResult {
+        val toRetrieve = filename ?: value.byFile.keys.let {
+            check(it.size == 1) { "Must specify a key to retrieve multi-file coverage result" }
+            it.first()
         }
+        val actualCoverage = value.byFile[toRetrieve]!![line]!!
+
+        return MatcherResult(
+            expectedCoverage == actualCoverage,
+            { "Expected coverage $expectedCoverage at line $line but found $actualCoverage" },
+            { "Expected coverage $expectedCoverage at line $line but found $actualCoverage" },
+        )
     }
+}
 
 fun haveFileMissedCount(expectedCount: Int, filename: String? = null) = object : Matcher<CoverageResult> {
     override fun test(value: CoverageResult): MatcherResult {

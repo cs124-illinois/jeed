@@ -670,16 +670,28 @@ class JavaFeatureListener(val source: Source, entry: Map.Entry<String, String>) 
                         count(FeatureName.DOT_NOTATION, ctx.bop.toLocation())
                     }
                 }
-                if (ctx.methodCall() != null) {
-                    if (!ctx.inPrintStatement()) {
-                        count(FeatureName.DOTTED_METHOD_CALL, ctx.bop.toLocation())
+            }
+        }
+        if (ctx.methodCall() != null) {
+            val location = ctx.methodCall().toLocation()
+            if (ctx.bop?.text == ".") {
+                if (!ctx.inPrintStatement()) {
+                    count(FeatureName.DOTTED_METHOD_CALL, location)
+                }
+                val identifier = ctx.methodCall().identifier()?.text
+                if (identifier != null) {
+                    currentFeatures.features.dottedMethodList += identifier
+                    if (identifier == "equals") {
+                        count(FeatureName.EQUALITY, ctx.methodCall().identifier().toLocation())
                     }
-                    val identifier = ctx.methodCall().identifier()?.text
-                    if (identifier != null) {
-                        currentFeatures.features.dottedMethodList += identifier
-                        if (identifier == "equals") {
-                            count(FeatureName.EQUALITY, ctx.methodCall().identifier().toLocation())
-                        }
+                }
+            } else {
+                count(FeatureName.METHOD_CALL, ctx.methodCall().toLocation())
+                val identifier = ctx.methodCall().identifier()?.text
+                if (identifier != null) {
+                    currentFeatures.features.methodList += identifier
+                    if (identifier == "equals") {
+                        count(FeatureName.EQUALITY, ctx.methodCall().identifier().toLocation())
                     }
                 }
             }

@@ -15,10 +15,10 @@ configurations.all {
     }
 }
 dependencies {
-    implementation("ch.qos.logback:logback-classic:1.5.12")
+    implementation("ch.qos.logback:logback-classic:1.5.16")
     implementation("io.github.microutils:kotlin-logging:3.0.5")
-    implementation("com.github.ajalt.clikt:clikt:5.0.1")
-    implementation("io.github.classgraph:classgraph:4.8.177")
+    implementation("com.github.ajalt.clikt:clikt:5.0.2")
+    implementation("io.github.classgraph:classgraph:4.8.179")
 }
 application {
     mainClass.set("edu.illinois.cs.cs125.jeed.containerrunner.MainKt")
@@ -60,7 +60,7 @@ tasks.register<Exec>("dockerBuild") {
     dependsOn("dockerCopyJar", "dockerCopyDockerfile")
     workingDir(layout.buildDirectory.dir("docker"))
     commandLine(
-        ("docker build . " +
+        ("/usr/local/bin/docker build . " +
             "-t ${dockerName}:latest " +
             "-t ${dockerName}:${project.version}").split(" ")
     )
@@ -69,7 +69,7 @@ tasks.register<Exec>("dockerPush") {
     dependsOn("dockerCopyJar", "dockerCopyDockerfile")
     workingDir(layout.buildDirectory.dir("docker"))
     commandLine(
-        ("docker buildx build . --platform=linux/amd64,linux/arm64/v8 " +
+        ("/usr/local/bin/docker buildx build . --platform=linux/amd64,linux/arm64/v8 " +
             "--builder multiplatform " +
             "--tag ${dockerName}:latest " +
             "--tag ${dockerName}:${project.version} --push").split(" ")

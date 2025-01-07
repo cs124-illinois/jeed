@@ -1256,6 +1256,23 @@ public class Question {
                 featureList should haveFeatureAt(FeatureName.PRINT_STATEMENTS, listOf(1))
             }
         }
+        "should count just method calls" {
+            Source.fromJavaSnippet(
+                """
+methodOne(1, 2);
+methodTwo(2, 3);
+equals(this);
+""",
+            ).features().check("") {
+                featureMap[FeatureName.METHOD_CALL] shouldBe 3
+                featureList should haveFeatureAt(FeatureName.METHOD_CALL, listOf(1, 2, 3))
+
+                featureMap[FeatureName.EQUALITY] shouldBe 1
+                featureList should haveFeatureAt(FeatureName.EQUALITY, listOf(3))
+
+                methodList shouldContainExactly setOf("methodOne", "methodTwo", "equals")
+            }
+        }
     }
 }
 

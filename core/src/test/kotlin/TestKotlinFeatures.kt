@@ -1300,5 +1300,18 @@ val third = intArrayOf(intArrayOf(1, 2))
                 featureList should haveFeatureAt(FeatureName.MULTIDIMENSIONAL_ARRAYS, listOf(2, 3))
             }
         }
+        "should count just method calls" {
+            Source.fromKotlinSnippet(
+                """
+methodOne(1, 2)
+methodTwo(2, 3)
+""",
+            ).features().check("") {
+                featureMap[FeatureName.METHOD_CALL] shouldBe 2
+                featureList should haveFeatureAt(FeatureName.METHOD_CALL, listOf(1, 2))
+
+                methodList shouldContainExactly setOf("methodOne", "methodTwo")
+            }
+        }
     }
 }

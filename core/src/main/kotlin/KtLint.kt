@@ -186,8 +186,7 @@ suspend fun Source.ktFormat(ktLintArguments: KtLintArguments = KtLintArguments()
 }
 
 @Suppress("unused")
-suspend fun String.ktFormat(ktLintArguments: KtLintArguments = KtLintArguments()) =
-    Source.fromKotlin(this).ktFormat(ktLintArguments).contents
+suspend fun String.ktFormat(ktLintArguments: KtLintArguments = KtLintArguments()) = Source.fromKotlin(this).ktFormat(ktLintArguments).contents
 
 private val unexpectedRegex = """Unexpected indentation \((\d+)\)""".toRegex()
 private val shouldBeRegex = """should be (\d+)""".toRegex()
@@ -280,5 +279,4 @@ suspend fun Source.ktLint(ktLintArguments: KtLintArguments = KtLintArguments()):
 }
 
 @Suppress("unused")
-suspend fun String.ktLint(ktLintArguments: KtLintArguments = KtLintArguments()) =
-    Source.fromKotlin(this).ktLint(ktLintArguments)
+suspend fun String.ktLint(ktLintArguments: KtLintArguments = KtLintArguments()) = Source.fromKotlin(this).ktLint(ktLintArguments)

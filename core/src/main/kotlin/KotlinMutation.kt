@@ -151,25 +151,23 @@ class KotlinMutationListener(private val parsedSource: Source.ParsedSource) : Ko
         insideAnnotation = false
     }
 
-    private fun ParserRuleContext.toLocation() =
-        Mutation.Location(
-            start.startIndex,
-            stop.stopIndex,
-            lines.filterIndexed { index, _ -> index >= start.line - 1 && index <= stop.line - 1 }
-                .joinToString("\n"),
-            start.line,
-            stop.line,
-        )
+    private fun ParserRuleContext.toLocation() = Mutation.Location(
+        start.startIndex,
+        stop.stopIndex,
+        lines.filterIndexed { index, _ -> index >= start.line - 1 && index <= stop.line - 1 }
+            .joinToString("\n"),
+        start.line,
+        stop.line,
+    )
 
-    private fun List<TerminalNode>.toLocation() =
-        Mutation.Location(
-            first().symbol.startIndex,
-            last().symbol.stopIndex,
-            lines.filterIndexed { index, _ -> index >= first().symbol.line - 1 && index <= last().symbol.line - 1 }
-                .joinToString("\n"),
-            first().symbol.line,
-            last().symbol.line,
-        )
+    private fun List<TerminalNode>.toLocation() = Mutation.Location(
+        first().symbol.startIndex,
+        last().symbol.stopIndex,
+        lines.filterIndexed { index, _ -> index >= first().symbol.line - 1 && index <= last().symbol.line - 1 }
+            .joinToString("\n"),
+        first().symbol.line,
+        last().symbol.line,
+    )
 
     override fun enterLineStringContent(ctx: KotlinParser.LineStringContentContext) {
         if (insideAnnotation) {
@@ -429,9 +427,8 @@ class KotlinMutationListener(private val parsedSource: Source.ParsedSource) : Ko
     private val loopBlockDepths = mutableListOf<Int>()
     private var continueUntil = 0
 
-    private fun StatementContext.isContinue() =
-        expression()?.primaryExpression()?.jumpExpression()?.CONTINUE() != null ||
-            expression()?.primaryExpression()?.jumpExpression()?.CONTINUE_AT() != null
+    private fun StatementContext.isContinue() = expression()?.primaryExpression()?.jumpExpression()?.CONTINUE() != null ||
+        expression()?.primaryExpression()?.jumpExpression()?.CONTINUE_AT() != null
 
     private fun StatementContext.isIfTry() = expression()?.primaryExpression()?.ifExpression() != null ||
         expression()?.primaryExpression()?.tryExpression() != null
@@ -718,8 +715,7 @@ class KotlinMutationListener(private val parsedSource: Source.ParsedSource) : Ko
         return Pair(frontLocation, backLocation)
     }
 
-    private fun TerminalNode.toLocation() =
-        Mutation.Location(symbol.startIndex, symbol.stopIndex, lines[symbol.line - 1], symbol.line, symbol.line)
+    private fun TerminalNode.toLocation() = Mutation.Location(symbol.startIndex, symbol.stopIndex, lines[symbol.line - 1], symbol.line, symbol.line)
 
     init {
         // println(parsedSource.tree.format(parsedSource.parser))
