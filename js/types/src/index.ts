@@ -334,6 +334,7 @@ export const Feature = Union(
   Literal("CONSTRUCTOR"),
   Literal("GETTER"),
   Literal("SETTER"),
+  Literal("METHOD_CALL"),
   //
   Literal("STRING"),
   Literal("NULL"),
@@ -605,6 +606,7 @@ export const ORDERED_FEATURES = Array(Feature).check([
   "WHEN_ENTRY",
   "LAST_WHEN_ENTRY",
   "SWITCH_EXPRESSION",
+  "METHOD_CALL",
 ])
 
 export const LocatedFeature = Record({
@@ -619,6 +621,8 @@ export const FeatureValue = Record({
   importList: Array(String),
   typeList: Array(String),
   identifierList: Array(String),
+  dottedMethodList: Array(String),
+  methodList: Array(String),
 })
 export type FeatureValue = Static<typeof FeatureValue>
 

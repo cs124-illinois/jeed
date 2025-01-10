@@ -1,4 +1,4 @@
-dist
+bundled
 .cache
 public
 example/graphql-types.ts

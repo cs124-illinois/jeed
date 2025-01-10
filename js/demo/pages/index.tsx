@@ -69,7 +69,7 @@ const JeedDemo: React.FC = () => {
   const [snippet, setSnippet] = useState(true)
   const [response, setResponse] = useState<{ response?: Response; error?: string } | undefined>()
   const { run: runJeed } = useJeed()
-  const aceRef = useRef<IAceEditor>()
+  const aceRef = useRef<IAceEditor>(null)
   const [loaded, setLoaded] = useState(false)
   const [outputLoaded, setOutputLoaded] = useState(false)
 
