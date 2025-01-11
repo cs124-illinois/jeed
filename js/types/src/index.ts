@@ -622,8 +622,11 @@ export const FeatureValue = Record({
   typeList: Array(String),
   identifierList: Array(String),
   dottedMethodList: Array(String),
-  methodList: Array(String),
-})
+}).And(
+  Partial({
+    methodList: Array(String),
+  }),
+)
 export type FeatureValue = Static<typeof FeatureValue>
 
 export const FlatClassFeatures = Record({

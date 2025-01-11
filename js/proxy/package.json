@@ -1,7 +1,7 @@
 {
   "private": true,
   "name": "proxy",
-  "version": "2025.1.0",
+  "version": "2025.1.1",
   "scripts": {
     "build": "rimraf bundled && node esbuild/server.mjs",
     "checker": "yarn depcheck && yarn prettier && yarn eslint && yarn tsc && yarn build",
@@ -17,7 +17,7 @@
     "tsc": "tsc --noEmit"
   },
   "dependencies": {
-    "@cs124/jeed-types": "2025.1.0",
+    "@cs124/jeed-types": "2025.1.1",
     "@koa/cors": "5.0.0",
     "@koa/router": "13.1.0",
     "@panva/hkdf": "1.2.1",
@@ -32,7 +32,7 @@
     "runtypes": "6.7.0"
   },
   "devDependencies": {
-    "@eslint/js": "9.17.0",
+    "@eslint/js": "9.18.0",
     "@types/isomorphic-fetch": "0.0.39",
     "@types/koa": "2.15.0",
     "@types/koa__cors": "5.0.0",
@@ -41,7 +41,7 @@
     "@types/mongodb-uri": "0.9.4",
     "env-cmd": "10.1.0",
     "esbuild": "0.24.2",
-    "eslint": "9.17.0",
+    "eslint": "9.18.0",
     "eslint-config-prettier": "9.1.0",
     "eslint-plugin-prettier": "5.2.1",
     "npm-check-updates": "17.1.13",

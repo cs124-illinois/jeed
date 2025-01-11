@@ -1,7 +1,7 @@
 {
   "private": true,
   "name": "demo",
-  "version": "2025.1.0",
+  "version": "2025.1.1",
   "scripts": {
     "build": "next build",
     "checker": "npm run eslint && npm run tsc && npm run format && npm run depcheck",
@@ -16,9 +16,9 @@
     "tsc": "tsc --noEmit"
   },
   "dependencies": {
-    "@cs124/jeed-output": "2025.1.0",
-    "@cs124/jeed-react": "2025.1.0",
-    "@cs124/jeed-types": "2025.1.0",
+    "@cs124/jeed-output": "2025.1.1",
+    "@cs124/jeed-react": "2025.1.1",
+    "@cs124/jeed-types": "2025.1.1",
     "next": "15.1.4",
     "react": "19.0.0",
     "react-ace": "13.0.0",
