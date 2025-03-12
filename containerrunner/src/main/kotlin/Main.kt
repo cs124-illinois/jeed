@@ -6,21 +6,17 @@ import com.github.ajalt.clikt.core.main
 import com.github.ajalt.clikt.core.subcommands
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.default
+import edu.illinois.cs.cs125.jeed.core.VERSION
 import io.github.classgraph.ClassGraph
 import mu.KotlinLogging
 import java.io.PrintWriter
 import java.io.StringWriter
 import java.lang.reflect.Method
 import java.lang.reflect.Modifier
-import java.util.Properties
 import kotlin.system.exitProcess
 
 @Suppress("UNUSED")
 private val logger = KotlinLogging.logger {}
-
-val VERSION: String = Properties().also {
-    it.load((object {}).javaClass.getResourceAsStream("/edu.illinois.cs.cs125.jeed.containerrunner.version"))
-}.getProperty("version")
 
 class MethodNotFoundException(method: String) : Exception(method)
 

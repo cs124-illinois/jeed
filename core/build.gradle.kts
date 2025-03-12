@@ -27,10 +27,10 @@ dependencies {
 
     antlr("org.antlr:antlr4:4.13.2")
 
-    implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:2.1.0")
+    implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:2.1.10")
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.1")
-    implementation("com.puppycrawl.tools:checkstyle:10.21.1")
+    implementation("com.puppycrawl.tools:checkstyle:10.21.4")
     implementation("org.codehaus.plexus:plexus-container-default:2.1.1")
     implementation("com.pinterest.ktlint:ktlint-rule-engine:1.5.0")
     implementation("com.pinterest.ktlint:ktlint-ruleset-standard:1.5.0")
@@ -39,9 +39,7 @@ dependencies {
     implementation("org.ow2.asm:asm:9.7.1")
     implementation("org.ow2.asm:asm-tree:9.7.1")
     implementation("org.ow2.asm:asm-util:9.7.1")
-    implementation("ch.qos.logback:logback-classic:1.5.16")
-    implementation("io.github.microutils:kotlin-logging:3.0.5")
-    implementation("io.github.classgraph:classgraph:4.8.179")
+
     implementation("net.java.dev.jna:jna:5.16.0")
     implementation("io.github.java-diff-utils:java-diff-utils:4.15")
     implementation("com.google.googlejavaformat:google-java-format:1.25.2")
@@ -49,7 +47,10 @@ dependencies {
     implementation("net.sf.extjwnl:extjwnl-data-wn31:1.2")
 
     api("org.jacoco:org.jacoco.core:0.8.12")
-    api("com.github.ben-manes.caffeine:caffeine:3.1.8")
+    api("com.github.ben-manes.caffeine:caffeine:3.2.0")
+    api("ch.qos.logback:logback-classic:1.5.17")
+    api("io.github.microutils:kotlin-logging:3.0.5")
+    api("io.github.classgraph:classgraph:4.8.179")
 
     testImplementation("io.kotest:kotest-runner-junit5:5.9.1")
     testImplementation("com.beyondgrader.resource-agent:agent:$agentVersion")
@@ -111,13 +112,12 @@ afterEvaluate {
         dependsOn(":containerrunner:dockerBuild")
     }
 }
-task("createProperties") {
-    dependsOn(tasks.processResources)
+tasks.register("createProperties") {
     doLast {
         val properties = Properties().also {
             it["version"] = project.version.toString()
         }
-        File(projectDir, "src/main/resources/edu.illinois.cs.cs125.jeed.core.version")
+        File(projectDir, "src/main/resources/edu.illinois.cs.cs125.jeed.version")
             .printWriter().use { printWriter ->
                 printWriter.print(
                     StringWriter().also { properties.store(it, null) }.buffer.toString()
@@ -125,6 +125,9 @@ task("createProperties") {
                 )
             }
     }
+}
+tasks.processResources {
+    dependsOn("createProperties")
 }
 tasks.register<Copy>("copyJavaGrammar") {
     from(project.file("src/main/antlr/edu/illinois/cs/cs125/jeed/antlr/java"))

@@ -22,7 +22,7 @@ configurations.all {
     }
 }
 dependencies {
-    val ktorVersion = "3.0.3"
+    val ktorVersion = "3.1.1"
 
     ksp("com.squareup.moshi:moshi-kotlin-codegen:1.15.2")
 
@@ -36,14 +36,12 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.1")
     implementation("com.squareup.moshi:moshi-kotlin:1.15.2")
     implementation("org.cs124:ktor-moshi:2025.1.0")
-    implementation("ch.qos.logback:logback-classic:1.5.16")
     implementation("io.github.nhubbard:konf:2.1.0")
-    implementation("io.github.microutils:kotlin-logging:3.0.5")
     implementation("com.beyondgrader.resource-agent:agent:$agentVersion")
     implementation("com.beyondgrader.resource-agent:jeedplugin:$agentVersion")
 
     // Libraries for student use
-    implementation("org.cs124:libcs1:2025.1.0")
+    implementation("org.cs124:libcs1:2025.3.0")
     implementation("io.kotest:kotest-runner-junit5:5.9.1")
     implementation("com.google.truth:truth:1.4.4")
 
@@ -53,10 +51,6 @@ dependencies {
 
 application {
     mainClass.set("edu.illinois.cs.cs125.jeed.server.MainKt")
-}
-
-tasks.processResources {
-    dependsOn("createProperties")
 }
 
 val dockerName = "cs124/jeed"
@@ -83,7 +77,6 @@ tasks.register<Exec>("dockerPush") {
     workingDir(layout.buildDirectory.dir("docker"))
     commandLine(
         ("/usr/local/bin/docker buildx build . --platform=linux/amd64,linux/arm64/v8 " +
-            "--builder multiplatform " +
             "--tag ${dockerName}:latest " +
             "--tag ${dockerName}:${project.version} --push").split(" ")
     )
@@ -92,23 +85,6 @@ tasks.test {
     useJUnitPlatform()
     systemProperties["logback.configurationFile"] = File(projectDir, "src/test/resources/logback-test.xml").absolutePath
     environment["JEED_USE_CACHE"] = "true"
-}
-task("createProperties") {
-    doLast {
-        val properties = Properties().also {
-            it["version"] = project.version.toString()
-        }
-        File(projectDir, "src/main/resources/edu.illinois.cs.cs125.jeed.server.version")
-            .printWriter().use { printWriter ->
-                printWriter.print(
-                    StringWriter().also { properties.store(it, null) }.buffer.toString()
-                        .lines().drop(1).joinToString(separator = "\n").trim()
-                )
-            }
-    }
-}
-tasks.processResources {
-    dependsOn("createProperties")
 }
 tasks.shadowJar {
     isZip64 = true

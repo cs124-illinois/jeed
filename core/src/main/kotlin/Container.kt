@@ -12,14 +12,13 @@ import java.io.InputStreamReader
 import java.time.Instant
 import java.util.UUID
 import java.util.concurrent.TimeUnit
-import edu.illinois.cs.cs125.jeed.core.version as JEED_VERSION
 
 private val CONTAINER_TMP_DIR = System.getenv("JEED_CONTAINER_TMP_DIR")
 
 @Suppress("TooGenericExceptionCaught")
 private val MAX_CONCURRENT_CONTAINERS = try {
     System.getenv("JEED_MAX_CONCURRENT_CONTAINERS").toInt()
-} catch (e: Exception) {
+} catch (_: Exception) {
     Runtime.getRuntime().availableProcessors()
 }
 private val containerSemaphore = Semaphore(MAX_CONCURRENT_CONTAINERS)
@@ -37,7 +36,7 @@ data class ContainerExecutionArguments(
 ) {
     companion object {
         @Suppress("SpellCheckingInspection")
-        val DEFAULT_IMAGE = "cs124/jeed-containerrunner:$JEED_VERSION"
+        val DEFAULT_IMAGE = "cs124/jeed-containerrunner:$VERSION"
         const val DEFAULT_TIMEOUT = 2000L
     }
 }

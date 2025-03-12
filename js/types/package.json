@@ -1,6 +1,6 @@
 {
   "name": "@cs124/jeed-types",
-  "version": "2025.1.1",
+  "version": "2025.3.0",
   "license": "MIT",
   "main": "dist/index.js",
   "scripts": {
@@ -22,27 +22,27 @@
     "runtypes": ">= 6"
   },
   "devDependencies": {
-    "@eslint/js": "9.18.0",
+    "@eslint/js": "9.22.0",
     "@types/deep-diff": "1.0.5",
     "@types/js-yaml": "4.0.9",
-    "@types/lodash": "4.17.14",
+    "@types/lodash": "4.17.16",
     "@types/mocha": "10.0.10",
     "deep-diff": "1.0.2",
     "depcheck": "1.4.7",
-    "eslint": "9.18.0",
-    "eslint-config-prettier": "9.1.0",
+    "eslint": "9.22.0",
+    "eslint-config-prettier": "10.1.1",
     "isomorphic-fetch": "3.0.0",
     "js-yaml": "4.1.0",
     "lodash": "4.17.21",
-    "mocha": "11.0.1",
-    "npm-check-updates": "17.1.13",
-    "prettier": "3.4.2",
+    "mocha": "11.1.0",
+    "npm-check-updates": "17.1.15",
+    "prettier": "3.5.3",
     "prettier-package-json": "2.8.0",
     "prettier-plugin-organize-imports": "4.1.0",
     "rimraf": "6.0.1",
     "runtypes": "6.7.0",
-    "ts-mocha": "10.0.0",
-    "typescript": "5.7.3",
-    "typescript-eslint": "8.19.1"
+    "ts-mocha": "11.1.0",
+    "typescript": "5.8.2",
+    "typescript-eslint": "8.26.1"
   }
 }

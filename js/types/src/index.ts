@@ -70,7 +70,6 @@ export const ServerStatus = Record({
   hostname: String,
   versions: Record({
     jeed: String,
-    server: String,
     compiler: String,
     kompiler: String,
   }),

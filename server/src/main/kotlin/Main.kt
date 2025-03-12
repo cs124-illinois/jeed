@@ -6,6 +6,7 @@ import com.beyondgrader.resourceagent.Agent
 import com.beyondgrader.resourceagent.StaticFailureDetection
 import com.ryanharter.ktor.moshi.moshi
 import com.squareup.moshi.Moshi
+import edu.illinois.cs.cs125.jeed.core.VERSION
 import edu.illinois.cs.cs125.jeed.core.checkDockerEnabled
 import edu.illinois.cs.cs125.jeed.core.getStackTraceAsString
 import edu.illinois.cs.cs125.jeed.core.warm
@@ -30,7 +31,6 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import mu.KotlinLogging
 import java.time.Instant
-import java.util.Properties
 import kotlin.system.exitProcess
 import edu.illinois.cs.cs125.jeed.core.moshi.Adapters as JeedAdapters
 
@@ -41,9 +41,6 @@ val moshi: Moshi = Moshi.Builder().let { builder ->
     JeedAdapters.forEach { builder.add(it) }
     builder.build()
 }
-val VERSION: String = Properties().also {
-    it.load((object {}).javaClass.getResourceAsStream("/edu.illinois.cs.cs125.jeed.server.version"))
-}.getProperty("version")
 
 val currentStatus = Status()
 

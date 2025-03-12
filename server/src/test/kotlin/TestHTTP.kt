@@ -4,6 +4,7 @@ package edu.illinois.cs.cs125.jeed.server
 
 import com.beyondgrader.resourceagent.jeed.MemoryLimit
 import edu.illinois.cs.cs125.jeed.core.LineTrace
+import edu.illinois.cs.cs125.jeed.core.VERSION
 import edu.illinois.cs.cs125.jeed.core.checkDockerEnabled
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.beEmpty
@@ -1183,7 +1184,7 @@ fun main() {
                 }.also { response ->
                     response.status shouldBe HttpStatusCode.OK
                     val status = Status.from(response.bodyAsText())
-                    status.versions.server shouldBe VERSION
+                    status.versions.jeed shouldBe VERSION
                 }
             }
         }

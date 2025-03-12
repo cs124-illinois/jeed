@@ -5,6 +5,7 @@ package edu.illinois.cs.cs125.jeed.server
 import com.squareup.moshi.JsonAdapter
 import com.squareup.moshi.JsonClass
 import edu.illinois.cs.cs125.jeed.core.MoreCacheStats
+import edu.illinois.cs.cs125.jeed.core.VERSION
 import edu.illinois.cs.cs125.jeed.core.compilationCache
 import edu.illinois.cs.cs125.jeed.core.compilationCacheSizeMB
 import edu.illinois.cs.cs125.jeed.core.server.Task
@@ -13,7 +14,6 @@ import java.net.InetAddress
 import java.time.Instant
 import edu.illinois.cs.cs125.jeed.core.systemCompilerName as COMPILER_NAME
 import edu.illinois.cs.cs125.jeed.core.systemKompilerVersion as KOMPILER_VERSION
-import edu.illinois.cs.cs125.jeed.core.version as JEED_VERSION
 
 @JsonClass(generateAdapter = true)
 @Suppress("MemberVisibilityCanBePrivate", "LongParameterList", "unused")
@@ -22,13 +22,13 @@ class Status(
     val started: Instant = Instant.now(),
     val hostname: String = InetAddress.getLocalHost().hostName,
     var lastRequest: Instant? = null,
-    val versions: Versions = Versions(JEED_VERSION, VERSION, COMPILER_NAME, KOMPILER_VERSION),
+    val versions: Versions = Versions(VERSION, COMPILER_NAME, KOMPILER_VERSION),
     val counts: Counts = Counts(),
     val cache: Cache = Cache(),
     val resources: Resources = Resources(),
 ) {
     @JsonClass(generateAdapter = true)
-    data class Versions(val jeed: String, val server: String, val compiler: String, val kompiler: String)
+    data class Versions(val jeed: String, val compiler: String, val kompiler: String)
 
     @JsonClass(generateAdapter = true)
     data class Counts(var submitted: Int = 0, var completed: Int = 0, var saved: Int = 0)
