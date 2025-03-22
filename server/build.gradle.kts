@@ -13,7 +13,7 @@ plugins {
     id("org.jmailen.kotlinter")
     id("io.gitlab.arturbosch.detekt")
     id("com.google.devtools.ksp")
-    id("com.ryandens.javaagent-test") version "0.7.0"
+    id("com.ryandens.javaagent-test") version "0.8.0"
 }
 val agentVersion: String by rootProject.extra
 configurations.all {

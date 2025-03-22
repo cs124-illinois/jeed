@@ -14,7 +14,7 @@ plugins {
     id("org.jmailen.kotlinter")
     id("io.gitlab.arturbosch.detekt")
     id("com.google.devtools.ksp")
-    id("com.ryandens.javaagent-test") version "0.7.0"
+    id("com.ryandens.javaagent-test") version "0.8.0"
 }
 val agentVersion: String by rootProject.extra
 configurations.all {
@@ -27,7 +27,7 @@ dependencies {
 
     antlr("org.antlr:antlr4:4.13.2")
 
-    implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:2.1.10")
+    implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:2.1.20")
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.1")
     implementation("com.puppycrawl.tools:checkstyle:10.21.4")
@@ -40,7 +40,7 @@ dependencies {
     implementation("org.ow2.asm:asm-tree:9.7.1")
     implementation("org.ow2.asm:asm-util:9.7.1")
 
-    implementation("net.java.dev.jna:jna:5.16.0")
+    implementation("net.java.dev.jna:jna:5.17.0")
     implementation("io.github.java-diff-utils:java-diff-utils:4.15")
     implementation("com.google.googlejavaformat:google-java-format:1.25.2")
     implementation("net.sf.extjwnl:extjwnl:2.0.5")
@@ -48,7 +48,7 @@ dependencies {
 
     api("org.jacoco:org.jacoco.core:0.8.12")
     api("com.github.ben-manes.caffeine:caffeine:3.2.0")
-    api("ch.qos.logback:logback-classic:1.5.17")
+    api("ch.qos.logback:logback-classic:1.5.18")
     api("io.github.microutils:kotlin-logging:3.0.5")
     api("io.github.classgraph:classgraph:4.8.179")
 
