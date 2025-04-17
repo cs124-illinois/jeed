@@ -11,7 +11,7 @@ configurations.all {
 }
 dependencies {
     implementation(project(":core"))
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
 }
 application {
     mainClass.set("edu.illinois.cs.cs125.jeed.leaktest.MainKt")

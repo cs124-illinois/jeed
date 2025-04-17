@@ -1,8 +1,6 @@
 import org.jmailen.gradle.kotlinter.tasks.FormatTask
 import org.jmailen.gradle.kotlinter.tasks.LintTask
 import java.io.File
-import java.io.StringWriter
-import java.util.Properties
 
 plugins {
     kotlin("jvm")
@@ -22,7 +20,7 @@ configurations.all {
     }
 }
 dependencies {
-    val ktorVersion = "3.1.1"
+    val ktorVersion = "3.1.2"
 
     ksp("com.squareup.moshi:moshi-kotlin-codegen:1.15.2")
 
@@ -33,7 +31,7 @@ dependencies {
     implementation("io.ktor:ktor-server-netty:$ktorVersion")
     implementation("io.ktor:ktor-server-cors:$ktorVersion")
     implementation("io.ktor:ktor-server-content-negotiation:$ktorVersion")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
     implementation("com.squareup.moshi:moshi-kotlin:1.15.2")
     implementation("org.cs124:ktor-moshi:2025.1.0")
     implementation("io.github.nhubbard:konf:2.1.0")
@@ -41,7 +39,7 @@ dependencies {
     implementation("com.beyondgrader.resource-agent:jeedplugin:$agentVersion")
 
     // Libraries for student use
-    implementation("org.cs124:libcs1:2025.3.0")
+    implementation("org.cs124:libcs1:2025.4.0")
     implementation("io.kotest:kotest-runner-junit5:5.9.1")
     implementation("com.google.truth:truth:1.4.4")
 

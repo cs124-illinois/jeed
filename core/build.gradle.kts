@@ -1,3 +1,5 @@
+@file:Suppress("SpellCheckingInspection")
+
 import java.io.File
 import java.io.StringWriter
 import java.util.Properties
@@ -29,24 +31,24 @@ dependencies {
 
     implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:2.1.20")
 
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.1")
-    implementation("com.puppycrawl.tools:checkstyle:10.21.4")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
+    implementation("com.puppycrawl.tools:checkstyle:10.23.0")
     implementation("org.codehaus.plexus:plexus-container-default:2.1.1")
     implementation("com.pinterest.ktlint:ktlint-rule-engine:1.5.0")
     implementation("com.pinterest.ktlint:ktlint-ruleset-standard:1.5.0")
     implementation("com.github.jknack:handlebars:4.4.0")
     implementation("com.squareup.moshi:moshi-kotlin:1.15.2")
-    implementation("org.ow2.asm:asm:9.7.1")
-    implementation("org.ow2.asm:asm-tree:9.7.1")
-    implementation("org.ow2.asm:asm-util:9.7.1")
+    implementation("org.ow2.asm:asm:9.8")
+    implementation("org.ow2.asm:asm-tree:9.8")
+    implementation("org.ow2.asm:asm-util:9.8")
 
     implementation("net.java.dev.jna:jna:5.17.0")
     implementation("io.github.java-diff-utils:java-diff-utils:4.15")
-    implementation("com.google.googlejavaformat:google-java-format:1.25.2")
+    implementation("com.google.googlejavaformat:google-java-format:1.26.0")
     implementation("net.sf.extjwnl:extjwnl:2.0.5")
     implementation("net.sf.extjwnl:extjwnl-data-wn31:1.2")
 
-    api("org.jacoco:org.jacoco.core:0.8.12")
+    api("org.jacoco:org.jacoco.core:0.8.13")
     api("com.github.ben-manes.caffeine:caffeine:3.2.0")
     api("ch.qos.logback:logback-classic:1.5.18")
     api("io.github.microutils:kotlin-logging:3.0.5")

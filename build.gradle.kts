@@ -7,14 +7,14 @@ plugins {
     id("org.jmailen.kotlinter") version "5.0.1" apply false
     id("com.github.ben-manes.versions") version "0.52.0"
     id("io.gitlab.arturbosch.detekt") version "1.23.8"
-    id("com.google.devtools.ksp") version "2.1.20-1.0.31" apply false
+    id("com.google.devtools.ksp") version "2.1.20-2.0.0" apply false
     id("io.github.gradle-nexus.publish-plugin") version "2.0.0"
-    id("com.autonomousapps.dependency-analysis") version "2.13.0"
+    id("com.autonomousapps.dependency-analysis") version "2.16.0"
 }
 val agentVersion by extra { "2024.7.0" }
 allprojects {
     group = "org.cs124.jeed"
-    version = "2025.3.2"
+    version = "2025.4.0"
 }
 subprojects {
     tasks.withType<Test> {

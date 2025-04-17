@@ -17,4 +17,4 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "jeed"
-include("core", "server", "containerrunner", "leaktest")
+include("core", "server")
