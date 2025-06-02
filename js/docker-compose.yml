@@ -1,6 +1,6 @@
 services:
   proxy:
-    image: cs124/jeed-proxy:2025.1.0
+    image: cs124/jeed-proxy:2025.6.0
     pull_policy: build
     build: proxy/.
     ports:
