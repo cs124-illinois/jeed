@@ -1,6 +1,6 @@
 {
   "name": "@cs124/jeed-output",
-  "version": "2025.3.0",
+  "version": "2025.6.0",
   "license": "MIT",
   "main": "dist/index.js",
   "scripts": {
@@ -18,20 +18,20 @@
   },
   "types": "dist/index.d.ts",
   "dependencies": {
-    "@cs124/jeed-types": "2025.3.0"
+    "@cs124/jeed-types": "2025.6.0"
   },
   "devDependencies": {
-    "@eslint/js": "9.22.0",
+    "@eslint/js": "9.28.0",
     "depcheck": "1.4.7",
-    "eslint": "9.22.0",
-    "eslint-config-prettier": "10.1.1",
-    "npm-check-updates": "17.1.15",
+    "eslint": "9.28.0",
+    "eslint-config-prettier": "10.1.5",
+    "npm-check-updates": "18.0.1",
     "prettier": "3.5.3",
     "prettier-package-json": "2.8.0",
     "prettier-plugin-organize-imports": "4.1.0",
     "rimraf": "6.0.1",
     "runtypes": "6.7.0",
-    "typescript": "5.8.2",
-    "typescript-eslint": "8.26.1"
+    "typescript": "5.8.3",
+    "typescript-eslint": "8.33.0"
   }
 }
