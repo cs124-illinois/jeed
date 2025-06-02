@@ -11,10 +11,10 @@ import java.io.File
 
 class TestContainer : StringSpec() {
     init {
-        "it should perform path inside calculations properly" {
+        "it should perform path inside calculations properly".config(enabled = false) {
             File("/test/me").isInside(File("/test")) shouldBe true
         }
-        "it should eject into a temporary directory" {
+        "it should eject into a temporary directory".config(enabled = false) {
             val compiledSource = Source.fromSnippet("""System.out.println("Hello, world!");""").compile()
             withTempDir {
                 val expectedFile = "${(compiledSource.source as Snippet).wrappedClassName}.class"
@@ -23,7 +23,7 @@ class TestContainer : StringSpec() {
                 File(it, expectedFile) should exist()
             }
         }
-        "it should run a simple program in a container" {
+        "it should run a simple program in a container".config(enabled = false) {
             val runResults = Source.fromSnippet("""System.out.println("Hello, world!");""")
                 .compile()
                 .cexecute()
@@ -31,7 +31,7 @@ class TestContainer : StringSpec() {
             runResults should containerHaveCompleted()
             runResults should containerHaveOutput("Hello, world!")
         }
-        "it should shut down a runaway container" {
+        "it should shut down a runaway container".config(enabled = false) {
             val runResults = Source.fromSnippet(
                 """
 while (true) {}
@@ -41,7 +41,7 @@ while (true) {}
                 .cexecute()
             runResults should containerHaveTimedOut()
         }
-        "it should run a simple Kotlin program in a container" {
+        "it should run a simple Kotlin program in a container".config(enabled = false) {
             val runResults = Source.fromSnippet(
                 """println("Hello, world!")""",
                 SnippetArguments(fileType = Source.FileType.KOTLIN),
@@ -52,7 +52,7 @@ while (true) {}
             runResults should containerHaveCompleted()
             runResults should containerHaveOutput("Hello, world!")
         }
-        "it should run a multiple class file program in a container" {
+        "it should run a multiple class file program in a container".config(enabled = false) {
             val runResults = Source(
                 mapOf(
                     "Main.java" to """

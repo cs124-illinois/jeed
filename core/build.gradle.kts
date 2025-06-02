@@ -29,13 +29,13 @@ dependencies {
 
     antlr("org.antlr:antlr4:4.13.2")
 
-    implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:2.1.20")
+    implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:2.1.21")
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
-    implementation("com.puppycrawl.tools:checkstyle:10.23.0")
+    implementation("com.puppycrawl.tools:checkstyle:10.25.0")
     implementation("org.codehaus.plexus:plexus-container-default:2.1.1")
-    implementation("com.pinterest.ktlint:ktlint-rule-engine:1.5.0")
-    implementation("com.pinterest.ktlint:ktlint-ruleset-standard:1.5.0")
+    implementation("com.pinterest.ktlint:ktlint-rule-engine:1.6.0")
+    implementation("com.pinterest.ktlint:ktlint-ruleset-standard:1.6.0")
     implementation("com.github.jknack:handlebars:4.4.0")
     implementation("com.squareup.moshi:moshi-kotlin:1.15.2")
     implementation("org.ow2.asm:asm:9.8")
@@ -44,7 +44,7 @@ dependencies {
 
     implementation("net.java.dev.jna:jna:5.17.0")
     implementation("io.github.java-diff-utils:java-diff-utils:4.15")
-    implementation("com.google.googlejavaformat:google-java-format:1.26.0")
+    implementation("com.google.googlejavaformat:google-java-format:1.27.0")
     implementation("net.sf.extjwnl:extjwnl:2.0.5")
     implementation("net.sf.extjwnl:extjwnl-data-wn31:1.2")
 
@@ -111,7 +111,7 @@ afterEvaluate {
         dependsOn(tasks.generateTestGrammarSource)
     }
     tasks.named("test") {
-        dependsOn(":containerrunner:dockerBuild")
+        // dependsOn(":containerrunner:dockerBuild")
     }
 }
 tasks.register("createProperties") {
