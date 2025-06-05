@@ -96,7 +96,7 @@ fun Application.jeed() {
     }
 }
 
-fun main(): Unit = runBlocking {
+fun main(@Suppress("unused") unused: Array<String>): Unit = runBlocking {
     logger.info { Status().toJson() }
     logger.info(configuration.toJson.toText())
 
