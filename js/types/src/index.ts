@@ -1,4 +1,4 @@
-import { Array, Boolean, Dictionary, Literal, Number, Partial, Record, Static, String, Union } from "runtypes"
+import { Array, Boolean, Literal, Number, Object, Record, Static, String, Union } from "runtypes"
 
 export const Task = Union(
   Literal("template"),
@@ -16,46 +16,40 @@ export const Task = Union(
 )
 export type Task = Static<typeof Task>
 
-export const FlatSource = Record({
+export const FlatSource = Object({
   path: String,
   contents: String,
 })
 export type FlatSource = Static<typeof FlatSource>
 
-export const Permission = Record({
+export const Permission = Object({
   klass: String,
   name: String,
-}).And(
-  Partial({
-    actions: String,
-  }),
-)
+  actions: String.optional(),
+})
 export type Permission = Static<typeof Permission>
 
 export const FileType = Union(Literal("JAVA"), Literal("KOTLIN"))
 export type FileType = Static<typeof FileType>
 
-export const Location = Record({ line: Number, column: Number })
+export const Location = Object({ line: Number, column: Number })
 export type Location = Static<typeof Location>
 
-export const SourceRange = Record({
+export const SourceRange = Object({
   start: Location,
   end: Location,
-}).And(
-  Partial({
-    source: String,
-  }),
-)
+  source: String.optional(),
+})
 export type SourceRange = Static<typeof SourceRange>
 
-export const SourceLocation = Record({
+export const SourceLocation = Object({
   source: String,
   line: Number,
   column: Number,
 })
 export type SourceLocation = Static<typeof SourceLocation>
 
-export const Interval = Record({
+export const Interval = Object({
   start: String.withConstraint((s) => !isNaN(Date.parse(s))),
   end: String.withConstraint((s) => !isNaN(Date.parse(s))),
 })
@@ -64,21 +58,21 @@ export type Interval = Static<typeof Interval>
 export const intervalDuration = (interval: Interval) =>
   new Date(interval.end).valueOf() - new Date(interval.start).valueOf()
 
-export const ServerStatus = Record({
+export const ServerStatus = Object({
   tasks: Array(Task),
   started: String.withConstraint((s) => !isNaN(Date.parse(s))),
   hostname: String,
-  versions: Record({
+  versions: Object({
     jeed: String,
     compiler: String,
     kompiler: String,
   }),
-  counts: Record({
+  counts: Object({
     submitted: Number,
     completed: Number,
     saved: Number,
   }),
-  cache: Record({
+  cache: Object({
     inUse: Boolean,
     sizeInMB: Number,
     hits: Number,
@@ -87,150 +81,156 @@ export const ServerStatus = Record({
     evictionCount: Number,
     averageLoadPenalty: Number,
   }),
-}).And(
-  Partial({
-    lastRequest: String.withConstraint((s) => !isNaN(Date.parse(s))),
-  }),
-)
+  lastRequest: String.withConstraint((s) => !isNaN(Date.parse(s))).optional(),
+})
 export type ServerStatus = Static<typeof ServerStatus>
 
-export const SnippetArguments = Partial({
-  indent: Number,
-  fileType: FileType,
-  noEmptyMain: Boolean,
+export const SnippetArguments = Object({
+  indent: Number.optional(),
+  fileType: FileType.optional(),
+  noEmptyMain: Boolean.optional(),
 })
 export type SnippetArguments = Static<typeof SnippetArguments>
 
-export const CompilationArguments = Partial({
-  wError: Boolean,
-  XLint: String,
-  enablePreview: Boolean,
-  useCache: Boolean,
-  waitForCache: Boolean,
-  parameters: Boolean,
-  debugInfo: Boolean,
+export const CompilationArguments = Object({
+  wError: Boolean.optional(),
+  XLint: String.optional(),
+  enablePreview: Boolean.optional(),
+  useCache: Boolean.optional(),
+  waitForCache: Boolean.optional(),
+  parameters: Boolean.optional(),
+  debugInfo: Boolean.optional(),
+  isolatedClassLoader: Boolean.optional(),
 })
 export type CompilationArguments = Static<typeof CompilationArguments>
 
-export const KompilationArguments = Partial({
-  verbose: Boolean,
-  allWarningsAsErrors: Boolean,
-  useCache: Boolean,
-  waitForCache: Boolean,
+export const KompilationArguments = Object({
+  verbose: Boolean.optional(),
+  allWarningsAsErrors: Boolean.optional(),
+  useCache: Boolean.optional(),
+  waitForCache: Boolean.optional(),
+  parameters: Boolean.optional(),
+  jvmTarget: String.optional(),
+  isolatedClassLoader: Boolean.optional(),
 })
 export type KompilationArguments = Static<typeof KompilationArguments>
 
-export const CheckstyleArguments = Partial({
-  sources: Array(String),
-  failOnError: Boolean,
+export const CheckstyleArguments = Object({
+  sources: Array(String).optional(),
+  failOnError: Boolean.optional(),
+  skipUnmapped: Boolean.optional(),
+  suppressions: Array(String).optional(),
 })
 export type CheckstyleArguments = Static<typeof CheckstyleArguments>
 
-export const KtLintArguments = Partial({
-  sources: Array(String),
-  failOnError: Boolean,
-  indent: Number,
-  maxLineLength: Number,
-  script: Boolean,
+export const KtLintArguments = Object({
+  sources: Array(String).optional(),
+  failOnError: Boolean.optional(),
+  indent: Number.optional(),
+  maxLineLength: Number.optional(),
+  script: Boolean.optional(),
 })
 export type KtLintArguments = Static<typeof KtLintArguments>
 
-export const ClassLoaderConfiguration = Partial({
-  whitelistedClasses: Array(String),
-  blacklistedClasses: Array(String),
-  unsafeExceptions: Array(String),
-  isolatedClasses: Array(String),
+export const ClassLoaderConfiguration = Object({
+  whitelistedClasses: Array(String).optional(),
+  blacklistedClasses: Array(String).optional(),
+  unsafeExceptions: Array(String).optional(),
+  isolatedClasses: Array(String).optional(),
 })
 export type ClassLoaderConfiguration = Static<typeof ClassLoaderConfiguration>
 
-export const SourceExecutionArguments = Partial({
-  klass: String,
-  method: String,
-  timeout: Number,
-  permissions: Array(Permission),
-  maxExtraThreads: Number,
-  maxOutputLines: Number,
-  maxIOBytes: Number,
-  classLoaderConfiguration: ClassLoaderConfiguration,
-  dryRun: Boolean,
-  waitForShutdown: Boolean,
-  returnTimeout: Number,
-  permissionBlackList: Boolean,
-  cpuTimeout: Number,
-  pollInterval: Number,
+export const SourceExecutionArguments = Object({
+  klass: String.optional(),
+  method: String.optional(),
+  timeout: Number.optional(),
+  permissions: Array(Permission).optional(),
+  maxExtraThreads: Number.optional(),
+  maxOutputLines: Number.optional(),
+  maxIOBytes: Number.optional(),
+  classLoaderConfiguration: ClassLoaderConfiguration.optional(),
+  dryRun: Boolean.optional(),
+  waitForShutdown: Boolean.optional(),
+  returnTimeout: Number.optional(),
+  permissionBlackList: Boolean.optional(),
+  cpuTimeout: Number.optional(),
+  pollInterval: Number.optional(),
 })
 export type SourceExecutionArguments = Static<typeof SourceExecutionArguments>
 
-export const ContainerExecutionArguments = Partial({
-  klass: String,
-  method: String,
-  image: String,
-  timeout: Number,
-  maxOutputLines: Number,
-  containerArguments: String,
+export const ContainerExecutionArguments = Object({
+  klass: String.optional(),
+  method: String.optional(),
+  image: String.optional(),
+  timeout: Number.optional(),
+  maxOutputLines: Number.optional(),
+  containerArguments: String.optional(),
 })
 export type ContainerExecutionArguments = Static<typeof ContainerExecutionArguments>
 
-export const MutationsArguments = Partial({
-  limit: Number,
-  suppressWithComments: Boolean,
+export const MutationsArguments = Object({
+  limit: Number.optional(),
+  suppressWithComments: Boolean.optional(),
 })
 export type MutationsArguments = Static<typeof MutationsArguments>
 
-export const TaskArguments = Partial({
-  snippet: SnippetArguments,
-  compilation: CompilationArguments,
-  kompilation: KompilationArguments,
-  checkstyle: CheckstyleArguments,
-  ktlint: KtLintArguments,
-  execution: SourceExecutionArguments,
-  cexecution: ContainerExecutionArguments,
-  mutations: MutationsArguments,
+export const TaskArguments = Object({
+  snippet: SnippetArguments.optional(),
+  compilation: CompilationArguments.optional(),
+  kompilation: KompilationArguments.optional(),
+  checkstyle: CheckstyleArguments.optional(),
+  ktlint: KtLintArguments.optional(),
+  execution: SourceExecutionArguments.optional(),
+  cexecution: ContainerExecutionArguments.optional(),
+  mutations: MutationsArguments.optional(),
 })
 export type TaskArguments = Static<typeof TaskArguments>
 
-export const Request = Record({
+export const Request = Object({
   tasks: Array(Task),
-  label: String,
-}).And(
-  Partial({
-    sources: Array(FlatSource),
-    templates: Array(FlatSource),
-    snippet: String,
-    arguments: TaskArguments,
-    checkForSnippet: Boolean,
-  }),
-)
+  label: String.optional(),
+  sources: Array(FlatSource).optional(),
+  templates: Array(FlatSource).optional(),
+  snippet: String.optional(),
+  arguments: TaskArguments.optional(),
+  checkForSnippet: Boolean.optional(),
+})
 export type Request = Static<typeof Request>
 
-export const Snippet = Record({
-  sources: Dictionary(String),
+export const SnippetProperties = Object({
+  importCount: Number,
+  looseCount: Number,
+  methodCount: Number,
+  classCount: Number,
+})
+export type SnippetProperties = Static<typeof SnippetProperties>
+
+export const Snippet = Object({
+  sources: Record(String, String),
   originalSource: String,
   rewrittenSource: String,
   snippetRange: SourceRange,
   wrappedClassName: String,
   looseCodeMethodName: String,
   fileType: FileType,
+  snippetProperties: SnippetProperties.optional(),
 })
 export type Snippet = Static<typeof Snippet>
 
-export const TemplatedSourceResult = Record({
-  sources: Dictionary(String),
-  originalSources: Dictionary(String),
+export const TemplatedSourceResult = Object({
+  sources: Record(String, String),
+  originalSources: Record(String, String),
 })
 export type TemplatedSourceResult = Static<typeof TemplatedSourceResult>
 
-export const CompilationMessage = Record({
+export const CompilationMessage = Object({
   kind: String,
   message: String,
-}).And(
-  Partial({
-    location: SourceLocation,
-  }),
-)
+  location: SourceLocation.optional(),
+})
 export type CompilationMessage = Static<typeof CompilationMessage>
 
-export const CompiledSourceResult = Record({
+export const CompiledSourceResult = Object({
   messages: Array(CompilationMessage),
   compiled: String.withConstraint((s) => !isNaN(Date.parse(s))),
   interval: Interval,
@@ -239,35 +239,32 @@ export const CompiledSourceResult = Record({
 })
 export type CompiledSourceResult = Static<typeof CompiledSourceResult>
 
-export const CheckstyleError = Record({
+export const CheckstyleError = Object({
   severity: String,
   location: SourceLocation,
   message: String,
-}).And(
-  Partial({
-    sourceName: String,
-  }),
-)
+  sourceName: String.optional(),
+})
 export type CheckstyleError = Static<typeof CheckstyleError>
 
-export const CheckstyleResults = Record({
+export const CheckstyleResults = Object({
   errors: Array(CheckstyleError),
 })
 export type CheckstyleResults = Static<typeof CheckstyleResults>
 
-export const KtlintError = Record({
+export const KtlintError = Object({
   ruleId: String,
   detail: String,
   location: SourceLocation,
 })
 export type KtlintError = Static<typeof KtlintError>
 
-export const KtlintResults = Record({
+export const KtlintResults = Object({
   errors: Array(KtlintError),
 })
 export type KtlintResults = Static<typeof KtlintError>
 
-export const FlatClassComplexity = Record({
+export const FlatClassComplexity = Object({
   name: String,
   path: String,
   range: SourceRange,
@@ -277,14 +274,14 @@ export type FlatClassComplexity = Static<typeof FlatClassComplexity>
 export const FlatMethodComplexity = FlatClassComplexity
 export type FlatMethodComplexity = FlatClassComplexity
 
-export const FlatComplexityResult = Record({
+export const FlatComplexityResult = Object({
   source: String,
   classes: Array(FlatClassComplexity),
   methods: Array(FlatMethodComplexity),
 })
 export type FlatComplexityResult = Static<typeof FlatComplexityResult>
 
-export const FlatComplexityResults = Record({
+export const FlatComplexityResults = Object({
   results: Array(FlatComplexityResult),
 })
 export type FlatComplexityResults = Static<typeof FlatComplexityResults>
@@ -608,41 +605,35 @@ export const ORDERED_FEATURES = Array(Feature).check([
   "METHOD_CALL",
 ])
 
-export const LocatedFeature = Record({
+export const LocatedFeature = Object({
   feature: Feature,
   location: Location,
 })
 export type LocatedFeature = Static<typeof LocatedFeature>
 
-export const FeatureValue = Record({
-  featureMap: Dictionary(Number, Feature),
+export const FeatureValue = Object({
+  featureMap: Record(String, Number),
   featureList: Array(LocatedFeature),
   importList: Array(String),
   typeList: Array(String),
   identifierList: Array(String),
   dottedMethodList: Array(String),
-}).And(
-  Partial({
-    methodList: Array(String),
-  }),
-)
+  methodList: Array(String).optional(),
+})
 export type FeatureValue = Static<typeof FeatureValue>
 
-export const FlatClassFeatures = Record({
+export const FlatClassFeatures = Object({
   name: String,
   path: String,
   features: FeatureValue,
-}).And(
-  Partial({
-    range: SourceRange,
-  }),
-)
+  range: SourceRange.optional(),
+})
 export type FlatClassFeatures = Static<typeof FlatClassFeatures>
 
 export const FlatMethodFeatures = FlatClassFeatures
 export type FlatMethodFeatures = FlatClassFeatures
 
-export const FlatUnitFeatures = Record({
+export const FlatUnitFeatures = Object({
   name: String,
   path: String,
   range: SourceRange,
@@ -650,21 +641,21 @@ export const FlatUnitFeatures = Record({
 })
 export type FlatUnitFeatures = Static<typeof FlatUnitFeatures>
 
-export const FlatFeaturesResult = Record({
+export const FlatFeaturesResult = Object({
   source: String,
   unit: FlatUnitFeatures,
-  classes: Array(FlatClassFeatures),
-  methods: Array(FlatMethodFeatures),
+  classes: Array(FlatClassFeatures).optional(),
+  methods: Array(FlatMethodFeatures).optional(),
 })
 export type FlatFeaturesResult = Static<typeof FlatFeaturesResult>
 
-export const FlatFeaturesResults = Record({
+export const FlatFeaturesResults = Object({
   results: Array(FlatFeaturesResult),
-  allFeatures: Dictionary(String),
+  allFeatures: Record(String, String),
 })
 export type FlatFeaturesResults = Static<typeof FlatFeaturesResults>
 
-export const MutationLocation = Record({
+export const MutationLocation = Object({
   start: Number,
   end: Number,
   line: String,
@@ -673,58 +664,53 @@ export const MutationLocation = Record({
 })
 export type MutationLocation = Static<typeof MutationLocation>
 
-export const AppliedMutation = Record({
+export const AppliedMutation = Object({
   mutationType: String,
   location: MutationLocation,
   original: String,
   mutated: String,
   linesChanged: Number,
+  mightNotCompile: Boolean.optional(),
 })
 export type AppliedMutation = Static<typeof AppliedMutation>
 
-export const MutatedSource = Record({
+export const MutatedSource = Object({
   mutatedSource: String,
-  mutatedSources: Dictionary(String),
+  mutatedSources: Record(String, String),
   mutation: AppliedMutation,
 })
 export type MutatedSource = Static<typeof MutatedSource>
 
-export const MutationsResults = Record({
-  source: Dictionary(String),
+export const MutationsResults = Object({
+  source: Record(String, String),
   mutatedSources: Array(MutatedSource),
 })
 export type MutationsResults = Static<typeof MutationsResults>
 
-export const DisassembleResults = Record({
-  disassemblies: Dictionary(String, String),
+export const DisassembleResults = Object({
+  disassemblies: Record(String, String),
 })
 export type DisassembleResults = Static<typeof DisassembleResults>
 
-export const ThrownException = Record({
+export const ThrownException = Object({
   klass: String,
   stacktrace: String,
-}).And(
-  Partial({
-    message: String,
-  }),
-)
+  message: String.optional(),
+})
 export type ThrownException = Static<typeof ThrownException>
 
 export const Console = Union(Literal("STDOUT"), Literal("STDERR"))
 export type Console = Static<typeof Console>
 
-export const OutputLine = Record({
+export const OutputLine = Object({
   console: Console,
   line: String,
   timestamp: String.withConstraint((s) => !isNaN(Date.parse(s))),
-}).And(
-  Partial({
-    thread: Number,
-  }),
-)
+  thread: Number.optional(),
+})
 export type OutputLine = Static<typeof OutputLine>
 
-export const PermissionRequest = Record({
+export const PermissionRequest = Object({
   permission: Permission,
   granted: Boolean,
 })
@@ -736,7 +722,7 @@ export const KILL_REASONS: { [key: string]: string } = {
   exceededLineLimit: "exceeded total line count limit",
 }
 
-export const SourceTaskResults = Record({
+export const SourceTaskResults = Object({
   klass: String,
   method: String,
   timeout: Boolean,
@@ -745,16 +731,13 @@ export const SourceTaskResults = Record({
   interval: Interval,
   executionInterval: Interval,
   truncatedLines: Number,
-}).And(
-  Partial({
-    returned: String,
-    threw: ThrownException,
-    killReason: String,
-  }),
-)
+  returned: String.optional(),
+  threw: ThrownException.optional(),
+  killReason: String.optional(),
+})
 export type SourceTaskResults = Static<typeof SourceTaskResults>
 
-export const ContainerExecutionResults = Record({
+export const ContainerExecutionResults = Object({
   klass: String,
   method: String,
   timeout: Boolean,
@@ -762,30 +745,27 @@ export const ContainerExecutionResults = Record({
   interval: Interval,
   executionInterval: Interval,
   truncatedLines: Number,
-}).And(
-  Partial({
-    exitcode: Number,
-  }),
-)
+  exitcode: Number.optional(),
+})
 export type ContainerExecutionResults = Static<typeof ContainerExecutionResults>
 
-export const CompletedTasks = Partial({
-  snippet: Snippet,
-  template: TemplatedSourceResult,
-  compilation: CompiledSourceResult,
-  kompilation: CompiledSourceResult,
-  checkstyle: CheckstyleResults,
-  ktlint: KtlintResults,
-  complexity: FlatComplexityResults,
-  features: FlatFeaturesResults,
-  execution: SourceTaskResults,
-  cexecution: ContainerExecutionResults,
-  mutations: MutationsResults,
-  disassemble: DisassembleResults,
+export const CompletedTasks = Object({
+  snippet: Snippet.optional(),
+  template: TemplatedSourceResult.optional(),
+  compilation: CompiledSourceResult.optional(),
+  kompilation: CompiledSourceResult.optional(),
+  checkstyle: CheckstyleResults.optional(),
+  ktlint: KtlintResults.optional(),
+  complexity: FlatComplexityResults.optional(),
+  features: FlatFeaturesResults.optional(),
+  execution: SourceTaskResults.optional(),
+  cexecution: ContainerExecutionResults.optional(),
+  mutations: MutationsResults.optional(),
+  disassemble: DisassembleResults.optional(),
 })
 export type CompletedTasks = Static<typeof CompletedTasks>
 
-export const TemplatingError = Record({
+export const TemplatingError = Object({
   name: String,
   line: Number,
   column: Number,
@@ -793,99 +773,93 @@ export const TemplatingError = Record({
 })
 export type TemplatingError = Static<typeof TemplatingError>
 
-export const TemplatingFailed = Record({
+export const TemplatingFailed = Object({
   errors: Array(TemplatingError),
 })
 export type TemplatingFailed = Static<typeof TemplatingFailed>
 
-export const SnippetTransformationError = Record({
+export const SnippetTransformationError = Object({
   line: Number,
   column: Number,
   message: String,
 })
 export type SnippetTransformationError = Static<typeof SnippetTransformationError>
 
-export const SnippetTransformationFailed = Record({
+export const SnippetTransformationFailed = Object({
   errors: Array(SnippetTransformationError),
 })
 export type SnippetTransformationFailed = Static<typeof SnippetTransformationFailed>
 
-export const CompilationError = Record({
+export const CompilationError = Object({
   message: String,
-}).And(
-  Partial({
-    location: SourceLocation,
-  }),
-)
+  location: SourceLocation.optional(),
+})
 export type CompilationError = Static<typeof CompilationError>
 
-export const CompilationFailed = Record({
+export const CompilationFailed = Object({
   errors: Array(CompilationError),
 })
 export type CompilationFailed = Static<typeof CompilationFailed>
 
-export const CheckstyleFailed = Record({
+export const CheckstyleFailed = Object({
   errors: Array(CheckstyleError),
 })
 export type CheckstyleFailed = Static<typeof CheckstyleFailed>
 
-export const KtlintFailed = Record({
+export const KtlintFailed = Object({
   errors: Array(KtlintError),
 })
 export type KtlintFailed = Static<typeof KtlintFailed>
 
-export const SourceError = Record({
+export const SourceError = Object({
   message: String,
-}).And(
-  Partial({
-    location: SourceLocation,
-  }),
-)
+  location: SourceLocation.optional(),
+})
 export type SourceError = Static<typeof SourceError>
 
-export const ComplexityFailed = Record({
+export const ComplexityFailed = Object({
   errors: Array(SourceError),
 })
 export type ComplexityFailed = Static<typeof ComplexityFailed>
 
-export const FeaturesFailed = Record({
+export const FeaturesFailed = Object({
   errors: Array(SourceError),
 })
 export type FeaturesFailed = Static<typeof FeaturesFailed>
 
-export const MutationsFailed = Record({
+export const MutationsFailed = Object({
   errors: Array(SourceError),
 })
 export type MutationsFailed = Static<typeof MutationsFailed>
 
-export const DisassembleFailed = Record({
+export const DisassembleFailed = Object({
   message: String,
 })
 export type DisassembleFailed = Static<typeof DisassembleFailed>
 
-export const ExecutionFailedResult = Partial({
-  classNotFound: String,
-  methodNotFound: String,
+export const ExecutionFailedResult = Object({
+  classNotFound: String.optional(),
+  methodNotFound: String.optional(),
 })
 export type ExecutionFailedResult = Static<typeof ExecutionFailedResult>
 
-export const FailedTasks = Partial({
-  template: TemplatingFailed,
-  snippet: SnippetTransformationFailed,
-  compilation: CompilationFailed,
-  kompilation: CompilationFailed,
-  checkstyle: CheckstyleFailed,
-  ktlint: KtlintFailed,
-  complexity: ComplexityFailed,
-  execution: ExecutionFailedResult,
-  cexecution: ExecutionFailedResult,
-  features: FeaturesFailed,
-  mutations: MutationsFailed,
-  disassemble: DisassembleFailed,
+export const FailedTasks = Object({
+  template: TemplatingFailed.optional(),
+  snippet: SnippetTransformationFailed.optional(),
+  compilation: CompilationFailed.optional(),
+  kompilation: CompilationFailed.optional(),
+  checkstyle: CheckstyleFailed.optional(),
+  ktlint: KtlintFailed.optional(),
+  complexity: ComplexityFailed.optional(),
+  execution: ExecutionFailedResult.optional(),
+  cexecution: ExecutionFailedResult.optional(),
+  features: FeaturesFailed.optional(),
+  mutations: MutationsFailed.optional(),
+  disassemble: DisassembleFailed.optional(),
 })
 export type FailedTasks = Static<typeof FailedTasks>
 
-export const Response = Record({
+export const Response = Object({
   request: Request,
   status: ServerStatus,
   completed: CompletedTasks,
@@ -893,10 +867,7 @@ export const Response = Record({
   failed: FailedTasks,
   failedTasks: Array(Task),
   interval: Interval,
-}).And(
-  Partial({
-    email: String,
-    audience: Array(String),
-  }),
-)
+  email: String.optional(),
+  audience: Array(String).optional(),
+})
 export type Response = Static<typeof Response>

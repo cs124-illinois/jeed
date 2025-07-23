@@ -1,6 +1,6 @@
 services:
   proxy:
-    image: cs124/jeed-proxy:2025.6.0
+    image: cs124/jeed-proxy:latest
     pull_policy: build
     build: proxy/.
     ports:
@@ -15,9 +15,10 @@ services:
     volumes:
       - ./proxy/dist:/server/dist
   jeed:
-    image: cs124/jeed:2025.6.0
+    image: cs124/jeed:latest
     environment:
       - JEED_USE_CACHE=true
+      - JEED_DOCKER_DISABLED=true
       - LIMITS_EXECUTION_TIMEOUT=1000
       - LIMITS_PLUGINS_LINECOUNTLIMIT=32768
       - LIMITS_EXECUTION_MAXEXTRATHREADS=8
