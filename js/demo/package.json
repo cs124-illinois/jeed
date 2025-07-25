@@ -4,7 +4,7 @@
   "version": "2025.7.1",
   "scripts": {
     "build": "next build",
-    "checker": "npm run eslint && npm run tsc && npm run format && npm run depcheck",
+    "check": "npm run eslint && npm run tsc && npm run format && npm run depcheck",
     "depcheck": "depcheck --ignore-dirs .next,.rush,bundled --ignores=@types/*,prettier-plugin-*",
     "deploy": "gh-pages -t -d dist",
     "eslint": "eslint --fix pages --max-warnings=0 --ext .ts,.tsx",
