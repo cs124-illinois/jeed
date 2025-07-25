@@ -48,3 +48,6 @@ leaktest/dump/
 core/src/main/gen
 
 .kotlin
+
+# TypeScript build cache
+*.tsbuildinfo
