@@ -4,7 +4,7 @@
   "version": "2025.7.1",
   "scripts": {
     "build": "rimraf bundled && node esbuild/server.mjs",
-    "checker": "yarn depcheck && yarn prettier && yarn eslint && yarn tsc && yarn build",
+    "checker": "npm run depcheck && npm run prettier && npm run eslint && npm run tsc && npm run build",
     "clean": "rimraf bundled",
     "depcheck": "depcheck --ignores=prettier-plugin-*,eslint-plugin-*,env-cmd,rimraf --ignore-dirs=bundled",
     "docker:build": "npm run build && docker build . -t cs124/jeed-proxy:latest && npm run docker:tag",

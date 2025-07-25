@@ -5,14 +5,14 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "rimraf dist && tsc",
-    "checker": "yarn depcheck && yarn prettier && yarn eslint && yarn tsc && yarn build",
+    "checker": "npm run depcheck && npm run prettier && npm run eslint && npm run tsc && npm run build",
     "clean": "rimraf dist",
     "depcheck": "depcheck --ignores=prettier-plugin-*,rimraf",
     "eslint": "eslint src/**",
     "ncu": "ncu",
     "prettier": "prettier -w --plugin=prettier-plugin-organize-imports . && prettier-package-json --write",
     "prepublish": "rimraf dist && tsc",
-    "start": "yarn watch",
+    "start": "npm run watch",
     "test": "env-cmd -f .env.test ts-mocha --paths tests/index.spec.ts",
     "tsc": "tsc --noEmit",
     "watch": "tsc -w"

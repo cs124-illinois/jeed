@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
-    "checker": "yarn depcheck && yarn prettier && yarn eslint && yarn tsc && yarn build",
+    "checker": "npm run depcheck && npm run prettier && npm run eslint && npm run tsc && npm run build",
     "clean": "rimraf dist",
     "depcheck": "depcheck --ignores=prettier-plugin-*,rimraf",
     "eslint": "eslint src/**",
