@@ -1,4 +1,4 @@
-FROM node:24.4.0-alpine
+FROM node:22.12.0-alpine
 
 RUN apk add --no-cache tini
 RUN apk add --no-cache entr --repository=http://dl-cdn.alpinelinux.org/alpine/edge/community

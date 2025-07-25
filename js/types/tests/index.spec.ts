@@ -33,10 +33,7 @@ describe("ServerStatus", function () {
     try {
       ServerStatus.check(status.status)
     } catch (err) {
-      console.log("ServerStatus validation error:")
-      console.log("Error message:", err.message)
-      console.log("Error details:", err.details)
-      console.log("Received status object:")
+      console.log(err.key)
       console.log(JSON.stringify(status, null, 2))
       throw err
     }
@@ -44,8 +41,27 @@ describe("ServerStatus", function () {
 })
 
 async function checkRequest(request: unknown, verbose = false): Promise<Response> {
+  try {
+    Request.check(request)
+  } catch (err) {
+    console.log(`Request problem ${err.key}`)
+    if (verbose) {
+      console.log(JSON.stringify(request, null, 2))
+    }
+    throw err
+  }
   const validatedRequest = Request.check(request)
-  const response = await postRequest(server, validatedRequest)
+  let response
+  try {
+    response = await postRequest(server, request as Request, false)
+    Response.check(response)
+  } catch (err) {
+    console.log(`Response problem: ${err.key || JSON.stringify(err)}`)
+    if (verbose && response) {
+      console.log(JSON.stringify(response, null, 2))
+    }
+    throw err
+  }
   const requestTaskArguments = validatedRequest.arguments || {}
   const responseTaskArguments = TaskArguments.check(response.request.arguments)
 

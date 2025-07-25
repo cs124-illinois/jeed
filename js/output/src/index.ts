@@ -177,11 +177,9 @@ ${originalLine ? originalLine + "\n" + new Array(column).join(" ") + "^" : ""}${
           }
           output.push(`  Class ${klass.name} has complexity ${klass.complexity}`)
         }
-        if (result.methods) {
-          for (const method of result.methods) {
-            const methodName = method.name === "" ? "Loose code" : `Method ${method.name}`
-            output.push(`  ${methodName} has complexity ${method.complexity}`)
-          }
+        for (const method of result.methods) {
+          const methodName = method.name === "" ? "Loose code" : `Method ${method.name}`
+          output.push(`  ${methodName} has complexity ${method.complexity}`)
         }
       }
       return { output: output.join("\n"), level: "success" }
@@ -198,11 +196,9 @@ ${originalLine ? originalLine + "\n" + new Array(column).join(" ") + "^" : ""}${
       const output = []
       for (const result of results) {
         const fileFeatures: { [key: string]: boolean } = {}
-        if (result.classes) {
-          for (const klass of result.classes) {
-            for (const feature of Object.keys(klass.features.featureMap)) {
-              fileFeatures[feature] = true
-            }
+        for (const klass of result.classes) {
+          for (const feature of Object.keys(klass.features.featureMap)) {
+            fileFeatures[feature] = true
           }
         }
         const name = result.source === "" ? "Entire snippet" : result.source

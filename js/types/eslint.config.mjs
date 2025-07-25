@@ -5,13 +5,11 @@ import eslintConfigPrettier from "eslint-config-prettier"
 import tseslint from "typescript-eslint"
 
 export default [
-  eslint.configs.recommended,
-  ...tseslint.configs.recommended,
-  {
+  ...tseslint.config(eslint.configs.recommended, ...tseslint.configs.recommended, {
     rules: {
       "@typescript-eslint/no-namespace": "off",
       "no-empty": "off",
     },
-  },
+  }),
   eslintConfigPrettier,
 ]

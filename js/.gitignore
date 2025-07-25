@@ -4,4 +4,3 @@ dist
 yarn-error.log
 .env.*
 .env
-tsconfig.tsbuildinfo
