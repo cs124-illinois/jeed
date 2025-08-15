@@ -16,8 +16,9 @@ plugins {
     id("org.jmailen.kotlinter")
     id("io.gitlab.arturbosch.detekt")
     id("com.google.devtools.ksp")
-    id("com.ryandens.javaagent-test") version "0.8.0"
+    id("com.ryandens.javaagent-test") version "0.9.1"
 }
+
 val agentVersion: String by rootProject.extra
 configurations.all {
     resolutionStrategy {
@@ -29,30 +30,30 @@ dependencies {
 
     antlr("org.antlr:antlr4:4.13.2")
 
-    implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:2.1.21")
+    implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:2.2.10")
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
-    implementation("com.puppycrawl.tools:checkstyle:10.25.0")
+    implementation("com.puppycrawl.tools:checkstyle:11.0.0")
     implementation("org.codehaus.plexus:plexus-container-default:2.1.1")
-    implementation("com.pinterest.ktlint:ktlint-rule-engine:1.6.0")
-    implementation("com.pinterest.ktlint:ktlint-ruleset-standard:1.6.0")
-    implementation("com.github.jknack:handlebars:4.4.0")
+    implementation("com.pinterest.ktlint:ktlint-rule-engine:1.7.1")
+    implementation("com.pinterest.ktlint:ktlint-ruleset-standard:1.7.1")
+    implementation("com.github.jknack:handlebars:4.5.0")
     implementation("com.squareup.moshi:moshi-kotlin:1.15.2")
     implementation("org.ow2.asm:asm:9.8")
     implementation("org.ow2.asm:asm-tree:9.8")
     implementation("org.ow2.asm:asm-util:9.8")
 
     implementation("net.java.dev.jna:jna:5.17.0")
-    implementation("io.github.java-diff-utils:java-diff-utils:4.15")
-    implementation("com.google.googlejavaformat:google-java-format:1.27.0")
+    implementation("io.github.java-diff-utils:java-diff-utils:4.16")
+    implementation("com.google.googlejavaformat:google-java-format:1.28.0")
     implementation("net.sf.extjwnl:extjwnl:2.0.5")
     implementation("net.sf.extjwnl:extjwnl-data-wn31:1.2")
 
     api("org.jacoco:org.jacoco.core:0.8.13")
-    api("com.github.ben-manes.caffeine:caffeine:3.2.0")
+    api("com.github.ben-manes.caffeine:caffeine:3.2.2")
     api("ch.qos.logback:logback-classic:1.5.18")
     api("io.github.microutils:kotlin-logging:3.0.5")
-    api("io.github.classgraph:classgraph:4.8.179")
+    api("io.github.classgraph:classgraph:4.8.181")
 
     testImplementation("io.kotest:kotest-runner-junit5:5.9.1")
     testImplementation("com.beyondgrader.resource-agent:agent:$agentVersion")
@@ -104,6 +105,12 @@ afterEvaluate {
     tasks.named("kspTestKotlin") {
         dependsOn(tasks.generateTestGrammarSource)
     }
+    tasks.named("lintKotlinMain") {
+        dependsOn(tasks.generateGrammarSource)
+    }
+    tasks.named("formatKotlinMain") {
+        dependsOn(tasks.generateGrammarSource)
+    }
     tasks.named("formatKotlinTest") {
         dependsOn(tasks.generateTestGrammarSource)
     }
@@ -112,6 +119,12 @@ afterEvaluate {
     }
     tasks.named("test") {
         // dependsOn(":containerrunner:dockerBuild")
+    }
+    tasks.withType<FormatTask> {
+        this.source = this.source.minus(fileTree("build")).asFileTree
+    }
+    tasks.withType<LintTask> {
+        this.source = this.source.minus(fileTree("build")).asFileTree
     }
 }
 tasks.register("createProperties") {
@@ -158,12 +171,7 @@ tasks.detekt {
     dependsOn(tasks.generateGrammarSource)
 }
 
-tasks.lintKotlinMain {
-    dependsOn(tasks.generateGrammarSource)
-}
-tasks.formatKotlinMain {
-    dependsOn(tasks.generateGrammarSource)
-}
+
 java {
     withJavadocJar()
     withSourcesJar()
@@ -171,12 +179,14 @@ java {
         languageVersion.set(JavaLanguageVersion.of(21))
     }
 }
-tasks.withType<FormatTask> {
-    this.source = this.source.minus(fileTree("build")).asFileTree
+sourceSets {
+    main {
+        kotlin {
+            exclude("build/**")
+        }
+    }
 }
-tasks.withType<LintTask> {
-    this.source = this.source.minus(fileTree("build")).asFileTree
-}
+
 publishing {
     publications {
         create<MavenPublication>("core") {

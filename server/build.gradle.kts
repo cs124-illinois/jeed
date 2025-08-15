@@ -7,11 +7,11 @@ plugins {
     application
     `maven-publish`
     signing
-    id("com.github.johnrengelman.shadow") version "8.1.1"
+    id("com.gradleup.shadow") version "9.0.2"
     id("org.jmailen.kotlinter")
     id("io.gitlab.arturbosch.detekt")
     id("com.google.devtools.ksp")
-    id("com.ryandens.javaagent-test") version "0.8.0"
+    id("com.ryandens.javaagent-test") version "0.9.1"
 }
 val agentVersion: String by rootProject.extra
 configurations.all {
@@ -20,7 +20,7 @@ configurations.all {
     }
 }
 dependencies {
-    val ktorVersion = "3.1.3"
+    val ktorVersion = "3.2.3"
 
     ksp("com.squareup.moshi:moshi-kotlin-codegen:1.15.2")
 
@@ -33,13 +33,13 @@ dependencies {
     implementation("io.ktor:ktor-server-content-negotiation:$ktorVersion")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
     implementation("com.squareup.moshi:moshi-kotlin:1.15.2")
-    implementation("org.cs124:ktor-moshi:2025.6.0")
+    implementation("org.cs124:ktor-moshi:2025.8.0")
     implementation("io.github.nhubbard:konf:2.1.0")
     implementation("com.beyondgrader.resource-agent:agent:$agentVersion")
     implementation("com.beyondgrader.resource-agent:jeedplugin:$agentVersion")
 
     // Libraries for student use
-    implementation("org.cs124:libcs1:2025.6.0")
+    implementation("org.cs124:libcs1:2025.8.0")
     implementation("io.kotest:kotest-runner-junit5:5.9.1")
     implementation("com.google.truth:truth:1.4.4")
 
@@ -100,11 +100,20 @@ java {
         languageVersion.set(JavaLanguageVersion.of(21))
     }
 }
-tasks.withType<FormatTask> {
-    this.source = this.source.minus(fileTree("build")).asFileTree
+sourceSets {
+    main {
+        kotlin {
+            exclude("build/**")
+        }
+    }
 }
-tasks.withType<LintTask> {
-    this.source = this.source.minus(fileTree("build")).asFileTree
+afterEvaluate {
+    tasks.withType<FormatTask> {
+        this.source = this.source.minus(fileTree("build")).asFileTree
+    }
+    tasks.withType<LintTask> {
+        this.source = this.source.minus(fileTree("build")).asFileTree
+    }
 }
 publishing {
     publications {
