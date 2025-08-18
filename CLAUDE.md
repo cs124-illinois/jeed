@@ -85,3 +85,9 @@ The project uses date-based versioning: YYYY.M.P (e.g., 2025.6.0)
 - Kotlin: 2.1.21
 - Node.js: 24.4.0 (for JS components)
 - Gradle: 9.x with Kotlin DSL
+
+## Dependency Management
+
+- Always specify exact dependencies in package.json files, avoiding ~ or ^ version prefixes
+
+- We're currently ignoring dependency updates from Kotlin, ktor, and kotest.
