@@ -20,7 +20,7 @@ configurations.all {
     }
 }
 dependencies {
-    val ktorVersion = "3.2.3"
+    val ktorVersion = "3.1.3"
 
     ksp("com.squareup.moshi:moshi-kotlin-codegen:1.15.2")
 
