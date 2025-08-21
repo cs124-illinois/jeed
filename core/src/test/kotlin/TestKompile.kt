@@ -11,14 +11,14 @@ import io.kotest.matchers.shouldBe
 class TestKompile :
     StringSpec({
         "should compile simple sources" {
-            val compiledSource = Source(
+            Source(
                 mapOf(
                     "Test.kt" to """val test = "string"""",
                 ),
-            ).kompile()
-
-            compiledSource should haveDefinedExactlyTheseClasses(setOf("TestKt"))
-            compiledSource should haveProvidedThisManyClasses(0)
+            ).kompile().also { compiledSource ->
+                compiledSource should haveDefinedExactlyTheseClasses(setOf("TestKt"))
+                compiledSource should haveProvidedThisManyClasses(0)
+            }
         }
         "should compile simple classes" {
             val compiledSource = Source(

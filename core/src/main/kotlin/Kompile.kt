@@ -60,8 +60,8 @@ data class KompilationArguments(
     val parameters: Boolean = DEFAULT_PARAMETERS,
     val jvmTarget: String = DEFAULT_JVM_TARGET,
     val isolatedClassLoader: Boolean = false,
+    val useK2: Boolean = true,
 ) {
-    @Suppress("SpellCheckingInspection")
     @Transient
     private val additionalCompilerArguments: List<String> = listOf(
         "-opt-in=kotlin.ExperimentalStdlibApi",
@@ -92,6 +92,7 @@ data class KompilationArguments(
         arguments.allWarningsAsErrors = allWarningsAsErrors
         arguments.noStdlib = true
         arguments.javaParameters = parameters
+        arguments.useK2 = useK2
     }
 
     companion object {
@@ -179,7 +180,7 @@ internal class JeedMessageCollector(val source: Source, private val allWarningsA
                 @Suppress("SwallowedException")
                 try {
                     source.mapLocation(SourceLocation(it, location.line, location.column))
-                } catch (e: SourceMappingException) {
+                } catch (_: SourceMappingException) {
                     null
                 }
             }
