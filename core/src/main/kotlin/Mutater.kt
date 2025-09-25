@@ -34,7 +34,7 @@ class MutatedSource(
     val originalSources: Sources,
     val mutations: List<AppliedSourceMutation>,
     val appliedMutations: Int,
-    @Suppress("SpellCheckingInspection") val unappliedMutations: Int,
+    val unappliedMutations: Int,
 ) : Source(sources) {
     fun cleaned() = Source(sources.mapValues { removeMutationSuppressions(it.value) })
 
@@ -142,7 +142,7 @@ class MutatedSource(
                 val modifiedLines = modified.lines()
                 val deltas =
                     DiffUtils.diff(originalLines, modifiedLines).deltas.sortedBy { it.source.position }.toMutableList()
-                check(deltas.size >= 1) { "Didn't find a delta" }
+                check(deltas.isNotEmpty()) { "Didn't find a delta" }
 
                 var currentOriginalLine = 0
                 val output = mutableListOf<String>()
@@ -274,7 +274,7 @@ class Mutater(
 
     fun mutate(limit: Int = 1): MutatedSource {
         check(appliedMutations.isEmpty()) { "Some mutations already applied" }
-        @Suppress("UnusedPrivateMember")
+        @Suppress("UNUSED")
         for (unused in 0 until limit) {
             if (availableMutations.isEmpty()) {
                 break
@@ -437,7 +437,7 @@ fun Source.allFixedMutations(
         } else {
             mutation.mutation.estimatedCount.coerceAtMost(nonFixedMax)
         }
-        @Suppress("UnusedPrivateMember")
+        @Suppress("UNUSED")
         for (unused in 0 until count) {
             mutation.mutation.reset()
             val modifiedSources = sources.copy().toMutableMap()
