@@ -90,4 +90,4 @@ The project uses date-based versioning: YYYY.M.P (e.g., 2025.6.0)
 
 - Always specify exact dependencies in package.json files, avoiding ~ or ^ version prefixes
 
-- We're currently ignoring dependency updates from Kotlin, ktor, and kotest.
+- We're currently ignoring dependency updates from Kotlin, ktor, KSP, and kotest.
