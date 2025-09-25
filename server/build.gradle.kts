@@ -7,11 +7,11 @@ plugins {
     application
     `maven-publish`
     signing
-    id("com.gradleup.shadow") version "9.0.2"
+    id("com.gradleup.shadow") version "9.2.1"
     id("org.jmailen.kotlinter")
     id("io.gitlab.arturbosch.detekt")
     id("com.google.devtools.ksp")
-    id("com.ryandens.javaagent-test") version "0.9.1"
+    id("com.ryandens.javaagent-test") version "0.10.0"
 }
 val agentVersion: String by rootProject.extra
 configurations.all {
@@ -41,7 +41,7 @@ dependencies {
     // Libraries for student use
     implementation("org.cs124:libcs1:2025.8.0")
     implementation("io.kotest:kotest-runner-junit5:5.9.1")
-    implementation("com.google.truth:truth:1.4.4")
+    implementation("com.google.truth:truth:1.4.5")
 
     testImplementation("io.kotest:kotest-runner-junit5:5.9.1")
     testImplementation("io.ktor:ktor-server-test-host:$ktorVersion")

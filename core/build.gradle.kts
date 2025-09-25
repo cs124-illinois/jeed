@@ -16,7 +16,7 @@ plugins {
     id("org.jmailen.kotlinter")
     id("io.gitlab.arturbosch.detekt")
     id("com.google.devtools.ksp")
-    id("com.ryandens.javaagent-test") version "0.9.1"
+    id("com.ryandens.javaagent-test") version "0.10.0"
 }
 
 val agentVersion: String by rootProject.extra
@@ -33,7 +33,7 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:2.1.21")
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
-    implementation("com.puppycrawl.tools:checkstyle:11.0.0")
+    implementation("com.puppycrawl.tools:checkstyle:11.0.1")
     implementation("org.codehaus.plexus:plexus-container-default:2.1.1")
     implementation("com.pinterest.ktlint:ktlint-rule-engine:1.7.1")
     implementation("com.pinterest.ktlint:ktlint-ruleset-standard:1.7.1")
@@ -43,7 +43,7 @@ dependencies {
     implementation("org.ow2.asm:asm-tree:9.8")
     implementation("org.ow2.asm:asm-util:9.8")
 
-    implementation("net.java.dev.jna:jna:5.17.0")
+    implementation("net.java.dev.jna:jna:5.18.0")
     implementation("io.github.java-diff-utils:java-diff-utils:4.16")
     implementation("com.google.googlejavaformat:google-java-format:1.28.0")
     implementation("net.sf.extjwnl:extjwnl:2.0.5")
@@ -162,6 +162,7 @@ tasks {
     val sourcesJar by registering(Jar::class) {
         archiveClassifier.set("sources")
         from(sourceSets["main"].allSource)
+        duplicatesStrategy = DuplicatesStrategy.INCLUDE
     }
     artifacts {
         add("archives", sourcesJar)
