@@ -477,7 +477,9 @@ expression
     | expression simpleIdentifier NL* expression
     | expression NL* elvis NL* expression
     | expression isOperator NL* type
-    | expression NL* (inOperator | comparisonOperator | equalityOperator | CONJ | DISJ) NL* expression
+    | expression NL* (inOperator | comparisonOperator | equalityOperator) NL* expression
+    | expression NL* bop = CONJ NL* expression
+    | expression NL* bop = DISJ NL* expression
     ;
 
 fullExpression

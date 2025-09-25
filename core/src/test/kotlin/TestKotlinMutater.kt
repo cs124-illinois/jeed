@@ -801,6 +801,37 @@ fun test() {
                 }
             }
         }
+        "it should remove and-or correctly" {
+            val source = Source.fromKotlin(
+                """
+class Question {
+  // TEMPLATE_START
+  fun arrayRangeSum(
+    array: IntArray,
+    range: Int,
+  ): Int {
+    var sum = 0
+    for (value in array) {
+      if (value < range && value > range * -1) {
+        sum += value
+      }
+      if (value < range || value > range * -1) {
+        sum += value
+      }
+    }
+    return sum
+  }
+  // TEMPLATE_END
+}
+""".trim(),
+            )
+            source.checkMutations<RemoveAndOr> { mutations, _ ->
+                mutations shouldHaveSize 4
+                mutations.forEach {
+                    it.apply(source.contents).ktLint()
+                }
+            }
+        }
         "it should remove plus correctly" {
             Source.fromKotlin(
                 """
