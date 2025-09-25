@@ -15,7 +15,7 @@ const val JEED_DEFAULT_COMPILATION_CACHE_SIZE_MB = 256L
 @Suppress("TooGenericExceptionCaught")
 val compilationCacheSizeMB = try {
     System.getenv("JEED_COMPILATION_CACHE_SIZE")?.toLong() ?: JEED_DEFAULT_COMPILATION_CACHE_SIZE_MB
-} catch (e: Exception) {
+} catch (_: Exception) {
     logger.warn("Bad value for JEED_COMPILATION_CACHE_SIZE")
     JEED_DEFAULT_COMPILATION_CACHE_SIZE_MB
 }
@@ -25,7 +25,7 @@ const val JEED_DEFAULT_USE_CACHE = false
 @Suppress("TooGenericExceptionCaught")
 val useCompilationCache = try {
     System.getenv("JEED_USE_CACHE")?.toBoolean() ?: JEED_DEFAULT_USE_CACHE
-} catch (e: Exception) {
+} catch (_: Exception) {
     logger.warn("Bad value for JEED_USE_CACHE")
     JEED_DEFAULT_USE_CACHE
 }

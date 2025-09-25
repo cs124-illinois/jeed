@@ -31,7 +31,7 @@ val systemCompilerVersion = systemCompilerName.let {
     @Suppress("TooGenericExceptionCaught")
     try {
         it.split("_")[1].toInt()
-    } catch (e: Exception) {
+    } catch (_: Exception) {
         DEFAULT_JAVA_VERSION
     }
 }
@@ -121,7 +121,7 @@ class CompiledSource(
     val cached: Boolean = false,
 )
 
-@Suppress("LongMethod", "ComplexMethod", "SpellCheckingInspection")
+@Suppress("LongMethod", "ComplexMethod")
 @Throws(CompilationFailed::class)
 internal fun compileToFileManager(
     compilationArguments: CompilationArguments = CompilationArguments(),
@@ -174,7 +174,7 @@ internal fun compileToFileManager(
         @Suppress("SwallowedException")
         val location = try {
             getMappedLocation(it)
-        } catch (e: SourceMappingException) {
+        } catch (_: SourceMappingException) {
             null
         }
         CompilationError(location, it.getMessage(Locale.US))
@@ -199,7 +199,7 @@ internal fun compileToFileManager(
         @Suppress("SwallowedException")
         val location = try {
             getMappedLocation(it)
-        } catch (e: SourceMappingException) {
+        } catch (_: SourceMappingException) {
             null
         }
         CompilationMessage(it.kind.toString(), location, it.getMessage(Locale.US))
@@ -474,7 +474,7 @@ class JeedClassLoader(private val fileManager: JeedFileManager, parentClassLoade
             loadedClasses += name
             providedClasses += name
             return defineClass(name, byteArray, 0, byteArray.size)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             throw ClassNotFoundException(name)
         }
     }
