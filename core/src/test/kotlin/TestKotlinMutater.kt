@@ -774,7 +774,7 @@ fun test(first: Int) {
             }
         }
         "it should remove statements correctly" {
-            Source.fromKotlin(
+            val source = Source.fromKotlin(
                 """
 fun test() {
   var i = 0
@@ -782,11 +782,23 @@ fun test() {
   i++
   if (i > 0) {
     i++
+  } else if (i == 0) {
+    i--
+  } else {
+    i++
+  }
+  var t = when {
+    i > 0 -> false
+    else -> true
   }
 }
 """.trim(),
-            ).checkMutations<RemoveStatement> { mutations, _ ->
-                mutations shouldHaveSize 4
+            )
+            source.checkMutations<RemoveStatement> { mutations, _ ->
+                mutations shouldHaveSize 5
+                mutations.forEach {
+                    it.apply(source.contents).ktLint()
+                }
             }
         }
         "it should remove plus correctly" {
@@ -872,7 +884,7 @@ fun fourth(): Object {
   }
 """.trim(),
             ).allMutations().also { mutations ->
-                mutations shouldHaveSize 8
+                mutations shouldHaveSize 7
                 mutations[0].cleaned().also {
                     it["Main.kt"] shouldNotContain "mutate-disable"
                 }
@@ -890,7 +902,7 @@ fun example(first: Int, second: Int): Int {
 }
 """.trim(),
             ).allMutations().also { mutations ->
-                mutations shouldHaveSize 10
+                mutations shouldHaveSize 9
                 mutations[0].cleaned().also {
                     it["Main.kt"] shouldNotContain "mutate-disable-conditional-boundary"
                 }
@@ -1043,7 +1055,7 @@ fun testStream(): String {
 }
 """.trim(),
             ).allFixedMutations(random = Random(124)).also { mutations ->
-                mutations shouldHaveSize 32
+                mutations shouldHaveSize 31
             }
         }
         "it should end stream mutations when out of things to mutate" {
@@ -1081,7 +1093,7 @@ fun reformatName(input: String?) {
 }
 """.trim(),
             ).allMutations().also { mutations ->
-                mutations shouldHaveSize 15
+                mutations shouldHaveSize 14
                 mutations.forEach { mutatedSource ->
                     mutatedSource.marked().ktLint(KtLintArguments(failOnError = true))
                 }

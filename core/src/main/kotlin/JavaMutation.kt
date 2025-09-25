@@ -1,16 +1,8 @@
-@file:Suppress("MatchingDeclarationName", "ktlint:standard:filename")
+@file:Suppress("MatchingDeclarationName", "ktlint:standard:filename", "ktlint:standard:no-wildcard-imports")
 
 package edu.illinois.cs.cs125.jeed.core
 
-import edu.illinois.cs.cs125.jeed.core.antlr.JavaParser
-import edu.illinois.cs.cs125.jeed.core.antlr.JavaParser.BlockContext
-import edu.illinois.cs.cs125.jeed.core.antlr.JavaParser.BlockStatementContext
-import edu.illinois.cs.cs125.jeed.core.antlr.JavaParser.ExpressionContext
-import edu.illinois.cs.cs125.jeed.core.antlr.JavaParser.LiteralContext
-import edu.illinois.cs.cs125.jeed.core.antlr.JavaParser.PrimaryContext
-import edu.illinois.cs.cs125.jeed.core.antlr.JavaParser.StatementContext
-import edu.illinois.cs.cs125.jeed.core.antlr.JavaParser.SwitchBlockStatementGroupContext
-import edu.illinois.cs.cs125.jeed.core.antlr.JavaParser.SwitchRuleOutcomeContext
+import edu.illinois.cs.cs125.jeed.core.antlr.JavaParser.*
 import edu.illinois.cs.cs125.jeed.core.antlr.JavaParserBaseListener
 import org.antlr.v4.runtime.ParserRuleContext
 import org.antlr.v4.runtime.RuleContext
@@ -28,16 +20,16 @@ class JavaMutationListener(private val parsedSource: Source.ParsedSource) : Java
     private val currentReturnType: String?
         get() = returnTypeStack.lastOrNull()
 
-    override fun enterMethodDeclaration(ctx: JavaParser.MethodDeclarationContext) {
+    override fun enterMethodDeclaration(ctx: MethodDeclarationContext) {
         returnTypeStack.add(ctx.typeTypeOrVoid().text)
     }
 
-    override fun exitMethodDeclaration(ctx: JavaParser.MethodDeclarationContext) {
+    override fun exitMethodDeclaration(ctx: MethodDeclarationContext) {
         check(returnTypeStack.isNotEmpty()) { "Return type stack should not be empty" }
         returnTypeStack.pop()
     }
 
-    override fun enterMethodBody(ctx: JavaParser.MethodBodyContext) {
+    override fun enterMethodBody(ctx: MethodBodyContext) {
         if (ctx.block() != null) {
             check(currentReturnType != null)
             val location = ctx.block().toLocation()
@@ -49,11 +41,11 @@ class JavaMutationListener(private val parsedSource: Source.ParsedSource) : Java
     }
 
     private var insideAnnotation = false
-    override fun enterAnnotation(ctx: JavaParser.AnnotationContext?) {
+    override fun enterAnnotation(ctx: AnnotationContext?) {
         insideAnnotation = true
     }
 
-    override fun exitAnnotation(ctx: JavaParser.AnnotationContext?) {
+    override fun exitAnnotation(ctx: AnnotationContext?) {
         insideAnnotation = false
     }
 
@@ -111,12 +103,12 @@ class JavaMutationListener(private val parsedSource: Source.ParsedSource) : Java
 
         val isNegative = try {
             (((ctx.parent as PrimaryContext).parent as ExpressionContext).parent as ExpressionContext).prefix.text == "-"
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             false
         }
         val isDivision = try {
             ctx.checkDivision()
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             false
         }
 
@@ -571,7 +563,7 @@ class JavaMutationListener(private val parsedSource: Source.ParsedSource) : Java
             val inSwitch = try {
                 val blockStatement = (ctx.parent as BlockStatementContext).parent
                 blockStatement is SwitchBlockStatementGroupContext || blockStatement is SwitchRuleOutcomeContext
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 false
             }
             if (!inSwitch) {
@@ -648,7 +640,7 @@ class JavaMutationListener(private val parsedSource: Source.ParsedSource) : Java
         }
     }
 
-    override fun enterArrayInitializer(ctx: JavaParser.ArrayInitializerContext) {
+    override fun enterArrayInitializer(ctx: ArrayInitializerContext) {
         if ((ctx.variableInitializer()?.size ?: 0) < 2) {
             return
         }
@@ -673,6 +665,6 @@ class JavaMutationListener(private val parsedSource: Source.ParsedSource) : Java
         // println(parsedSource.tree.format(parsedSource.parser))
         ParseTreeWalker.DEFAULT.walk(this, parsedSource.tree)
         check(loopDepth == 0)
-        check(loopBlockDepths.size == 0)
+        check(loopBlockDepths.isEmpty())
     }
 }

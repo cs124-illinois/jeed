@@ -1,14 +1,8 @@
-@file:Suppress("MatchingDeclarationName", "ktlint:standard:filename")
+@file:Suppress("MatchingDeclarationName", "ktlint:standard:filename", "ktlint:standard:no-wildcard-imports")
 
 package edu.illinois.cs.cs125.jeed.core
 
-import edu.illinois.cs.cs125.jeed.core.antlr.KotlinParser
-import edu.illinois.cs.cs125.jeed.core.antlr.KotlinParser.AssignmentContext
-import edu.illinois.cs.cs125.jeed.core.antlr.KotlinParser.ControlStructureBodyContext
-import edu.illinois.cs.cs125.jeed.core.antlr.KotlinParser.ExpressionContext
-import edu.illinois.cs.cs125.jeed.core.antlr.KotlinParser.LiteralConstantContext
-import edu.illinois.cs.cs125.jeed.core.antlr.KotlinParser.PrimaryExpressionContext
-import edu.illinois.cs.cs125.jeed.core.antlr.KotlinParser.StatementContext
+import edu.illinois.cs.cs125.jeed.core.antlr.KotlinParser.*
 import edu.illinois.cs.cs125.jeed.core.antlr.KotlinParserBaseListener
 import org.antlr.v4.runtime.ParserRuleContext
 import org.antlr.v4.runtime.RuleContext
@@ -25,38 +19,38 @@ class KotlinMutationListener(private val parsedSource: Source.ParsedSource) : Ko
     private val currentReturnType: String?
         get() = returnTypeStack.lastOrNull()
 
-    override fun enterFunctionDeclaration(ctx: KotlinParser.FunctionDeclarationContext) {
+    override fun enterFunctionDeclaration(ctx: FunctionDeclarationContext) {
         val returnType = ctx.type()?.text ?: ""
         returnTypeStack.add(returnType)
     }
 
-    override fun exitFunctionDeclaration(ctx: KotlinParser.FunctionDeclarationContext) {
+    override fun exitFunctionDeclaration(ctx: FunctionDeclarationContext) {
         check(returnTypeStack.isNotEmpty()) { "Return type stack should not be empty" }
         returnTypeStack.pop()
     }
 
     private var inSetterOrGetter = false
-    override fun enterGetter(ctx: KotlinParser.GetterContext) {
+    override fun enterGetter(ctx: GetterContext) {
         check(!inSetterOrGetter)
         inSetterOrGetter = true
     }
 
-    override fun exitGetter(ctx: KotlinParser.GetterContext) {
+    override fun exitGetter(ctx: GetterContext) {
         check(inSetterOrGetter)
         inSetterOrGetter = false
     }
 
-    override fun enterSetter(ctx: KotlinParser.SetterContext) {
+    override fun enterSetter(ctx: SetterContext) {
         check(!inSetterOrGetter)
         inSetterOrGetter = true
     }
 
-    override fun exitSetter(ctx: KotlinParser.SetterContext) {
+    override fun exitSetter(ctx: SetterContext) {
         check(inSetterOrGetter)
         inSetterOrGetter = false
     }
 
-    override fun enterFunctionBody(ctx: KotlinParser.FunctionBodyContext) {
+    override fun enterFunctionBody(ctx: FunctionBodyContext) {
         if (inSetterOrGetter) {
             return
         }
@@ -68,7 +62,7 @@ class KotlinMutationListener(private val parsedSource: Source.ParsedSource) : Ko
         }
     }
 
-    override fun enterJumpExpression(ctx: KotlinParser.JumpExpressionContext) {
+    override fun enterJumpExpression(ctx: JumpExpressionContext) {
         if (ctx.RETURN() != null && ctx.expression() != null && !inSetterOrGetter) {
             val returnToken = ctx.expression()
             val returnLocation = returnToken.toLocation()
@@ -132,22 +126,34 @@ class KotlinMutationListener(private val parsedSource: Source.ParsedSource) : Ko
             )
         }
         if (ctx.declaration() == null) {
-            mutations.add(
-                RemoveStatement(
-                    statementLocation,
-                    parsedSource.contents(statementLocation),
-                    Source.FileType.KOTLIN,
-                ),
-            )
+            val skipIfStatement = try {
+                ((ctx.children.first() as ExpressionContext).children.first() as PrimaryExpressionContext).children.first() is IfExpressionContext
+            } catch (_: Exception) {
+                false
+            }
+            val skipWhenEntry = try {
+                (ctx.parent as ControlStructureBodyContext).parent is WhenEntryContext
+            } catch (_: Exception) {
+                false
+            }
+            if (!skipIfStatement && !skipWhenEntry) {
+                mutations.add(
+                    RemoveStatement(
+                        statementLocation,
+                        parsedSource.contents(statementLocation),
+                        Source.FileType.KOTLIN,
+                    ),
+                )
+            }
         }
     }
 
     private var insideAnnotation = false
-    override fun enterAnnotation(ctx: KotlinParser.AnnotationContext?) {
+    override fun enterAnnotation(ctx: AnnotationContext?) {
         insideAnnotation = true
     }
 
-    override fun exitAnnotation(ctx: KotlinParser.AnnotationContext?) {
+    override fun exitAnnotation(ctx: AnnotationContext?) {
         insideAnnotation = false
     }
 
@@ -169,7 +175,7 @@ class KotlinMutationListener(private val parsedSource: Source.ParsedSource) : Ko
         last().symbol.line,
     )
 
-    override fun enterLineStringContent(ctx: KotlinParser.LineStringContentContext) {
+    override fun enterLineStringContent(ctx: LineStringContentContext) {
         if (insideAnnotation) {
             return
         }
@@ -179,7 +185,7 @@ class KotlinMutationListener(private val parsedSource: Source.ParsedSource) : Ko
         }
     }
 
-    override fun enterMultiLineStringContent(ctx: KotlinParser.MultiLineStringContentContext) {
+    override fun enterMultiLineStringContent(ctx: MultiLineStringContentContext) {
         if (insideAnnotation) {
             return
         }
@@ -189,7 +195,7 @@ class KotlinMutationListener(private val parsedSource: Source.ParsedSource) : Ko
         }
     }
 
-    override fun enterLineStringLiteral(ctx: KotlinParser.LineStringLiteralContext) {
+    override fun enterLineStringLiteral(ctx: LineStringLiteralContext) {
         if (insideAnnotation) {
             return
         }
@@ -204,10 +210,14 @@ class KotlinMutationListener(private val parsedSource: Source.ParsedSource) : Ko
     private fun LiteralConstantContext.checkDivision(): Boolean {
         var current: RuleContext? = this
         while (current != null) {
-            if (current is ExpressionContext && current.multiplicativeOperator()?.let { it.DIV() != null || it.MOD() != null } == true) {
+            if (current is ExpressionContext && current.multiplicativeOperator()
+                    ?.let { it.DIV() != null || it.MOD() != null } == true
+            ) {
                 return current.expression(1)?.text?.trimParentheses() == text
             }
-            if (current is AssignmentContext && current.assignmentAndOperator()?.let { it.MOD_ASSIGNMENT() != null || it.DIV_ASSIGNMENT() != null } == true) {
+            if (current is AssignmentContext && current.assignmentAndOperator()
+                    ?.let { it.MOD_ASSIGNMENT() != null || it.DIV_ASSIGNMENT() != null } == true
+            ) {
                 return current.fullExpression()?.text?.trimParentheses() == text
             }
             current = current.parent
@@ -229,13 +239,13 @@ class KotlinMutationListener(private val parsedSource: Source.ParsedSource) : Ko
             (((ctx.parent as PrimaryExpressionContext).parent as ExpressionContext).parent as ExpressionContext).unaryPrefix(
                 0,
             ).text == "-"
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             false
         }
 
         val isDivision = try {
             ctx.checkDivision()
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             false
         }
 
@@ -382,7 +392,7 @@ class KotlinMutationListener(private val parsedSource: Source.ParsedSource) : Ko
         }
     }
 
-    override fun enterIfExpression(ctx: KotlinParser.IfExpressionContext) {
+    override fun enterIfExpression(ctx: IfExpressionContext) {
         val conditionalLocation = ctx.expression().toLocation()
         mutations.add(NegateIf(conditionalLocation, parsedSource.contents(conditionalLocation), Source.FileType.KOTLIN))
         if (ctx.ELSE() == null) {
@@ -458,7 +468,7 @@ class KotlinMutationListener(private val parsedSource: Source.ParsedSource) : Ko
         }
     }
 
-    override fun enterLoopStatement(ctx: KotlinParser.LoopStatementContext) {
+    override fun enterLoopStatement(ctx: LoopStatementContext) {
         val location = ctx.toLocation()
         ctx.doWhileStatement()?.also {
             loopDepth++
@@ -478,7 +488,7 @@ class KotlinMutationListener(private val parsedSource: Source.ParsedSource) : Ko
         mutations.add(RemoveLoop(location, parsedSource.contents(location), Source.FileType.KOTLIN))
     }
 
-    override fun exitLoopStatement(ctx: KotlinParser.LoopStatementContext) {
+    override fun exitLoopStatement(ctx: LoopStatementContext) {
         ctx.doWhileStatement()?.also {
             loopDepth--
             check(loopBlockDepths.removeAt(0) == 0)
@@ -493,13 +503,13 @@ class KotlinMutationListener(private val parsedSource: Source.ParsedSource) : Ko
         }
     }
 
-    override fun enterBlock(ctx: KotlinParser.BlockContext?) {
+    override fun enterBlock(ctx: BlockContext?) {
         if (loopDepth > 0) {
             loopBlockDepths[0]++
         }
     }
 
-    override fun exitBlock(ctx: KotlinParser.BlockContext) {
+    override fun exitBlock(ctx: BlockContext) {
         if (loopDepth > 0) {
             val rightCurl = ctx.RCURL()
             val rightCurlLocation = listOf(rightCurl, rightCurl).toLocation()
@@ -530,12 +540,12 @@ class KotlinMutationListener(private val parsedSource: Source.ParsedSource) : Ko
         }
     }
 
-    override fun enterDoWhileStatement(ctx: KotlinParser.DoWhileStatementContext) {
+    override fun enterDoWhileStatement(ctx: DoWhileStatementContext) {
         val location = ctx.expression().toLocation()
         mutations.add(NegateWhile(location, parsedSource.contents(location), Source.FileType.KOTLIN))
     }
 
-    override fun enterWhileStatement(ctx: KotlinParser.WhileStatementContext) {
+    override fun enterWhileStatement(ctx: WhileStatementContext) {
         val location = ctx.expression().toLocation()
         val rightCurl = ctx.controlStructureBody().block()?.RCURL()
         if (rightCurl != null) {
@@ -545,12 +555,12 @@ class KotlinMutationListener(private val parsedSource: Source.ParsedSource) : Ko
         mutations.add(NegateWhile(location, parsedSource.contents(location), Source.FileType.KOTLIN))
     }
 
-    override fun enterTryExpression(ctx: KotlinParser.TryExpressionContext) {
+    override fun enterTryExpression(ctx: TryExpressionContext) {
         val location = ctx.toLocation()
         mutations.add(RemoveTry(location, parsedSource.contents(location), Source.FileType.KOTLIN))
     }
 
-    override fun enterPrefixUnaryOperator(ctx: KotlinParser.PrefixUnaryOperatorContext) {
+    override fun enterPrefixUnaryOperator(ctx: PrefixUnaryOperatorContext) {
         if (IncrementDecrement.matches(ctx.text)) {
             mutations.add(IncrementDecrement(ctx.toLocation(), ctx.text, Source.FileType.KOTLIN))
         }
@@ -559,13 +569,13 @@ class KotlinMutationListener(private val parsedSource: Source.ParsedSource) : Ko
         }
     }
 
-    override fun enterPostfixUnaryOperator(ctx: KotlinParser.PostfixUnaryOperatorContext) {
+    override fun enterPostfixUnaryOperator(ctx: PostfixUnaryOperatorContext) {
         if (IncrementDecrement.matches(ctx.text)) {
             mutations.add(IncrementDecrement(ctx.toLocation(), ctx.text, Source.FileType.KOTLIN))
         }
     }
 
-    override fun enterComparisonOperator(ctx: KotlinParser.ComparisonOperatorContext) {
+    override fun enterComparisonOperator(ctx: ComparisonOperatorContext) {
         if (ConditionalBoundary.matches(ctx.text)) {
             mutations.add(ConditionalBoundary(ctx.toLocation(), ctx.text, Source.FileType.KOTLIN))
         }
@@ -574,13 +584,13 @@ class KotlinMutationListener(private val parsedSource: Source.ParsedSource) : Ko
         }
     }
 
-    override fun enterMultiplicativeOperator(ctx: KotlinParser.MultiplicativeOperatorContext) {
+    override fun enterMultiplicativeOperator(ctx: MultiplicativeOperatorContext) {
         if (MutateMath.matches(ctx.text)) {
             mutations.add(MutateMath(ctx.toLocation(), ctx.text, Source.FileType.KOTLIN))
         }
     }
 
-    override fun enterAdditiveOperator(ctx: KotlinParser.AdditiveOperatorContext) {
+    override fun enterAdditiveOperator(ctx: AdditiveOperatorContext) {
         if (PlusToMinus.matches(ctx.text)) {
             mutations.add(PlusToMinus(ctx.toLocation(), ctx.text, Source.FileType.KOTLIN))
         }
@@ -589,7 +599,7 @@ class KotlinMutationListener(private val parsedSource: Source.ParsedSource) : Ko
         }
     }
 
-    override fun enterEqualityOperator(ctx: KotlinParser.EqualityOperatorContext) {
+    override fun enterEqualityOperator(ctx: EqualityOperatorContext) {
         if (NegateConditional.matches(ctx.text)) {
             mutations.add(NegateConditional(ctx.toLocation(), ctx.text, Source.FileType.KOTLIN))
         }
@@ -676,7 +686,7 @@ class KotlinMutationListener(private val parsedSource: Source.ParsedSource) : Ko
         }
     }
 
-    override fun enterNavigationSuffix(ctx: KotlinParser.NavigationSuffixContext) {
+    override fun enterNavigationSuffix(ctx: NavigationSuffixContext) {
         if (ctx.memberAccessOperator()?.DOT() == null || ctx.simpleIdentifier() == null) {
             return
         }
@@ -721,6 +731,6 @@ class KotlinMutationListener(private val parsedSource: Source.ParsedSource) : Ko
         // println(parsedSource.tree.format(parsedSource.parser))
         ParseTreeWalker.DEFAULT.walk(this, parsedSource.tree)
         check(loopDepth == 0)
-        check(loopBlockDepths.size == 0)
+        check(loopBlockDepths.isEmpty())
     }
 }
