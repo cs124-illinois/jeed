@@ -221,11 +221,13 @@ publishing {
 }
 signing {
     setRequired {
-        gradle.taskGraph.allTasks.any { it is PublishToMavenRepository }
+        gradle.taskGraph.allTasks.any { it.name.contains("ToSonatype") }
     }
     sign(publishing.publications["core"])
-    setRequired {
-        gradle.taskGraph.hasTask("publishCorePublicationToSonatype")
+}
+tasks.withType<Sign>().configureEach {
+    onlyIf {
+        gradle.taskGraph.allTasks.any { it.name.contains("ToSonatype") }
     }
 }
 tasks.withType<Javadoc> {

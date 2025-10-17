@@ -148,7 +148,12 @@ publishing {
 }
 signing {
     setRequired {
-        gradle.taskGraph.allTasks.any { it is PublishToMavenRepository }
+        gradle.taskGraph.allTasks.any { it.name.contains("ToSonatype") }
     }
     sign(publishing.publications["server"])
+}
+tasks.withType<Sign>().configureEach {
+    onlyIf {
+        gradle.taskGraph.allTasks.any { it.name.contains("ToSonatype") }
+    }
 }
