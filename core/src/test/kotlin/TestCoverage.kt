@@ -236,4 +236,24 @@ fun main() {
                 fileCoverage should haveMissedCount(0)
             }
         }
+        "it should ignore Kotlin collection indexing" {
+            val source = Source.fromKotlin(
+                """
+fun main() {
+  val map = mutableMapOf("a" to 1, "b" to 2, "c" to 3)
+  for (k in map.keys) {
+    if (map[k] == 1) {
+      println(k)
+    }
+  }
+}
+""",
+            )
+            source.coverage().let { coverageResult ->
+                coverageResult should haveFileMissedCount(1)
+                coverageResult.adjustWithFeatures(source.features(), source.type.toFileType())
+            }.also { coverageResult ->
+                coverageResult should haveFileMissedCount(0)
+            }
+        }
     })
