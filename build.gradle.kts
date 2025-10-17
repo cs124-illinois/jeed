@@ -13,7 +13,7 @@ plugins {
 val agentVersion by extra { "2024.7.0" }
 allprojects {
     group = "org.cs124.jeed"
-    version = "2025.9.0"
+    version = "2025.10.0"
 }
 subprojects {
     tasks.withType<Test> {
