@@ -12,6 +12,7 @@ plugins {
     id("io.gitlab.arturbosch.detekt")
     id("com.google.devtools.ksp")
     id("com.ryandens.javaagent-test") version "0.10.0"
+    id("com.adarshr.test-logger")
 }
 val agentVersion: String by rootProject.extra
 configurations.all {
@@ -20,7 +21,7 @@ configurations.all {
     }
 }
 dependencies {
-    val ktorVersion = "3.1.3"
+    val ktorVersion = "3.3.1"
 
     ksp("com.squareup.moshi:moshi-kotlin-codegen:1.15.2")
 
@@ -40,11 +41,14 @@ dependencies {
 
     // Libraries for student use
     implementation("org.cs124:libcs1:2025.8.0")
-    implementation("io.kotest:kotest-runner-junit5:5.9.1")
+    implementation("io.kotest:kotest-runner-junit5:6.0.4")
     implementation("com.google.truth:truth:1.4.5")
 
-    testImplementation("io.kotest:kotest-runner-junit5:5.9.1")
+    testImplementation("io.kotest:kotest-runner-junit5:6.0.4")
     testImplementation("io.ktor:ktor-server-test-host:$ktorVersion")
+}
+testlogger {
+    slowThreshold = 600000L
 }
 
 application {

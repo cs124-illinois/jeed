@@ -17,6 +17,7 @@ plugins {
     id("io.gitlab.arturbosch.detekt")
     id("com.google.devtools.ksp")
     id("com.ryandens.javaagent-test") version "0.10.0"
+    id("com.adarshr.test-logger")
 }
 
 val agentVersion: String by rootProject.extra
@@ -30,10 +31,10 @@ dependencies {
 
     antlr("org.antlr:antlr4:4.13.2")
 
-    implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:2.1.21")
+    implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:2.2.21")
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
-    implementation("com.puppycrawl.tools:checkstyle:12.0.1")
+    implementation("com.puppycrawl.tools:checkstyle:12.1.1")
     implementation("org.codehaus.plexus:plexus-container-default:2.1.1")
     implementation("com.pinterest.ktlint:ktlint-rule-engine:1.7.1")
     implementation("com.pinterest.ktlint:ktlint-ruleset-standard:1.7.1")
@@ -45,19 +46,22 @@ dependencies {
 
     implementation("net.java.dev.jna:jna:5.18.1")
     implementation("io.github.java-diff-utils:java-diff-utils:4.16")
-    implementation("com.google.googlejavaformat:google-java-format:1.30.0")
+    implementation("com.google.googlejavaformat:google-java-format:1.31.0")
     implementation("net.sf.extjwnl:extjwnl:2.0.5")
     implementation("net.sf.extjwnl:extjwnl-data-wn31:1.2")
 
     api("org.jacoco:org.jacoco.core:0.8.14")
-    api("com.github.ben-manes.caffeine:caffeine:3.2.2")
-    api("ch.qos.logback:logback-classic:1.5.19")
+    api("com.github.ben-manes.caffeine:caffeine:3.2.3")
+    api("ch.qos.logback:logback-classic:1.5.20")
     api("io.github.microutils:kotlin-logging:3.0.5")
     api("io.github.classgraph:classgraph:4.8.184")
 
-    testImplementation("io.kotest:kotest-runner-junit5:5.9.1")
+    testImplementation("io.kotest:kotest-runner-junit5:6.0.4")
     testImplementation("com.beyondgrader.resource-agent:agent:$agentVersion")
     testJavaagent("com.beyondgrader.resource-agent:agent:$agentVersion")
+}
+testlogger {
+    slowThreshold = 600000L
 }
 tasks.test {
     useJUnitPlatform()
