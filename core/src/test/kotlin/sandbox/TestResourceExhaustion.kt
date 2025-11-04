@@ -10,10 +10,7 @@ import edu.illinois.cs.cs125.jeed.core.haveCompleted
 import edu.illinois.cs.cs125.jeed.core.haveCpuTimedOut
 import edu.illinois.cs.cs125.jeed.core.haveOutput
 import edu.illinois.cs.cs125.jeed.core.haveTimedOut
-import io.kotest.core.Tuple2
 import io.kotest.core.spec.style.StringSpec
-import io.kotest.core.test.TestCase
-import io.kotest.core.test.TestResult
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.ints.shouldBeGreaterThan
@@ -24,25 +21,19 @@ import kotlinx.coroutines.async
 import java.lang.IllegalArgumentException
 
 @Suppress("LargeClass")
-class TestResourceExhaustion : StringSpec() {
-    private fun checkCounts(after: Boolean) {
-        Sandbox.activeTaskCount shouldBe 0
-        Sandbox.busyTaskCount shouldBe 0
-        if (after) {
-            Sandbox.startedTaskCount shouldBeGreaterThan 0
+class TestResourceExhaustion :
+    StringSpec({
+        beforeEach {
+            Sandbox.activeTaskCount shouldBe 0
+            Sandbox.busyTaskCount shouldBe 0
         }
-        Sandbox.completedTaskCount shouldBe Sandbox.startedTaskCount
-    }
 
-    override fun beforeTest(f: suspend (TestCase) -> Unit) {
-        checkCounts(false)
-    }
-
-    override fun afterTest(f: suspend (Tuple2<TestCase, TestResult>) -> Unit) {
-        checkCounts(true)
-    }
-
-    init {
+        afterEach {
+            Sandbox.activeTaskCount shouldBe 0
+            Sandbox.busyTaskCount shouldBe 0
+            Sandbox.startedTaskCount shouldBeGreaterThan 0
+            Sandbox.completedTaskCount shouldBe Sandbox.startedTaskCount
+        }
         "should timeout correctly on snippet" {
             val executionResult = Source.fromSnippet(
                 """
@@ -807,5 +798,4 @@ public class Main {
             executionResult shouldNot haveCompleted()
             executionResult should haveTimedOut()
         }
-    }
-}
+    })
