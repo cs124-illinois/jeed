@@ -31,11 +31,19 @@ var useDiskCache = try {
     JEED_DEFAULT_USE_DISK_CACHE
 }
 
+val diskCacheDir: Path = try {
+    System.getenv("JEED_DISK_CACHE_DIR")?.let { Path.of(it) }
+        ?: Path.of(System.getProperty("java.io.tmpdir"), "jeed-cache")
+} catch (_: Exception) {
+    logger.warn("Bad value for JEED_DISK_CACHE_DIR")
+    Path.of(System.getProperty("java.io.tmpdir"), "jeed-cache")
+}
+
 /**
  * Manages disk-based compilation cache with LRU eviction.
  */
 class DiskCompilationCache(
-    private val cacheDir: Path = Path.of(System.getProperty("java.io.tmpdir"), "jeed-cache"),
+    private val cacheDir: Path = diskCacheDir,
     private val maxSizeBytes: Long = diskCacheSizeMB * MB_TO_BYTES,
 ) {
     init {
