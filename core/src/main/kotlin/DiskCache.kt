@@ -41,16 +41,36 @@ val diskCacheDir: Path = try {
 
 /**
  * Manages disk-based compilation cache with LRU eviction.
+ * Tracks cache size in memory to avoid expensive filesystem scans.
  */
 class DiskCompilationCache(
     private val cacheDir: Path = diskCacheDir,
     private val maxSizeBytes: Long = diskCacheSizeMB * MB_TO_BYTES,
 ) {
+    private var currentSizeBytes: Long = 0
+
     init {
         Files.createDirectories(cacheDir)
+        // Calculate initial cache size on startup
+        currentSizeBytes = computeCurrentSize()
     }
 
     private fun getCachePath(key: String): Path = cacheDir.resolve("$key.cache")
+
+    /**
+     * Computes the current size of all cache files.
+     * Only called on initialization and optionally for periodic correction.
+     */
+    private fun computeCurrentSize(): Long = try {
+        Files.list(cacheDir).use { stream ->
+            stream.filter { Files.isRegularFile(it) && it.toString().endsWith(".cache") }
+                .mapToLong { Files.size(it) }
+                .sum()
+        }
+    } catch (e: Exception) {
+        logger.warn("Failed to compute cache size: ${e.message}")
+        0L
+    }
 
     /**
      * Retrieves a cached compilation result from disk.
@@ -77,10 +97,17 @@ class DiskCompilationCache(
     fun put(key: String, results: CachedCompilationResults) {
         try {
             val path = getCachePath(key)
+            val existingSize = if (Files.exists(path)) Files.size(path) else 0L
+
             DiskCacheSerializer.write(path, key, results)
 
-            // Enforce size limit with LRU eviction
-            evictIfNeeded()
+            val newSize = Files.size(path)
+            currentSizeBytes = currentSizeBytes - existingSize + newSize
+
+            // Check if we need to evict (cheap memory comparison)
+            if (currentSizeBytes > maxSizeBytes) {
+                evictIfNeeded()
+            }
         } catch (e: Exception) {
             logger.warn("Failed to write disk cache entry: ${e.message}")
         }
@@ -88,6 +115,7 @@ class DiskCompilationCache(
 
     /**
      * Evicts least recently used entries if cache size exceeds limit.
+     * Updates the in-memory size tracker as files are deleted.
      */
     private fun evictIfNeeded() {
         try {
@@ -96,22 +124,18 @@ class DiskCompilationCache(
                     .toList()
             }
 
-            val totalSize = cacheFiles.sumOf { Files.size(it) }
+            // Sort by last access time (oldest first)
+            val sortedFiles = cacheFiles.sortedBy {
+                Files.getLastModifiedTime(it).toMillis()
+            }
 
-            if (totalSize > maxSizeBytes) {
-                // Sort by last access time (oldest first)
-                val sortedFiles = cacheFiles.sortedBy {
-                    Files.getLastModifiedTime(it).toMillis()
+            for (file in sortedFiles) {
+                if (currentSizeBytes <= maxSizeBytes) {
+                    break
                 }
-
-                var currentSize = totalSize
-                for (file in sortedFiles) {
-                    if (currentSize <= maxSizeBytes) {
-                        break
-                    }
-                    val fileSize = Files.size(file)
-                    Files.deleteIfExists(file)
-                    currentSize -= fileSize
+                val fileSize = Files.size(file)
+                if (Files.deleteIfExists(file)) {
+                    currentSizeBytes -= fileSize
                 }
             }
         } catch (e: Exception) {
@@ -128,6 +152,7 @@ class DiskCompilationCache(
                 stream.filter { Files.isRegularFile(it) && it.toString().endsWith(".cache") }
                     .forEach { Files.deleteIfExists(it) }
             }
+            currentSizeBytes = 0
         } catch (e: Exception) {
             logger.warn("Failed to clear disk cache: ${e.message}")
         }
@@ -135,17 +160,9 @@ class DiskCompilationCache(
 
     /**
      * Returns the current size of the disk cache in bytes.
+     * Uses the in-memory tracked size for efficiency.
      */
-    fun size(): Long = try {
-        Files.list(cacheDir).use { stream ->
-            stream.filter { Files.isRegularFile(it) && it.toString().endsWith(".cache") }
-                .mapToLong { Files.size(it) }
-                .sum()
-        }
-    } catch (e: Exception) {
-        logger.warn("Failed to calculate disk cache size: ${e.message}")
-        0L
-    }
+    fun size(): Long = currentSizeBytes
 }
 
 /**
