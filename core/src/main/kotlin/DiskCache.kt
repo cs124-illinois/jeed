@@ -91,9 +91,10 @@ class DiskCompilationCache(
      */
     private fun evictIfNeeded() {
         try {
-            val cacheFiles = Files.list(cacheDir)
-                .filter { Files.isRegularFile(it) && it.toString().endsWith(".cache") }
-                .toList()
+            val cacheFiles = Files.list(cacheDir).use { stream ->
+                stream.filter { Files.isRegularFile(it) && it.toString().endsWith(".cache") }
+                    .toList()
+            }
 
             val totalSize = cacheFiles.sumOf { Files.size(it) }
 
@@ -123,9 +124,10 @@ class DiskCompilationCache(
      */
     fun clear() {
         try {
-            Files.list(cacheDir)
-                .filter { Files.isRegularFile(it) && it.toString().endsWith(".cache") }
-                .forEach { Files.deleteIfExists(it) }
+            Files.list(cacheDir).use { stream ->
+                stream.filter { Files.isRegularFile(it) && it.toString().endsWith(".cache") }
+                    .forEach { Files.deleteIfExists(it) }
+            }
         } catch (e: Exception) {
             logger.warn("Failed to clear disk cache: ${e.message}")
         }
@@ -135,10 +137,11 @@ class DiskCompilationCache(
      * Returns the current size of the disk cache in bytes.
      */
     fun size(): Long = try {
-        Files.list(cacheDir)
-            .filter { Files.isRegularFile(it) && it.toString().endsWith(".cache") }
-            .mapToLong { Files.size(it) }
-            .sum()
+        Files.list(cacheDir).use { stream ->
+            stream.filter { Files.isRegularFile(it) && it.toString().endsWith(".cache") }
+                .mapToLong { Files.size(it) }
+                .sum()
+        }
     } catch (e: Exception) {
         logger.warn("Failed to calculate disk cache size: ${e.message}")
         0L
