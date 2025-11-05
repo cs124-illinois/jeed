@@ -42,12 +42,16 @@ val diskCacheDir: Path = try {
 /**
  * Manages disk-based compilation cache with LRU eviction.
  * Tracks cache size in memory to avoid expensive filesystem scans.
+ * Uses a low water mark strategy: when evicting, evict down to 90% of capacity
+ * to avoid triggering eviction on every subsequent write.
  */
 class DiskCompilationCache(
     private val cacheDir: Path = diskCacheDir,
     private val maxSizeBytes: Long = diskCacheSizeMB * MB_TO_BYTES,
+    private val lowWaterMarkRatio: Double = 0.9,
 ) {
     private var currentSizeBytes: Long = 0
+    private val lowWaterMarkBytes: Long = (maxSizeBytes * lowWaterMarkRatio).toLong()
 
     init {
         Files.createDirectories(cacheDir)
@@ -116,6 +120,8 @@ class DiskCompilationCache(
     /**
      * Evicts least recently used entries if cache size exceeds limit.
      * Updates the in-memory size tracker as files are deleted.
+     * Evicts down to the low water mark (90% of capacity) to avoid
+     * needing to evict on every subsequent write.
      */
     private fun evictIfNeeded() {
         try {
@@ -129,8 +135,9 @@ class DiskCompilationCache(
                 Files.getLastModifiedTime(it).toMillis()
             }
 
+            // Evict down to low water mark to create breathing room
             for (file in sortedFiles) {
-                if (currentSizeBytes <= maxSizeBytes) {
+                if (currentSizeBytes <= lowWaterMarkBytes) {
                     break
                 }
                 val fileSize = Files.size(file)
