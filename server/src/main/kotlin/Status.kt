@@ -44,7 +44,9 @@ class Status(
     data class Cache(
         val inUse: Boolean = useCompilationCache,
         val sizeInMB: Long = compilationCacheSizeMB,
-        var hits: Int = 0,
+        var l1Hits: Int = 0,
+        var l2Hits: Int = 0,
+        var totalHits: Int = 0,
         var misses: Int = 0,
         var hitRate: Double = 0.0,
         var evictionCount: Long = 0,
@@ -53,7 +55,9 @@ class Status(
 
     fun update(): Status {
         compilationCache.stats().also {
-            cache.hits = MoreCacheStats.hits
+            cache.l1Hits = MoreCacheStats.l1Hits
+            cache.l2Hits = MoreCacheStats.l2Hits
+            cache.totalHits = MoreCacheStats.totalHits
             cache.misses = MoreCacheStats.misses
             cache.hitRate = it.hitRate()
             cache.evictionCount = it.evictionCount()

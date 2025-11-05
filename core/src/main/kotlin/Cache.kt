@@ -8,7 +8,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import java.security.MessageDigest
 import java.time.Instant
+import java.util.Locale
 
 const val JEED_DEFAULT_COMPILATION_CACHE_SIZE_MB = 256L
 
@@ -40,6 +42,8 @@ val compilationCache: Cache<String, CachedCompilationResults> =
         .recordStats()
         .build()
 
+var diskCompilationCache: DiskCompilationCache = DiskCompilationCache()
+
 class CachedCompilationResults(
     val compiled: Instant,
     val messages: List<CompilationMessage>,
@@ -49,9 +53,76 @@ class CachedCompilationResults(
     val kompilationArguments: KompilationArguments? = null,
 )
 
+fun JeedFileManager.bytecodeHash(): String = MessageDigest.getInstance("MD5").let { digest ->
+    allClassFiles.toSortedMap().forEach { (path, fileObj) ->
+        digest.update(path.toByteArray())
+        digest.update(fileObj.openInputStream().readAllBytes())
+    }
+    digest.digest()
+}.joinToString(separator = "") {
+    String.format(Locale.US, "%02x", it)
+}
+
+fun Source.computeCacheKey(
+    compilationArguments: CompilationArguments,
+    compilerName: String,
+): String = MessageDigest.getInstance("SHA-256").let { digest ->
+    // Source content
+    digest.update(md5.toByteArray())
+
+    // Compiler version
+    digest.update(compilerName.toByteArray())
+
+    // Parent bytecode if present
+    val parent = compilationArguments.parentFileManager as? JeedFileManager
+    parent?.let {
+        digest.update(it.bytecodeHash().toByteArray())
+    }
+
+    // Compilation arguments
+    digest.update(compilationArguments.hashCode().toString().toByteArray())
+
+    digest.digest()
+}.joinToString(separator = "") {
+    String.format(Locale.US, "%02x", it)
+}
+
+fun Source.computeCacheKey(
+    kompilationArguments: KompilationArguments,
+    compilerName: String,
+): String = MessageDigest.getInstance("SHA-256").let { digest ->
+    // Source content
+    digest.update(md5.toByteArray())
+
+    // Compiler version
+    digest.update(compilerName.toByteArray())
+
+    // Parent bytecode if present
+    kompilationArguments.parentFileManager?.let {
+        digest.update(it.bytecodeHash().toByteArray())
+    }
+
+    // Kompilation arguments
+    digest.update(kompilationArguments.hashCode().toString().toByteArray())
+
+    digest.digest()
+}.joinToString(separator = "") {
+    String.format(Locale.US, "%02x", it)
+}
+
 object MoreCacheStats {
-    var hits: Int = 0
+    var l1Hits: Int = 0
+    var l2Hits: Int = 0
     var misses: Int = 0
+
+    val totalHits: Int
+        get() = l1Hits + l2Hits
+
+    fun reset() {
+        l1Hits = 0
+        l2Hits = 0
+        misses = 0
+    }
 }
 
 @Suppress("ReturnCount")
@@ -64,20 +135,38 @@ fun Source.tryCache(
     if (!useCache) {
         return null
     }
-    val cachedResult = compilationCache.getIfPresent(md5)
+    val cacheKey = computeCacheKey(compilationArguments, compilerName)
+
+    // Try memory cache first
+    var cachedResult = compilationCache.getIfPresent(cacheKey)
+    val hitL1 = cachedResult != null
+
+    // If not in memory, try disk cache
+    if (cachedResult == null && useDiskCache) {
+        cachedResult = diskCompilationCache.get(cacheKey)
+        if (cachedResult != null) {
+            // Restore to memory cache
+            compilationCache.put(cacheKey, cachedResult)
+            MoreCacheStats.l2Hits++
+        }
+    }
+
     if (cachedResult == null) {
         MoreCacheStats.misses++
         return null
     }
-    MoreCacheStats.hits++
+    if (hitL1) {
+        MoreCacheStats.l1Hits++
+    }
 
-    val cachedCompilationArguments = cachedResult.compilationArguments ?: error(
-        "Cached compilation result missing arguments",
-    )
+    // Verify compiler name matches
     if (cachedResult.compilerName != compilerName) {
         return null
     }
-    if (cachedCompilationArguments != compilationArguments) {
+
+    // If compilationArguments is present (memory cache hit), verify it matches
+    // If null (disk cache hit), cache key already verified correctness
+    if (cachedResult.compilationArguments != null && cachedResult.compilationArguments != compilationArguments) {
         return null
     }
     val parentClassLoader =
@@ -100,17 +189,23 @@ fun CompiledSource.cache(compilationArguments: CompilationArguments) {
     if (cached || !useCache) {
         return
     }
+    val cacheKey = source.computeCacheKey(compilationArguments, compilerName)
+    val cachedResults = CachedCompilationResults(
+        compiled,
+        messages,
+        fileManager,
+        compilerName,
+        compilationArguments = compilationArguments,
+    )
+
     compilationScope.launch {
-        compilationCache.put(
-            source.md5,
-            CachedCompilationResults(
-                compiled,
-                messages,
-                fileManager,
-                compilerName,
-                compilationArguments = compilationArguments,
-            ),
-        )
+        // Write to memory cache
+        compilationCache.put(cacheKey, cachedResults)
+
+        // Write to disk cache if enabled
+        if (useDiskCache) {
+            diskCompilationCache.put(cacheKey, cachedResults)
+        }
     }.also {
         if (compilationArguments.waitForCache) {
             runBlocking { it.join() }
@@ -128,19 +223,38 @@ fun Source.tryCache(
     if (!useCache) {
         return null
     }
-    val cachedResult = compilationCache.getIfPresent(md5)
+    val cacheKey = computeCacheKey(kompilationArguments, compilerName)
+
+    // Try memory cache first
+    var cachedResult = compilationCache.getIfPresent(cacheKey)
+    val hitL1 = cachedResult != null
+
+    // If not in memory, try disk cache
+    if (cachedResult == null && useDiskCache) {
+        cachedResult = diskCompilationCache.get(cacheKey)
+        if (cachedResult != null) {
+            // Restore to memory cache
+            compilationCache.put(cacheKey, cachedResult)
+            MoreCacheStats.l2Hits++
+        }
+    }
+
     if (cachedResult == null) {
         MoreCacheStats.misses++
         return null
     }
-    MoreCacheStats.hits++
-    val cachedKompilationArguments = cachedResult.kompilationArguments ?: error(
-        "Cached kompilation result missing arguments",
-    )
+    if (hitL1) {
+        MoreCacheStats.l1Hits++
+    }
+
+    // Verify compiler name matches
     if (cachedResult.compilerName != compilerName) {
         return null
     }
-    if (cachedKompilationArguments != kompilationArguments) {
+
+    // If kompilationArguments is present (memory cache hit), verify it matches
+    // If null (disk cache hit), cache key already verified correctness
+    if (cachedResult.kompilationArguments != null && cachedResult.kompilationArguments != kompilationArguments) {
         return null
     }
     return CompiledSource(
@@ -160,17 +274,23 @@ fun CompiledSource.cache(kompilationArguments: KompilationArguments) {
     if (cached || !useCache) {
         return
     }
+    val cacheKey = source.computeCacheKey(kompilationArguments, compilerName)
+    val cachedResults = CachedCompilationResults(
+        compiled,
+        messages,
+        fileManager,
+        compilerName,
+        kompilationArguments = kompilationArguments,
+    )
+
     compilationScope.launch {
-        compilationCache.put(
-            source.md5,
-            CachedCompilationResults(
-                compiled,
-                messages,
-                fileManager,
-                compilerName,
-                kompilationArguments = kompilationArguments,
-            ),
-        )
+        // Write to memory cache
+        compilationCache.put(cacheKey, cachedResults)
+
+        // Write to disk cache if enabled
+        if (useDiskCache) {
+            diskCompilationCache.put(cacheKey, cachedResults)
+        }
     }.also {
         if (kompilationArguments.waitForCache) {
             runBlocking { it.join() }

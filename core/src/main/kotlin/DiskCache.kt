@@ -1,0 +1,313 @@
+@file:Suppress("MatchingDeclarationName")
+
+package edu.illinois.cs.cs125.jeed.core
+
+import java.io.DataInputStream
+import java.io.DataOutputStream
+import java.io.File
+import java.io.FileInputStream
+import java.io.FileOutputStream
+import java.nio.file.Files
+import java.nio.file.Path
+import java.time.Instant
+
+const val JEED_DEFAULT_DISK_CACHE_SIZE_MB = 1024L
+
+@Suppress("TooGenericExceptionCaught")
+val diskCacheSizeMB = try {
+    System.getenv("JEED_DISK_CACHE_SIZE")?.toLong() ?: JEED_DEFAULT_DISK_CACHE_SIZE_MB
+} catch (_: Exception) {
+    logger.warn("Bad value for JEED_DISK_CACHE_SIZE")
+    JEED_DEFAULT_DISK_CACHE_SIZE_MB
+}
+
+const val JEED_DEFAULT_USE_DISK_CACHE = false
+
+@Suppress("TooGenericExceptionCaught")
+var useDiskCache = try {
+    System.getenv("JEED_USE_DISK_CACHE")?.toBoolean() ?: JEED_DEFAULT_USE_DISK_CACHE
+} catch (_: Exception) {
+    logger.warn("Bad value for JEED_USE_DISK_CACHE")
+    JEED_DEFAULT_USE_DISK_CACHE
+}
+
+/**
+ * Manages disk-based compilation cache with LRU eviction.
+ */
+class DiskCompilationCache(
+    private val cacheDir: Path = Path.of(System.getProperty("java.io.tmpdir"), "jeed-cache"),
+    private val maxSizeBytes: Long = diskCacheSizeMB * MB_TO_BYTES,
+) {
+    init {
+        Files.createDirectories(cacheDir)
+    }
+
+    private fun getCachePath(key: String): Path = cacheDir.resolve("$key.cache")
+
+    /**
+     * Retrieves a cached compilation result from disk.
+     */
+    fun get(key: String): CachedCompilationResults? {
+        val path = getCachePath(key)
+        val result = DiskCacheSerializer.read(path, key)
+
+        // Update access time for LRU
+        if (result != null) {
+            try {
+                Files.setLastModifiedTime(path, java.nio.file.attribute.FileTime.from(Instant.now()))
+            } catch (e: Exception) {
+                logger.warn("Failed to update access time for cache entry: ${e.message}")
+            }
+        }
+
+        return result
+    }
+
+    /**
+     * Stores a compilation result to disk.
+     */
+    fun put(key: String, results: CachedCompilationResults) {
+        try {
+            val path = getCachePath(key)
+            DiskCacheSerializer.write(path, key, results)
+
+            // Enforce size limit with LRU eviction
+            evictIfNeeded()
+        } catch (e: Exception) {
+            logger.warn("Failed to write disk cache entry: ${e.message}")
+        }
+    }
+
+    /**
+     * Evicts least recently used entries if cache size exceeds limit.
+     */
+    private fun evictIfNeeded() {
+        try {
+            val cacheFiles = Files.list(cacheDir)
+                .filter { Files.isRegularFile(it) && it.toString().endsWith(".cache") }
+                .toList()
+
+            val totalSize = cacheFiles.sumOf { Files.size(it) }
+
+            if (totalSize > maxSizeBytes) {
+                // Sort by last access time (oldest first)
+                val sortedFiles = cacheFiles.sortedBy {
+                    Files.getLastModifiedTime(it).toMillis()
+                }
+
+                var currentSize = totalSize
+                for (file in sortedFiles) {
+                    if (currentSize <= maxSizeBytes) {
+                        break
+                    }
+                    val fileSize = Files.size(file)
+                    Files.deleteIfExists(file)
+                    currentSize -= fileSize
+                }
+            }
+        } catch (e: Exception) {
+            logger.warn("Failed to evict cache entries: ${e.message}")
+        }
+    }
+
+    /**
+     * Clears all entries from the disk cache.
+     */
+    fun clear() {
+        try {
+            Files.list(cacheDir)
+                .filter { Files.isRegularFile(it) && it.toString().endsWith(".cache") }
+                .forEach { Files.deleteIfExists(it) }
+        } catch (e: Exception) {
+            logger.warn("Failed to clear disk cache: ${e.message}")
+        }
+    }
+
+    /**
+     * Returns the current size of the disk cache in bytes.
+     */
+    fun size(): Long = try {
+        Files.list(cacheDir)
+            .filter { Files.isRegularFile(it) && it.toString().endsWith(".cache") }
+            .mapToLong { Files.size(it) }
+            .sum()
+    } catch (e: Exception) {
+        logger.warn("Failed to calculate disk cache size: ${e.message}")
+        0L
+    }
+}
+
+/**
+ * Serialization/deserialization for disk-based compilation cache.
+ */
+object DiskCacheSerializer {
+    private const val CACHE_VERSION = 1
+
+    /**
+     * Serializes a CachedCompilationResults to disk.
+     */
+    fun write(path: Path, key: String, results: CachedCompilationResults) {
+        val tempFile = Files.createTempFile(path.parent, ".cache-", ".tmp")
+        try {
+            DataOutputStream(FileOutputStream(tempFile.toFile())).use { output ->
+                // Write version for future compatibility
+                output.writeInt(CACHE_VERSION)
+
+                // Write cache key
+                output.writeUTF(key)
+
+                // Write compilation timestamp
+                output.writeLong(results.compiled.toEpochMilli())
+
+                // Write compiler name
+                output.writeUTF(results.compilerName)
+
+                // Write compilation messages
+                output.writeInt(results.messages.size)
+                results.messages.forEach { message ->
+                    output.writeUTF(message.kind)
+                    output.writeUTF(message.message)
+                    output.writeBoolean(message.location != null)
+                    message.location?.let { location ->
+                        output.writeUTF(location.source)
+                        output.writeInt(location.line)
+                        output.writeInt(location.column)
+                    }
+                }
+
+                // Write file manager contents (bytecode)
+                val classFiles = results.fileManager.allClassFiles
+                output.writeInt(classFiles.size)
+                classFiles.forEach { (path, fileObj) ->
+                    output.writeUTF(path)
+                    val bytecode = fileObj.openInputStream().readAllBytes()
+                    output.writeInt(bytecode.size)
+                    output.write(bytecode)
+                }
+
+                // Write compilation arguments if present
+                output.writeBoolean(results.compilationArguments != null)
+                results.compilationArguments?.let { args ->
+                    output.writeInt(args.hashCode())
+                }
+
+                // Write kompilation arguments if present
+                output.writeBoolean(results.kompilationArguments != null)
+                results.kompilationArguments?.let { args ->
+                    output.writeInt(args.hashCode())
+                }
+            }
+
+            // Atomic move to final location
+            Files.move(tempFile, path, java.nio.file.StandardCopyOption.REPLACE_EXISTING)
+        } catch (e: Exception) {
+            Files.deleteIfExists(tempFile)
+            throw e
+        }
+    }
+
+    /**
+     * Deserializes a CachedCompilationResults from disk.
+     * Returns null if the file doesn't exist, is corrupted, or has an incompatible version.
+     */
+    fun read(path: Path, expectedKey: String): CachedCompilationResults? {
+        if (!Files.exists(path)) {
+            return null
+        }
+
+        return try {
+            DataInputStream(FileInputStream(path.toFile())).use { input ->
+                // Read and verify version
+                val version = input.readInt()
+                if (version != CACHE_VERSION) {
+                    return null
+                }
+
+                // Read and verify cache key
+                val key = input.readUTF()
+                if (key != expectedKey) {
+                    return null
+                }
+
+                // Read compilation timestamp
+                val compiled = Instant.ofEpochMilli(input.readLong())
+
+                // Read compiler name
+                val compilerName = input.readUTF()
+
+                // Read compilation messages
+                val messageCount = input.readInt()
+                val messages = (0 until messageCount).map {
+                    val kind = input.readUTF()
+                    val message = input.readUTF()
+                    val hasLocation = input.readBoolean()
+                    val location = if (hasLocation) {
+                        SourceLocation(
+                            input.readUTF(),
+                            input.readInt(),
+                            input.readInt(),
+                        )
+                    } else {
+                        null
+                    }
+                    CompilationMessage(kind, location, message)
+                }
+
+                // Read file manager contents (bytecode)
+                val classFileCount = input.readInt()
+                val classFiles = mutableMapOf<String, ByteArray>()
+                repeat(classFileCount) {
+                    val path = input.readUTF()
+                    val size = input.readInt()
+                    val bytecode = ByteArray(size)
+                    input.readFully(bytecode)
+                    classFiles[path] = bytecode
+                }
+
+                // Create a new JeedFileManager and populate it with the bytecode
+                val fileManager = JeedFileManager(standardFileManager)
+                classFiles.forEach { (path, bytecode) ->
+                    fileManager.addClass(path, bytecode)
+                }
+
+                // Read compilation arguments
+                val hasCompilationArguments = input.readBoolean()
+                val compilationArgumentsHash = if (hasCompilationArguments) {
+                    input.readInt()
+                } else {
+                    null
+                }
+
+                // Read kompilation arguments
+                val hasKompilationArguments = input.readBoolean()
+                val kompilationArgumentsHash = if (hasKompilationArguments) {
+                    input.readInt()
+                } else {
+                    null
+                }
+
+                // Note: We can't fully reconstruct the compilation/kompilation arguments from disk,
+                // so we store null and rely on the cache key verification to ensure correctness.
+                // The hash codes are stored for debugging purposes.
+                CachedCompilationResults(
+                    compiled = compiled,
+                    messages = messages,
+                    fileManager = fileManager,
+                    compilerName = compilerName,
+                    compilationArguments = null,
+                    kompilationArguments = null,
+                )
+            }
+        } catch (e: Exception) {
+            logger.warn("Failed to read disk cache entry: ${e.message}")
+            null
+        }
+    }
+
+    /**
+     * Deletes a cache entry from disk.
+     */
+    fun delete(path: Path) {
+        Files.deleteIfExists(path)
+    }
+}

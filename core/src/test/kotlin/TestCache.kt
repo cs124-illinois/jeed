@@ -13,6 +13,8 @@ import java.util.PropertyPermission
 class TestCache :
     StringSpec({
         "should cache compiled simple snippets" {
+            MoreCacheStats.reset()
+
             val first = Source.fromSnippet(
                 "int weirdName = 8;",
             ).compile(CompilationArguments(useCache = true, waitForCache = true))
@@ -24,6 +26,11 @@ class TestCache :
             second.cached shouldBe true
             second.interval.length shouldBeLessThan first.interval.length
             first.compiled shouldBe second.compiled
+
+            // Validate cache stats
+            MoreCacheStats.l1Hits shouldBe 1
+            MoreCacheStats.l2Hits shouldBe 0
+            MoreCacheStats.misses shouldBe 1
         }
         "should calculate size for file managers" {
             val snippet = Source.fromSnippet(
@@ -113,6 +120,8 @@ public class Main {
             secondResult should haveOutput("2")
         }
         "should cache compiled simple kotlin snippets" {
+            MoreCacheStats.reset()
+
             val first = Source.fromSnippet(
                 "val weirdKame = 8",
                 SnippetArguments(fileType = Source.FileType.KOTLIN),
@@ -126,6 +135,11 @@ public class Main {
             second.cached shouldBe true
             second.interval.length shouldBeLessThan first.interval.length
             first.compiled shouldBe second.compiled
+
+            // Validate cache stats
+            MoreCacheStats.l1Hits shouldBe 1
+            MoreCacheStats.l2Hits shouldBe 0
+            MoreCacheStats.misses shouldBe 1
         }
         "should cache compiled kotlin sources" {
             val first = Source(
@@ -221,5 +235,94 @@ try {
             executionResult shouldNot haveTimedOut()
             executionResult should haveOutput("Try")
             executionResult.threw.shouldBeTypeOf<NullPointerException>()
+        }
+        "should cache correctly with parent file manager (compileWith)" {
+            // Compile parent code
+            val parentSource = Source(
+                mapOf(
+                    "Parent.java" to "public class Parent { public static int getValue() { return 42; } }",
+                ),
+            )
+            val parentCompiled = parentSource.compile(
+                CompilationArguments(useCache = true, waitForCache = true),
+            )
+
+            // Compile child code that uses parent - first time
+            val childSource = Source(
+                mapOf(
+                    "Child.java" to "public class Child { public static int test() { return Parent.getValue(); } }",
+                ),
+            )
+            val firstChild = childSource.compile(
+                CompilationArguments(
+                    useCache = true,
+                    waitForCache = true,
+                    parentFileManager = parentCompiled.fileManager,
+                ),
+            )
+            firstChild.cached shouldBe false
+
+            // Compile child again with same parent - should hit cache
+            val secondChild = childSource.compile(
+                CompilationArguments(
+                    useCache = true,
+                    waitForCache = true,
+                    parentFileManager = parentCompiled.fileManager,
+                ),
+            )
+            secondChild.cached shouldBe true
+
+            // Compile different parent with same name but different implementation
+            val parentSource2 = Source(
+                mapOf(
+                    "Parent.java" to "public class Parent { public static int getValue() { return 99; } }",
+                ),
+            )
+            val parentCompiled2 = parentSource2.compile(
+                CompilationArguments(useCache = true, waitForCache = true),
+            )
+
+            // Compile child with different parent - should NOT hit cache (different parent bytecode)
+            val thirdChild = childSource.compile(
+                CompilationArguments(
+                    useCache = true,
+                    waitForCache = true,
+                    parentFileManager = parentCompiled2.fileManager,
+                ),
+            )
+            thirdChild.cached shouldBe false
+
+            // Verify cache keys are different for different parents
+            val key1 = childSource.computeCacheKey(
+                CompilationArguments(parentFileManager = parentCompiled.fileManager),
+                firstChild.compilerName,
+            )
+            val key2 = childSource.computeCacheKey(
+                CompilationArguments(parentFileManager = parentCompiled2.fileManager),
+                thirdChild.compilerName,
+            )
+            key1 shouldNotBe key2
+        }
+        "cache keys should differ for different sources and compilation arguments" {
+            val source1 = Source.fromSnippet("int a = 1;")
+            val source2 = Source.fromSnippet("int a = 2;")
+            val args1 = CompilationArguments()
+            val args2 = CompilationArguments(parameters = true)
+
+            val compiled1 = source1.compile(CompilationArguments(useCache = true, waitForCache = true))
+            val compiled2 = source2.compile(CompilationArguments(useCache = true, waitForCache = true))
+
+            val key1 = source1.computeCacheKey(args1, compiled1.compilerName)
+            val key2 = source2.computeCacheKey(args1, compiled2.compilerName)
+            val key3 = source1.computeCacheKey(args2, compiled1.compilerName)
+
+            // Different sources should have different keys
+            key1 shouldNotBe key2
+
+            // Same source with different compilation arguments should have different keys
+            key1 shouldNotBe key3
+
+            // Different source and different args should have different keys
+            key2 shouldNotBe key3
         }
     })

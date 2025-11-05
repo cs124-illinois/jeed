@@ -339,6 +339,13 @@ class JeedFileManager(
         }
     }
 
+    fun addClass(path: String, bytecode: ByteArray) {
+        require(path.endsWith(".class")) { "Path must end with .class: $path" }
+        allFiles[path] = ByteSource(path, JavaFileObject.Kind.CLASS).also {
+            it.buffer.writeBytes(bytecode)
+        }
+    }
+
     private class ByteSource(path: String, kind: JavaFileObject.Kind) : SimpleJavaFileObject(URI.create("bytearray:///$path"), kind) {
         init {
             check(kind != JavaFileObject.Kind.CLASS || path.endsWith(".class")) { "incorrect suffix for ByteSource path: $path" }
