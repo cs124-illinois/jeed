@@ -1,9 +1,6 @@
 package edu.illinois.cs.cs125.jeed.core
 
 import com.squareup.moshi.JsonClass
-import com.squareup.moshi.Moshi
-import edu.illinois.cs.cs125.jeed.core.server.FlatSource
-import edu.illinois.cs.cs125.jeed.core.server.toFlatSources
 import mu.KotlinLogging
 import org.antlr.v4.runtime.CharStream
 import org.antlr.v4.runtime.Parser
@@ -131,35 +128,27 @@ open class Source(
         return filenameToFileType(filename)
     }
 
-    @JsonClass(generateAdapter = true)
-    data class FlattenedSources(val sources: List<FlatSource>)
-
     val md5: String by lazy {
-        MessageDigest.getInstance("MD5")?.let { message ->
-            message.digest(
-                moshi.adapter(FlattenedSources::class.java).toJson(
-                    FlattenedSources(sources.toFlatSources().sortedBy { it.path }),
-                ).toByteArray(),
-            )
+        MessageDigest.getInstance("MD5")?.let { digest ->
+            sources.toSortedMap().forEach { (path, contents) ->
+                digest.update(path.toByteArray())
+                digest.update(contents.toByteArray())
+            }
+            digest.digest()
         }?.joinToString(separator = "") {
             String.format(Locale.US, "%02x", it)
         } ?: error("Problem computing hash")
     }
 
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-        other as Source
-        return md5 == other.md5
+    override fun equals(other: Any?): Boolean = when {
+        this === other -> true
+        javaClass != other?.javaClass -> false
+        else -> md5 == (other as Source).md5
     }
 
     override fun hashCode(): Int = md5.toBigInteger(radix = 16).toInt()
 
     companion object {
-        private val moshi by lazy {
-            Moshi.Builder().build()
-        }
-
         private fun filenameToFileType(filename: String): FileType = when (val extension = filename.split("/").last().split(".").last()) {
             "java" -> FileType.JAVA
             "kt" -> FileType.KOTLIN
@@ -290,7 +279,7 @@ fun Throwable.getStackTraceForSource(
         }
         val (klass, method, name, correctLine) = parsedLine.destructured
         val fixedKlass = if (source is Snippet &&
-            (klass == source.wrappedClassName || klass == "${source.wrappedClassName}${"$"}Companion")
+            (klass == source.wrappedClassName || klass == $$"$${source.wrappedClassName}$Companion")
         ) {
             ""
         } else {
