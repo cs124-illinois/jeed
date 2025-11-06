@@ -1656,6 +1656,25 @@ public class Question {
                 }
             }
         }
+        "~it should not produce octal values zeros with number literal trim" {
+            Source.fromJava(
+                """
+public class Question {
+  public static void test() {
+    int value = 202;
+  }
+}
+                """.trimMargin(),
+            ).checkMutations<NumberLiteralTrim> { mutations, contents ->
+                mutations shouldHaveSize 1
+                repeat(32) {
+                    mutations.first().apply(contents).also { mutated ->
+                        mutated shouldNotContain "02"
+                    }
+                    mutations.first().reset()
+                }
+            }
+        }
     })
 
 inline fun <reified T : Mutation> Source.checkMutations(

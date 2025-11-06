@@ -653,7 +653,15 @@ class NumberLiteralTrim(
                     }
                 }
 
-                else -> listOf(current.substring(1, current.length), current.substring(0, current.length - 1))
+                else -> {
+                    val leftTrim = current.substring(1, current.length)
+                    val rightTrim = current.substring(0, current.length - 1)
+                    listOf(leftTrim, rightTrim).filter { trimmed ->
+                        // Don't allow left trim if it creates a leading zero (except for single "0")
+                        // e.g., 202 -> "02" is invalid, but 20 -> "0" is fine
+                        !(trimmed.startsWith("0") && trimmed.length > 1)
+                    }
+                }
             }
                 .filter { string ->
                     string.length == 1 ||
