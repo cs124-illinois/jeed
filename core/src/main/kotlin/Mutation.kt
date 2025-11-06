@@ -257,7 +257,7 @@ class BooleanLiteral(
     }
 }
 
-val ALPHANUMERIC_CHARS = (('a'..'z') + ('A'..'Z') + ('0'..'9')).toSet()
+val ALPHANUMERIC_CHARS = (('a'..'z') + ('A'..'Z') + ('0'..'9')).sorted()
 
 class CharLiteral(
     location: Location,
@@ -276,7 +276,7 @@ class CharLiteral(
     override fun applyMutation(random: Random): String = ALPHANUMERIC_CHARS.filter { it != character }.shuffled(random).first().let { "'$it'" }
 }
 
-private val ALPHANUMERIC_CHARS_AND_SPACE = (('a'..'z') + ('A'..'Z') + ('0'..'9') + (' ')).toSet()
+private val ALPHANUMERIC_CHARS_AND_SPACE = (('a'..'z') + ('A'..'Z') + ('0'..'9') + (' ')).sorted()
 
 // private val PUNCTUATION = setOf('.', ',', '!', '?', ';', ':', '[', ']', '(', ')', '<', '>')
 private val LOOKALIKES =
