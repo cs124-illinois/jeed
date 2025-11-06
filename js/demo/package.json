@@ -1,7 +1,7 @@
 {
   "private": true,
   "name": "demo",
-  "version": "2025.7.1",
+  "version": "2025.11.1",
   "scripts": {
     "build": "next build",
     "check": "npm run eslint && npm run tsc && npm run format && npm run depcheck",
@@ -11,30 +11,32 @@
     "export": "rimraf dist && NEXT_PUBLIC_BASE_PATH=/jeed npm run build && touch dist/.nojekyll",
     "format": "prettier -w --plugin=prettier-plugin-organize-imports . && prettier-package-json --write",
     "lint": "next lint",
+    "ncu": "ncu",
     "serve": "next start",
     "start": "next dev",
     "tsc": "tsc --noEmit"
   },
   "dependencies": {
-    "@cs124/jeed-output": "2025.7.1",
-    "@cs124/jeed-react": "2025.7.1",
-    "@cs124/jeed-types": "2025.7.1",
-    "next": "15.4.4",
-    "react": "19.1.0",
+    "@cs124/jeed-output": "2025.11.1",
+    "@cs124/jeed-react": "2025.11.1",
+    "@cs124/jeed-types": "2025.11.1",
+    "next": "15.5.6",
+    "react": "19.2.0",
     "react-ace": "14.0.1",
-    "react-dom": "19.1.0",
+    "react-dom": "19.2.0",
     "runtypes": "6.7.0"
   },
   "devDependencies": {
-    "@types/react": "19.1.8",
+    "@types/react": "19.2.2",
     "depcheck": "1.4.7",
     "eslint": "8.57.0",
-    "eslint-config-next": "15.4.4",
+    "eslint-config-next": "15.5.6",
     "gh-pages": "6.3.0",
+    "npm-check-updates": "19.1.2",
     "prettier": "3.6.2",
     "prettier-package-json": "2.8.0",
-    "prettier-plugin-organize-imports": "4.2.0",
-    "sass": "1.89.2",
-    "typescript": "5.8.3"
+    "prettier-plugin-organize-imports": "4.3.0",
+    "sass": "1.93.3",
+    "typescript": "5.9.3"
   }
 }
