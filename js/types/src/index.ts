@@ -81,11 +81,16 @@ export const ServerStatus = Record({
   cache: Record({
     inUse: Boolean,
     sizeInMB: Number,
-    hits: Number,
+    l1Hits: Number,
+    l2Hits: Number,
+    totalHits: Number,
     misses: Number,
     hitRate: Number,
     evictionCount: Number,
     averageLoadPenalty: Number,
+    diskCacheInUse: Boolean,
+    diskCacheMaxSizeInMB: Number,
+    diskCacheCurrentSizeInMB: Number,
   }),
 }).And(
   Partial({
