@@ -1234,7 +1234,7 @@ public class Example {
   }
 }""",
             ).also { source ->
-                source.mutationStream(random = Random(124)).toList().size shouldBe 987
+                source.mutationStream(random = Random(124)).toList().size shouldBe 989
             }
         }
         "it should apply all fixed mutations" {
