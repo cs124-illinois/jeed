@@ -2,6 +2,9 @@
 
 package edu.illinois.cs.cs125.jeed.core
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.io.DataInputStream
 import java.io.DataOutputStream
 import java.io.File
@@ -10,6 +13,8 @@ import java.io.FileOutputStream
 import java.nio.file.Files
 import java.nio.file.Path
 import java.time.Instant
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicLong
 
 const val JEED_DEFAULT_DISK_CACHE_SIZE_MB = 1024L
 
@@ -39,24 +44,37 @@ val diskCacheDir: Path = try {
     Path.of(System.getProperty("java.io.tmpdir"), "jeed-cache")
 }
 
+const val JEED_DEFAULT_DISK_CACHE_LOW_WATER_MARK = 0.75
+
+@Suppress("TooGenericExceptionCaught")
+val diskCacheLowWaterMark = try {
+    System.getenv("JEED_DISK_CACHE_LOW_WATER_MARK")?.toDouble() ?: JEED_DEFAULT_DISK_CACHE_LOW_WATER_MARK
+} catch (_: Exception) {
+    logger.warn("Bad value for JEED_DISK_CACHE_LOW_WATER_MARK")
+    JEED_DEFAULT_DISK_CACHE_LOW_WATER_MARK
+}
+
 /**
  * Manages disk-based compilation cache with LRU eviction.
  * Tracks cache size in memory to avoid expensive filesystem scans.
- * Uses a low water mark strategy: when evicting, evict down to 90% of capacity
- * to avoid triggering eviction on every subsequent write.
+ * Uses a low water mark strategy: when evicting, evict down to the configured
+ * percentage of capacity (default 75%) to avoid triggering eviction on every
+ * subsequent write. Eviction runs in a background coroutine to avoid blocking writes.
  */
 class DiskCompilationCache(
     private val cacheDir: Path = diskCacheDir,
     private val maxSizeBytes: Long = diskCacheSizeMB * MB_TO_BYTES,
-    private val lowWaterMarkRatio: Double = 0.9,
+    private val lowWaterMarkRatio: Double = diskCacheLowWaterMark,
 ) {
-    private var currentSizeBytes: Long = 0
+    private val currentSizeBytes = AtomicLong(0)
     private val lowWaterMarkBytes: Long = (maxSizeBytes * lowWaterMarkRatio).toLong()
+    private val evictionInProgress = AtomicBoolean(false)
+    private val evictionScope = CoroutineScope(Dispatchers.IO)
 
     init {
         Files.createDirectories(cacheDir)
         // Calculate initial cache size on startup
-        currentSizeBytes = computeCurrentSize()
+        currentSizeBytes.set(computeCurrentSize())
     }
 
     private fun getCachePath(key: String): Path = cacheDir.resolve("$key.cache")
@@ -97,6 +115,7 @@ class DiskCompilationCache(
 
     /**
      * Stores a compilation result to disk.
+     * Triggers background eviction if cache exceeds limit, but does not block.
      */
     fun put(key: String, results: CachedCompilationResults) {
         try {
@@ -106,11 +125,17 @@ class DiskCompilationCache(
             DiskCacheSerializer.write(path, key, results)
 
             val newSize = Files.size(path)
-            currentSizeBytes = currentSizeBytes - existingSize + newSize
+            currentSizeBytes.addAndGet(newSize - existingSize)
 
-            // Check if we need to evict (cheap memory comparison)
-            if (currentSizeBytes > maxSizeBytes) {
-                evictIfNeeded()
+            // Launch background eviction if needed (non-blocking)
+            if (currentSizeBytes.get() > maxSizeBytes && evictionInProgress.compareAndSet(false, true)) {
+                evictionScope.launch {
+                    try {
+                        evictIfNeeded()
+                    } finally {
+                        evictionInProgress.set(false)
+                    }
+                }
             }
         } catch (e: Exception) {
             logger.warn("Failed to write disk cache entry: ${e.message}")
@@ -120,8 +145,9 @@ class DiskCompilationCache(
     /**
      * Evicts least recently used entries if cache size exceeds limit.
      * Updates the in-memory size tracker as files are deleted.
-     * Evicts down to the low water mark (90% of capacity) to avoid
+     * Evicts down to the low water mark (default 75% of capacity) to avoid
      * needing to evict on every subsequent write.
+     * Runs in a background coroutine to avoid blocking writes.
      */
     private fun evictIfNeeded() {
         try {
@@ -137,12 +163,12 @@ class DiskCompilationCache(
 
             // Evict down to low water mark to create breathing room
             for (file in sortedFiles) {
-                if (currentSizeBytes <= lowWaterMarkBytes) {
+                if (currentSizeBytes.get() <= lowWaterMarkBytes) {
                     break
                 }
                 val fileSize = Files.size(file)
                 if (Files.deleteIfExists(file)) {
-                    currentSizeBytes -= fileSize
+                    currentSizeBytes.addAndGet(-fileSize)
                 }
             }
         } catch (e: Exception) {
@@ -159,7 +185,7 @@ class DiskCompilationCache(
                 stream.filter { Files.isRegularFile(it) && it.toString().endsWith(".cache") }
                     .forEach { Files.deleteIfExists(it) }
             }
-            currentSizeBytes = 0
+            currentSizeBytes.set(0)
         } catch (e: Exception) {
             logger.warn("Failed to clear disk cache: ${e.message}")
         }
@@ -169,7 +195,7 @@ class DiskCompilationCache(
      * Returns the current size of the disk cache in bytes.
      * Uses the in-memory tracked size for efficiency.
      */
-    fun size(): Long = currentSizeBytes
+    fun size(): Long = currentSizeBytes.get()
 }
 
 /**
