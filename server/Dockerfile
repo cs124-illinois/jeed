@@ -1,4 +1,4 @@
-FROM openjdk:21-jdk-slim
+FROM eclipse-temurin:21-jdk-jammy
 
 ARG TARGETARCH
 ENV TINI_VERSION=v0.19.0
