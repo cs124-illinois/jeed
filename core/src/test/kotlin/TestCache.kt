@@ -13,7 +13,7 @@ import java.util.PropertyPermission
 class TestCache :
     StringSpec({
         "should cache compiled simple snippets" {
-            MoreCacheStats.reset()
+            JeedCacheStats.reset()
 
             val first = Source.fromSnippet(
                 "int weirdName = 8;",
@@ -28,9 +28,9 @@ class TestCache :
             first.compiled shouldBe second.compiled
 
             // Validate cache stats
-            MoreCacheStats.l1Hits shouldBe 1
-            MoreCacheStats.l2Hits shouldBe 0
-            MoreCacheStats.misses shouldBe 1
+            JeedCacheStats.l1Hits shouldBe 1
+            JeedCacheStats.l2Hits shouldBe 0
+            JeedCacheStats.misses shouldBe 1
         }
         "should calculate size for file managers" {
             val snippet = Source.fromSnippet(
@@ -120,7 +120,7 @@ public class Main {
             secondResult should haveOutput("2")
         }
         "should cache compiled simple kotlin snippets" {
-            MoreCacheStats.reset()
+            JeedCacheStats.reset()
 
             val first = Source.fromSnippet(
                 "val weirdKame = 8",
@@ -137,9 +137,9 @@ public class Main {
             first.compiled shouldBe second.compiled
 
             // Validate cache stats
-            MoreCacheStats.l1Hits shouldBe 1
-            MoreCacheStats.l2Hits shouldBe 0
-            MoreCacheStats.misses shouldBe 1
+            JeedCacheStats.l1Hits shouldBe 1
+            JeedCacheStats.l2Hits shouldBe 0
+            JeedCacheStats.misses shouldBe 1
         }
         "should cache compiled kotlin sources" {
             val first = Source(

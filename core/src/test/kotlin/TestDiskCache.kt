@@ -87,7 +87,7 @@ class TestDiskCache :
                 // Temporarily enable disk cache and use our test instance
                 useDiskCache = true
                 diskCompilationCache = testDiskCache
-                MoreCacheStats.reset()
+                JeedCacheStats.reset()
 
                 val source = Source.fromSnippet(
                     "int twoTierTest = 123;",
@@ -103,9 +103,9 @@ class TestDiskCache :
                 val cacheKey = source.computeCacheKey(CompilationArguments(), firstCompiled.compilerName)
 
                 // Verify stats after first compilation
-                MoreCacheStats.l1Hits shouldBe 0
-                MoreCacheStats.l2Hits shouldBe 0
-                MoreCacheStats.misses shouldBe 1
+                JeedCacheStats.l1Hits shouldBe 0
+                JeedCacheStats.l2Hits shouldBe 0
+                JeedCacheStats.misses shouldBe 1
 
                 // Second compilation - L1 cache hit (fastest)
                 val secondCompiled = source.compile(
@@ -115,9 +115,9 @@ class TestDiskCache :
                 val secondTime = secondCompiled.interval.length
 
                 // Verify stats after L1 hit
-                MoreCacheStats.l1Hits shouldBe 1
-                MoreCacheStats.l2Hits shouldBe 0
-                MoreCacheStats.misses shouldBe 1
+                JeedCacheStats.l1Hits shouldBe 1
+                JeedCacheStats.l2Hits shouldBe 0
+                JeedCacheStats.misses shouldBe 1
 
                 // Remove from L1 cache to force L2 lookup
                 compilationCache.invalidate(cacheKey)
@@ -131,9 +131,9 @@ class TestDiskCache :
                 val thirdTime = thirdCompiled.interval.length
 
                 // Verify stats after L2 hit
-                MoreCacheStats.l1Hits shouldBe 1
-                MoreCacheStats.l2Hits shouldBe 1
-                MoreCacheStats.misses shouldBe 1
+                JeedCacheStats.l1Hits shouldBe 1
+                JeedCacheStats.l2Hits shouldBe 1
+                JeedCacheStats.misses shouldBe 1
 
                 // Verify it was restored to L1
                 compilationCache.getIfPresent(cacheKey) shouldNotBe null
@@ -146,9 +146,9 @@ class TestDiskCache :
                 val fourthTime = fourthCompiled.interval.length
 
                 // Verify final stats
-                MoreCacheStats.l1Hits shouldBe 2
-                MoreCacheStats.l2Hits shouldBe 1
-                MoreCacheStats.misses shouldBe 1
+                JeedCacheStats.l1Hits shouldBe 2
+                JeedCacheStats.l2Hits shouldBe 1
+                JeedCacheStats.misses shouldBe 1
 
                 // Verify timing relationships: L1 hits should be faster than L2 hit, which should be faster than miss
                 secondTime shouldBeLessThan firstTime
@@ -219,7 +219,7 @@ class TestDiskCache :
             try {
                 useDiskCache = true
                 diskCompilationCache = testDiskCache
-                MoreCacheStats.reset()
+                JeedCacheStats.reset()
 
                 val source = Source.fromSnippet(
                     "val kotlinTest = 42",
@@ -237,9 +237,9 @@ class TestDiskCache :
                 testDiskCache.get(cacheKey) shouldNotBe null
 
                 // Verify stats
-                MoreCacheStats.l1Hits shouldBe 0
-                MoreCacheStats.l2Hits shouldBe 0
-                MoreCacheStats.misses shouldBe 1
+                JeedCacheStats.l1Hits shouldBe 0
+                JeedCacheStats.l2Hits shouldBe 0
+                JeedCacheStats.misses shouldBe 1
 
                 // Clear L1 to force L2 lookup
                 compilationCache.invalidate(cacheKey)
@@ -251,9 +251,9 @@ class TestDiskCache :
                 secondCompiled.cached shouldBe true
 
                 // Verify stats after L2 hit
-                MoreCacheStats.l1Hits shouldBe 0
-                MoreCacheStats.l2Hits shouldBe 1
-                MoreCacheStats.misses shouldBe 1
+                JeedCacheStats.l1Hits shouldBe 0
+                JeedCacheStats.l2Hits shouldBe 1
+                JeedCacheStats.misses shouldBe 1
 
                 // Verify restored to L1
                 compilationCache.getIfPresent(cacheKey) shouldNotBe null
@@ -266,9 +266,9 @@ class TestDiskCache :
                 thirdCompiled.interval.length shouldBeLessThan firstCompiled.interval.length
 
                 // Verify final stats
-                MoreCacheStats.l1Hits shouldBe 1
-                MoreCacheStats.l2Hits shouldBe 1
-                MoreCacheStats.misses shouldBe 1
+                JeedCacheStats.l1Hits shouldBe 1
+                JeedCacheStats.l2Hits shouldBe 1
+                JeedCacheStats.misses shouldBe 1
             } finally {
                 useDiskCache = originalUseDiskCache
                 diskCompilationCache = originalDiskCache

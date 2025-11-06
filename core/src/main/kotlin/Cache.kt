@@ -110,13 +110,16 @@ fun Source.computeCacheKey(
     String.format(Locale.US, "%02x", it)
 }
 
-object MoreCacheStats {
+object JeedCacheStats {
     var l1Hits: Int = 0
     var l2Hits: Int = 0
     var misses: Int = 0
 
     val totalHits: Int
         get() = l1Hits + l2Hits
+
+    val diskCacheSizeBytes: Long
+        get() = diskCompilationCache.size()
 
     fun reset() {
         l1Hits = 0
@@ -147,16 +150,16 @@ fun Source.tryCache(
         if (cachedResult != null) {
             // Restore to memory cache
             compilationCache.put(cacheKey, cachedResult)
-            MoreCacheStats.l2Hits++
+            JeedCacheStats.l2Hits++
         }
     }
 
     if (cachedResult == null) {
-        MoreCacheStats.misses++
+        JeedCacheStats.misses++
         return null
     }
     if (hitL1) {
-        MoreCacheStats.l1Hits++
+        JeedCacheStats.l1Hits++
     }
 
     // Verify compiler name matches
@@ -235,16 +238,16 @@ fun Source.tryCache(
         if (cachedResult != null) {
             // Restore to memory cache
             compilationCache.put(cacheKey, cachedResult)
-            MoreCacheStats.l2Hits++
+            JeedCacheStats.l2Hits++
         }
     }
 
     if (cachedResult == null) {
-        MoreCacheStats.misses++
+        JeedCacheStats.misses++
         return null
     }
     if (hitL1) {
-        MoreCacheStats.l1Hits++
+        JeedCacheStats.l1Hits++
     }
 
     // Verify compiler name matches
