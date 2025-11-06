@@ -89,5 +89,4 @@ The project uses date-based versioning: YYYY.M.P (e.g., 2025.6.0)
 ## Dependency Management
 
 - Always specify exact dependencies in package.json files, avoiding ~ or ^ version prefixes
-
-- We're currently ignoring dependency updates from Kotlin, ktor, KSP, and kotest.
+- Use `./gradlew dependencyUpdates` to check for available dependency updates
