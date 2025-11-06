@@ -89,7 +89,7 @@ router.post("/", async (ctx: Context) => {
       ...(ctx.email && { email: ctx.email }),
       ...(ctx.request.origin && { origin: ctx.request.origin }),
     })
-    return ctx.throw(err, 400)
+    return ctx.throw(400, err)
   }
   ctx.body = response
   collection?.insertOne({
