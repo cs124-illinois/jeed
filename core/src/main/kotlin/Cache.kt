@@ -32,6 +32,14 @@ val useCompilationCache = try {
     JEED_DEFAULT_USE_CACHE
 }
 
+@Suppress("TooGenericExceptionCaught")
+val logDiskCacheMisses = try {
+    System.getenv("JEED_LOG_DISK_CACHE_MISSES")?.toBoolean() ?: false
+} catch (_: Exception) {
+    logger.warn("Bad value for JEED_LOG_DISK_CACHE_MISSES")
+    false
+}
+
 const val MB_TO_BYTES = 1024 * 1024
 val compilationCache: Cache<String, CachedCompilationResults> =
     Caffeine.newBuilder()
@@ -155,7 +163,14 @@ fun Source.tryCache(
     }
 
     if (cachedResult == null) {
-        JeedCacheStats.misses++
+        // Don't count as miss yet - only count if compilation succeeds and gets cached
+        if (useDiskCache && logDiskCacheMisses) {
+            val sourceInfo = sources.entries.joinToString("\n") { (path, content) ->
+                "$path:\n$content"
+            }
+            val stackTrace = Thread.currentThread().stackTrace.drop(1).joinToString("\n") { "  at $it" }
+            logger.warn("Disk cache miss: key=$cacheKey\n$sourceInfo\nStack trace:\n$stackTrace")
+        }
         return null
     }
     if (hitL1) {
@@ -192,6 +207,10 @@ fun CompiledSource.cache(compilationArguments: CompilationArguments) {
     if (cached || !useCache) {
         return
     }
+
+    // Count as cache miss - this only runs for successful compilations that weren't cached
+    JeedCacheStats.misses++
+
     val cacheKey = source.computeCacheKey(compilationArguments, compilerName)
     val cachedResults = CachedCompilationResults(
         compiled,
@@ -243,7 +262,14 @@ fun Source.tryCache(
     }
 
     if (cachedResult == null) {
-        JeedCacheStats.misses++
+        // Don't count as miss yet - only count if compilation succeeds and gets cached
+        if (useDiskCache && logDiskCacheMisses) {
+            val sourceInfo = sources.entries.joinToString("\n") { (path, content) ->
+                "$path:\n$content"
+            }
+            val stackTrace = Thread.currentThread().stackTrace.drop(1).joinToString("\n") { "  at $it" }
+            logger.warn("Disk cache miss: key=$cacheKey\n$sourceInfo\nStack trace:\n$stackTrace")
+        }
         return null
     }
     if (hitL1) {
@@ -277,6 +303,10 @@ fun CompiledSource.cache(kompilationArguments: KompilationArguments) {
     if (cached || !useCache) {
         return
     }
+
+    // Count as cache miss - this only runs for successful compilations that weren't cached
+    JeedCacheStats.misses++
+
     val cacheKey = source.computeCacheKey(kompilationArguments, compilerName)
     val cachedResults = CachedCompilationResults(
         compiled,
