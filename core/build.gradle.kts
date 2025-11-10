@@ -46,7 +46,7 @@ dependencies {
 
     implementation("net.java.dev.jna:jna:5.18.1")
     implementation("io.github.java-diff-utils:java-diff-utils:4.16")
-    implementation("com.google.googlejavaformat:google-java-format:1.31.0")
+    implementation("com.google.googlejavaformat:google-java-format:1.32.0")
     implementation("net.sf.extjwnl:extjwnl:2.0.5")
     implementation("net.sf.extjwnl:extjwnl-data-wn31:1.2")
 
