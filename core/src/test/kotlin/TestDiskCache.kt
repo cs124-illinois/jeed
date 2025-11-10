@@ -326,4 +326,222 @@ class TestDiskCache :
                 Files.deleteIfExists(tempDir)
             }
         }
+        "disk cache should differentiate compilations with different parent file managers" {
+            val tempDir = Files.createTempDirectory("jeed-test-parent-collision")
+            val testDiskCache = DiskCompilationCache(tempDir, 1024 * 1024 * 10)
+            val originalUseDiskCache = useDiskCache
+            val originalDiskCache = diskCompilationCache
+
+            try {
+                useDiskCache = true
+                diskCompilationCache = testDiskCache
+
+                // Compile parent code with different implementations
+                val parentSource1 = Source(
+                    mapOf(
+                        "Parent.java" to "public class Parent { public static int getValue() { return 42; } }",
+                    ),
+                )
+                val parentCompiled1 = parentSource1.compile(
+                    CompilationArguments(useCache = true, waitForCache = true),
+                )
+
+                val parentSource2 = Source(
+                    mapOf(
+                        "Parent.java" to "public class Parent { public static int getValue() { return 99; } }",
+                    ),
+                )
+                val parentCompiled2 = parentSource2.compile(
+                    CompilationArguments(useCache = true, waitForCache = true),
+                )
+
+                // Compile child code that uses parent
+                val childSource = Source(
+                    mapOf(
+                        "Child.java" to "public class Child { public static int test() { return Parent.getValue(); } }",
+                    ),
+                )
+
+                // First compilation with parent1
+                compilationCache.invalidateAll()
+                val firstChild = childSource.compile(
+                    CompilationArguments(
+                        useCache = true,
+                        waitForCache = true,
+                        parentFileManager = parentCompiled1.fileManager,
+                    ),
+                )
+                val key1 = childSource.computeCacheKey(
+                    CompilationArguments(parentFileManager = parentCompiled1.fileManager),
+                    firstChild.compilerName,
+                )
+
+                // Second compilation with parent2 - should have DIFFERENT cache key
+                compilationCache.invalidateAll()
+                val secondChild = childSource.compile(
+                    CompilationArguments(
+                        useCache = true,
+                        waitForCache = true,
+                        parentFileManager = parentCompiled2.fileManager,
+                    ),
+                )
+                val key2 = childSource.computeCacheKey(
+                    CompilationArguments(parentFileManager = parentCompiled2.fileManager),
+                    secondChild.compilerName,
+                )
+
+                // Verify cache keys are different
+                key1 shouldNotBe key2
+
+                // Verify they're both in disk cache with different keys
+                testDiskCache.get(key1) shouldNotBe null
+                testDiskCache.get(key2) shouldNotBe null
+
+                // Verify both compilations succeeded
+                // (they use different parent bytecode so should have different cache keys)
+            } finally {
+                useDiskCache = originalUseDiskCache
+                diskCompilationCache = originalDiskCache
+                testDiskCache.clear()
+                Files.deleteIfExists(tempDir)
+            }
+        }
+        "disk cache should differentiate between compilation with and without parent" {
+            val tempDir = Files.createTempDirectory("jeed-test-null-parent-collision")
+            val testDiskCache = DiskCompilationCache(tempDir, 1024 * 1024 * 10)
+            val originalUseDiskCache = useDiskCache
+            val originalDiskCache = diskCompilationCache
+
+            try {
+                useDiskCache = true
+                diskCompilationCache = testDiskCache
+
+                val childSource = Source(
+                    mapOf(
+                        "Child.java" to "public class Child { }",
+                    ),
+                )
+
+                // First: compile Child with no parent (isolatedClassLoader)
+                compilationCache.invalidateAll()
+                val firstCompilation = childSource.compile(
+                    CompilationArguments(
+                        useCache = true,
+                        waitForCache = true,
+                        isolatedClassLoader = true,
+                    ),
+                )
+                val key1 = childSource.computeCacheKey(
+                    CompilationArguments(isolatedClassLoader = true),
+                    firstCompilation.compilerName,
+                )
+                firstCompilation.classLoader.definedClasses.size shouldBe 1
+
+                // Compile parent separately
+                val parentSource = Source(
+                    mapOf(
+                        "Parent.java" to "public class Parent { }",
+                    ),
+                )
+                val parentCompilation = parentSource.compile(
+                    CompilationArguments(useCache = true, waitForCache = true),
+                )
+
+                // Second: compile same Child source but WITH parent
+                compilationCache.invalidateAll()
+                val secondCompilation = childSource.compile(
+                    CompilationArguments(
+                        useCache = true,
+                        waitForCache = true,
+                        parentFileManager = parentCompilation.fileManager,
+                    ),
+                )
+                val key2 = childSource.computeCacheKey(
+                    CompilationArguments(parentFileManager = parentCompilation.fileManager),
+                    secondCompilation.compilerName,
+                )
+
+                // Cache keys should be different (one has parent, one doesn't)
+                key1 shouldNotBe key2
+
+                // First compilation should have only Child
+                firstCompilation.classLoader.definedClasses.size shouldBe 1
+                firstCompilation.classLoader.definedClasses shouldBe setOf("Child")
+
+                // Second compilation should also have only Child (Parent is in parent)
+                secondCompilation.classLoader.definedClasses.size shouldBe 1
+                secondCompilation.classLoader.definedClasses shouldBe setOf("Child")
+            } finally {
+                useDiskCache = originalUseDiskCache
+                diskCompilationCache = originalDiskCache
+                testDiskCache.clear()
+                Files.deleteIfExists(tempDir)
+            }
+        }
+        "disk cache should not include parent classes in definedClasses after restore" {
+            val tempDir = Files.createTempDirectory("jeed-test-parent-classes")
+            val testDiskCache = DiskCompilationCache(tempDir, 1024 * 1024 * 10)
+            val originalUseDiskCache = useDiskCache
+            val originalDiskCache = diskCompilationCache
+
+            try {
+                useDiskCache = true
+                diskCompilationCache = testDiskCache
+
+                // Compile parent
+                val parentSource = Source(
+                    mapOf(
+                        "Parent.java" to "public class Parent { public static int getValue() { return 42; } }",
+                    ),
+                )
+                val parentCompiled = parentSource.compile(
+                    CompilationArguments(useCache = true, waitForCache = true),
+                )
+
+                // Compile child with parent
+                val childSource = Source(
+                    mapOf(
+                        "Child.java" to "public class Child { public static int test() { return Parent.getValue(); } }",
+                    ),
+                )
+                val childCompiled = childSource.compile(
+                    CompilationArguments(
+                        useCache = true,
+                        waitForCache = true,
+                        parentFileManager = parentCompiled.fileManager,
+                    ),
+                )
+
+                // Child compilation should only define Child, not Parent
+                childCompiled.classLoader.definedClasses.size shouldBe 1
+                childCompiled.classLoader.definedClasses shouldBe setOf("Child")
+
+                // Clear L1 cache to force L2 (disk) restore
+                val cacheKey = childSource.computeCacheKey(
+                    CompilationArguments(parentFileManager = parentCompiled.fileManager),
+                    childCompiled.compilerName,
+                )
+                compilationCache.invalidate(cacheKey)
+
+                // Compile again - will restore from disk
+                val restoredCompiled = childSource.compile(
+                    CompilationArguments(
+                        useCache = true,
+                        waitForCache = true,
+                        parentFileManager = parentCompiled.fileManager,
+                    ),
+                )
+                restoredCompiled.cached shouldBe true
+
+                // CRITICAL: After restoring from disk, definedClasses should STILL only contain Child
+                // This test will fail if disk serialization incorrectly includes parent classes
+                restoredCompiled.classLoader.definedClasses.size shouldBe 1
+                restoredCompiled.classLoader.definedClasses shouldBe setOf("Child")
+            } finally {
+                useDiskCache = originalUseDiskCache
+                diskCompilationCache = originalDiskCache
+                testDiskCache.clear()
+                Files.deleteIfExists(tempDir)
+            }
+        }
     })

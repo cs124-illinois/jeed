@@ -237,7 +237,8 @@ object DiskCacheSerializer {
                 }
 
                 // Write file manager contents (bytecode)
-                val classFiles = results.fileManager.allClassFiles
+                // Only serialize classes defined in this compilation, not parent classes
+                val classFiles = results.fileManager.classFiles
                 output.writeInt(classFiles.size)
                 classFiles.forEach { (path, fileObj) ->
                     output.writeUTF(path)
