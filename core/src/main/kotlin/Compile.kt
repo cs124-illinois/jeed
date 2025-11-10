@@ -96,7 +96,7 @@ data class CompilationArguments(
         }
     }
 
-    override fun hashCode() = Objects.hashCode(wError, Xlint, enablePreview, parameters, debugInfo, parentFileManager)
+    override fun hashCode() = Objects.hashCode(wError, Xlint, enablePreview, parameters, debugInfo)
 }
 
 @JsonClass(generateAdapter = true)

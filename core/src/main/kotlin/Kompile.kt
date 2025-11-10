@@ -122,7 +122,7 @@ data class KompilationArguments(
         }
     }
 
-    override fun hashCode() = Objects.hashCode(verbose, allWarningsAsErrors, parameters, jvmTarget, parentFileManager)
+    override fun hashCode() = Objects.hashCode(verbose, allWarningsAsErrors, parameters, jvmTarget)
 }
 
 internal class JeedMessageCollector(val source: Source, private val allWarningsAsErrors: Boolean) : MessageCollector {
