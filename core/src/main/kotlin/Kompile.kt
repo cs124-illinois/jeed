@@ -116,13 +116,22 @@ data class KompilationArguments(
                 allWarningsAsErrors != other.allWarningsAsErrors -> false
                 parameters != other.parameters -> false
                 jvmTarget != other.jvmTarget -> false
+                isolatedClassLoader != other.isolatedClassLoader -> false
                 parentFileManager !== other.parentFileManager -> false
                 else -> true
             }
         }
     }
 
-    override fun hashCode() = Objects.hashCode(verbose, allWarningsAsErrors, parameters, jvmTarget)
+    override fun hashCode(): Int {
+        var result = Objects.hashCode(verbose, allWarningsAsErrors, parameters, jvmTarget, isolatedClassLoader)
+        // Include content-based hash of parent file manager if present
+        result = 31 * result + when (val parent = parentFileManager) {
+            null -> 0
+            else -> parent.contentHashCode()
+        }
+        return result
+    }
 }
 
 internal class JeedMessageCollector(val source: Source, private val allWarningsAsErrors: Boolean) : MessageCollector {

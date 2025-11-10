@@ -90,13 +90,23 @@ data class CompilationArguments(
                 enablePreview != other.enablePreview -> false
                 parameters != other.parameters -> false
                 debugInfo != other.debugInfo -> false
+                isolatedClassLoader != other.isolatedClassLoader -> false
                 parentFileManager !== other.parentFileManager -> false
                 else -> true
             }
         }
     }
 
-    override fun hashCode() = Objects.hashCode(wError, Xlint, enablePreview, parameters, debugInfo)
+    override fun hashCode(): Int {
+        var result = Objects.hashCode(wError, Xlint, enablePreview, parameters, debugInfo, isolatedClassLoader)
+        // Include content-based hash of parent file manager if present
+        result = 31 * result + when (val parent = parentFileManager) {
+            null -> 0
+            is JeedFileManager -> parent.contentHashCode()
+            else -> 1 // Different non-null, non-Jeed parent
+        }
+        return result
+    }
 }
 
 @JsonClass(generateAdapter = true)
@@ -321,6 +331,26 @@ class JeedFileManager(
 
     val size: Int
         get() = classFiles.values.filterIsInstance<ByteSource>().sumOf { it.buffer.size() }
+
+    @Transient
+    private var cachedContentHashCode: Int? = null
+
+    /**
+     * Returns a stable, content-based hashCode for this file manager.
+     * Used in cache key computation to differentiate parent file managers.
+     * Based on the bytecode content, not memory address.
+     */
+    fun contentHashCode(): Int {
+        if (cachedContentHashCode == null) {
+            cachedContentHashCode = allClassFiles.toSortedMap().entries.fold(0) { acc, (path, fileObj) ->
+                var hash = acc
+                hash = 31 * hash + path.hashCode()
+                hash = 31 * hash + fileObj.openInputStream().readAllBytes().contentHashCode()
+                hash
+            }
+        }
+        return cachedContentHashCode!!
+    }
 
     fun merge(other: JeedFileManager) {
         check(allFiles.keys.intersect(other.allFiles.keys).isEmpty()) {
