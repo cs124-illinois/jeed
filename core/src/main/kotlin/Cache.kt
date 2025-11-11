@@ -59,6 +59,7 @@ class CachedCompilationResults(
     val compilerName: String,
     val compilationArguments: CompilationArguments? = null,
     val kompilationArguments: KompilationArguments? = null,
+    val failedCompilationErrors: List<CompilationError>? = null,
 )
 
 fun JeedFileManager.bytecodeHash(): String = MessageDigest.getInstance("MD5").let { digest ->
@@ -187,6 +188,18 @@ fun Source.tryCache(
     if (cachedResult.compilationArguments != null && cachedResult.compilationArguments != compilationArguments) {
         return null
     }
+
+    // If this was a cached failure, throw the exception
+    if (cachedResult.failedCompilationErrors != null) {
+        val failedData = FailedCompilationData(
+            cachedResult.compiled,
+            Interval(started, Instant.now()),
+            cached = true,
+            compilerName,
+        )
+        throw CompilationFailed(cachedResult.failedCompilationErrors, failedData)
+    }
+
     val parentClassLoader =
         compilationArguments.parentClassLoader ?: ClassLoader.getSystemClassLoader()
     return CompiledSource(
@@ -218,6 +231,44 @@ fun CompiledSource.cache(compilationArguments: CompilationArguments) {
         fileManager,
         compilerName,
         compilationArguments = compilationArguments,
+    )
+
+    compilationScope.launch {
+        // Write to memory cache
+        compilationCache.put(cacheKey, cachedResults)
+
+        // Write to disk cache if enabled
+        if (useDiskCache) {
+            diskCompilationCache.put(cacheKey, cachedResults)
+        }
+    }.also {
+        if (compilationArguments.waitForCache) {
+            runBlocking { it.join() }
+        }
+    }
+}
+
+fun Source.cacheFailure(
+    compilationArguments: CompilationArguments,
+    errors: List<CompilationError>,
+    failedData: FailedCompilationData,
+) {
+    val useCache = compilationArguments.useCache ?: useCompilationCache
+    if (!useCache) {
+        return
+    }
+
+    // Count as cache miss - failed compilation that wasn't cached
+    JeedCacheStats.misses++
+
+    val cacheKey = computeCacheKey(compilationArguments, failedData.compilerName)
+    val cachedResults = CachedCompilationResults(
+        failedData.started,
+        emptyList(), // No compilation messages for failures
+        JeedFileManager(standardFileManager), // Empty file manager
+        failedData.compilerName,
+        compilationArguments = compilationArguments,
+        failedCompilationErrors = errors,
     )
 
     compilationScope.launch {

@@ -325,4 +325,34 @@ try {
             // Different source and different args should have different keys
             key2 shouldNotBe key3
         }
+        "should cache failed compilations" {
+            JeedCacheStats.reset()
+
+            // Source with compilation error
+            val source = Source.fromSnippet(
+                "int x = undefinedVariable;",
+            )
+
+            // First compilation - should fail and not be cached
+            val firstFailed = runCatching {
+                source.compile(CompilationArguments(useCache = true, waitForCache = true))
+            }.exceptionOrNull()
+            firstFailed.shouldBeTypeOf<CompilationFailed>()
+            val firstData = (firstFailed as CompilationFailed).compilationData!!
+            firstData.cached shouldBe false
+
+            // Second compilation - should fail but hit cache and be faster
+            val secondFailed = runCatching {
+                source.compile(CompilationArguments(useCache = true, waitForCache = true))
+            }.exceptionOrNull()
+            secondFailed.shouldBeTypeOf<CompilationFailed>()
+            val secondData = (secondFailed as CompilationFailed).compilationData!!
+            secondData.cached shouldBe true
+            secondData.interval.length shouldBeLessThan firstData.interval.length
+
+            // Validate cache stats
+            JeedCacheStats.l1Hits shouldBe 1
+            JeedCacheStats.l2Hits shouldBe 0
+            JeedCacheStats.misses shouldBe 1
+        }
     })

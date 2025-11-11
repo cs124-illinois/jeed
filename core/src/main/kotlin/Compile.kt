@@ -112,9 +112,19 @@ data class CompilationArguments(
 @JsonClass(generateAdapter = true)
 class CompilationError(location: SourceLocation?, message: String) : SourceError(location, message)
 
-class CompilationFailed(errors: List<CompilationError>) : JeedError(errors) {
+class CompilationFailed(
+    errors: List<CompilationError>,
+    val compilationData: FailedCompilationData? = null,
+) : JeedError(errors) {
     override fun toString(): String = "compilation errors were encountered: ${errors.joinToString(separator = ",")}"
 }
+
+data class FailedCompilationData(
+    val started: Instant,
+    val interval: Interval,
+    val cached: Boolean = false,
+    val compilerName: String = systemCompilerName,
+)
 
 @JsonClass(generateAdapter = true)
 class CompilationMessage(@Suppress("unused") val kind: String, location: SourceLocation?, message: String) : SourceError(location, message)
@@ -233,22 +243,35 @@ private fun compile(
     val started = Instant.now()
     source.tryCache(compilationArguments, started, systemCompilerName)?.let { return it }
 
-    val (fileManager, messages) = compileToFileManager(compilationArguments, source, parentFileManager)
-    val actualParentClassloader = if (compilationArguments.isolatedClassLoader) {
-        IsolatingClassLoader(fileManager.classFiles.keys.map { pathToClassName(it) }.toSet())
-    } else {
-        parentClassLoader
-    }
+    try {
+        val (fileManager, messages) = compileToFileManager(compilationArguments, source, parentFileManager)
+        val actualParentClassloader = if (compilationArguments.isolatedClassLoader) {
+            IsolatingClassLoader(fileManager.classFiles.keys.map { pathToClassName(it) }.toSet())
+        } else {
+            parentClassLoader
+        }
 
-    return CompiledSource(
-        source,
-        messages,
-        started,
-        Interval(started, Instant.now()),
-        JeedClassLoader(fileManager, actualParentClassloader),
-        fileManager,
-    ).also { compiledSource ->
-        compiledSource.cache(compilationArguments)
+        return CompiledSource(
+            source,
+            messages,
+            started,
+            Interval(started, Instant.now()),
+            JeedClassLoader(fileManager, actualParentClassloader),
+            fileManager,
+        ).also { compiledSource ->
+            compiledSource.cache(compilationArguments)
+        }
+    } catch (e: CompilationFailed) {
+        // Cache failed compilation
+        val failedData = FailedCompilationData(
+            started,
+            Interval(started, Instant.now()),
+            cached = false,
+            systemCompilerName,
+        )
+        val errors = e.errors.filterIsInstance<CompilationError>()
+        source.cacheFailure(compilationArguments, errors, failedData)
+        throw CompilationFailed(errors, failedData)
     }
 }
 
