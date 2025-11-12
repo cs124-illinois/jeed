@@ -34,7 +34,7 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:2.2.21")
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
-    implementation("com.puppycrawl.tools:checkstyle:12.1.1")
+    implementation("com.puppycrawl.tools:checkstyle:12.1.2")
     implementation("org.codehaus.plexus:plexus-container-default:2.1.1")
     implementation("com.pinterest.ktlint:ktlint-rule-engine:1.7.1")
     implementation("com.pinterest.ktlint:ktlint-ruleset-standard:1.7.1")
@@ -52,7 +52,7 @@ dependencies {
 
     api("org.jacoco:org.jacoco.core:0.8.14")
     api("com.github.ben-manes.caffeine:caffeine:3.2.3")
-    api("ch.qos.logback:logback-classic:1.5.20")
+    api("ch.qos.logback:logback-classic:1.5.21")
     api("io.github.microutils:kotlin-logging:3.0.5")
     api("io.github.classgraph:classgraph:4.8.184")
 
