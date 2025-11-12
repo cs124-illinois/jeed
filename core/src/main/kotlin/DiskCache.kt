@@ -258,6 +258,21 @@ object DiskCacheSerializer {
                 results.kompilationArguments?.let { args ->
                     output.writeInt(args.hashCode())
                 }
+
+                // Write failed compilation errors if present
+                output.writeBoolean(results.failedCompilationErrors != null)
+                results.failedCompilationErrors?.let { errors ->
+                    output.writeInt(errors.size)
+                    errors.forEach { error ->
+                        output.writeUTF(error.message)
+                        output.writeBoolean(error.location != null)
+                        error.location?.let { location ->
+                            output.writeUTF(location.source)
+                            output.writeInt(location.line)
+                            output.writeInt(location.column)
+                        }
+                    }
+                }
             }
 
             // Atomic move to final location
@@ -348,6 +363,28 @@ object DiskCacheSerializer {
                     null
                 }
 
+                // Read failed compilation errors if present
+                val hasFailedCompilationErrors = input.readBoolean()
+                val failedCompilationErrors = if (hasFailedCompilationErrors) {
+                    val errorCount = input.readInt()
+                    (0 until errorCount).map {
+                        val message = input.readUTF()
+                        val hasLocation = input.readBoolean()
+                        val location = if (hasLocation) {
+                            SourceLocation(
+                                input.readUTF(),
+                                input.readInt(),
+                                input.readInt(),
+                            )
+                        } else {
+                            null
+                        }
+                        CompilationError(location, message)
+                    }
+                } else {
+                    null
+                }
+
                 // Note: We can't fully reconstruct the compilation/kompilation arguments from disk,
                 // so we store null and rely on the cache key verification to ensure correctness.
                 // The hash codes are stored for debugging purposes.
@@ -358,6 +395,7 @@ object DiskCacheSerializer {
                     compilerName = compilerName,
                     compilationArguments = null,
                     kompilationArguments = null,
+                    failedCompilationErrors = failedCompilationErrors,
                 )
             }
         } catch (e: Exception) {

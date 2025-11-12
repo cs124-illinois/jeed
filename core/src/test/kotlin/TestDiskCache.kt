@@ -1,5 +1,6 @@
 package edu.illinois.cs.cs125.jeed.core
 
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.longs.shouldBeGreaterThan
 import io.kotest.matchers.longs.shouldBeLessThan
@@ -537,6 +538,88 @@ class TestDiskCache :
                 // This test will fail if disk serialization incorrectly includes parent classes
                 restoredCompiled.classLoader.definedClasses.size shouldBe 1
                 restoredCompiled.classLoader.definedClasses shouldBe setOf("Child")
+            } finally {
+                useDiskCache = originalUseDiskCache
+                diskCompilationCache = originalDiskCache
+                testDiskCache.clear()
+                Files.deleteIfExists(tempDir)
+            }
+        }
+        "disk cache should correctly cache failed compilation results" {
+            val tempDir = Files.createTempDirectory("jeed-test-failed-compilation")
+            val testDiskCache = DiskCompilationCache(tempDir, 1024 * 1024 * 10)
+            val originalUseDiskCache = useDiskCache
+            val originalDiskCache = diskCompilationCache
+
+            try {
+                useDiskCache = true
+                diskCompilationCache = testDiskCache
+                JeedCacheStats.reset()
+
+                // Code that will fail compilation - missing import for Arrays
+                val source = Source(
+                    mapOf(
+                        "Question.java" to """
+                            public class Question {
+                              boolean arrayIsSorted(int[] values) {
+                                Arrays.sort(values);
+                                return false;
+                              }
+                            }
+                        """.trimIndent(),
+                    ),
+                )
+
+                // First compilation - should fail
+                val firstFailed = shouldThrow<CompilationFailed> {
+                    source.compile(CompilationArguments(useCache = true, waitForCache = true))
+                }
+                val firstData = firstFailed.compilationData!!
+                firstData.cached shouldBe false
+
+                // Verify the error message mentions "Arrays"
+                val errorMessage = firstFailed.errors.joinToString(" ")
+                errorMessage.contains("Arrays") shouldBe true
+
+                // Verify stats - should be a cache miss
+                JeedCacheStats.l1Hits shouldBe 0
+                JeedCacheStats.l2Hits shouldBe 0
+                JeedCacheStats.misses shouldBe 1
+
+                // Compute cache key and verify it's in disk cache
+                val cacheKey = source.computeCacheKey(CompilationArguments(), firstData.compilerName)
+                testDiskCache.get(cacheKey) shouldNotBe null
+
+                // Clear L1 cache to force L2 lookup
+                compilationCache.invalidate(cacheKey)
+
+                // Second compilation - should hit L2 cache with the failed result
+                val secondFailed = shouldThrow<CompilationFailed> {
+                    source.compile(CompilationArguments(useCache = true, waitForCache = true))
+                }
+                val secondData = secondFailed.compilationData!!
+                secondData.cached shouldBe true
+
+                // Verify the same error is returned from cache
+                val cachedErrorMessage = secondFailed.errors.joinToString(" ")
+                cachedErrorMessage.contains("Arrays") shouldBe true
+
+                // Verify stats after L2 hit
+                JeedCacheStats.l1Hits shouldBe 0
+                JeedCacheStats.l2Hits shouldBe 1
+                JeedCacheStats.misses shouldBe 1
+
+                // Third compilation - should now hit L1 cache (restored from L2)
+                val thirdFailed = shouldThrow<CompilationFailed> {
+                    source.compile(CompilationArguments(useCache = true, waitForCache = true))
+                }
+                val thirdData = thirdFailed.compilationData!!
+                thirdData.cached shouldBe true
+
+                // Verify final stats
+                JeedCacheStats.l1Hits shouldBe 1
+                JeedCacheStats.l2Hits shouldBe 1
+                JeedCacheStats.misses shouldBe 1
             } finally {
                 useDiskCache = originalUseDiskCache
                 diskCompilationCache = originalDiskCache
