@@ -4,6 +4,7 @@ import java.io.File
 
 plugins {
     kotlin("jvm")
+    kotlin("plugin.serialization")
     application
     `maven-publish`
     signing
@@ -23,8 +24,6 @@ configurations.all {
 dependencies {
     val ktorVersion = "3.3.2"
 
-    ksp("com.squareup.moshi:moshi-kotlin-codegen:1.15.2")
-
     testJavaagent("com.beyondgrader.resource-agent:agent:$agentVersion")
 
     implementation(project(":core"))
@@ -32,9 +31,9 @@ dependencies {
     implementation("io.ktor:ktor-server-netty:$ktorVersion")
     implementation("io.ktor:ktor-server-cors:$ktorVersion")
     implementation("io.ktor:ktor-server-content-negotiation:$ktorVersion")
+    implementation("io.ktor:ktor-serialization-kotlinx-json:$ktorVersion")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
-    implementation("com.squareup.moshi:moshi-kotlin:1.15.2")
-    implementation("org.cs124:ktor-moshi:2025.8.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.0")
     implementation("io.github.nhubbard:konf:2.1.0")
     implementation("com.beyondgrader.resource-agent:agent:$agentVersion")
     implementation("com.beyondgrader.resource-agent:jeedplugin:$agentVersion")

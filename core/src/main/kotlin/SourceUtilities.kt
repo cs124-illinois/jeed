@@ -2,7 +2,6 @@
 
 package edu.illinois.cs.cs125.jeed.core
 
-import com.squareup.moshi.JsonClass
 import edu.illinois.cs.cs125.jeed.core.antlr.JavaLexer
 import edu.illinois.cs.cs125.jeed.core.antlr.JavaParser
 import edu.illinois.cs.cs125.jeed.core.antlr.JavaParserBaseListener
@@ -10,6 +9,7 @@ import edu.illinois.cs.cs125.jeed.core.antlr.KotlinLexer
 import edu.illinois.cs.cs125.jeed.core.antlr.KotlinParser
 import edu.illinois.cs.cs125.jeed.core.antlr.KotlinParserBaseListener
 import edu.illinois.cs.cs125.jeed.core.antlr.SnippetLexer
+import kotlinx.serialization.Serializable
 import net.sf.extjwnl.data.POS
 import net.sf.extjwnl.dictionary.Dictionary
 import org.antlr.v4.runtime.CharStreams
@@ -284,7 +284,7 @@ fun Source.getBadWords(whitelist: Set<String> = setOf()): Set<String> {
     return badWords
 }
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class LineCounts(val source: Int, val comment: Int, val blank: Int) {
     operator fun plus(other: LineCounts) = LineCounts(source + other.source, comment + other.comment, blank + other.blank)
 

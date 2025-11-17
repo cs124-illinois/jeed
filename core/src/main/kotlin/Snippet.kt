@@ -1,6 +1,5 @@
 package edu.illinois.cs.cs125.jeed.core
 
-import com.squareup.moshi.JsonClass
 import edu.illinois.cs.cs125.jeed.core.antlr.JavaLexer
 import edu.illinois.cs.cs125.jeed.core.antlr.KotlinLexer
 import edu.illinois.cs.cs125.jeed.core.antlr.KotlinParser
@@ -10,6 +9,8 @@ import edu.illinois.cs.cs125.jeed.core.antlr.SnippetLexer
 import edu.illinois.cs.cs125.jeed.core.antlr.SnippetParser
 import edu.illinois.cs.cs125.jeed.core.antlr.SnippetParser.IdentifierContext
 import edu.illinois.cs.cs125.jeed.core.antlr.SnippetParserBaseVisitor
+import edu.illinois.cs.cs125.jeed.core.serializers.SnippetTransformationFailedSerializer
+import kotlinx.serialization.Serializable
 import org.antlr.v4.runtime.BaseErrorListener
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
@@ -21,7 +22,7 @@ import org.jetbrains.kotlin.backend.common.pop
 
 const val SNIPPET_SOURCE = ""
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class SnippetProperties(
     val importCount: Int,
     val looseCount: Int,
@@ -112,6 +113,7 @@ class SnippetTransformationError(
     constructor(location: SourceLocation, message: String) : this(location.line, location.column, message)
 }
 
+@Serializable(with = SnippetTransformationFailedSerializer::class)
 class SnippetTransformationFailed(errors: List<SnippetTransformationError>) : AlwaysLocatedJeedError(errors)
 
 class SnippetErrorListener(
@@ -163,7 +165,7 @@ class SnippetErrorListener(
     }
 }
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class SnippetArguments(
     val indent: Int = DEFAULT_SNIPPET_INDENT,
     var fileType: Source.FileType = Source.FileType.JAVA,

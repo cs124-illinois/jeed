@@ -1,6 +1,6 @@
 package edu.illinois.cs.cs125.jeed.core
 
-import com.squareup.moshi.JsonClass
+import kotlinx.serialization.Serializable
 import org.jacoco.core.analysis.Analyzer
 import org.jacoco.core.analysis.CoverageBuilder
 import org.jacoco.core.analysis.IClassCoverage
@@ -118,7 +118,7 @@ private fun ILine.toLineCoverage() = when (status) {
 typealias FileCoverage = Map<Int, LineCoverage>
 typealias ClassCoverage = Map<Int, LineCoverage>
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class CoverageResult(
     val byFile: Map<String, FileCoverage>,
     val byClass: Map<String, ClassCoverage>,

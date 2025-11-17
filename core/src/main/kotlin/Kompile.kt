@@ -3,9 +3,10 @@
 package edu.illinois.cs.cs125.jeed.core
 
 import com.google.common.base.Objects
-import com.squareup.moshi.JsonClass
 import edu.illinois.cs.cs125.jeed.core.antlr.KotlinParser
 import io.github.classgraph.ClassGraph
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 import org.jetbrains.kotlin.cli.common.CLIConfigurationKeys
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.parseCommandLineArguments
@@ -48,7 +49,7 @@ private val classpath = ClassGraph().classpathFiles.joinToString(separator = Fil
 
 private const val KOTLIN_EMPTY_LOCATION = "/"
 
-@JsonClass(generateAdapter = true)
+@Serializable
 @Suppress("MatchingDeclarationName")
 data class KompilationArguments(
     @Transient var parentClassLoader: ClassLoader? = null,
@@ -74,6 +75,7 @@ data class KompilationArguments(
         "-XXLanguage:+RangeUntilOperator",
     )
 
+    @Transient
     val arguments: K2JVMCompilerArguments = K2JVMCompilerArguments()
 
     init {

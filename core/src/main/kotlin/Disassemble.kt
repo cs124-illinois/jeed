@@ -1,6 +1,6 @@
 package edu.illinois.cs.cs125.jeed.core
 
-import com.squareup.moshi.JsonClass
+import kotlinx.serialization.Serializable
 import org.objectweb.asm.ClassReader
 import org.objectweb.asm.util.TraceClassVisitor
 import java.io.ByteArrayOutputStream
@@ -27,12 +27,12 @@ fun CompiledSource.disassemble(): DisassembleResults {
     }
 }
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class DisassembleResults(val disassemblies: Map<String, String>)
 
 class DisassembleFailed(override val cause: Exception) : Exception(cause)
 
-@JsonClass(generateAdapter = true)
+@Serializable
 class DisassembleFailedResult(val message: String) {
     constructor(cause: Exception) : this(cause.message ?: cause.javaClass.name)
 }

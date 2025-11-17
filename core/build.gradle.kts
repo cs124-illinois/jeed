@@ -9,6 +9,7 @@ import org.jmailen.gradle.kotlinter.tasks.LintTask
 
 plugins {
     kotlin("jvm")
+    kotlin("plugin.serialization")
     antlr
     java
     `maven-publish`
@@ -27,19 +28,18 @@ configurations.all {
     }
 }
 dependencies {
-    ksp("com.squareup.moshi:moshi-kotlin-codegen:1.15.2")
-
     antlr("org.antlr:antlr4:4.13.2")
 
     implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:2.2.21")
+    implementation("org.jetbrains.kotlin:kotlin-reflect:2.2.21")
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.0")
     implementation("com.puppycrawl.tools:checkstyle:12.1.2")
     implementation("org.codehaus.plexus:plexus-container-default:2.1.1")
     implementation("com.pinterest.ktlint:ktlint-rule-engine:1.7.1")
     implementation("com.pinterest.ktlint:ktlint-ruleset-standard:1.7.1")
     implementation("com.github.jknack:handlebars:4.5.0")
-    implementation("com.squareup.moshi:moshi-kotlin:1.15.2")
     implementation("org.ow2.asm:asm:9.9")
     implementation("org.ow2.asm:asm-tree:9.9")
     implementation("org.ow2.asm:asm-util:9.9")

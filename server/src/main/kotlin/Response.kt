@@ -1,12 +1,15 @@
 package edu.illinois.cs.cs125.jeed.server
 
-import com.squareup.moshi.JsonAdapter
 import edu.illinois.cs.cs125.jeed.core.Interval
+import edu.illinois.cs.cs125.jeed.core.serializers.JeedJson
 import edu.illinois.cs.cs125.jeed.core.server.CompletedTasks
 import edu.illinois.cs.cs125.jeed.core.server.FailedTasks
 import edu.illinois.cs.cs125.jeed.core.server.Task
+import kotlinx.serialization.Contextual
+import kotlinx.serialization.Serializable
 
-class Response(val request: Request) {
+@Serializable
+class Response(@Contextual val request: Request) {
     val email = request.email
     val audience = request.audience
 
@@ -18,17 +21,17 @@ class Response(val request: Request) {
     val failedTasks: MutableSet<Task> = mutableSetOf()
     val failed: FailedTasks = FailedTasks()
 
+    @Contextual
     lateinit var interval: Interval
 
     @Suppress("unused")
     val json: String
-        get() = RESPONSE_ADAPTER.toJson(this)
+        get() = JeedJson.encodeToString(this)
 
     companion object {
-        val RESPONSE_ADAPTER: JsonAdapter<Response> = moshi.adapter(Response::class.java)
         fun from(response: String?): Response {
             check(response != null) { "can't deserialize null string" }
-            return RESPONSE_ADAPTER.fromJson(response) ?: error("failed to deserialize result")
+            return JeedJson.decodeFromString<Response>(response)
         }
     }
 }

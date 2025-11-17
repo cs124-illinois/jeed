@@ -1,6 +1,7 @@
 package edu.illinois.cs.cs125.jeed.core
 
-import com.squareup.moshi.JsonClass
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 import java.io.ByteArrayInputStream
 import java.io.FilePermission
 import java.io.InputStream
@@ -12,7 +13,6 @@ import java.net.SocketPermission
 import java.security.Permission
 import java.util.PropertyPermission
 
-@JsonClass(generateAdapter = true)
 @Suppress("LongParameterList")
 class SourceExecutionArguments(
     var klass: String? = null,

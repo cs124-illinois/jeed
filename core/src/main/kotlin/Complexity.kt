@@ -1,6 +1,7 @@
 package edu.illinois.cs.cs125.jeed.core
 
-import com.squareup.moshi.JsonClass
+import edu.illinois.cs.cs125.jeed.core.serializers.ComplexityFailedSerializer
+import kotlinx.serialization.Serializable
 
 sealed class ComplexityValue(
     name: String,
@@ -20,7 +21,6 @@ sealed class ComplexityValue(
 }
 
 @Suppress("LongParameterList")
-@JsonClass(generateAdapter = true)
 class ClassComplexity(
     name: String,
     range: SourceRange,
@@ -29,7 +29,6 @@ class ClassComplexity(
     complexity: Int = 0,
 ) : ComplexityValue(name, range, classes, methods, complexity)
 
-@JsonClass(generateAdapter = true)
 class MethodComplexity(
     name: String,
     range: SourceRange,
@@ -38,6 +37,7 @@ class MethodComplexity(
     complexity: Int = 1,
 ) : ComplexityValue(name, range, classes, methods, complexity)
 
+@Serializable(with = ComplexityFailedSerializer::class)
 class ComplexityFailed(errors: List<SourceError>) : JeedError(errors) {
     override fun toString(): String = "errors were encountered while computing complexity: ${errors.joinToString(separator = ",")}"
 }

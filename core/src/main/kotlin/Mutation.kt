@@ -2,7 +2,7 @@
 
 package edu.illinois.cs.cs125.jeed.core
 
-import com.squareup.moshi.JsonClass
+import kotlinx.serialization.Serializable
 import org.apache.commons.text.StringEscapeUtils
 import java.util.Objects
 import kotlin.math.abs
@@ -15,7 +15,7 @@ sealed class Mutation(
     val original: String,
     val fileType: Source.FileType,
 ) {
-    @JsonClass(generateAdapter = true)
+    @Serializable
     data class Location(
         val start: Int,
         val end: Int,
@@ -174,7 +174,7 @@ sealed class Mutation(
     }
 }
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class AppliedMutation(
     val mutationType: Mutation.Type,
     var location: Mutation.Location,

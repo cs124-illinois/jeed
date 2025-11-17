@@ -1,6 +1,6 @@
 package edu.illinois.cs.cs125.jeed.core
 
-import com.squareup.moshi.JsonClass
+import kotlinx.serialization.Serializable
 import org.objectweb.asm.ClassReader
 import org.objectweb.asm.ClassVisitor
 import org.objectweb.asm.ClassWriter
@@ -400,7 +400,7 @@ object LineTrace : SandboxPluginWithDefaultArguments<LineTraceArguments, LineTra
     }
 }
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class LineTraceArguments(
     val recordedLineLimit: Long = DEFAULT_RECORDED_LINE_LIMIT,
     val runLineLimit: Long? = null,
@@ -419,13 +419,13 @@ data class LineTraceArguments(
     }
 }
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class LineTraceResult(
     val arguments: LineTraceArguments,
     val steps: List<LineStep>,
     val linesRun: Long,
 ) {
-    @JsonClass(generateAdapter = true)
+    @Serializable
     data class LineStep(val source: String, val line: Int, val threadIndex: Int)
 
     fun remap(source: Source): LineTraceResult {

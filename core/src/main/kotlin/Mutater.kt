@@ -4,7 +4,9 @@ package edu.illinois.cs.cs125.jeed.core
 
 import com.github.difflib.DiffUtils
 import com.github.difflib.patch.DeltaType
-import com.squareup.moshi.JsonClass
+import edu.illinois.cs.cs125.jeed.core.serializers.MutationsFailedSerializer
+import kotlinx.serialization.Contextual
+import kotlinx.serialization.Serializable
 import org.antlr.v4.runtime.misc.Interval
 import kotlin.random.Random
 
@@ -14,13 +16,13 @@ fun MutableList<Mutation.Location.SourcePath>.klass(): String = findLast { it.ty
 
 fun MutableList<Mutation.Location.SourcePath>.method(): String = findLast { it.type == Mutation.Location.SourcePath.Type.METHOD }?.name ?: error("No current method in path")
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class SourceMutation(
     val name: String,
-    val mutation: Mutation,
+    @Contextual val mutation: Mutation,
 )
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class AppliedSourceMutation(
     val name: String,
     val mutation: AppliedMutation,
@@ -466,16 +468,17 @@ fun Source.allFixedMutations(
     return mutatedSources
 }
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class MutationsArguments(val limit: Int = 4, val suppressWithComments: Boolean = true)
 
+@Serializable(with = MutationsFailedSerializer::class)
 class MutationsFailed(errors: List<SourceError>) : JeedError(errors) {
     override fun toString(): String = "errors were encountered while mutating sources: ${errors.joinToString(separator = ",")}"
 }
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class MutationsResults(val source: Map<String, String>, val mutatedSources: List<MutatedSource>) {
-    @JsonClass(generateAdapter = true)
+    @Serializable
     data class MutatedSource(
         val mutatedSource: String,
         val mutatedSources: Map<String, String>,

@@ -2,6 +2,8 @@ package edu.illinois.cs.cs125.jeed.core
 
 import com.github.jknack.handlebars.Handlebars
 import com.github.jknack.handlebars.HandlebarsException
+import edu.illinois.cs.cs125.jeed.core.serializers.TemplatingFailedSerializer
+import kotlinx.serialization.Serializable
 
 class TemplatedSource(
     sources: Sources,
@@ -50,6 +52,7 @@ class TemplatingError(
     message: String,
 ) : AlwaysLocatedSourceError(SourceLocation(name, line, column), message)
 
+@Serializable(with = TemplatingFailedSerializer::class)
 class TemplatingFailed(errors: List<TemplatingError>) : AlwaysLocatedJeedError(errors)
 
 @Throws(TemplatingFailed::class)

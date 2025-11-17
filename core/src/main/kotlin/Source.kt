@@ -1,6 +1,8 @@
 package edu.illinois.cs.cs125.jeed.core
 
-import com.squareup.moshi.JsonClass
+import kotlinx.serialization.Contextual
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 import mu.KotlinLogging
 import org.antlr.v4.runtime.CharStream
 import org.antlr.v4.runtime.Parser
@@ -184,7 +186,7 @@ open class Source(
     }
 }
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class SourceLocation(
     val source: String,
     val line: Int,
@@ -197,20 +199,19 @@ data class SourceLocation(
     }
 }
 
-@JsonClass(generateAdapter = true)
 @Suppress("unused")
+@Serializable
 data class Location(val line: Int, val column: Int) {
     fun asSourceLocation(source: String) = SourceLocation(source, line, column)
 }
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class SourceRange(
     val source: String?,
     val start: Location,
     val end: Location,
 )
 
-@JsonClass(generateAdapter = true)
 open class LocatedClassOrMethod(
     val name: String,
     @Suppress("unused") val range: SourceRange?,
@@ -218,15 +219,14 @@ open class LocatedClassOrMethod(
     val methods: MutableMap<String, LocatedClassOrMethod> = mutableMapOf(),
 )
 
-@JsonClass(generateAdapter = true)
+@Serializable
 open class SourceError(
-    open val location: SourceLocation?,
+    @Contextual open val location: SourceLocation?,
     val message: String,
 ) {
     override fun toString(): String = if (location == null) message else "$location: $message"
 }
 
-@JsonClass(generateAdapter = true)
 open class AlwaysLocatedSourceError(
     final override val location: SourceLocation,
     message: String,
@@ -238,8 +238,8 @@ abstract class JeedError(open val errors: List<SourceError>) : Exception() {
 
 abstract class AlwaysLocatedJeedError(final override val errors: List<AlwaysLocatedSourceError>) : JeedError(errors)
 
-@JsonClass(generateAdapter = true)
-data class Interval(val start: Instant, val end: Instant, val length: Long = end.toEpochMilli() - start.toEpochMilli())
+@Serializable
+data class Interval(@Contextual val start: Instant, @Contextual val end: Instant, val length: Long = end.toEpochMilli() - start.toEpochMilli())
 
 fun Throwable.getStackTraceAsString(): String {
     val stringWriter = StringWriter()

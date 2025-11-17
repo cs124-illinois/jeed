@@ -2,47 +2,48 @@
 
 package edu.illinois.cs.cs125.jeed.server
 
-import com.squareup.moshi.JsonAdapter
-import com.squareup.moshi.JsonClass
 import edu.illinois.cs.cs125.jeed.core.JeedCacheStats
 import edu.illinois.cs.cs125.jeed.core.VERSION
 import edu.illinois.cs.cs125.jeed.core.compilationCache
 import edu.illinois.cs.cs125.jeed.core.compilationCacheSizeMB
 import edu.illinois.cs.cs125.jeed.core.diskCacheSizeMB
+import edu.illinois.cs.cs125.jeed.core.serializers.JeedJson
 import edu.illinois.cs.cs125.jeed.core.server.Task
 import edu.illinois.cs.cs125.jeed.core.useCompilationCache
 import edu.illinois.cs.cs125.jeed.core.useDiskCache
+import kotlinx.serialization.Contextual
+import kotlinx.serialization.Serializable
 import java.net.InetAddress
 import java.time.Instant
 import edu.illinois.cs.cs125.jeed.core.systemCompilerName as COMPILER_NAME
 import edu.illinois.cs.cs125.jeed.core.systemKompilerVersion as KOMPILER_VERSION
 
-@JsonClass(generateAdapter = true)
+@Serializable
 @Suppress("MemberVisibilityCanBePrivate", "LongParameterList", "unused")
 class Status(
     val tasks: Set<Task> = Task.entries.toSet(),
-    val started: Instant = Instant.now(),
+    @Contextual val started: Instant = Instant.now(),
     val hostname: String = InetAddress.getLocalHost().hostName,
-    var lastRequest: Instant? = null,
+    @Contextual var lastRequest: Instant? = null,
     val versions: Versions = Versions(VERSION, COMPILER_NAME, KOMPILER_VERSION),
     val counts: Counts = Counts(),
     val cache: Cache = Cache(),
     val resources: Resources = Resources(),
 ) {
-    @JsonClass(generateAdapter = true)
+    @Serializable
     data class Versions(val jeed: String, val compiler: String, val kompiler: String)
 
-    @JsonClass(generateAdapter = true)
+    @Serializable
     data class Counts(var submitted: Int = 0, var completed: Int = 0, var saved: Int = 0)
 
-    @JsonClass(generateAdapter = true)
+    @Serializable
     data class Resources(
         val processors: Int = Runtime.getRuntime().availableProcessors(),
         val totalMemory: Long = Runtime.getRuntime().totalMemory() / 1024 / 1024,
         var freeMemory: Long = Runtime.getRuntime().freeMemory() / 1024 / 1024,
     )
 
-    @JsonClass(generateAdapter = true)
+    @Serializable
     data class Cache(
         val inUse: Boolean = useCompilationCache,
         val sizeInMB: Long = compilationCacheSizeMB,
@@ -73,13 +74,12 @@ class Status(
         return this
     }
 
-    fun toJson(): String = statusAdapter.indent("  ").toJson(this)
+    fun toJson(): String = JeedJson.encodeToString(this)
 
     companion object {
-        private val statusAdapter: JsonAdapter<Status> = moshi.adapter(Status::class.java)
         fun from(response: String?): Status {
             check(response != null) { "can't deserialize null string" }
-            return statusAdapter.fromJson(response) ?: error("failed to deserialize status")
+            return JeedJson.decodeFromString<Status>(response)
         }
     }
 }

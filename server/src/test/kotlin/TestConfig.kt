@@ -1,7 +1,8 @@
 package edu.illinois.cs.cs125.jeed.server
 
 import edu.illinois.cs.cs125.jeed.core.Sandbox
-import edu.illinois.cs.cs125.jeed.core.moshi.PermissionJson
+import edu.illinois.cs.cs125.jeed.core.serializers.JeedJson
+import edu.illinois.cs.cs125.jeed.core.serializers.PermissionJson
 import io.github.nhubbard.konf.Config
 import io.github.nhubbard.konf.source.yaml.yaml
 import io.kotest.core.spec.style.StringSpec
@@ -13,6 +14,7 @@ import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.testing.testApplication
+import kotlinx.serialization.json.Json
 
 class TestConfig :
     StringSpec({

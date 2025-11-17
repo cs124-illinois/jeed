@@ -1,6 +1,7 @@
 package edu.illinois.cs.cs125.jeed.core
 
-import com.squareup.moshi.JsonClass
+import kotlinx.serialization.Contextual
+import kotlinx.serialization.Serializable
 import org.objectweb.asm.ClassReader
 import org.objectweb.asm.ClassVisitor
 import org.objectweb.asm.ClassWriter
@@ -702,7 +703,7 @@ object ExecutionTrace : SandboxPluginWithDefaultArguments<ExecutionTraceArgument
     )
 }
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class ExecutionTraceArguments(
     val recordedStepLimit: Int = DEFAULT_RECORDED_STEP_LIMIT,
 ) {
@@ -782,12 +783,12 @@ private class ExecutionTraceWorkingData(
     }
 }
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class ExecutionTraceResults(
     val arguments: ExecutionTraceArguments,
-    val steps: List<ExecutionStep>,
+    val steps: List<@Contextual ExecutionStep>,
 ) {
-    @JsonClass(generateAdapter = true)
+    @Serializable
     data class MethodInfo(val className: String, val method: String, val argumentTypes: List<String>)
 
     @Suppress("ktlint:standard:no-multi-spaces")
@@ -804,13 +805,13 @@ data class ExecutionTraceResults(
         LONG,
     }
 
-    @JsonClass(generateAdapter = true)
-    data class Value(val type: ValueType, val value: Any?)
+    @Serializable
+    data class Value(val type: ValueType, @Contextual val value: Any?)
 
-    @JsonClass(generateAdapter = true)
+    @Serializable
     data class PassedArgument(val argumentName: String, val value: Value)
 
-    @JsonClass(generateAdapter = true)
+    @Serializable
     data class ObjectState(
         val type: String,
         val stringRepresentation: String?,

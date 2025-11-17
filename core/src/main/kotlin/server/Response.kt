@@ -1,6 +1,5 @@
 package edu.illinois.cs.cs125.jeed.core.server
 
-import com.squareup.moshi.JsonClass
 import edu.illinois.cs.cs125.jeed.core.ALL_FEATURES
 import edu.illinois.cs.cs125.jeed.core.CheckstyleFailed
 import edu.illinois.cs.cs125.jeed.core.CheckstyleResults
@@ -28,16 +27,14 @@ import edu.illinois.cs.cs125.jeed.core.SnippetTransformationFailed
 import edu.illinois.cs.cs125.jeed.core.SourceRange
 import edu.illinois.cs.cs125.jeed.core.TemplatingFailed
 import edu.illinois.cs.cs125.jeed.core.UnitFeatures
-import edu.illinois.cs.cs125.jeed.core.moshi.CompiledSourceResult
-import edu.illinois.cs.cs125.jeed.core.moshi.ExecutionFailedResult
-import edu.illinois.cs.cs125.jeed.core.moshi.SourceTaskResults
-import edu.illinois.cs.cs125.jeed.core.moshi.TemplatedSourceResult
+import kotlinx.serialization.Contextual
+import kotlinx.serialization.Serializable
 
-@JsonClass(generateAdapter = true)
+@Serializable
 @Suppress("LongParameterList")
 class CompletedTasks(
     var template: TemplatedSourceResult? = null,
-    var snippet: Snippet? = null,
+    @Contextual var snippet: Snippet? = null,
     var compilation: CompiledSourceResult? = null,
     var kompilation: CompiledSourceResult? = null,
     var checkstyle: CheckstyleResults? = null,
@@ -50,24 +47,24 @@ class CompletedTasks(
     var disassemble: DisassembleResults? = null,
 )
 
-@JsonClass(generateAdapter = true)
+@Serializable
 @Suppress("LongParameterList")
 class FailedTasks(
-    var template: TemplatingFailed? = null,
-    var snippet: SnippetTransformationFailed? = null,
-    var compilation: CompilationFailed? = null,
-    var kompilation: CompilationFailed? = null,
-    var checkstyle: CheckstyleFailed? = null,
-    var ktlint: KtLintFailed? = null,
-    var complexity: ComplexityFailed? = null,
+    @Contextual var template: TemplatingFailed? = null,
+    @Contextual var snippet: SnippetTransformationFailed? = null,
+    @Contextual var compilation: CompilationFailed? = null,
+    @Contextual var kompilation: CompilationFailed? = null,
+    @Contextual var checkstyle: CheckstyleFailed? = null,
+    @Contextual var ktlint: KtLintFailed? = null,
+    @Contextual var complexity: ComplexityFailed? = null,
     var execution: ExecutionFailedResult? = null,
     var cexecution: ExecutionFailedResult? = null,
-    var features: FeaturesFailed? = null,
-    var mutations: MutationsFailed? = null,
+    @Contextual var features: FeaturesFailed? = null,
+    @Contextual var mutations: MutationsFailed? = null,
     var disassemble: DisassembleFailedResult? = null,
 )
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class FlatSource(val path: String, val contents: String)
 
 fun List<FlatSource>.toSource(): Map<String, String> {
@@ -77,8 +74,8 @@ fun List<FlatSource>.toSource(): Map<String, String> {
 
 fun Map<String, String>.toFlatSources(): List<FlatSource> = this.map { FlatSource(it.key, it.value) }
 
-@JsonClass(generateAdapter = true)
-data class FlatClassComplexity(val name: String, val path: String, val range: SourceRange, val complexity: Int) {
+@Serializable
+data class FlatClassComplexity(val name: String, val path: String, @Contextual val range: SourceRange, val complexity: Int) {
     constructor(classComplexity: ClassComplexity, prefix: String) : this(
         classComplexity.name,
         "$prefix.${classComplexity.name}",
@@ -87,8 +84,8 @@ data class FlatClassComplexity(val name: String, val path: String, val range: So
     )
 }
 
-@JsonClass(generateAdapter = true)
-data class FlatMethodComplexity(val name: String, val path: String, val range: SourceRange, val complexity: Int) {
+@Serializable
+data class FlatMethodComplexity(val name: String, val path: String, @Contextual val range: SourceRange, val complexity: Int) {
     constructor(methodComplexity: MethodComplexity, prefix: String) : this(
         methodComplexity.name,
         "$prefix.${methodComplexity.name}",
@@ -97,7 +94,7 @@ data class FlatMethodComplexity(val name: String, val path: String, val range: S
     )
 }
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class FlatComplexityResult(
     val source: String,
     val classes: List<FlatClassComplexity>,
@@ -133,7 +130,7 @@ data class FlatComplexityResult(
     }
 }
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class FlatComplexityResults(val results: List<FlatComplexityResult>) {
     constructor(complexityResults: ComplexityResults) : this(
         complexityResults.results.map { (source, results) ->
@@ -142,8 +139,8 @@ data class FlatComplexityResults(val results: List<FlatComplexityResult>) {
     )
 }
 
-@JsonClass(generateAdapter = true)
-data class FlatUnitFeatures(val name: String, val path: String, val range: SourceRange, val features: Features) {
+@Serializable
+data class FlatUnitFeatures(val name: String, val path: String, @Contextual val range: SourceRange, val features: Features) {
     constructor(unitFeatures: UnitFeatures, filename: String) : this(
         unitFeatures.name,
         filename,
@@ -152,8 +149,8 @@ data class FlatUnitFeatures(val name: String, val path: String, val range: Sourc
     )
 }
 
-@JsonClass(generateAdapter = true)
-data class FlatClassFeatures(val name: String, val path: String, val range: SourceRange?, val features: Features) {
+@Serializable
+data class FlatClassFeatures(val name: String, val path: String, @Contextual val range: SourceRange?, val features: Features) {
     constructor(classFeatures: ClassFeatures, prefix: String) : this(
         classFeatures.name,
         "$prefix.${classFeatures.name}",
@@ -162,8 +159,8 @@ data class FlatClassFeatures(val name: String, val path: String, val range: Sour
     )
 }
 
-@JsonClass(generateAdapter = true)
-data class FlatMethodFeatures(val name: String, val path: String, val range: SourceRange?, val features: Features) {
+@Serializable
+data class FlatMethodFeatures(val name: String, val path: String, @Contextual val range: SourceRange?, val features: Features) {
     constructor(methodFeatures: MethodFeatures, prefix: String) : this(
         methodFeatures.name,
         "$prefix.${methodFeatures.name}",
@@ -172,7 +169,7 @@ data class FlatMethodFeatures(val name: String, val path: String, val range: Sou
     )
 }
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class FlatFeaturesResult(
     val source: String,
     val unit: FlatUnitFeatures,
@@ -214,7 +211,7 @@ data class FlatFeaturesResult(
     }
 }
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class FlatFeaturesResults(
     val results: List<FlatFeaturesResult>,
     val allFeatures: Map<String, String> = ALL_FEATURES,

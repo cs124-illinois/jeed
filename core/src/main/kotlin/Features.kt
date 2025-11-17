@@ -1,6 +1,8 @@
 package edu.illinois.cs.cs125.jeed.core
 
-import com.squareup.moshi.JsonClass
+import edu.illinois.cs.cs125.jeed.core.serializers.FeaturesFailedSerializer
+import kotlinx.serialization.Contextual
+import kotlinx.serialization.Serializable
 
 enum class FeatureName(val description: String) {
     EMPTY("empty placeholder feature"),
@@ -353,7 +355,7 @@ class FeatureMap(val map: MutableMap<FeatureName, Int> = mutableMapOf()) : Mutab
     }
 }
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class LocatedFeature(val feature: FeatureName, val location: Location)
 
 fun List<LocatedFeature>.toLineMap(): Map<Int, List<LocatedFeature>> {
@@ -365,9 +367,9 @@ fun List<LocatedFeature>.toLineMap(): Map<Int, List<LocatedFeature>> {
     return map
 }
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class Features(
-    val featureMap: FeatureMap = FeatureMap(),
+    @Contextual val featureMap: FeatureMap = FeatureMap(),
     val featureList: MutableList<LocatedFeature> = mutableListOf(),
     val importList: MutableSet<String> = mutableSetOf(),
     val typeList: MutableSet<String> = mutableSetOf(),
@@ -421,7 +423,6 @@ sealed class FeatureValue(
     }
 }
 
-@JsonClass(generateAdapter = true)
 class ClassFeatures(
     name: String,
     range: SourceRange?,
@@ -430,7 +431,6 @@ class ClassFeatures(
     features: Features = Features(),
 ) : FeatureValue(name, range, methods, classes, features)
 
-@JsonClass(generateAdapter = true)
 class MethodFeatures(
     name: String,
     range: SourceRange?,
@@ -439,7 +439,6 @@ class MethodFeatures(
     features: Features = Features(),
 ) : FeatureValue(name, range, methods, classes, features)
 
-@JsonClass(generateAdapter = true)
 class UnitFeatures(
     name: String,
     range: SourceRange,
@@ -448,6 +447,7 @@ class UnitFeatures(
     features: Features = Features(),
 ) : FeatureValue(name, range, methods, classes, features)
 
+@Serializable(with = FeaturesFailedSerializer::class)
 class FeaturesFailed(errors: List<SourceError>) : JeedError(errors) {
     override fun toString(): String = "errors were encountered while performing feature analysis: ${errors.joinToString(separator = ",")}"
 }

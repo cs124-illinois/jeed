@@ -2,9 +2,10 @@
 
 package edu.illinois.cs.cs125.jeed.core
 
-import com.squareup.moshi.JsonClass
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
+import kotlinx.serialization.Contextual
+import kotlinx.serialization.Serializable
 import java.io.BufferedReader
 import java.io.File
 import java.io.InputStream
@@ -23,7 +24,7 @@ private val MAX_CONCURRENT_CONTAINERS = try {
 }
 private val containerSemaphore = Semaphore(MAX_CONCURRENT_CONTAINERS)
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class ContainerExecutionArguments(
     var klass: String? = null,
     var method: String? = null,
@@ -41,15 +42,15 @@ data class ContainerExecutionArguments(
     }
 }
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class ContainerExecutionResults(
     val klass: String,
     val method: String,
     val exitCode: Int?,
     val timeout: Boolean,
     val outputLines: List<Sandbox.TaskResults.OutputLine>,
-    val interval: Interval,
-    val executionInterval: Interval,
+    @Contextual val interval: Interval,
+    @Contextual val executionInterval: Interval,
     val truncatedLines: Int,
 ) {
     val completed: Boolean

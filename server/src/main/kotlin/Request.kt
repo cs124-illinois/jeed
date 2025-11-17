@@ -32,38 +32,41 @@ import edu.illinois.cs.cs125.jeed.core.fromSnippet
 import edu.illinois.cs.cs125.jeed.core.fromTemplates
 import edu.illinois.cs.cs125.jeed.core.kompile
 import edu.illinois.cs.cs125.jeed.core.ktLint
-import edu.illinois.cs.cs125.jeed.core.moshi.CompiledSourceResult
-import edu.illinois.cs.cs125.jeed.core.moshi.ExecutionFailedResult
-import edu.illinois.cs.cs125.jeed.core.moshi.PermissionAdapter
-import edu.illinois.cs.cs125.jeed.core.moshi.SourceTaskResults
-import edu.illinois.cs.cs125.jeed.core.moshi.TemplatedSourceResult
 import edu.illinois.cs.cs125.jeed.core.mutations
+import edu.illinois.cs.cs125.jeed.core.serializers.PermissionJson
+import edu.illinois.cs.cs125.jeed.core.server.CompiledSourceResult
+import edu.illinois.cs.cs125.jeed.core.server.ExecutionFailedResult
 import edu.illinois.cs.cs125.jeed.core.server.FlatComplexityResults
 import edu.illinois.cs.cs125.jeed.core.server.FlatFeaturesResults
+import edu.illinois.cs.cs125.jeed.core.server.SourceTaskResults
 import edu.illinois.cs.cs125.jeed.core.server.Task
 import edu.illinois.cs.cs125.jeed.core.server.TaskArguments
+import edu.illinois.cs.cs125.jeed.core.server.TemplatedSourceResult
+import edu.illinois.cs.cs125.jeed.server.serializers.RequestSerializer
+import kotlinx.serialization.Serializable
+import java.security.Permission
 import java.time.Instant
 
+@Serializable(with = RequestSerializer::class)
 @Suppress("LongParameterList")
 class Request(
-    passedSource: Map<String, String>?,
-    val templates: Map<String, String>?,
-    passedSnippet: String?,
+    passedSource: Map<String, String>? = null,
+    val templates: Map<String, String>? = null,
+    passedSnippet: String? = null,
     passedTasks: Set<Task>,
-    arguments: TaskArguments?,
+    passedArguments: TaskArguments? = null,
     val label: String,
     val checkForSnippet: Boolean = false,
 ) {
-    val tasks: Set<Task>
-    val arguments = arguments ?: TaskArguments()
-
+    var tasks: Set<Task>
+    var arguments: TaskArguments
     var email: String? = null
     var audience: List<String>? = null
-
-    val source: Map<String, String>?
-    val snippet: String?
+    var source: Map<String, String>? = null
+    var snippet: String? = null
 
     init {
+        arguments = passedArguments ?: TaskArguments()
         var potentialSource = passedSource
         var potentialSnippet = passedSnippet
 
@@ -138,8 +141,16 @@ class Request(
             }
         }
         val defaultPermissions =
-            configuration[Limits.Execution.permissions].map { PermissionAdapter().permissionFromJson(it) }
-                .toSet()
+            configuration[Limits.Execution.permissions].map { permissionJson ->
+                val permissionClass = Class.forName(permissionJson.klass)
+                if (permissionJson.actions != null) {
+                    val constructor = permissionClass.getConstructor(String::class.java, String::class.java)
+                    constructor.newInstance(permissionJson.name, permissionJson.actions) as Permission
+                } else {
+                    val constructor = permissionClass.getConstructor(String::class.java)
+                    constructor.newInstance(permissionJson.name) as Permission
+                }
+            }.toSet()
         if (Task.execute in tasks) {
             arguments.execution.setDefaults(
                 configuration[Limits.Execution.timeout],
@@ -181,8 +192,16 @@ class Request(
                     "(> ${configuration[Limits.Execution.maxOutputLines]}"
             }
             val allowedPermissions =
-                configuration[Limits.Execution.permissions].map { PermissionAdapter().permissionFromJson(it) }
-                    .toSet()
+                configuration[Limits.Execution.permissions].map { permissionJson ->
+                    val permissionClass = Class.forName(permissionJson.klass)
+                    if (permissionJson.actions != null) {
+                        val constructor = permissionClass.getConstructor(String::class.java, String::class.java)
+                        constructor.newInstance(permissionJson.name, permissionJson.actions) as Permission
+                    } else {
+                        val constructor = permissionClass.getConstructor(String::class.java)
+                        constructor.newInstance(permissionJson.name) as Permission
+                    }
+                }.toSet()
             require(allowedPermissions.containsAll(arguments.execution.permissions!!)) {
                 "job is requesting unavailable permissions: ${arguments.execution.permissions}"
             }
@@ -226,16 +245,16 @@ class Request(
         val response = Response(this)
         @Suppress("TooGenericExceptionCaught")
         try {
-            val actualSource = if (source != null) {
+            val actualSource = source?.let { sourceMap ->
                 if (templates == null) {
-                    Source(source)
+                    Source(sourceMap)
                 } else {
-                    Source.fromTemplates(source, templates).also {
+                    Source.fromTemplates(sourceMap, templates).also {
                         response.completedTasks.add(Task.template)
                         response.completed.template = TemplatedSourceResult(it)
                     }
                 }
-            } else {
+            } ?: run {
                 arguments.snippet.fileType = when {
                     tasks.contains(Task.kompile) -> {
                         Source.FileType.KOTLIN

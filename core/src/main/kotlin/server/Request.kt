@@ -1,6 +1,5 @@
 package edu.illinois.cs.cs125.jeed.core.server
 
-import com.squareup.moshi.JsonClass
 import edu.illinois.cs.cs125.jeed.core.CheckstyleArguments
 import edu.illinois.cs.cs125.jeed.core.CompilationArguments
 import edu.illinois.cs.cs125.jeed.core.ContainerExecutionArguments
@@ -10,6 +9,8 @@ import edu.illinois.cs.cs125.jeed.core.MutationsArguments
 import edu.illinois.cs.cs125.jeed.core.Sandbox
 import edu.illinois.cs.cs125.jeed.core.SnippetArguments
 import edu.illinois.cs.cs125.jeed.core.SourceExecutionArguments
+import kotlinx.serialization.Contextual
+import kotlinx.serialization.Serializable
 import java.security.Permission
 
 @Suppress("EnumEntryName", "EnumNaming")
@@ -28,7 +29,7 @@ enum class Task {
     disassemble,
 }
 
-@JsonClass(generateAdapter = true)
+@Serializable
 @Suppress("LongParameterList")
 class TaskArguments(
     val snippet: SnippetArguments = SnippetArguments(),
@@ -45,12 +46,12 @@ class TaskArguments(
     val plugins: PluginArguments = PluginArguments(),
 )
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class ServerSourceExecutionArguments(
     val klass: String? = null,
     val method: String? = null,
     var timeout: Long? = null,
-    var permissions: Set<Permission>? = null,
+    var permissions: Set<@Contextual Permission>? = null,
     var maxExtraThreads: Int? = null,
     var maxOutputLines: Int? = null,
     var maxIOBytes: Int? = null,
@@ -93,7 +94,7 @@ data class ServerSourceExecutionArguments(
     )
 }
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class ServerClassLoaderConfiguration(
     var whitelistedClasses: Set<String>? = null,
     var blacklistedClasses: Set<String>? = null,
@@ -120,7 +121,7 @@ data class ServerClassLoaderConfiguration(
     )
 }
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class PluginArguments(
     var lineCountLimit: Long? = null,
     var memoryTotalLimit: Long? = null,

@@ -3,7 +3,7 @@ package edu.illinois.cs.cs125.jeed.server
 import edu.illinois.cs.cs125.jeed.core.ContainerExecutionArguments
 import edu.illinois.cs.cs125.jeed.core.Sandbox
 import edu.illinois.cs.cs125.jeed.core.SourceExecutionArguments
-import edu.illinois.cs.cs125.jeed.core.moshi.PermissionAdapter
+import edu.illinois.cs.cs125.jeed.core.serializers.PermissionJson
 import edu.illinois.cs.cs125.jeed.core.server.PluginArguments
 import io.github.nhubbard.konf.Config
 import io.github.nhubbard.konf.ConfigSpec
@@ -20,8 +20,12 @@ object Limits : ConfigSpec() {
     object Execution : ConfigSpec() {
         val timeout by optional(Sandbox.ExecutionArguments.DEFAULT_TIMEOUT)
         val permissions by optional(
-            SourceExecutionArguments.REQUIRED_PERMISSIONS.toList().map {
-                PermissionAdapter().permissionToJson(it)
+            SourceExecutionArguments.REQUIRED_PERMISSIONS.toList().map { permission ->
+                PermissionJson(
+                    klass = permission.javaClass.name,
+                    name = permission.name ?: "",
+                    actions = permission.actions,
+                )
             },
         )
         val maxExtraThreads by optional(Sandbox.ExecutionArguments.DEFAULT_MAX_EXTRA_THREADS)

@@ -8,9 +8,12 @@ import com.puppycrawl.tools.checkstyle.PropertiesExpander
 import com.puppycrawl.tools.checkstyle.api.FileSetCheck
 import com.puppycrawl.tools.checkstyle.api.FileText
 import com.puppycrawl.tools.checkstyle.api.SeverityLevel
-import com.squareup.moshi.JsonClass
+import edu.illinois.cs.cs125.jeed.core.serializers.CheckstyleFailedSerializer
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
+import kotlinx.serialization.Contextual
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 import org.jetbrains.kotlin.util.removeSuffixIfPresent
 import org.w3c.dom.Node
 import org.xml.sax.InputSource
@@ -21,7 +24,7 @@ import javax.xml.parsers.DocumentBuilderFactory
 import javax.xml.xpath.XPathConstants
 import javax.xml.xpath.XPathFactory
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class CheckstyleArguments(
     val sources: Set<String>? = null,
     val failOnError: Boolean = false,
@@ -31,7 +34,6 @@ data class CheckstyleArguments(
     val filterErrors: (error: CheckstyleError) -> Boolean = { _ -> true },
 )
 
-@JsonClass(generateAdapter = true)
 class CheckstyleError(
     val severity: String,
     val key: String?,
@@ -51,12 +53,13 @@ class CheckstyleError(
     override fun hashCode() = Objects.hashCode(severity, key, location, message)
 }
 
+@Serializable(with = CheckstyleFailedSerializer::class)
 class CheckstyleFailed(errors: List<CheckstyleError>) : AlwaysLocatedJeedError(errors) {
     override fun toString(): String = "checkstyle errors were encountered: ${errors.joinToString(separator = ",")}"
 }
 
-@JsonClass(generateAdapter = true)
-data class CheckstyleResults(val errors: List<CheckstyleError>)
+@Serializable
+data class CheckstyleResults(val errors: List<@Contextual CheckstyleError>)
 
 private const val INDENTATION_PATH =
     "/module[@name='Checker']/module[@name='TreeWalker']/module[@name='Indentation']"

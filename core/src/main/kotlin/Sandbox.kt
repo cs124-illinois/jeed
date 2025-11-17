@@ -4,8 +4,10 @@ package edu.illinois.cs.cs125.jeed.core
 
 import com.github.benmanes.caffeine.cache.Cache
 import com.github.benmanes.caffeine.cache.Caffeine
-import com.squareup.moshi.JsonClass
 import kotlinx.coroutines.future.await
+import kotlinx.serialization.Contextual
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.decapitalizeAsciiOnly
 import org.objectweb.asm.ClassReader
 import org.objectweb.asm.ClassVisitor
@@ -105,7 +107,6 @@ object Sandbox {
         warmPlatform()
     }
 
-    @JsonClass(generateAdapter = true)
     class ClassLoaderConfiguration(
         val whitelistedClasses: Set<String> = DEFAULT_WHITELISTED_CLASSES,
         blacklistedClasses: Set<String> = DEFAULT_BLACKLISTED_CLASSES,
@@ -191,7 +192,6 @@ object Sandbox {
     }
 
     @Suppress("LongParameterList")
-    @JsonClass(generateAdapter = true)
     open class ExecutionArguments(
         // var because may be increased in the presence of coroutines
         var timeout: Long = DEFAULT_TIMEOUT,
@@ -245,7 +245,7 @@ object Sandbox {
         }
     }
 
-    @JsonClass(generateAdapter = true)
+    @Serializable
     data class MethodFilter(val ownerClassPrefix: String, val methodPrefix: String, val allowInReload: Boolean = false)
 
     @Suppress("LongParameterList", "unused")
@@ -276,26 +276,26 @@ object Sandbox {
         val nanoTime: Long,
         val executionNanoTime: Long,
     ) {
-        @JsonClass(generateAdapter = true)
+        @Serializable
         data class OutputLine(
             val console: Console,
             val line: String,
-            val timestamp: Instant,
+            @Contextual val timestamp: Instant,
             val thread: Long? = null,
         ) {
             enum class Console { STDOUT, STDERR }
         }
 
-        @JsonClass(generateAdapter = true)
+        @Serializable
         data class InputLine(
             val line: String,
-            val timestamp: Instant,
+            @Contextual val timestamp: Instant,
         )
 
         private data class RecordedPermissionRequest(val permission: Permission, val granted: Boolean)
 
-        @JsonClass(generateAdapter = true)
-        data class PermissionRequest(val permission: Permission, val granted: Boolean, var count: Int)
+        @Serializable
+        data class PermissionRequest(@Contextual val permission: Permission, val granted: Boolean, var count: Int)
 
         val completed: Boolean
             get() {

@@ -1,7 +1,9 @@
 package edu.illinois.cs.cs125.jeed.core
 
 import com.google.common.base.Objects
-import com.squareup.moshi.JsonClass
+import kotlinx.serialization.Contextual
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 import org.jetbrains.kotlin.codegen.GeneratedClassLoader
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
@@ -50,7 +52,7 @@ private val standardFileManagerSyncRoot = Object()
 private var lastMultireleaseOperand: String? = null
 
 @Suppress("PropertyName", "SpellCheckingInspection")
-@JsonClass(generateAdapter = true)
+@Serializable
 data class CompilationArguments(
     val wError: Boolean = DEFAULT_WERROR,
     @Suppress("ConstructorParameterNaming") val Xlint: String = DEFAULT_XLINT,
@@ -109,7 +111,6 @@ data class CompilationArguments(
     }
 }
 
-@JsonClass(generateAdapter = true)
 class CompilationError(location: SourceLocation?, message: String) : SourceError(location, message)
 
 class CompilationFailed(
@@ -119,14 +120,14 @@ class CompilationFailed(
     override fun toString(): String = "compilation errors were encountered: ${errors.joinToString(separator = ",")}"
 }
 
+@Serializable
 data class FailedCompilationData(
-    val started: Instant,
-    val interval: Interval,
+    @Contextual val started: Instant,
+    @Contextual val interval: Interval,
     val cached: Boolean = false,
     val compilerName: String = systemCompilerName,
 )
 
-@JsonClass(generateAdapter = true)
 class CompilationMessage(@Suppress("unused") val kind: String, location: SourceLocation?, message: String) : SourceError(location, message)
 
 @Suppress("LongParameterList")

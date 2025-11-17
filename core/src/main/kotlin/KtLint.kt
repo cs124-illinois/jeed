@@ -37,12 +37,14 @@ import com.pinterest.ktlint.ruleset.standard.rules.SpacingAroundParensRule
 import com.pinterest.ktlint.ruleset.standard.rules.SpacingAroundRangeOperatorRule
 import com.pinterest.ktlint.ruleset.standard.rules.StatementWrappingRule
 import com.pinterest.ktlint.ruleset.standard.rules.StringTemplateRule
-import com.squareup.moshi.JsonClass
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
+import kotlinx.serialization.Contextual
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 import java.util.Objects
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class KtLintArguments(
     val sources: Set<String>? = null,
     val failOnError: Boolean = false,
@@ -59,7 +61,6 @@ data class KtLintArguments(
 
 internal const val KTLINT_INDENTATION_RULE_NAME = "standard:indent"
 
-@JsonClass(generateAdapter = true)
 class KtLintError(
     val ruleId: String,
     @Suppress("MemberVisibilityCanBePrivate") val detail: String,
@@ -80,8 +81,8 @@ class KtLintFailed(errors: List<KtLintError>) : AlwaysLocatedJeedError(errors) {
     override fun toString(): String = "ktlint errors were encountered: ${errors.joinToString(separator = ",")}"
 }
 
-@JsonClass(generateAdapter = true)
-data class KtLintResults(val errors: List<KtLintError>)
+@Serializable
+data class KtLintResults(val errors: List<@Contextual KtLintError>)
 
 val jeedRuleProviders = setOf(
     RuleProvider { ChainWrappingRule() },

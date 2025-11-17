@@ -4,15 +4,14 @@ package edu.illinois.cs.cs125.jeed.server
 
 import com.beyondgrader.resourceagent.Agent
 import com.beyondgrader.resourceagent.StaticFailureDetection
-import com.ryanharter.ktor.moshi.moshi
-import com.squareup.moshi.Moshi
 import edu.illinois.cs.cs125.jeed.core.VERSION
 import edu.illinois.cs.cs125.jeed.core.checkDockerEnabled
 import edu.illinois.cs.cs125.jeed.core.getStackTraceAsString
+import edu.illinois.cs.cs125.jeed.core.serializers.JeedJson
 import edu.illinois.cs.cs125.jeed.core.warm
-import edu.illinois.cs.cs125.jeed.server.moshi.Adapters
 import io.github.nhubbard.konf.source.json.toJson
 import io.ktor.http.HttpStatusCode
+import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
 import io.ktor.server.application.call
 import io.ktor.server.application.install
@@ -32,15 +31,9 @@ import kotlinx.coroutines.withContext
 import mu.KotlinLogging
 import java.time.Instant
 import kotlin.system.exitProcess
-import edu.illinois.cs.cs125.jeed.core.moshi.Adapters as JeedAdapters
 
 @Suppress("UNUSED")
 val logger = KotlinLogging.logger {}
-val moshi: Moshi = Moshi.Builder().let { builder ->
-    Adapters.forEach { builder.add(it) }
-    JeedAdapters.forEach { builder.add(it) }
-    builder.build()
-}
 
 val currentStatus = Status()
 
@@ -51,10 +44,7 @@ fun Application.jeed() {
         allowNonSimpleContentTypes = true
     }
     install(ContentNegotiation) {
-        moshi {
-            JeedAdapters.forEach { this.add(it) }
-            Adapters.forEach { this.add(it) }
-        }
+        json(JeedJson)
     }
     routing {
         get("/") {
