@@ -1,7 +1,7 @@
 package edu.illinois.cs.cs125.jeed.core
 
+import edu.illinois.cs.cs125.jeed.core.serializers.FeatureMapSerializer
 import edu.illinois.cs.cs125.jeed.core.serializers.FeaturesFailedSerializer
-import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
 
 enum class FeatureName(val description: String) {
@@ -342,6 +342,7 @@ val ORDERED_FEATURES = listOf(
     }
 }
 
+@Serializable(with = FeatureMapSerializer::class)
 class FeatureMap(val map: MutableMap<FeatureName, Int> = mutableMapOf()) : MutableMap<FeatureName, Int> by map {
     override fun get(key: FeatureName): Int = map.getOrDefault(key, 0)
     override fun put(key: FeatureName, value: Int): Int? {
@@ -369,7 +370,7 @@ fun List<LocatedFeature>.toLineMap(): Map<Int, List<LocatedFeature>> {
 
 @Serializable
 data class Features(
-    @Contextual val featureMap: FeatureMap = FeatureMap(),
+    val featureMap: FeatureMap = FeatureMap(),
     val featureList: MutableList<LocatedFeature> = mutableListOf(),
     val importList: MutableSet<String> = mutableSetOf(),
     val typeList: MutableSet<String> = mutableSetOf(),

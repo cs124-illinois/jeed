@@ -5,7 +5,6 @@ package edu.illinois.cs.cs125.jeed.core
 import com.github.difflib.DiffUtils
 import com.github.difflib.patch.DeltaType
 import edu.illinois.cs.cs125.jeed.core.serializers.MutationsFailedSerializer
-import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
 import org.antlr.v4.runtime.misc.Interval
 import kotlin.random.Random
@@ -16,10 +15,9 @@ fun MutableList<Mutation.Location.SourcePath>.klass(): String = findLast { it.ty
 
 fun MutableList<Mutation.Location.SourcePath>.method(): String = findLast { it.type == Mutation.Location.SourcePath.Type.METHOD }?.name ?: error("No current method in path")
 
-@Serializable
 data class SourceMutation(
     val name: String,
-    @Contextual val mutation: Mutation,
+    val mutation: Mutation,
 )
 
 @Serializable

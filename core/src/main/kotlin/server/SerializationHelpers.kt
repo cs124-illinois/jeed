@@ -34,9 +34,9 @@ data class ExecutionFailedResult(
 
 @Serializable
 data class CompiledSourceResult(
-    val messages: List<@Contextual CompilationMessage>,
+    val messages: List<CompilationMessage>,
     @Contextual val compiled: Instant,
-    @Contextual val interval: Interval,
+    val interval: Interval,
     val compilerName: String,
     val cached: Boolean,
 ) {
@@ -80,8 +80,8 @@ data class SourceTaskResults(
     val killReason: String?,
     val outputLines: List<Sandbox.TaskResults.OutputLine> = listOf(),
     val permissionRequests: List<Sandbox.TaskResults.PermissionRequest> = listOf(),
-    @Contextual val interval: Interval,
-    @Contextual val executionInterval: Interval,
+    val interval: Interval,
+    val executionInterval: Interval,
     val truncatedLines: Int,
 ) {
     constructor(

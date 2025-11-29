@@ -8,10 +8,10 @@ import com.puppycrawl.tools.checkstyle.PropertiesExpander
 import com.puppycrawl.tools.checkstyle.api.FileSetCheck
 import com.puppycrawl.tools.checkstyle.api.FileText
 import com.puppycrawl.tools.checkstyle.api.SeverityLevel
+import edu.illinois.cs.cs125.jeed.core.serializers.CheckstyleErrorSerializer
 import edu.illinois.cs.cs125.jeed.core.serializers.CheckstyleFailedSerializer
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
-import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import org.jetbrains.kotlin.util.removeSuffixIfPresent
@@ -34,6 +34,7 @@ data class CheckstyleArguments(
     val filterErrors: (error: CheckstyleError) -> Boolean = { _ -> true },
 )
 
+@Serializable(with = CheckstyleErrorSerializer::class)
 class CheckstyleError(
     val severity: String,
     val key: String?,
@@ -61,7 +62,7 @@ class CheckstyleFailed(errors: List<CheckstyleError>) : AlwaysLocatedJeedError(e
 }
 
 @Serializable
-data class CheckstyleResults(val errors: List<@Contextual CheckstyleError>)
+data class CheckstyleResults(val errors: List<CheckstyleError>)
 
 private const val INDENTATION_PATH =
     "/module[@name='Checker']/module[@name='TreeWalker']/module[@name='Indentation']"

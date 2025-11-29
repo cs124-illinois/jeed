@@ -5,11 +5,10 @@ import edu.illinois.cs.cs125.jeed.core.serializers.JeedJson
 import edu.illinois.cs.cs125.jeed.core.server.CompletedTasks
 import edu.illinois.cs.cs125.jeed.core.server.FailedTasks
 import edu.illinois.cs.cs125.jeed.core.server.Task
-import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
 
 @Serializable
-class Response(@Contextual val request: Request) {
+class Response(val request: Request) {
     val email = request.email
     val audience = request.audience
 
@@ -21,7 +20,6 @@ class Response(@Contextual val request: Request) {
     val failedTasks: MutableSet<Task> = mutableSetOf()
     val failed: FailedTasks = FailedTasks()
 
-    @Contextual
     lateinit var interval: Interval
 
     @Suppress("unused")

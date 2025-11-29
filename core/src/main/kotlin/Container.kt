@@ -4,7 +4,6 @@ package edu.illinois.cs.cs125.jeed.core
 
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
-import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
 import java.io.BufferedReader
 import java.io.File
@@ -49,8 +48,8 @@ data class ContainerExecutionResults(
     val exitCode: Int?,
     val timeout: Boolean,
     val outputLines: List<Sandbox.TaskResults.OutputLine>,
-    @Contextual val interval: Interval,
-    @Contextual val executionInterval: Interval,
+    val interval: Interval,
+    val executionInterval: Interval,
     val truncatedLines: Int,
 ) {
     val completed: Boolean

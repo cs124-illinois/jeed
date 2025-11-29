@@ -9,8 +9,10 @@ import edu.illinois.cs.cs125.jeed.core.antlr.SnippetLexer
 import edu.illinois.cs.cs125.jeed.core.antlr.SnippetParser
 import edu.illinois.cs.cs125.jeed.core.antlr.SnippetParser.IdentifierContext
 import edu.illinois.cs.cs125.jeed.core.antlr.SnippetParserBaseVisitor
+import edu.illinois.cs.cs125.jeed.core.serializers.SnippetSerializer
 import edu.illinois.cs.cs125.jeed.core.serializers.SnippetTransformationFailedSerializer
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 import org.antlr.v4.runtime.BaseErrorListener
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
@@ -31,6 +33,7 @@ data class SnippetProperties(
 )
 
 @Suppress("LongParameterList")
+@Serializable(with = SnippetSerializer::class)
 class Snippet(
     sources: Sources,
     val originalSource: String,

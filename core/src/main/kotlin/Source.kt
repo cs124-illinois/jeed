@@ -221,7 +221,7 @@ open class LocatedClassOrMethod(
 
 @Serializable
 open class SourceError(
-    @Contextual open val location: SourceLocation?,
+    open val location: SourceLocation?,
     val message: String,
 ) {
     override fun toString(): String = if (location == null) message else "$location: $message"

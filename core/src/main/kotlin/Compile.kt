@@ -1,6 +1,8 @@
 package edu.illinois.cs.cs125.jeed.core
 
 import com.google.common.base.Objects
+import edu.illinois.cs.cs125.jeed.core.serializers.CompilationFailedSerializer
+import edu.illinois.cs.cs125.jeed.core.serializers.CompilationMessageSerializer
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
@@ -115,6 +117,7 @@ data class CompilationArguments(
 
 class CompilationError(location: SourceLocation?, message: String) : SourceError(location, message)
 
+@Serializable(with = CompilationFailedSerializer::class)
 class CompilationFailed(
     errors: List<CompilationError>,
     val compilationData: FailedCompilationData? = null,
@@ -125,11 +128,12 @@ class CompilationFailed(
 @Serializable
 data class FailedCompilationData(
     @Contextual val started: Instant,
-    @Contextual val interval: Interval,
+    val interval: Interval,
     val cached: Boolean = false,
     val compilerName: String = systemCompilerName,
 )
 
+@Serializable(with = CompilationMessageSerializer::class)
 class CompilationMessage(@Suppress("unused") val kind: String, location: SourceLocation?, message: String) : SourceError(location, message)
 
 @Suppress("LongParameterList")

@@ -798,7 +798,7 @@ private class ExecutionTraceWorkingData(
 @Serializable
 data class ExecutionTraceResults(
     val arguments: ExecutionTraceArguments,
-    val steps: List<@Contextual ExecutionStep>,
+    val steps: List<ExecutionStep>,
 ) {
     @Serializable
     data class MethodInfo(val className: String, val method: String, val argumentTypes: List<String>)
@@ -834,11 +834,14 @@ data class ExecutionTraceResults(
     )
 }
 
+@Serializable
 sealed class ExecutionStep {
     // No change to state, coalesce with next step if LineTrace was installed after ExecutionTrace
+    @Serializable
     data class Line(val source: String, val line: Int) : ExecutionStep()
 
     // Push call stack, initialize locals with arguments
+    @Serializable
     data class EnterMethod(
         val method: ExecutionTraceResults.MethodInfo,
         val receiverId: Int?,
@@ -846,27 +849,34 @@ sealed class ExecutionStep {
     ) : ExecutionStep()
 
     // Pop call stack
+    @Serializable
     data class ExitMethodNormally(val returnValue: ExecutionTraceResults.Value) : ExecutionStep()
 
     // Pop call stack
+    @Serializable
     data class ExitMethodExceptionally(val throwableObjectId: Int) : ExecutionStep()
 
     // Delete locals in deadLocals, create locals in newLocals
+    @Serializable
     data class ChangeScope(
         val newLocals: Map<String, ExecutionTraceResults.Value>,
         val deadLocals: List<String>,
     ) : ExecutionStep()
 
     // Alter one existing local
+    @Serializable
     data class SetVariable(val local: String, val value: ExecutionTraceResults.Value) : ExecutionStep()
 
     // Create new uninitialized object in object table, coalesce with next step
+    @Serializable
     data class CreateObject(val id: Int, val type: String) : ExecutionStep()
 
     // Create new object in object table, coalesce with next step
+    @Serializable
     data class ObtainObject(val id: Int, val obj: ExecutionTraceResults.ObjectState) : ExecutionStep()
 
     // Alter one indexed component in an object
+    @Serializable
     data class SetIndexedComponent(
         val objectId: Int,
         val component: Int,
@@ -874,5 +884,6 @@ sealed class ExecutionStep {
     ) : ExecutionStep()
 
     // Replace an existing object's state and mark it initialized
+    @Serializable
     data class SetState(val objectId: Int, val state: ExecutionTraceResults.ObjectState) : ExecutionStep()
 }
