@@ -813,8 +813,11 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
                         val location = currentSuffix.memberAccessOperator().toLocation()
                         when (separatorType) {
                             SeparatorType.DOT -> count(FeatureName.DOT_NOTATION, location)
+
                             SeparatorType.SAFENAV -> count(FeatureName.SAFE_CALL_OPERATOR, location)
+
                             SeparatorType.UNSAFENAV -> count(FeatureName.UNSAFE_CALL_OPERATOR, location)
+
                             // Not counting COLONCOLON yet
                             else -> {}
                         }

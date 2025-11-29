@@ -271,8 +271,11 @@ object ExecutionTrace : SandboxPluginWithDefaultArguments<ExecutionTraceArgument
         method.instructions.forEach { insn ->
             when (insn) {
                 is JumpInsnNode -> reachable.add(insn.label)
+
                 is LookupSwitchInsnNode -> reachable.addAll(insn.labels)
+
                 is TableSwitchInsnNode -> reachable.addAll(insn.labels)
+
                 is LabelNode -> {
                     val previous = insn.previousRealInsn()
                     if (previous == null || previous.opcode !in NEVER_FALLTHROUGH_OPCODES) {
@@ -613,12 +616,15 @@ object ExecutionTrace : SandboxPluginWithDefaultArguments<ExecutionTraceArgument
                     array[index] = byteValue
                     recordSetArray(Type.BYTE_TYPE, array, index, byteValue)
                 }
+
                 is BooleanArray -> {
                     val booleanValue = (value and 1) != 0
                     array[index] = booleanValue
                     recordSetArray(Type.BOOLEAN_TYPE, array, index, booleanValue)
                 }
+
                 null -> throw NullPointerException("cannot store to byte/boolean array because it is null")
+
                 else -> error("bastore instructions only operate on byte[] or boolean[]")
             }
         }
@@ -641,12 +647,15 @@ object ExecutionTrace : SandboxPluginWithDefaultArguments<ExecutionTraceArgument
                 val objId = value?.let { findObjectId(it) }
                 ExecutionTraceResults.Value(ExecutionTraceResults.ValueType.REFERENCE, objId)
             }
+
             Type.VOID -> {
                 ExecutionTraceResults.Value(ExecutionTraceResults.ValueType.VOID, null)
             }
+
             Type.METHOD -> {
                 error("instances of method types are impossible")
             }
+
             else -> {
                 val publishableType = PRIMITIVE_TYPES[type] ?: error("unknown type $type")
                 val box = value ?: error("primitives cannot be null")
@@ -681,8 +690,11 @@ object ExecutionTrace : SandboxPluginWithDefaultArguments<ExecutionTraceArgument
             // TODO: Untrusted class instances, boxes, common collections, etc.
             when {
                 obj.javaClass.isPrimitive -> error("primitives are not objects")
+
                 obj is String -> state.stringRepresentation = obj
+
                 obj is Enum<*> -> state.stringRepresentation = obj.name
+
                 obj.javaClass.isArray -> {
                     val length = ReflectArray.getLength(obj)
                     val asmElemType = Type.getType(obj.javaClass.componentType)

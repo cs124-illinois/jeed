@@ -110,7 +110,9 @@ data class KompilationArguments(
 
     override fun equals(other: Any?): Boolean = when {
         this === other -> true
+
         javaClass != other?.javaClass -> false
+
         else -> {
             other as KompilationArguments
             when {
@@ -145,11 +147,13 @@ internal class JeedMessageCollector(val source: Source, private val allWarningsA
 
     val errors: List<CompilationError>
         get() = messages.filter {
-            it.kind == CompilerMessageSeverity.ERROR.presentableName ||
-                allWarningsAsErrors &&
+            (it.kind == CompilerMessageSeverity.ERROR.presentableName) ||
                 (
-                    it.kind == CompilerMessageSeverity.WARNING.presentableName ||
-                        it.kind == CompilerMessageSeverity.STRONG_WARNING.presentableName
+                    allWarningsAsErrors &&
+                        (
+                            it.kind == CompilerMessageSeverity.WARNING.presentableName ||
+                                it.kind == CompilerMessageSeverity.STRONG_WARNING.presentableName
+                            )
                     )
         }.map {
             CompilationError(it.location, it.message)

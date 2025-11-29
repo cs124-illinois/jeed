@@ -647,16 +647,22 @@ class JavaFeatureListener(val source: Source, entry: Map.Entry<String, String>) 
     override fun enterExpression(ctx: ExpressionContext) {
         when (ctx.bop?.text) {
             "<", ">", "<=", ">=", "==", "!=" -> count(FeatureName.COMPARISON_OPERATORS, ctx.bop.toLocation())
+
             "&&", "||" -> count(FeatureName.LOGICAL_OPERATORS, ctx.bop.toLocation())
+
             "+", "-", "*", "/", "%" -> count(FeatureName.ARITHMETIC_OPERATORS, ctx.bop.toLocation())
+
             "&", "|", "^" -> count(FeatureName.BITWISE_OPERATORS, ctx.bop.toLocation())
+
             "+=", "-=", "*=", "/=", "%=" -> {
                 count(FeatureName.ASSIGNMENT_OPERATORS, ctx.bop.toLocation())
                 count(FeatureName.VARIABLE_REASSIGNMENTS, ctx.bop.toLocation())
             }
 
             "?" -> count(FeatureName.TERNARY_OPERATOR, ctx.bop.toLocation())
+
             "instanceof" -> count(FeatureName.INSTANCEOF, ctx.bop.toLocation())
+
             "." -> {
                 if (ctx.identifier() != null) {
                     if (ctx.identifier().text != "length") {
@@ -703,6 +709,7 @@ class JavaFeatureListener(val source: Source, entry: Map.Entry<String, String>) 
             }
 
             "~" -> count(FeatureName.BITWISE_OPERATORS, ctx.prefix.toLocation())
+
             "!" -> count(FeatureName.LOGICAL_OPERATORS, ctx.prefix.toLocation())
         }
         when (ctx.postfix?.text) {

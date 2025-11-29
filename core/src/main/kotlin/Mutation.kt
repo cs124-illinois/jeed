@@ -35,7 +35,9 @@ sealed class Mutation(
 
         override fun equals(other: Any?) = when {
             this === other -> true
+
             javaClass != other?.javaClass -> false
+
             else -> {
                 other as Location
                 start == other.start && end == other.end && line == other.line
@@ -125,6 +127,7 @@ sealed class Mutation(
         val modifiedLines = modified!!.lines()
         linesChanged = when {
             modified!!.isBlank() -> original.lines().size
+
             originalLines.size == modifiedLines.size ->
                 originalLines.zip(modifiedLines).filter { (m, o) -> m != o }.size
 
@@ -151,7 +154,9 @@ sealed class Mutation(
 
     override fun equals(other: Any?) = when {
         this === other -> true
+
         javaClass != other?.javaClass -> false
+
         else -> {
             other as Mutation
             mutationType == other.mutationType && location == other.location && original == other.original
@@ -635,6 +640,7 @@ class NumberLiteralTrim(
 
             return when {
                 current.length == 1 -> listOf()
+
                 current.contains(".") -> {
                     val parts = current.split(".")
                     check(parts.size == 2)

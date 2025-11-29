@@ -68,7 +68,9 @@ class KtLintError(
 ) : AlwaysLocatedSourceError(location, "$ruleId: $detail") {
     override fun equals(other: Any?) = when {
         other === this -> true
+
         other?.javaClass != KtLintError::class.java -> false
+
         else -> {
             other as KtLintError
             other.ruleId == ruleId && other.detail == detail && other.location == location

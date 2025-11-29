@@ -83,7 +83,9 @@ data class CompilationArguments(
 
     override fun equals(other: Any?): Boolean = when {
         this === other -> true
+
         javaClass != other?.javaClass -> false
+
         else -> {
             other as CompilationArguments
             when {
@@ -426,7 +428,9 @@ class JeedFileManager(
         val classPath = classNameToPathWithClass(className)
         return when {
             location != StandardLocation.CLASS_OUTPUT -> super.getJavaFileForOutput(location, className, kind, sibling)
+
             kind != JavaFileObject.Kind.CLASS -> throw UnsupportedOperationException()
+
             else -> {
                 ByteSource(classPath, kind).also {
                     allFiles[classPath] = it
@@ -441,7 +445,9 @@ class JeedFileManager(
         kind: JavaFileObject.Kind,
     ): JavaFileObject? = when {
         location != StandardLocation.CLASS_OUTPUT -> super.getJavaFileForInput(location, className, kind)
+
         kind != JavaFileObject.Kind.CLASS -> throw UnsupportedOperationException()
+
         else -> {
             allFiles[classNameToPathWithClass(className)]
         }

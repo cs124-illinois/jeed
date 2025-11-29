@@ -43,7 +43,9 @@ class CheckstyleError(
 ) : AlwaysLocatedSourceError(location, message) {
     override fun equals(other: Any?) = when {
         this === other -> true
+
         other?.javaClass != CheckstyleError::class.java -> false
+
         else -> {
             other as CheckstyleError
             other.severity == severity && other.key == key && other.location == location && other.message == message && other.sourceName == sourceName

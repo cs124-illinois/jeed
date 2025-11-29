@@ -1993,8 +1993,12 @@ object Sandbox {
 
         override fun checkPermission(permission: Permission) {
             val confinedTask = when (permission) {
-                SET_IO_PERMISSION -> confinedTaskByThreadGroup() // Even trusted tasks shouldn't call System.setOut
-                GET_CLASSLOADER_PERMISSION -> confinedTaskByClassLoaderReentrant() // Avoid StackOverflowError
+                SET_IO_PERMISSION -> confinedTaskByThreadGroup()
+
+                // Even trusted tasks shouldn't call System.setOut
+                GET_CLASSLOADER_PERMISSION -> confinedTaskByClassLoaderReentrant()
+
+                // Avoid StackOverflowError
                 else -> confinedTaskByClassLoader()
             } ?: return systemSecurityManager?.checkPermission(permission) ?: return
 
