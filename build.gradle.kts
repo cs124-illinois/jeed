@@ -1,14 +1,15 @@
 import io.gitlab.arturbosch.detekt.Detekt
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.jmailen.gradle.kotlinter.tasks.LintTask
 
 plugins {
     kotlin("jvm") version "2.2.21" apply false
     kotlin("plugin.serialization") version "2.2.21" apply false
-    id("org.jmailen.kotlinter") version "5.2.0" apply false
+    id("org.jmailen.kotlinter") version "5.3.0" apply false
     id("com.github.ben-manes.versions") version "0.53.0"
     id("io.gitlab.arturbosch.detekt") version "1.23.8"
-    id("com.google.devtools.ksp") version "2.3.2" apply false
+    id("com.google.devtools.ksp") version "2.3.3" apply false
     id("io.github.gradle-nexus.publish-plugin") version "2.0.0"
     id("com.adarshr.test-logger") version "4.0.0" apply false
 }
@@ -46,6 +47,11 @@ subprojects {
     }
     tasks.withType<Detekt> {
         jvmTarget = "21"
+    }
+    afterEvaluate {
+        tasks.withType<LintTask> {
+            dependsOn(tasks.matching { it.name == name.replace("lint", "format") })
+        }
     }
 }
 tasks.dependencyUpdates {

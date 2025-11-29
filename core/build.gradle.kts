@@ -34,11 +34,11 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-reflect:2.2.21")
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
     implementation("com.puppycrawl.tools:checkstyle:12.1.2")
     implementation("org.codehaus.plexus:plexus-container-default:2.1.1")
-    implementation("com.pinterest.ktlint:ktlint-rule-engine:1.7.1")
-    implementation("com.pinterest.ktlint:ktlint-ruleset-standard:1.7.1")
+    implementation("com.pinterest.ktlint:ktlint-rule-engine:1.8.0")
+    implementation("com.pinterest.ktlint:ktlint-ruleset-standard:1.8.0")
     implementation("com.github.jknack:handlebars:4.5.0")
     implementation("org.ow2.asm:asm:9.9")
     implementation("org.ow2.asm:asm-tree:9.9")
@@ -56,7 +56,7 @@ dependencies {
     api("io.github.microutils:kotlin-logging:3.0.5")
     api("io.github.classgraph:classgraph:4.8.184")
 
-    testImplementation("io.kotest:kotest-runner-junit5:6.0.4")
+    testImplementation("io.kotest:kotest-runner-junit5:6.0.5")
     testImplementation("com.beyondgrader.resource-agent:agent:$agentVersion")
     testJavaagent("com.beyondgrader.resource-agent:agent:$agentVersion")
 }
@@ -109,16 +109,10 @@ afterEvaluate {
     tasks.named("kspTestKotlin") {
         dependsOn(tasks.generateTestGrammarSource)
     }
-    tasks.named("lintKotlinMain") {
-        dependsOn(tasks.generateGrammarSource)
-    }
     tasks.named("formatKotlinMain") {
         dependsOn(tasks.generateGrammarSource)
     }
     tasks.named("formatKotlinTest") {
-        dependsOn(tasks.generateTestGrammarSource)
-    }
-    tasks.named("lintKotlinTest") {
         dependsOn(tasks.generateTestGrammarSource)
     }
     tasks.named("test") {

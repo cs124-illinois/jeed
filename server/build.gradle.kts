@@ -22,7 +22,7 @@ configurations.all {
     }
 }
 dependencies {
-    val ktorVersion = "3.3.2"
+    val ktorVersion = "3.3.3"
 
     testJavaagent("com.beyondgrader.resource-agent:agent:$agentVersion")
 
@@ -33,17 +33,17 @@ dependencies {
     implementation("io.ktor:ktor-server-content-negotiation:$ktorVersion")
     implementation("io.ktor:ktor-serialization-kotlinx-json:$ktorVersion")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
     implementation("io.github.nhubbard:konf:2.1.0")
     implementation("com.beyondgrader.resource-agent:agent:$agentVersion")
     implementation("com.beyondgrader.resource-agent:jeedplugin:$agentVersion")
 
     // Libraries for student use
     implementation("org.cs124:libcs1:2025.8.0")
-    implementation("io.kotest:kotest-runner-junit5:6.0.4")
+    implementation("io.kotest:kotest-runner-junit5:6.0.5")
     implementation("com.google.truth:truth:1.4.5")
 
-    testImplementation("io.kotest:kotest-runner-junit5:6.0.4")
+    testImplementation("io.kotest:kotest-runner-junit5:6.0.5")
     testImplementation("io.ktor:ktor-server-test-host:$ktorVersion")
 }
 testlogger {
