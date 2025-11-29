@@ -9,3 +9,7 @@ exceptions:
     active: false
   TooGenericExceptionCaught:
     active: false
+
+style:
+  UnusedImports:
+    active: true

@@ -1,6 +1,5 @@
 package edu.illinois.cs.cs125.jeed.core
 
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import java.io.ByteArrayInputStream
 import java.io.FilePermission

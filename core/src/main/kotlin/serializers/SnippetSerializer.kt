@@ -1,6 +1,5 @@
 package edu.illinois.cs.cs125.jeed.core.serializers
 
-import edu.illinois.cs.cs125.jeed.core.Location
 import edu.illinois.cs.cs125.jeed.core.Snippet
 import edu.illinois.cs.cs125.jeed.core.SnippetProperties
 import edu.illinois.cs.cs125.jeed.core.Source
