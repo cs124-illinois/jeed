@@ -1,3 +1,6 @@
+console-reports:
+  active: false
+
 complexity:
   LargeClass:
     active: false
