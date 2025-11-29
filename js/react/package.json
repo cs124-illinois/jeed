@@ -1,6 +1,6 @@
 {
   "name": "@cs124/jeed-react",
-  "version": "2025.11.1",
+  "version": "2025.11.4",
   "license": "MIT",
   "main": "dist/index.js",
   "scripts": {
@@ -18,7 +18,7 @@
   },
   "types": "dist/index.d.ts",
   "dependencies": {
-    "@cs124/jeed-types": "2025.11.1"
+    "@cs124/jeed-types": "2025.11.4"
   },
   "peerDependencies": {
     "react": ">= 16"
