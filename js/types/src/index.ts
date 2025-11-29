@@ -187,7 +187,7 @@ export const TaskArguments = Partial({
   compilation: CompilationArguments,
   kompilation: KompilationArguments,
   checkstyle: CheckstyleArguments,
-  ktlint: KtLintArguments,
+  ktLint: KtLintArguments,
   execution: SourceExecutionArguments,
   cexecution: ContainerExecutionArguments,
   mutations: MutationsArguments,
@@ -260,17 +260,17 @@ export const CheckstyleResults = Record({
 })
 export type CheckstyleResults = Static<typeof CheckstyleResults>
 
-export const KtlintError = Record({
+export const KtLintError = Record({
   ruleId: String,
   detail: String,
   location: SourceLocation,
 })
-export type KtlintError = Static<typeof KtlintError>
+export type KtLintError = Static<typeof KtLintError>
 
-export const KtlintResults = Record({
-  errors: Array(KtlintError),
+export const KtLintResults = Record({
+  errors: Array(KtLintError),
 })
-export type KtlintResults = Static<typeof KtlintError>
+export type KtLintResults = Static<typeof KtLintError>
 
 export const FlatClassComplexity = Record({
   name: String,
@@ -684,6 +684,7 @@ export const AppliedMutation = Record({
   original: String,
   mutated: String,
   linesChanged: Number,
+  mightNotCompile: Boolean,
 })
 export type AppliedMutation = Static<typeof AppliedMutation>
 
@@ -732,6 +733,7 @@ export type OutputLine = Static<typeof OutputLine>
 export const PermissionRequest = Record({
   permission: Permission,
   granted: Boolean,
+  count: Number,
 })
 export type PermissionRequest = Static<typeof PermissionRequest>
 
@@ -769,7 +771,7 @@ export const ContainerExecutionResults = Record({
   truncatedLines: Number,
 }).And(
   Partial({
-    exitcode: Number,
+    exitCode: Number,
   }),
 )
 export type ContainerExecutionResults = Static<typeof ContainerExecutionResults>
@@ -780,7 +782,7 @@ export const CompletedTasks = Partial({
   compilation: CompiledSourceResult,
   kompilation: CompiledSourceResult,
   checkstyle: CheckstyleResults,
-  ktlint: KtlintResults,
+  ktLint: KtLintResults,
   complexity: FlatComplexityResults,
   features: FlatFeaturesResults,
   execution: SourceTaskResults,
@@ -834,10 +836,10 @@ export const CheckstyleFailed = Record({
 })
 export type CheckstyleFailed = Static<typeof CheckstyleFailed>
 
-export const KtlintFailed = Record({
-  errors: Array(KtlintError),
+export const KtLintFailed = Record({
+  errors: Array(KtLintError),
 })
-export type KtlintFailed = Static<typeof KtlintFailed>
+export type KtLintFailed = Static<typeof KtLintFailed>
 
 export const SourceError = Record({
   message: String,
@@ -880,7 +882,7 @@ export const FailedTasks = Partial({
   compilation: CompilationFailed,
   kompilation: CompilationFailed,
   checkstyle: CheckstyleFailed,
-  ktlint: KtlintFailed,
+  ktLint: KtLintFailed,
   complexity: ComplexityFailed,
   execution: ExecutionFailedResult,
   cexecution: ExecutionFailedResult,

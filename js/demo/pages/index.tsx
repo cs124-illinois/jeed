@@ -103,7 +103,7 @@ const JeedDemo: React.FC = () => {
         args.checkstyle = { failOnError: true }
       }
       if (tasks.includes("ktlint")) {
-        args.ktlint = { failOnError: true }
+        args.ktLint = { failOnError: true }
       }
       if (tasks.includes("disassemble") && tasks.includes("compile")) {
         args.compilation = { parameters: true, debugInfo: true }

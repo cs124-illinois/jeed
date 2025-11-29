@@ -104,14 +104,14 @@ ${originalLine ? originalLine + "\n" + new Array(column).join(" ") + "^" : ""}${
   ${errorCount} error${errorCount > 1 ? "s" : ""}`,
       level: "error",
     }
-  } else if (response.failed.ktlint) {
+  } else if (response.failed.ktLint) {
     const output =
-      response.failed.ktlint?.errors
+      response.failed.ktLint?.errors
         .map(({ location: { source, line }, detail }) => {
           return `${source === "" ? "Line " : `${source}:`}${line}: ktlint error: ${detail}`
         })
         .join("\n") || ""
-    const errorCount = Object.keys(response.failed.ktlint?.errors || {}).length
+    const errorCount = Object.keys(response.failed.ktLint?.errors || {}).length
     return {
       output: `${output}
   ${errorCount} error${errorCount > 1 ? "s" : ""}`,
@@ -162,7 +162,7 @@ ${originalLine ? originalLine + "\n" + new Array(column).join(" ") + "^" : ""}${
       return { output: output.join("\n"), level }
     } else if (response.completed.checkstyle) {
       return { output: `No checkstyle errors found`, level: "success" }
-    } else if (response.completed.ktlint) {
+    } else if (response.completed.ktLint) {
       return { output: `No ktlint errors found`, level: "success" }
     } else if (response.completed.complexity) {
       const results = response.completed.complexity.results
