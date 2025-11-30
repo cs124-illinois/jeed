@@ -14,4 +14,5 @@ val JeedJson = Json {
     serializersModule = JeedSerializersModule
     ignoreUnknownKeys = true
     encodeDefaults = true
+    explicitNulls = false
 }
