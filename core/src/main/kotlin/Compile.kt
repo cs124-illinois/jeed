@@ -168,6 +168,8 @@ internal fun compileToFileManager(
     val options = mutableSetOf<String>()
     options.add("-proc:none")
     options.add("-Xlint:${compilationArguments.Xlint}")
+    // Prevent javac from sharing string table between compilations to avoid memory leaks
+    options.add("-XDuseUnsharedTable=true")
     if (compilationArguments.parameters) {
         options.add("-parameters")
     }
