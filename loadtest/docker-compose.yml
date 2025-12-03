@@ -1,0 +1,27 @@
+services:
+  jeed:
+    build:
+      context: ../server
+      dockerfile: Dockerfile
+    ports:
+      - "8888:8888"
+    environment:
+      # Match production settings exactly
+      - JAVA_OPTS=-XX:MaxRAMPercentage=40
+      # Log status frequently for monitoring
+      - STATUS_LOG_INTERVAL_MS=10000
+      # Match production cache settings
+      - JEED_USE_CACHE=true
+      - JEED_COMPILATION_CACHE_SIZE=32
+      - JEED_DOCKER_DISABLED=1
+      - LIMITS_EXECUTION_TIMEOUT=5000
+      # CORS disabled by default - set to true to enable
+      # - ENABLE_CORS=true
+    volumes:
+      # Mount /tmp to extract heap dumps
+      - ./heapdumps:/tmp
+    # Match production memory limit exactly
+    deploy:
+      resources:
+        limits:
+          memory: 1g

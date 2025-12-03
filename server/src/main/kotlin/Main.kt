@@ -18,7 +18,6 @@ import io.ktor.server.application.install
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.server.plugins.cors.routing.CORS
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
 import io.ktor.server.response.respondText
@@ -132,10 +131,6 @@ private fun CoroutineScope.startStatusLogger() {
 
 @Suppress("ComplexMethod", "LongMethod")
 fun Application.jeed() {
-    install(CORS) {
-        anyHost()
-        allowNonSimpleContentTypes = true
-    }
     install(ContentNegotiation) {
         json(JeedJson)
     }

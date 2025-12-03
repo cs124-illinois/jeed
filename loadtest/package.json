@@ -1,0 +1,15 @@
+{
+  "name": "jeed-loadtest",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "test": "npx tsx index.ts",
+    "test:java": "npx tsx index.ts --java-only",
+    "test:kotlin": "npx tsx index.ts --kotlin-only",
+    "test:k2": "npx tsx index.ts --kotlin-only --k2",
+    "test:idle": "npx tsx index.ts --idle"
+  },
+  "dependencies": {
+    "tsx": "4.19.2"
+  }
+}

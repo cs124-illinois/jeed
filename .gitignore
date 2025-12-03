@@ -51,3 +51,9 @@ core/src/main/gen
 
 # TypeScript build cache
 *.tsbuildinfo
+
+# Node.js dependencies
+node_modules/
+
+# Load test artifacts
+loadtest/heapdumps/
