@@ -35,7 +35,7 @@ dependencies {
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
-    implementation("com.puppycrawl.tools:checkstyle:12.2.0")
+    implementation("com.puppycrawl.tools:checkstyle:12.3.0")
     implementation("org.codehaus.plexus:plexus-container-default:2.1.1")
     implementation("com.pinterest.ktlint:ktlint-rule-engine:1.8.0")
     implementation("com.pinterest.ktlint:ktlint-ruleset-standard:1.8.0")
@@ -46,13 +46,13 @@ dependencies {
 
     implementation("net.java.dev.jna:jna:5.18.1")
     implementation("io.github.java-diff-utils:java-diff-utils:4.16")
-    implementation("com.google.googlejavaformat:google-java-format:1.32.0")
+    implementation("com.google.googlejavaformat:google-java-format:1.33.0")
     implementation("net.sf.extjwnl:extjwnl:2.0.5")
     implementation("net.sf.extjwnl:extjwnl-data-wn31:1.2")
 
     api("org.jacoco:org.jacoco.core:0.8.14")
     api("com.github.ben-manes.caffeine:caffeine:3.2.3")
-    api("ch.qos.logback:logback-classic:1.5.21")
+    api("ch.qos.logback:logback-classic:1.5.22")
     api("io.github.microutils:kotlin-logging:3.0.5")
     api("io.github.classgraph:classgraph:4.8.184")
 
