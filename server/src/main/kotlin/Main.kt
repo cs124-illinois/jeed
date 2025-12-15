@@ -29,7 +29,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 import mu.KotlinLogging
 import sun.misc.Signal
 import java.lang.management.ManagementFactory
@@ -146,49 +145,47 @@ fun Application.jeed() {
             val requestStart = System.currentTimeMillis()
             logger.info { "REQUEST $requestId: started" }
 
-            withContext(Dispatchers.IO) {
-                val parseStart = System.currentTimeMillis()
-                val job = try {
-                    call.receive<Request>().check()
-                } catch (e: Exception) {
-                    logger.warn { "REQUEST $requestId: parse failed after ${System.currentTimeMillis() - parseStart}ms" }
-                    logger.warn(e.getStackTraceAsString())
-                    call.respondText(e.message ?: e.toString(), status = HttpStatusCode.BadRequest)
-                    return@withContext
+            val parseStart = System.currentTimeMillis()
+            val job = try {
+                call.receive<Request>().check()
+            } catch (e: Exception) {
+                logger.warn { "REQUEST $requestId: parse failed after ${System.currentTimeMillis() - parseStart}ms" }
+                logger.warn(e.getStackTraceAsString())
+                call.respondText(e.message ?: e.toString(), status = HttpStatusCode.BadRequest)
+                return@post
+            }
+            val parseTime = System.currentTimeMillis() - parseStart
+
+            try {
+                val runStart = System.currentTimeMillis()
+                val result = job.run()
+                val runTime = System.currentTimeMillis() - runStart
+                currentStatus.lastRequest = Instant.now()
+
+                val respondStart = System.currentTimeMillis()
+                call.respond(result)
+                val respondTime = System.currentTimeMillis() - respondStart
+
+                val totalTime = System.currentTimeMillis() - requestStart
+                logger.info {
+                    "REQUEST $requestId: completed in ${totalTime}ms " +
+                        "(parse=${parseTime}ms, run=${runTime}ms, respond=${respondTime}ms)"
                 }
-                val parseTime = System.currentTimeMillis() - parseStart
 
-                try {
-                    val runStart = System.currentTimeMillis()
-                    val result = job.run()
-                    val runTime = System.currentTimeMillis() - runStart
-                    currentStatus.lastRequest = Instant.now()
-
-                    val respondStart = System.currentTimeMillis()
-                    call.respond(result)
-                    val respondTime = System.currentTimeMillis() - respondStart
-
-                    val totalTime = System.currentTimeMillis() - requestStart
-                    logger.info {
-                        "REQUEST $requestId: completed in ${totalTime}ms " +
-                            "(parse=${parseTime}ms, run=${runTime}ms, respond=${respondTime}ms)"
+                val staticInitFailures = StaticFailureDetection.pollStaticInitializationFailures()
+                if (staticInitFailures.isNotEmpty()) {
+                    val failedClasses = staticInitFailures.map { it.clazz }
+                    logger.warn("Execution detected failed static initializations: $failedClasses")
+                    if (System.getenv("SHUTDOWN_ON_CACHE_POISONING") != null) {
+                        logger.error("Terminating due to cache poisoning")
+                        exitProcess(-1)
                     }
-
-                    val staticInitFailures = StaticFailureDetection.pollStaticInitializationFailures()
-                    if (staticInitFailures.isNotEmpty()) {
-                        val failedClasses = staticInitFailures.map { it.clazz }
-                        logger.warn("Execution detected failed static initializations: $failedClasses")
-                        if (System.getenv("SHUTDOWN_ON_CACHE_POISONING") != null) {
-                            logger.error("Terminating due to cache poisoning")
-                            exitProcess(-1)
-                        }
-                    }
-                } catch (e: Exception) {
-                    val totalTime = System.currentTimeMillis() - requestStart
-                    logger.warn { "REQUEST $requestId: failed after ${totalTime}ms" }
-                    logger.warn(e.getStackTraceAsString())
-                    call.respondText(e.message ?: e.toString(), status = HttpStatusCode.BadRequest)
                 }
+            } catch (e: Exception) {
+                val totalTime = System.currentTimeMillis() - requestStart
+                logger.warn { "REQUEST $requestId: failed after ${totalTime}ms" }
+                logger.warn(e.getStackTraceAsString())
+                call.respondText(e.message ?: e.toString(), status = HttpStatusCode.BadRequest)
             }
         }
     }
