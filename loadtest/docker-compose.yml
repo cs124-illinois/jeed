@@ -7,7 +7,8 @@ services:
       - "8888:8888"
     environment:
       # Match production settings exactly
-      - JAVA_OPTS=-XX:MaxRAMPercentage=40
+      # Added heap dump flags for memory leak analysis
+      - JAVA_OPTS=-XX:MaxRAMPercentage=40 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/heapdumps/oom.hprof
       # Log status frequently for monitoring
       - STATUS_LOG_INTERVAL_MS=10000
       # Match production cache settings
@@ -18,10 +19,10 @@ services:
       # CORS disabled by default - set to true to enable
       # - ENABLE_CORS=true
     volumes:
-      # Mount /tmp to extract heap dumps
-      - ./heapdumps:/tmp
-    # Match production memory limit exactly
+      # Mount to /heapdumps (not /tmp - that breaks Java attach API)
+      - ./heapdumps:/heapdumps
+    # Increased for heap dump analysis (production uses 1g)
     deploy:
       resources:
         limits:
-          memory: 1g
+          memory: 2g
