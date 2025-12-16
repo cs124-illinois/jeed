@@ -119,19 +119,18 @@ private fun setupShutdownHook() {
     logger.info { "Shutdown hook registered" }
 }
 
-private fun CoroutineScope.startStatusLogger() {
-    launch(Dispatchers.Default) {
-        while (true) {
-            delay(statusLogIntervalMs)
-            logDetailedStatus("PERIODIC")
-        }
-    }
-}
 
 @Suppress("ComplexMethod", "LongMethod")
 fun Application.jeed() {
     install(ContentNegotiation) {
         json(JeedJson)
+    }
+    // Start status logger in the application's coroutine scope
+    launch {
+        while (true) {
+            delay(statusLogIntervalMs)
+            logDetailedStatus("PERIODIC")
+        }
     }
     routing {
         get("/") {
@@ -191,7 +190,7 @@ fun Application.jeed() {
     }
 }
 
-fun main(@Suppress("unused") unused: Array<String>): Unit = runBlocking {
+fun main(@Suppress("unused") unused: Array<String>) {
     logger.info { "Jeed server starting..." }
     logger.info { "JVM: ${System.getProperty("java.version")} (${System.getProperty("java.vendor")})" }
     logger.info { "Max heap: ${Runtime.getRuntime().maxMemory() / 1024 / 1024}MB" }
@@ -204,11 +203,13 @@ fun main(@Suppress("unused") unused: Array<String>): Unit = runBlocking {
     Agent.activate(countLines = false, redirectFiles = false)
     StaticFailureDetection.recordingFailedClasses = true
 
-    try {
-        warm(2, failLint = false)
-    } catch (e: Exception) {
-        logger.error("Warm failed, restarting: $e")
-        exitProcess(-1)
+    runBlocking {
+        try {
+            warm(2, failLint = false)
+        } catch (e: Exception) {
+            logger.error("Warm failed, restarting: $e")
+            exitProcess(-1)
+        }
     }
 
     val dockerEnabled = try {
@@ -227,7 +228,6 @@ fun main(@Suppress("unused") unused: Array<String>): Unit = runBlocking {
     )
 
     logDetailedStatus("STARTUP-COMPLETE")
-    startStatusLogger()
     logger.info { "Periodic status logging every ${statusLogIntervalMs / 1000}s (set STATUS_LOG_INTERVAL_MS to change)" }
 
     embeddedServer(Netty, port = configuration[TopLevel.port], module = Application::jeed).start(true)
