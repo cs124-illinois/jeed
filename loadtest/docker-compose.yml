@@ -1,7 +1,7 @@
 services:
   jeed:
     build:
-      context: ../server
+      context: ../server/build/docker
       dockerfile: Dockerfile
     ports:
       - "8888:8888"
