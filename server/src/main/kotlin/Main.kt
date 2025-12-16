@@ -24,8 +24,6 @@ import io.ktor.server.response.respondText
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -118,7 +116,6 @@ private fun setupShutdownHook() {
     )
     logger.info { "Shutdown hook registered" }
 }
-
 
 @Suppress("ComplexMethod", "LongMethod")
 fun Application.jeed() {

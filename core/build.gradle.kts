@@ -40,9 +40,9 @@ dependencies {
     implementation("com.pinterest.ktlint:ktlint-rule-engine:1.8.0")
     implementation("com.pinterest.ktlint:ktlint-ruleset-standard:1.8.0")
     implementation("com.github.jknack:handlebars:4.5.0")
-    implementation("org.ow2.asm:asm:9.9")
-    implementation("org.ow2.asm:asm-tree:9.9")
-    implementation("org.ow2.asm:asm-util:9.9")
+    implementation("org.ow2.asm:asm:9.9.1")
+    implementation("org.ow2.asm:asm-tree:9.9.1")
+    implementation("org.ow2.asm:asm-util:9.9.1")
 
     implementation("net.java.dev.jna:jna:5.18.1")
     implementation("io.github.java-diff-utils:java-diff-utils:4.16")
