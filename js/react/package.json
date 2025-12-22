@@ -1,11 +1,11 @@
 {
   "name": "@cs124/jeed-react",
-  "version": "2025.11.4",
+  "version": "2025.12.3",
   "license": "MIT",
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
-    "check": "npm run depcheck && npm run prettier && npm run eslint && npm run tsc && npm run build",
+    "check": "bun run depcheck && bun run prettier && bun run eslint && bun run tsc && bun run build",
     "clean": "rimraf dist",
     "depcheck": "depcheck --ignores=prettier-plugin-*,rimraf",
     "eslint": "eslint src/**",
@@ -18,24 +18,25 @@
   },
   "types": "dist/index.d.ts",
   "dependencies": {
-    "@cs124/jeed-types": "2025.11.4"
+    "@cs124/jeed-types": "2025.12.3"
   },
   "peerDependencies": {
     "react": ">= 16"
   },
   "devDependencies": {
-    "@eslint/js": "9.39.1",
-    "@types/react": "19.2.2",
-    "eslint": "9.39.1",
+    "@eslint/js": "9.39.2",
+    "@types/react": "19.2.7",
+    "depcheck": "1.4.7",
+    "eslint": "9.39.2",
     "eslint-config-prettier": "10.1.8",
-    "npm-check-updates": "19.1.2",
-    "prettier": "3.6.2",
+    "npm-check-updates": "19.2.0",
+    "prettier": "3.7.4",
     "prettier-package-json": "2.8.0",
     "prettier-plugin-organize-imports": "4.3.0",
-    "react": "19.2.0",
-    "rimraf": "6.1.0",
+    "react": "19.2.3",
+    "rimraf": "6.1.2",
     "runtypes": "6.7.0",
     "typescript": "5.9.3",
-    "typescript-eslint": "8.46.3"
+    "typescript-eslint": "8.50.0"
   }
 }

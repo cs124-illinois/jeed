@@ -1,38 +1,38 @@
 {
   "name": "@cs124/jeed-output",
-  "version": "2025.11.4",
+  "version": "2025.12.3",
   "license": "MIT",
   "main": "dist/index.js",
   "scripts": {
     "build": "rimraf dist && tsc",
-    "check": "npm run depcheck && npm run prettier && npm run eslint && npm run tsc && npm run build",
+    "check": "bun run depcheck && bun run prettier && bun run eslint && bun run tsc && bun run build",
     "clean": "rimraf dist",
     "depcheck": "depcheck --ignores=prettier-plugin-*,rimraf",
     "eslint": "eslint src/**",
     "ncu": "ncu",
     "prettier": "prettier -w --plugin=prettier-plugin-organize-imports . && prettier-package-json --write",
     "prepublish": "rimraf dist && tsc",
-    "start": "npm run watch",
+    "start": "bun run watch",
     "test": "JEED_SERVER=http://localhost:8888 ts-mocha --paths tests/index.spec.ts",
     "tsc": "tsc --noEmit",
     "watch": "tsc -w"
   },
   "types": "dist/index.d.ts",
   "dependencies": {
-    "@cs124/jeed-types": "2025.11.4"
+    "@cs124/jeed-types": "2025.12.3"
   },
   "devDependencies": {
-    "@eslint/js": "9.39.1",
+    "@eslint/js": "9.39.2",
     "depcheck": "1.4.7",
-    "eslint": "9.39.1",
+    "eslint": "9.39.2",
     "eslint-config-prettier": "10.1.8",
-    "npm-check-updates": "19.1.2",
-    "prettier": "3.6.2",
+    "npm-check-updates": "19.2.0",
+    "prettier": "3.7.4",
     "prettier-package-json": "2.8.0",
     "prettier-plugin-organize-imports": "4.3.0",
-    "rimraf": "6.1.0",
+    "rimraf": "6.1.2",
     "runtypes": "6.7.0",
     "typescript": "5.9.3",
-    "typescript-eslint": "8.46.3"
+    "typescript-eslint": "8.50.0"
   }
 }

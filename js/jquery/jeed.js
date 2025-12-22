@@ -1,13 +1,13 @@
-(function ($) {
+;(function ($) {
   function runWithJeed(server, snippet, language, checkstyle) {
-    const tasks = { execute: true };
+    const tasks = { execute: true }
     if (language === "java") {
-      tasks.compile = true;
-      tasks.checkstyle = checkstyle;
+      tasks.compile = true
+      tasks.checkstyle = checkstyle
     } else if (language === "kotlin") {
-      tasks.kompile = true;
+      tasks.kompile = true
     } else {
-      throw Error("Invalid Jeed language " + language);
+      throw Error("Invalid Jeed language " + language)
     }
     const request = {
       label: "",
@@ -20,8 +20,8 @@
           failOnError: true,
         },
       },
-    };
-    request.tasks = Object.keys(tasks);
+    }
+    request.tasks = Object.keys(tasks)
     return $.ajax({
       url: server,
       type: "POST",
@@ -30,203 +30,175 @@
       xhrFields: { withCredentials: true },
       crossDomain: true,
       dataType: "json",
-    });
+    })
   }
 
   function formatJeedResult(result) {
-    const request = result.request;
-    let resultOutput = "";
+    const request = result.request
+    let resultOutput = ""
     if (result.failed.snippet) {
-      const { errors } = result.failed.snippet;
+      const { errors } = result.failed.snippet
       resultOutput += errors
         .map((error) => {
-          const { line, column, message } = error;
-          const originalLine = request.snippet.split("\n")[line - 1];
+          const { line, column, message } = error
+          const originalLine = request.snippet.split("\n")[line - 1]
           return `Line ${line}: error: ${message}
 ${originalLine}
-${new Array(column).join(" ")}^`;
+${new Array(column).join(" ")}^`
         })
-        .join("\n");
+        .join("\n")
 
-      const errorCount = Object.keys(errors).length;
+      const errorCount = Object.keys(errors).length
       resultOutput += `
-${errorCount} error${errorCount > 1 ? "s" : ""}`;
+${errorCount} error${errorCount > 1 ? "s" : ""}`
     } else if (result.failed.compilation || result.failed.kompilation) {
-      const { errors } = result.failed.compilation || result.failed.kompilation;
+      const { errors } = result.failed.compilation || result.failed.kompilation
       resultOutput += errors
         .map((error) => {
           const { location, message } = error
           if (location) {
-            const { source, line, column } = location;
+            const { source, line, column } = location
             const originalLine =
-              source === ""
-                ? request.snippet.split("\n")[line - 1]
-                : request.sources[0].contents.split("\n")[line - 1];
-            const firstErrorLine = error.message
-              .split("\n")
-              .slice(0, 1)
-              .join("\n");
+              source === "" ? request.snippet.split("\n")[line - 1] : request.sources[0].contents.split("\n")[line - 1]
+            const firstErrorLine = error.message.split("\n").slice(0, 1).join("\n")
             const restError = error.message
               .split("\n")
               .slice(1)
               .filter((errorLine) => {
-                if (
-                  source === "" &&
-                  errorLine.trim().startsWith("location: class")
-                ) {
-                  return false;
+                if (source === "" && errorLine.trim().startsWith("location: class")) {
+                  return false
                 } else {
-                  return true;
+                  return true
                 }
               })
-              .join("\n");
-            return `${
-              source === "" ? "Line " : `${source}:`
-            }${line}: error: ${firstErrorLine}
+              .join("\n")
+            return `${source === "" ? "Line " : `${source}:`}${line}: error: ${firstErrorLine}
   ${originalLine}
   ${new Array(column).join(" ")}^
-  ${restError}`;
+  ${restError}`
           } else {
             return message
           }
         })
-        .join("\n");
-      const errorCount = Object.keys(errors).length;
+        .join("\n")
+      const errorCount = Object.keys(errors).length
       resultOutput += `
-${errorCount} error${errorCount > 1 ? "s" : ""}`;
+${errorCount} error${errorCount > 1 ? "s" : ""}`
     } else if (result.failed.checkstyle) {
-      const { errors } = result.failed.checkstyle;
+      const { errors } = result.failed.checkstyle
       resultOutput += errors
         .map((error) => {
-          const { source, line } = error.location;
-          return `${
-            source === "" ? "Line " : `${source}:`
-          }${line}: checkstyle error: ${error.message}`;
+          const { source, line } = error.location
+          return `${source === "" ? "Line " : `${source}:`}${line}: checkstyle error: ${error.message}`
         })
-        .join("\n");
-      const errorCount = Object.keys(errors).length;
+        .join("\n")
+      const errorCount = Object.keys(errors).length
       resultOutput += `
-${errorCount} error${errorCount > 1 ? "s" : ""}`;
+${errorCount} error${errorCount > 1 ? "s" : ""}`
     } else if (result.failed.execution) {
       if (result.failed.execution.classNotFound) {
-        resultOutput += `Error: could not find class ${result.failed.execution.classNotFound.klass}`;
+        resultOutput += `Error: could not find class ${result.failed.execution.classNotFound.klass}`
       } else if (result.failed.execution.methodNotFound) {
-        resultOutput += `Error: could not find method ${result.failed.execution.methodNotFound.method}`;
+        resultOutput += `Error: could not find method ${result.failed.execution.methodNotFound.method}`
       } else {
-        resultOutput += "Something went wrong...";
+        resultOutput += "Something went wrong..."
       }
     }
 
     if (Object.keys(result.failed).length === 0) {
       if (result.completed.execution) {
-        const { execution } = result.completed;
+        const { execution } = result.completed
         const executionLines = execution.outputLines.map((outputLine) => {
-          return outputLine.line;
-        });
+          return outputLine.line
+        })
         if (execution.threw) {
-          executionLines.push(execution.threw.stacktrace);
+          executionLines.push(execution.threw.stacktrace)
         }
         if (execution.timeout) {
-          executionLines.push("(Program Timed Out)");
+          executionLines.push("(Program Timed Out)")
         }
         if (execution.truncatedLines > 0) {
-          executionLines.push(
-            `(${execution.truncatedLines} lines were truncated)`
-          );
+          executionLines.push(`(${execution.truncatedLines} lines were truncated)`)
         }
-        resultOutput += executionLines.join("\n");
+        resultOutput += executionLines.join("\n")
       }
     }
-    return resultOutput.trim();
+    return resultOutput.trim()
   }
 
   const defaultCloseButton =
-    '<button class="jeed close" style="position: absolute; right: 2px; top: 2px;">Close</button>';
-  const defaultRunButton =
-    '<button class="jeed play" style="position: absolute; right: 2px; bottom: 2px;">Run</button>';
-  const defaultRunningBanner =
-    '<div class="jeed running" style="display: none;"><pre>Running...</pre></div>';
+    '<button class="jeed close" style="position: absolute; right: 2px; top: 2px;">Close</button>'
+  const defaultRunButton = '<button class="jeed play" style="position: absolute; right: 2px; bottom: 2px;">Run</button>'
+  const defaultRunningBanner = '<div class="jeed running" style="display: none;"><pre>Running...</pre></div>'
 
   $.fn.jeed = function (server, options = {}) {
     this.each(function (index, elem) {
       if ($(elem).children("code").length !== 1) {
-        return;
+        return
       }
-      const code = $(elem).children("code").eq(0);
+      const code = $(elem).children("code").eq(0)
       if (!(code.hasClass("lang-java") || code.hasClass("lang-kotlin"))) {
-        return;
+        return
       }
 
-      let language;
+      let language
       if (code.hasClass("lang-java")) {
-        language = "java";
+        language = "java"
       } else if (code.hasClass("lang-kotlin")) {
-        language = "kotlin";
+        language = "kotlin"
       }
 
-      $(elem).css({ position: "relative" });
+      $(elem).css({ position: "relative" })
 
-      const outputWrapper = $(
-        '<div class="jeed output" style="position: relative;"><pre></pre></div>'
-      ).css({
+      const outputWrapper = $('<div class="jeed output" style="position: relative;"><pre></pre></div>').css({
         display: "none",
-      });
-      const runningBanner = $(options.runningBanner || defaultRunningBanner);
-      outputWrapper.append(runningBanner);
+      })
+      const runningBanner = $(options.runningBanner || defaultRunningBanner)
+      outputWrapper.append(runningBanner)
 
-      const closeButton = $(options.closeButton || defaultCloseButton).on(
-        "click",
-        function () {
-          $(this).parent().css({ display: "none" });
-        }
-      );
-      outputWrapper.append(closeButton);
+      const closeButton = $(options.closeButton || defaultCloseButton).on("click", function () {
+        $(this).parent().css({ display: "none" })
+      })
+      outputWrapper.append(closeButton)
 
-      const output = $(outputWrapper).children("pre").eq(0);
-      output.css({ display: "none" });
+      const output = $(outputWrapper).children("pre").eq(0)
+      output.css({ display: "none" })
 
       const checkstyle = options.checkstyle || false
-      let timer;
-      const runButton = $(options.runButton || defaultRunButton).on(
-        "click",
-        function () {
-          $(output).text("");
-          timer = setTimeout(() => {
-            $(outputWrapper).css({ display: "block" });
-            runningBanner.css({ display: "block" });
-          }, 100);
-          runWithJeed(server, $(this).prev("code").text(), language, checkstyle)
-            .done((result) => {
-              $(outputWrapper).css({ display: "block" });
-              const jeedOutput = formatJeedResult(result);
-              if (jeedOutput !== "") {
-                $(output).text(formatJeedResult(result));
-              } else {
-                $(output).html(
-                  '<span class="jeed blank">(No output produced)</span>'
-                );
-              }
-              clearTimeout(timer);
-              output.css({ display: "block" });
-              runningBanner.css({ display: "none" });
-            })
-            .fail((xhr, status, error) => {
-              console.error("Request failed");
-              console.error(JSON.stringify(xhr, null, 2));
-              console.error(JSON.stringify(status, null, 2));
-              console.error(JSON.stringify(error, null, 2));
-              $(output).html(
-                '<span class="jeed error">An error occurred</span>'
-              );
-              clearTimeout(timer);
-              output.css({ display: "block" });
-              runningBanner.css({ display: "none" });
-            });
-        }
-      );
+      let timer
+      const runButton = $(options.runButton || defaultRunButton).on("click", function () {
+        $(output).text("")
+        timer = setTimeout(() => {
+          $(outputWrapper).css({ display: "block" })
+          runningBanner.css({ display: "block" })
+        }, 100)
+        runWithJeed(server, $(this).prev("code").text(), language, checkstyle)
+          .done((result) => {
+            $(outputWrapper).css({ display: "block" })
+            const jeedOutput = formatJeedResult(result)
+            if (jeedOutput !== "") {
+              $(output).text(formatJeedResult(result))
+            } else {
+              $(output).html('<span class="jeed blank">(No output produced)</span>')
+            }
+            clearTimeout(timer)
+            output.css({ display: "block" })
+            runningBanner.css({ display: "none" })
+          })
+          .fail((xhr, status, error) => {
+            console.error("Request failed")
+            console.error(JSON.stringify(xhr, null, 2))
+            console.error(JSON.stringify(status, null, 2))
+            console.error(JSON.stringify(error, null, 2))
+            $(output).html('<span class="jeed error">An error occurred</span>')
+            clearTimeout(timer)
+            output.css({ display: "block" })
+            runningBanner.css({ display: "none" })
+          })
+      })
 
-      $(elem).append(runButton);
-      $(elem).append(outputWrapper);
-    });
-  };
-})(jQuery);
+      $(elem).append(runButton)
+      $(elem).append(outputWrapper)
+    })
+  }
+})(jQuery)
