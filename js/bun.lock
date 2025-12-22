@@ -7,9 +7,9 @@
       "name": "demo",
       "version": "2025.12.3",
       "dependencies": {
-        "@cs124/jeed-output": "2025.11.4",
-        "@cs124/jeed-react": "2025.11.4",
-        "@cs124/jeed-types": "2025.11.4",
+        "@cs124/jeed-output": "2025.12.3",
+        "@cs124/jeed-react": "2025.12.3",
+        "@cs124/jeed-types": "2025.12.3",
         "next": "15.5.6",
         "react": "19.2.3",
         "react-ace": "14.0.1",
@@ -27,6 +27,7 @@
         "prettier": "3.7.4",
         "prettier-package-json": "2.8.0",
         "prettier-plugin-organize-imports": "4.3.0",
+        "rimraf": "6.1.2",
         "sass": "1.97.1",
         "typescript": "5.9.3",
       },
@@ -50,7 +51,7 @@
       "name": "@cs124/jeed-output",
       "version": "2025.12.3",
       "dependencies": {
-        "@cs124/jeed-types": "2025.11.4",
+        "@cs124/jeed-types": "2025.12.3",
       },
       "devDependencies": {
         "@eslint/js": "9.39.2",

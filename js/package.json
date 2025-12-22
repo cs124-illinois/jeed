@@ -6,6 +6,6 @@
     "build:all": "bun run --cwd types build && bun run --cwd jquery build && bun run --cwd output build && bun run --cwd react build && bun run --cwd proxy build && bun run --cwd demo build",
     "check:all": "bun run --cwd types check && bun run --cwd jquery prettier && bun run --cwd output check && bun run --cwd react check && bun run --cwd proxy check && bun run --cwd demo check",
     "ncu:all": "cd types && ncu -u && cd ../output && ncu -u && cd ../react && ncu -u && cd ../proxy && ncu -u && cd ../demo && ncu -u && cd ../jquery && ncu -u",
-    "publish:all": "bun run --cwd types publish && bun run --cwd output publish && bun run --cwd react publish"
+    "publish:all": "cd types && npm publish && cd ../output && npm publish && cd ../react && npm publish && cd ../proxy && bun run docker:build && bun run docker:push && cd ../demo && bun run export && bun run deploy"
   }
 }
