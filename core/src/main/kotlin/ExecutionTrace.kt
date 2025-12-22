@@ -45,7 +45,7 @@ object ExecutionTrace : SandboxPluginWithDefaultArguments<ExecutionTraceArgument
             Opcodes.LASTORE to Type.LONG_TYPE,
             Opcodes.FASTORE to Type.FLOAT_TYPE,
             Opcodes.DASTORE to Type.DOUBLE_TYPE,
-            Opcodes.AASTORE to Type.getType(Object::class.java),
+            Opcodes.AASTORE to Type.getType(Any::class.java),
             Opcodes.CASTORE to Type.CHAR_TYPE,
             Opcodes.SASTORE to Type.SHORT_TYPE,
         )
@@ -243,7 +243,7 @@ object ExecutionTrace : SandboxPluginWithDefaultArguments<ExecutionTraceArgument
             val chainEpilogue = InsnList()
             chainEpilogue.add(VarInsnNode(Opcodes.ALOAD, 0))
             val afterChainHandle = TracingSupport::bootstrapAfterChain.asAsmHandle()
-            val afterChainDesc = Type.getMethodDescriptor(Type.VOID_TYPE, Type.getType(Object::class.java))
+            val afterChainDesc = Type.getMethodDescriptor(Type.VOID_TYPE, Type.getType(Any::class.java))
             chainEpilogue.add(InvokeDynamicInsnNode(methodKey, afterChainDesc, afterChainHandle))
             method.instructions.insert(chainInvokespecial, chainEpilogue)
             val preChainHandlerLabel = LabelNode()

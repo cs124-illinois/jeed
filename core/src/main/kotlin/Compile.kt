@@ -48,7 +48,7 @@ val standardFileManager: JavaFileManager = run {
         }
     }
 }
-private val standardFileManagerSyncRoot = Object()
+private val standardFileManagerSyncRoot = Any()
 
 @Suppress("SpellCheckingInspection")
 private var lastMultireleaseOperand: String? = null

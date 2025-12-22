@@ -696,7 +696,7 @@ object Sandbox {
             plugin to plugin.createInitialData(instrumentationData, executionArguments)
         }
 
-        private val isolatedLocksSyncRoot = Object()
+        private val isolatedLocksSyncRoot = Any()
         private val isolatedLocks = IdentityHashMap<Any, ReentrantLock>()
         private val isolatedConditions = IdentityHashMap<Any, Condition>()
 
@@ -1693,7 +1693,7 @@ object Sandbox {
                 }
                 val rewriteTarget = if (!isInterface &&
                     opcode == Opcodes.INVOKEVIRTUAL &&
-                    owner == classNameToPath(Object::class.java.name)
+                    owner == classNameToPath(Any::class.java.name)
                 ) {
                     syncNotifyMethods["$name:$descriptor"]
                 } else {

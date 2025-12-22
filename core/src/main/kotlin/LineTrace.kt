@@ -201,7 +201,7 @@ object LineTrace : SandboxPluginWithDefaultArguments<LineTraceArguments, LineTra
         val threads: MutableMap<Int, PerThreadWorkingData> = mutableMapOf(),
         var nextThreadIndex: Int = LineTraceResult.MAIN_THREAD,
         val lineCallbacks: MutableList<LineCallback> = mutableListOf(),
-        val threadTrackingSyncRoot: Any = Object(),
+        val threadTrackingSyncRoot: Any = Any(),
     ) {
         class PerThreadWorkingData(
             var linesRun: Long = 0,
@@ -210,7 +210,7 @@ object LineTrace : SandboxPluginWithDefaultArguments<LineTraceArguments, LineTra
             var lastLabelSequence: Int? = null,
             var unsynchronizedLines: Int = 0,
             var linesRunByOtherThreads: Long = 0,
-            val syncLock: Any = Object(),
+            val syncLock: Any = Any(),
         )
     }
 

@@ -12,6 +12,7 @@ import java.io.InputStreamReader
 import java.time.Instant
 import java.util.UUID
 import java.util.concurrent.TimeUnit
+import kotlin.io.path.createTempDirectory
 
 private val CONTAINER_TMP_DIR = System.getenv("JEED_CONTAINER_TMP_DIR")
 
@@ -194,8 +195,7 @@ class StreamGobbler(
 }
 
 suspend fun <T> withTempDir(root: File? = null, f: suspend (directory: File) -> T): T {
-    @Suppress("DEPRECATION", "SpellCheckingInspection")
-    val directory = createTempDir("containerrunner", null, root)
+    val directory = createTempDirectory(root?.toPath(), "containerrunner").toFile()
     return try {
         f(directory)
     } finally {
