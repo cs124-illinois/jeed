@@ -30,8 +30,8 @@ configurations.all {
 dependencies {
     antlr("org.antlr:antlr4:4.13.2")
 
-    implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:2.2.21")
-    implementation("org.jetbrains.kotlin:kotlin-reflect:2.2.21")
+    implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:2.3.0")
+    implementation("org.jetbrains.kotlin:kotlin-reflect:2.3.0")
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
@@ -52,7 +52,7 @@ dependencies {
 
     api("org.jacoco:org.jacoco.core:0.8.14")
     api("com.github.ben-manes.caffeine:caffeine:3.2.3")
-    api("ch.qos.logback:logback-classic:1.5.22")
+    api("ch.qos.logback:logback-classic:1.5.23")
     api("io.github.microutils:kotlin-logging:3.0.5")
     api("io.github.classgraph:classgraph:4.8.184")
 
