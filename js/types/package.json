@@ -1,6 +1,6 @@
 {
   "name": "@cs124/jeed-types",
-  "version": "2025.12.3",
+  "version": "2025.12.4",
   "license": "MIT",
   "main": "dist/index.js",
   "scripts": {
@@ -44,6 +44,6 @@
     "ts-mocha": "11.1.0",
     "ts-node": "10.9.2",
     "typescript": "5.9.3",
-    "typescript-eslint": "8.50.0"
+    "typescript-eslint": "8.51.0"
   }
 }

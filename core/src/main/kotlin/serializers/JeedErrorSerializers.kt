@@ -25,7 +25,10 @@ import kotlinx.serialization.encoding.Encoder
 
 // Serializers for JeedError subclasses - serialize as objects with error lists
 @Serializable
-data class SnippetTransformationFailedJson(val errors: List<SourceError>)
+data class SnippetTransformationErrorJson(val line: Int, val column: Int, val message: String)
+
+@Serializable
+data class SnippetTransformationFailedJson(val errors: List<SnippetTransformationErrorJson>)
 
 @Serializable
 data class TemplatingFailedJson(val errors: List<SourceError>)
@@ -55,14 +58,21 @@ object SnippetTransformationFailedSerializer : KSerializer<SnippetTransformation
     override val descriptor: SerialDescriptor = SnippetTransformationFailedJson.serializer().descriptor
 
     override fun serialize(encoder: Encoder, value: SnippetTransformationFailed) {
-        val json = SnippetTransformationFailedJson(value.errors)
+        val json = SnippetTransformationFailedJson(
+            value.errors.map { error ->
+                SnippetTransformationErrorJson(error.location.line, error.location.column, error.message)
+            },
+        )
         encoder.encodeSerializableValue(SnippetTransformationFailedJson.serializer(), json)
     }
 
     override fun deserialize(decoder: Decoder): SnippetTransformationFailed {
         val json = decoder.decodeSerializableValue(SnippetTransformationFailedJson.serializer())
-        @Suppress("UNCHECKED_CAST")
-        return SnippetTransformationFailed(json.errors as List<SnippetTransformationError>)
+        return SnippetTransformationFailed(
+            json.errors.map { error ->
+                SnippetTransformationError(error.line, error.column, error.message)
+            },
+        )
     }
 }
 

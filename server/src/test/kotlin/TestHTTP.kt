@@ -21,6 +21,9 @@ import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.testing.testApplication
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
 
 @Suppress("LargeClass")
 class TestHTTP : StringSpec() {
@@ -673,6 +676,42 @@ class Main {
                     jeedResponse.completedTasks.size shouldBe 0
                     jeedResponse.failedTasks.size shouldBe 1
                     (jeedResponse.failed.snippet?.errors?.size ?: 0) shouldBeGreaterThan 0
+                }
+            }
+        }
+        "should serialize snippet errors with flat line and column fields" {
+            testApplication {
+                application {
+                    jeed()
+                }
+                client.post("/") {
+                    header("content-type", "application/json")
+                    setBody(
+                        """
+{
+"label": "test",
+"snippet": "int i = 0\nprint(\"Hello\")",
+"tasks": [ "snippet" ]
+}""".trim(),
+                    )
+                }.also { response ->
+                    response.status shouldBe HttpStatusCode.OK
+
+                    val responseText = response.bodyAsText()
+                    val jeedResponse = Response.from(responseText)
+                    jeedResponse.failedTasks.size shouldBe 1
+                    (jeedResponse.failed.snippet?.errors?.size ?: 0) shouldBeGreaterThan 0
+
+                    // Verify JSON structure has flat line/column (not nested in location)
+                    val parsed = Json.parseToJsonElement(responseText).jsonObject
+                    val snippetErrors = parsed["failed"]!!.jsonObject["snippet"]!!.jsonObject["errors"]!!.jsonArray
+                    snippetErrors.forEach { errorElement ->
+                        val error = errorElement.jsonObject
+                        error.containsKey("line") shouldBe true
+                        error.containsKey("column") shouldBe true
+                        error.containsKey("message") shouldBe true
+                        error.containsKey("location") shouldBe false
+                    }
                 }
             }
         }

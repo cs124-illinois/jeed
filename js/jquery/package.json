@@ -1,7 +1,7 @@
 {
   "private": true,
   "name": "@cs125/jeed-jquery",
-  "version": "2025.12.3",
+  "version": "2025.12.4",
   "scripts": {
     "build": "babel jeed.js -d build/",
     "jeed": "docker run -p 8888:8888 -e HOSTS=http://localhost:1234 cs125/jeed:latest",

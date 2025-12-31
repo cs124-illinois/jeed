@@ -8,6 +8,10 @@ import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
 
 class TestSnippet :
     StringSpec({
@@ -1182,6 +1186,31 @@ println(second.modify(3))
 println(third["test"]!!["test"])
             """.trim(),
             )
+        }
+        "should have line numbers for all snippet transformation errors" {
+            val exception = shouldThrow<SnippetTransformationFailed> {
+                Source.fromJavaSnippet(
+                    """
+int i = 0
+print("Hello, {}".format(i))
+                    """.trim(),
+                )
+            }
+            exception.errors.forEach { error ->
+                error.location.line shouldNotBe 0
+            }
+            // Test JSON serialization - line and column should be flat (not nested in location)
+            val json = Json.encodeToString(exception)
+            val parsed = Json.parseToJsonElement(json).jsonObject
+            val errors = parsed["errors"]!!.jsonArray
+            errors.size shouldBe exception.errors.size
+            errors.forEach { errorElement ->
+                val error = errorElement.jsonObject
+                error.containsKey("line") shouldBe true
+                error.containsKey("column") shouldBe true
+                error.containsKey("message") shouldBe true
+                error.containsKey("location") shouldBe false
+            }
         }
     })
 

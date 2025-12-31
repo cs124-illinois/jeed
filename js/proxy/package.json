@@ -1,7 +1,7 @@
 {
   "private": true,
   "name": "proxy",
-  "version": "2025.12.3",
+  "version": "2025.12.4",
   "scripts": {
     "build": "rimraf bundled && node esbuild/server.mjs",
     "check": "bun run depcheck && bun run prettier && bun run eslint && bun run tsc && bun run build",
@@ -17,7 +17,7 @@
     "tsc": "tsc --noEmit"
   },
   "dependencies": {
-    "@cs124/jeed-types": "2025.12.3",
+    "@cs124/jeed-types": "2025.12.4",
     "@koa/cors": "5.0.0",
     "@koa/router": "15.1.1",
     "@panva/hkdf": "1.2.1",
@@ -52,7 +52,7 @@
     "prettier-plugin-organize-imports": "4.3.0",
     "rimraf": "6.1.2",
     "typescript": "5.9.3",
-    "typescript-eslint": "8.50.0"
+    "typescript-eslint": "8.51.0"
   },
   "watch": {
     "build": {

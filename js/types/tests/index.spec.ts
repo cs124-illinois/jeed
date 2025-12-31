@@ -4,7 +4,7 @@ import yaml from "js-yaml"
 import _ from "lodash"
 import { describe } from "mocha"
 import { String } from "runtypes"
-import { Request, Response, ServerStatus, TaskArguments } from "../src"
+import { Request, Response, ServerStatus, SnippetTransformationFailed, TaskArguments } from "../src"
 
 require("isomorphic-fetch")
 
@@ -96,5 +96,29 @@ describe("Java", function () {
         .then(() => done())
         .catch((err) => done(err))
     })
+  })
+})
+
+describe("SnippetTransformationFailed", function () {
+  it("should validate errors with flat line and column fields", function () {
+    const validResponse = {
+      errors: [
+        { line: 2, column: 0, message: "missing ';' at 'print'" },
+        { line: 2, column: 29, message: "missing ';'" },
+      ],
+    }
+    SnippetTransformationFailed.check(validResponse)
+  })
+
+  it("should reject errors with nested location", function () {
+    const invalidResponse = {
+      errors: [{ location: { source: "", line: 2, column: 0 }, message: "missing ';'" }],
+    }
+    try {
+      SnippetTransformationFailed.check(invalidResponse)
+      throw new Error("Should have thrown")
+    } catch (err) {
+      // Expected to fail validation
+    }
   })
 })
