@@ -864,6 +864,56 @@ System.out.println(\"Here\");
                 }
             }
         }
+        "should serialize checkstyle errors with severity field" {
+            testApplication {
+                application {
+                    jeed()
+                }
+                client.post("/") {
+                    header("content-type", "application/json")
+                    setBody(
+                        """
+{
+"label": "test",
+"arguments": {
+  "checkstyle": {
+    "failOnError": true
+  }
+},
+"sources": [
+  {
+    "path": "Main.java",
+    "contents": "
+public class Main {
+public static void main() {
+System.out.println(\"Here\");
+}
+}"
+  }
+],
+"tasks": [ "checkstyle" ]
+}""".trim(),
+                    )
+                }.also { response ->
+                    response.status shouldBe HttpStatusCode.OK
+
+                    val responseText = response.bodyAsText()
+                    val jeedResponse = Response.from(responseText)
+                    jeedResponse.failedTasks.size shouldBe 1
+                    (jeedResponse.failed.checkstyle?.errors?.size ?: 0) shouldBeGreaterThan 0
+
+                    // Verify JSON structure has severity field
+                    val parsed = Json.parseToJsonElement(responseText).jsonObject
+                    val checkstyleErrors = parsed["failed"]!!.jsonObject["checkstyle"]!!.jsonObject["errors"]!!.jsonArray
+                    checkstyleErrors.forEach { errorElement ->
+                        val error = errorElement.jsonObject
+                        error.containsKey("severity") shouldBe true
+                        error.containsKey("location") shouldBe true
+                        error.containsKey("message") shouldBe true
+                    }
+                }
+            }
+        }
         "should return checkstyle results when not configured to fail" {
             testApplication {
                 application {

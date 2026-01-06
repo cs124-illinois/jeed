@@ -31,7 +31,10 @@ data class SnippetTransformationErrorJson(val line: Int, val column: Int, val me
 data class SnippetTransformationFailedJson(val errors: List<SnippetTransformationErrorJson>)
 
 @Serializable
-data class TemplatingFailedJson(val errors: List<SourceError>)
+data class TemplatingErrorJson(val name: String, val line: Int, val column: Int, val message: String)
+
+@Serializable
+data class TemplatingFailedJson(val errors: List<TemplatingErrorJson>)
 
 @Serializable
 data class CompilationFailedJson(
@@ -40,10 +43,25 @@ data class CompilationFailedJson(
 )
 
 @Serializable
-data class CheckstyleFailedJson(val errors: List<SourceError>)
+data class CheckstyleErrorJson(
+    val severity: String,
+    val location: SourceLocation,
+    val message: String,
+    val sourceName: String = "",
+)
 
 @Serializable
-data class KtLintFailedJson(val errors: List<SourceError>)
+data class CheckstyleFailedJson(val errors: List<CheckstyleErrorJson>)
+
+@Serializable
+data class KtLintErrorJson(
+    val ruleId: String,
+    val detail: String,
+    val location: SourceLocation,
+)
+
+@Serializable
+data class KtLintFailedJson(val errors: List<KtLintErrorJson>)
 
 @Serializable
 data class ComplexityFailedJson(val errors: List<SourceError>)
@@ -80,14 +98,22 @@ object TemplatingFailedSerializer : KSerializer<TemplatingFailed> {
     override val descriptor: SerialDescriptor = TemplatingFailedJson.serializer().descriptor
 
     override fun serialize(encoder: Encoder, value: TemplatingFailed) {
-        val json = TemplatingFailedJson(value.errors)
+        val json = TemplatingFailedJson(
+            value.errors.map { error ->
+                error as TemplatingError
+                TemplatingErrorJson(error.location.source, error.location.line, error.location.column, error.message)
+            },
+        )
         encoder.encodeSerializableValue(TemplatingFailedJson.serializer(), json)
     }
 
     override fun deserialize(decoder: Decoder): TemplatingFailed {
         val json = decoder.decodeSerializableValue(TemplatingFailedJson.serializer())
-        @Suppress("UNCHECKED_CAST")
-        return TemplatingFailed(json.errors as List<TemplatingError>)
+        return TemplatingFailed(
+            json.errors.map { error ->
+                TemplatingError(error.name, error.line, error.column, error.message)
+            },
+        )
     }
 }
 
@@ -110,14 +136,22 @@ object CheckstyleFailedSerializer : KSerializer<CheckstyleFailed> {
     override val descriptor: SerialDescriptor = CheckstyleFailedJson.serializer().descriptor
 
     override fun serialize(encoder: Encoder, value: CheckstyleFailed) {
-        val json = CheckstyleFailedJson(value.errors)
+        val json = CheckstyleFailedJson(
+            value.errors.map { error ->
+                error as CheckstyleError
+                CheckstyleErrorJson(error.severity, error.location, error.message, error.sourceName)
+            },
+        )
         encoder.encodeSerializableValue(CheckstyleFailedJson.serializer(), json)
     }
 
     override fun deserialize(decoder: Decoder): CheckstyleFailed {
         val json = decoder.decodeSerializableValue(CheckstyleFailedJson.serializer())
-        @Suppress("UNCHECKED_CAST")
-        return CheckstyleFailed(json.errors as List<CheckstyleError>)
+        return CheckstyleFailed(
+            json.errors.map { error ->
+                CheckstyleError(error.severity, null, error.location, error.message, error.sourceName)
+            },
+        )
     }
 }
 
@@ -125,14 +159,22 @@ object KtLintFailedSerializer : KSerializer<KtLintFailed> {
     override val descriptor: SerialDescriptor = KtLintFailedJson.serializer().descriptor
 
     override fun serialize(encoder: Encoder, value: KtLintFailed) {
-        val json = KtLintFailedJson(value.errors)
+        val json = KtLintFailedJson(
+            value.errors.map { error ->
+                error as KtLintError
+                KtLintErrorJson(error.ruleId, error.detail, error.location)
+            },
+        )
         encoder.encodeSerializableValue(KtLintFailedJson.serializer(), json)
     }
 
     override fun deserialize(decoder: Decoder): KtLintFailed {
         val json = decoder.decodeSerializableValue(KtLintFailedJson.serializer())
-        @Suppress("UNCHECKED_CAST")
-        return KtLintFailed(json.errors as List<KtLintError>)
+        return KtLintFailed(
+            json.errors.map { error ->
+                KtLintError(error.ruleId, error.detail, error.location)
+            },
+        )
     }
 }
 
@@ -178,23 +220,13 @@ object MutationsFailedSerializer : KSerializer<MutationsFailed> {
     }
 }
 
-// Serializers for specific error types
-@Serializable
-data class CheckstyleErrorJson(
-    val severity: String,
-    val key: String?,
-    val location: SourceLocation,
-    val message: String,
-    val sourceName: String = "",
-)
-
+// Serializers for specific error types - CheckstyleErrorJson is defined above with CheckstyleFailedJson
 object CheckstyleErrorSerializer : KSerializer<CheckstyleError> {
     override val descriptor: SerialDescriptor = CheckstyleErrorJson.serializer().descriptor
 
     override fun serialize(encoder: Encoder, value: CheckstyleError) {
         val json = CheckstyleErrorJson(
             severity = value.severity,
-            key = value.key,
             location = value.location,
             message = value.message,
             sourceName = value.sourceName,
@@ -206,7 +238,7 @@ object CheckstyleErrorSerializer : KSerializer<CheckstyleError> {
         val json = decoder.decodeSerializableValue(CheckstyleErrorJson.serializer())
         return CheckstyleError(
             severity = json.severity,
-            key = json.key,
+            key = null,
             location = json.location,
             message = json.message,
             sourceName = json.sourceName,
@@ -214,13 +246,7 @@ object CheckstyleErrorSerializer : KSerializer<CheckstyleError> {
     }
 }
 
-@Serializable
-data class KtLintErrorJson(
-    val ruleId: String,
-    val detail: String,
-    val location: SourceLocation,
-)
-
+// KtLintErrorJson is defined above with KtLintFailedJson
 object KtLintErrorSerializer : KSerializer<KtLintError> {
     override val descriptor: SerialDescriptor = KtLintErrorJson.serializer().descriptor
 
