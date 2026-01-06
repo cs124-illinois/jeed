@@ -10,6 +10,7 @@ import edu.illinois.cs.cs125.jeed.core.Sandbox
 import edu.illinois.cs.cs125.jeed.core.SnippetArguments
 import edu.illinois.cs.cs125.jeed.core.SourceExecutionArguments
 import kotlinx.serialization.Contextual
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import java.security.Permission
 
@@ -36,7 +37,7 @@ class TaskArguments(
     val compilation: CompilationArguments = CompilationArguments(),
     val kompilation: KompilationArguments = KompilationArguments(),
     val checkstyle: CheckstyleArguments = CheckstyleArguments(),
-    val ktlint: KtLintArguments = KtLintArguments(),
+    @SerialName("ktLint") val ktlint: KtLintArguments = KtLintArguments(),
     // val complexity: currently accepts no arguments
     val execution: ServerSourceExecutionArguments = ServerSourceExecutionArguments(),
     val cexecution: ContainerExecutionArguments = ContainerExecutionArguments(),

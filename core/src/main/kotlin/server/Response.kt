@@ -27,6 +27,7 @@ import edu.illinois.cs.cs125.jeed.core.SnippetTransformationFailed
 import edu.illinois.cs.cs125.jeed.core.SourceRange
 import edu.illinois.cs.cs125.jeed.core.TemplatingFailed
 import edu.illinois.cs.cs125.jeed.core.UnitFeatures
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -37,7 +38,7 @@ class CompletedTasks(
     var compilation: CompiledSourceResult? = null,
     var kompilation: CompiledSourceResult? = null,
     var checkstyle: CheckstyleResults? = null,
-    var ktlint: KtLintResults? = null,
+    @SerialName("ktLint") var ktlint: KtLintResults? = null,
     var complexity: FlatComplexityResults? = null,
     var execution: SourceTaskResults? = null,
     var cexecution: ContainerExecutionResults? = null,
@@ -54,7 +55,7 @@ class FailedTasks(
     var compilation: CompilationFailed? = null,
     var kompilation: CompilationFailed? = null,
     var checkstyle: CheckstyleFailed? = null,
-    var ktlint: KtLintFailed? = null,
+    @SerialName("ktLint") var ktlint: KtLintFailed? = null,
     var complexity: ComplexityFailed? = null,
     var execution: ExecutionFailedResult? = null,
     var cexecution: ExecutionFailedResult? = null,

@@ -914,6 +914,52 @@ System.out.println(\"Here\");
                 }
             }
         }
+        "should serialize ktlint errors with correct JSON key" {
+            testApplication {
+                application {
+                    jeed()
+                }
+                client.post("/") {
+                    header("content-type", "application/json")
+                    setBody(
+                        """
+{
+"label": "test",
+"arguments": {
+  "ktLint": {
+    "failOnError": true
+  }
+},
+"sources": [
+  {
+    "path": "Main.kt",
+    "contents": "fun main() {\nprintln(\"Here\")\n}"
+  }
+],
+"tasks": [ "ktlint" ]
+}""".trim(),
+                    )
+                }.also { response ->
+                    response.status shouldBe HttpStatusCode.OK
+
+                    val responseText = response.bodyAsText()
+                    val jeedResponse = Response.from(responseText)
+                    jeedResponse.failedTasks.size shouldBe 1
+                    (jeedResponse.failed.ktlint?.errors?.size ?: 0) shouldBeGreaterThan 0
+
+                    // Verify JSON structure uses ktLint key (camelCase) and has correct fields
+                    val parsed = Json.parseToJsonElement(responseText).jsonObject
+                    parsed["failed"]!!.jsonObject.containsKey("ktLint") shouldBe true
+                    val ktlintErrors = parsed["failed"]!!.jsonObject["ktLint"]!!.jsonObject["errors"]!!.jsonArray
+                    ktlintErrors.forEach { errorElement ->
+                        val error = errorElement.jsonObject
+                        error.containsKey("ruleId") shouldBe true
+                        error.containsKey("detail") shouldBe true
+                        error.containsKey("location") shouldBe true
+                    }
+                }
+            }
+        }
         "should return checkstyle results when not configured to fail" {
             testApplication {
                 application {
