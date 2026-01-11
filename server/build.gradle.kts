@@ -8,7 +8,7 @@ plugins {
     application
     `maven-publish`
     signing
-    id("com.gradleup.shadow") version "9.3.0"
+    id("com.gradleup.shadow") version "9.3.1"
     id("org.jmailen.kotlinter")
     id("io.gitlab.arturbosch.detekt")
     id("com.google.devtools.ksp")
@@ -38,7 +38,7 @@ dependencies {
     implementation("com.beyondgrader.resource-agent:jeedplugin:$agentVersion")
 
     // Libraries for student use
-    implementation("org.cs124:libcs1:2025.12.0")
+    implementation("org.cs124:libcs1:2026.1.0")
     implementation("io.kotest:kotest-runner-junit5:6.0.7")
     implementation("com.google.truth:truth:1.4.5")
 
