@@ -1,5 +1,6 @@
 package edu.illinois.cs.cs125.jeed.core
 
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.beEmpty
 import io.kotest.matchers.collections.shouldBeIn
@@ -21,7 +22,6 @@ import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.string.endWith
 import io.kotest.matchers.string.shouldStartWith
 import io.kotest.matchers.types.beInstanceOf
-import org.junit.jupiter.api.assertThrows
 import java.lang.reflect.InvocationTargetException
 
 class TestLineTrace :
@@ -880,7 +880,7 @@ public class Main {
   }
 }""".trim(),
             )
-            assertThrows<IllegalStateException> {
+            shouldThrow<IllegalStateException> {
                 source.compile().execute(SourceExecutionArguments().addPlugin(LineTrace).addPlugin(LineTrace))
             }.message shouldStartWith "Duplicate plugin: edu.illinois.cs.cs125.jeed.core.LineTrace"
         }

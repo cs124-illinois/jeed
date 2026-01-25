@@ -8,7 +8,6 @@ import io.kotest.matchers.collections.beEmpty
 import io.kotest.matchers.collections.shouldHaveAtLeastSize
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
-import org.junit.jupiter.api.assertThrows
 import java.io.IOException
 import java.lang.IllegalStateException
 
@@ -93,7 +92,7 @@ public class Main {
   public static void main() { }
 }""",
             ).compile()
-            assertThrows<IOException> {
+            shouldThrow<IOException> {
                 // Jacoco refuses to re-instrument, which is good
                 source.execute(SourceExecutionArguments().addPlugin(Jacoco))
             }
@@ -165,7 +164,7 @@ fun main() {
                 results.pluginResult(Jacoco).classes.find { it.name == "PingPonger" }!!.allMissedLines() should beEmpty()
             }
             // LineTrace before doesn't (because LineTrace interferes with Jacoco's avoidance of hash-collision branches)
-            assertThrows<IllegalStateException> {
+            shouldThrow<IllegalStateException> {
                 compiledSource.execute(SourceExecutionArguments().addPlugin(LineTrace).addPlugin(Jacoco))
             }
         }

@@ -12,6 +12,7 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 
 @Suppress("LargeClass")
+@OptIn(io.kotest.common.KotestInternal::class)
 class TestJavaFeatures : StringSpec() {
     override suspend fun beforeSpec(spec: Spec) {
         seenJavaFeatures.clear()

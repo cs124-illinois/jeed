@@ -337,16 +337,14 @@ try {
             val firstFailed = runCatching {
                 source.compile(CompilationArguments(useCache = true, waitForCache = true))
             }.exceptionOrNull()
-            firstFailed.shouldBeTypeOf<CompilationFailed>()
-            val firstData = (firstFailed as CompilationFailed).compilationData!!
+            val firstData = firstFailed.shouldBeTypeOf<CompilationFailed>().compilationData!!
             firstData.cached shouldBe false
 
             // Second compilation - should fail but hit cache and be faster
             val secondFailed = runCatching {
                 source.compile(CompilationArguments(useCache = true, waitForCache = true))
             }.exceptionOrNull()
-            secondFailed.shouldBeTypeOf<CompilationFailed>()
-            val secondData = (secondFailed as CompilationFailed).compilationData!!
+            val secondData = secondFailed.shouldBeTypeOf<CompilationFailed>().compilationData!!
             secondData.cached shouldBe true
             secondData.interval.length shouldBeLessThan firstData.interval.length
 

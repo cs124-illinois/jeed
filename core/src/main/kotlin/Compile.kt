@@ -46,12 +46,12 @@ val standardFileManager: JavaFileManager = run {
         check(results.diagnostics.isEmpty()) {
             "fileManager generated errors ${results.diagnostics}"
         }
+        // Set multi-release once at startup to avoid needing synchronization later
+        it.handleOption("--multi-release", listOf(Runtime.version().feature().toString()).iterator())
+        // Warm up the file manager's caches to avoid concurrent modification during initialization
+        it.list(StandardLocation.CLASS_PATH, "", setOf(JavaFileObject.Kind.CLASS), false)
     }
 }
-private val standardFileManagerSyncRoot = Any()
-
-@Suppress("SpellCheckingInspection")
-private var lastMultireleaseOperand: String? = null
 
 @Suppress("PropertyName", "SpellCheckingInspection")
 @Serializable
@@ -180,17 +180,7 @@ internal fun compileToFileManager(
         options.add("-g")
     }
 
-    val runCompilation = {
-        systemCompiler.getTask(null, fileManager, results, options.toList(), null, units).call()
-    }
-    if (parentFileManager == null || parentFileManager is JeedFileManager) {
-        runCompilation()
-    } else {
-        // Custom file manager might not handle concurrency correctly
-        synchronized(standardFileManagerSyncRoot) {
-            runCompilation()
-        }
-    }
+    systemCompiler.getTask(null, fileManager, results, options.toList(), null, units).call()
 
     fun getMappedLocation(diagnostic: Diagnostic<out JavaFileObject>): SourceLocation? = diagnostic
         .let { if (it.source == null) null else it }
@@ -465,9 +455,7 @@ class JeedFileManager(
         kinds: MutableSet<JavaFileObject.Kind>,
         recurse: Boolean,
     ): MutableIterable<JavaFileObject> {
-        val parentList = synchronized(standardFileManagerSyncRoot) {
-            super.list(location, packageName, kinds, recurse)
-        }
+        val parentList = super.list(location, packageName, kinds, recurse)
         return if (!kinds.contains(JavaFileObject.Kind.CLASS)) {
             parentList
         } else {
@@ -495,18 +483,10 @@ class JeedFileManager(
     }
 
     @Suppress("SpellCheckingInspection")
-    override fun handleOption(current: String?, remaining: MutableIterator<String>?): Boolean = if (parentFileManager === standardFileManager && current == "--multi-release") {
-        val operand = remaining?.next() ?: error("MULTIRELEASE should have an operand")
-        synchronized(standardFileManagerSyncRoot) {
-            if (operand != lastMultireleaseOperand) {
-                require(lastMultireleaseOperand == null) { "MULTIRELEASE should not have changed" }
-                lastMultireleaseOperand = operand
-                super.handleOption(current, listOf(operand).iterator())
-            } else {
-                // Prevent JavacFileManager from clearing its caches, which would break concurrent tasks
-                true
-            }
-        }
+    override fun handleOption(current: String?, remaining: MutableIterator<String>?): Boolean = if (current == "--multi-release") {
+        // Consume the operand but ignore it - multi-release is set once at startup on standardFileManager
+        remaining?.next()
+        true
     } else {
         super.handleOption(current, remaining)
     }

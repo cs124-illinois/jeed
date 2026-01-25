@@ -9,6 +9,7 @@ import edu.illinois.cs.cs125.jeed.core.fromSnippet
 import edu.illinois.cs.cs125.jeed.core.haveCompleted
 import edu.illinois.cs.cs125.jeed.core.haveOutput
 import edu.illinois.cs.cs125.jeed.core.haveTimedOut
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
@@ -18,7 +19,6 @@ import io.kotest.matchers.string.shouldStartWith
 import io.kotest.matchers.types.beInstanceOf
 import io.kotest.matchers.types.shouldBeTypeOf
 import kotlinx.coroutines.async
-import org.junit.jupiter.api.assertThrows
 
 class TestByteCodeRewriters :
     StringSpec({
@@ -784,7 +784,7 @@ public class Main {
                 ),
             ).compile().execute()
             executionResult should haveCompleted()
-            assertThrows<SecurityException> { executionResult.returned!!.toString() }
+            shouldThrow<SecurityException> { executionResult.returned!!.toString() }
         }
         "should prevent custom exceptions from escaping the sandbox" {
             val executionResult = Source(
