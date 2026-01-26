@@ -13,7 +13,7 @@ plugins {
     id("io.github.gradle-nexus.publish-plugin") version "2.0.0"
     id("com.adarshr.test-logger") version "4.0.0" apply false
 }
-val agentVersion by extra { "2026.1.1" }
+val agentVersion by extra { "2026.1.2" }
 allprojects {
     group = "org.cs124.jeed"
     version = "2026.1.3"
