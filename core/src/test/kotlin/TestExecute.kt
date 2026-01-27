@@ -598,6 +598,51 @@ System.out.println(new Date(t).toString());
                 it should haveCompleted()
             }
         }
+        "should not fail on Date.toInstant" {
+            Source.fromSnippet(
+                """
+import java.util.Date;
+long millis = 1602106609897L;
+System.out.println(new Date(millis).toInstant().toString());
+            """.trim(),
+            ).compile().execute().also {
+                it should haveCompleted()
+                it shouldNot havePermissionDenied()
+            }
+        }
+        "should not fail on SimpleDateFormat" {
+            Source.fromSnippet(
+                """
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.TimeZone;
+long millis = 1602106609897L;
+SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+simpleDateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+System.out.println(simpleDateFormat.format(new Date(millis)));
+            """.trim(),
+            ).compile().execute().also {
+                it should haveCompleted()
+                it shouldNot havePermissionDenied()
+            }
+        }
+        "should not fail on SimpleDateFormat with uncommon locale" {
+            Source.fromSnippet(
+                """
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
+import java.util.TimeZone;
+long millis = 1602106609897L;
+SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.forLanguageTag("zh-Hans-CN"));
+simpleDateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+System.out.println(simpleDateFormat.format(new Date(millis)));
+            """.trim(),
+            ).compile().execute().also {
+                it should haveCompleted()
+                it shouldNot havePermissionDenied()
+            }
+        }
         "should print records" {
             Source.fromSnippet(
                 """record Person(String name, int age) {}
@@ -790,6 +835,17 @@ fun haveCombinedInputOutput(io: String) = object : Matcher<Sandbox.TaskResults<o
             actualInputOutput == io,
             { "Expected combined input/output $io, found $actualInputOutput" },
             { "Expected to not find combined input/output $actualInputOutput" },
+        )
+    }
+}
+
+fun havePermissionDenied() = object : Matcher<Sandbox.TaskResults<out Any?>> {
+    override fun test(value: Sandbox.TaskResults<out Any?>): MatcherResult {
+        val denied = value.permissionRequests.filter { !it.granted }
+        return MatcherResult(
+            denied.isNotEmpty(),
+            { "Expected denied permissions, but all were granted" },
+            { "Expected no denied permissions, but found: ${denied.map { it.permission }}" },
         )
     }
 }

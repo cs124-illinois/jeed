@@ -369,6 +369,14 @@ object Sandbox {
         RuntimePermission("modifyThreadGroup"),
     )
 
+    // Permissions that are safe to allow and needed for common operations like date formatting
+    // These are automatically included in whitelist mode
+    val SAFE_PERMISSIONS = setOf(
+        // Required for SimpleDateFormat and locale-sensitive date/time operations
+        RuntimePermission("accessClassInPackage.sun.util.resources"),
+        RuntimePermission("accessClassInPackage.sun.util.locale.provider"),
+    )
+
     suspend fun <T> execute(
         sandboxedClassLoader: SandboxedClassLoader,
         executionArguments: ExecutionArguments,
@@ -644,6 +652,10 @@ object Sandbox {
         val permissionBlacklist = executionArguments.permissionBlacklist
         val permissions: Permissions = Permissions().apply {
             executionArguments.permissions.forEach { add(it) }
+            // Add safe permissions needed for common operations like date formatting
+            if (!permissionBlacklist) {
+                SAFE_PERMISSIONS.forEach { add(it) }
+            }
         }
         val accessControlContext: AccessControlContext? = when (permissionBlacklist) {
             false -> AccessControlContext(arrayOf(ProtectionDomain(null, permissions)))
