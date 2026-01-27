@@ -142,12 +142,20 @@
 
         <!-- Modifier Checks                                    -->
         <!-- See http://checkstyle.sf.net/config_modifiers.html -->
-        <module name="ModifierOrder"/>
+        <!-- CS124: improved message for beginners -->
+        <module name="ModifierOrder">
+            <message key="mod.order"
+                value="''{0}'' modifier is out of order. Use: public/protected/private, static, final, abstract."/>
+        </module>
         <module name="RedundantModifier"/>
 
         <!-- Checks for blocks. You know, those {}'s         -->
         <!-- See http://checkstyle.sf.net/config_blocks.html -->
-        <module name="AvoidNestedBlocks"/>
+        <!-- CS124: improved message for beginners -->
+        <module name="AvoidNestedBlocks">
+            <message key="block.nested"
+                value="Avoid unnecessary braces ({}) that aren't part of an if, for, while, or other statement."/>
+        </module>
         <module name="EmptyBlock"/>
         <module name="LeftCurly"/>
         <!-- CS124: allow empty for loops for list problems. -->
@@ -158,14 +166,26 @@
 
         <!-- Checks for common coding problems               -->
         <!-- See http://checkstyle.sf.net/config_coding.html -->
-        <module name="AvoidInlineConditionals"/>
-        <module name="EmptyStatement" />
+        <!-- CS124: improved message for beginners -->
+        <module name="AvoidInlineConditionals">
+            <message key="inline.conditional.avoid"
+                value="Avoid the ternary operator (?:). Use an if/else statement instead."/>
+        </module>
+        <!-- CS124: improved message for beginners -->
+        <module name="EmptyStatement">
+            <message key="empty.statement"
+                value="Remove this unnecessary semicolon, or add the missing statement before it."/>
+        </module>
         <!-- CS124: don't enforce this
         <module name="EqualsHashCode"/>
         -->
         <module name="HiddenField"/>
         <module name="IllegalInstantiation"/>
-        <module name="InnerAssignment"/>
+        <!-- CS124: improved message for beginners -->
+        <module name="InnerAssignment">
+            <message key="assignment.inner.avoid"
+                value="Avoid assignments inside expressions. Did you mean == instead of =?"/>
+        </module>
 
         <!-- CS124: disabled by default.
         <module name="MagicNumber"/>
@@ -173,7 +193,11 @@
         <module name="MissingSwitchDefault"/>
         <!-- CS124: if (test == true) is clear. -->
         <!-- <module name="SimplifyBooleanExpression"/> -->
-        <module name="SimplifyBooleanReturn" />
+        <!-- CS124: improved message for beginners -->
+        <module name="SimplifyBooleanReturn">
+            <message key="simplify.boolReturn"
+                value="Instead of 'if (condition) { return true; } else { return false; }', simplify to 'return condition;'"/>
+        </module>
 
         <!-- Checks for class design                         -->
         <!-- See http://checkstyle.sf.net/config_design.html -->
@@ -191,12 +215,20 @@
 
         <!-- Miscellaneous other checks.                   -->
         <!-- See http://checkstyle.sf.net/config_misc.html -->
-        <module name="ArrayTypeStyle"/>
+        <!-- CS124: improved message for beginners -->
+        <module name="ArrayTypeStyle">
+            <message key="array.type.style"
+                value="Place array brackets after the type, not the variable name: use 'int[] array' instead of 'int array[]'."/>
+        </module>
         <!-- CS124: Disabling by default, since throwing final everywhere is fairly annoying.
         <module name="FinalParameters"/>
         -->
         <module name="TodoComment"/>
-        <module name="UpperEll"/>
+        <!-- CS124: improved message for beginners -->
+        <module name="UpperEll">
+            <message key="upperEll"
+                value="Use uppercase 'L' for long literals (e.g., 100L not 100l) since lowercase 'l' looks like '1'."/>
+        </module>
 
         <module name="Indentation">
             <property name="basicOffset" value="2"/>
@@ -206,7 +238,6 @@
         </module>
 
         <module name="OneStatementPerLine"/>
-        <module name="EmptyStatement"/>
         <module name="ParameterAssignment"/>
         <module name="StringLiteralEquality"/>
 
