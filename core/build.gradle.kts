@@ -52,7 +52,7 @@ dependencies {
 
     api("org.jacoco:org.jacoco.core:0.8.14")
     api("com.github.ben-manes.caffeine:caffeine:3.2.3")
-    api("ch.qos.logback:logback-classic:1.5.25")
+    api("ch.qos.logback:logback-classic:1.5.26")
     api("io.github.microutils:kotlin-logging:3.0.5")
     api("io.github.classgraph:classgraph:4.8.184")
 
