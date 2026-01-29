@@ -56,7 +56,7 @@ dependencies {
     api("io.github.microutils:kotlin-logging:3.0.5")
     api("io.github.classgraph:classgraph:4.8.184")
 
-    testImplementation("io.kotest:kotest-runner-junit5:6.1.1")
+    testImplementation("io.kotest:kotest-runner-junit5:6.1.2")
     testImplementation("com.beyondgrader.resource-agent:agent:$agentVersion")
     testJavaagent("com.beyondgrader.resource-agent:agent:$agentVersion")
 }
