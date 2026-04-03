@@ -8,7 +8,7 @@ plugins {
     application
     `maven-publish`
     signing
-    id("com.gradleup.shadow") version "9.3.1"
+    id("com.gradleup.shadow") version "9.4.1"
     id("org.jmailen.kotlinter")
     id("io.gitlab.arturbosch.detekt")
     id("com.google.devtools.ksp")
@@ -22,7 +22,7 @@ configurations.all {
     }
 }
 dependencies {
-    val ktorVersion = "3.4.0"
+    val ktorVersion = "3.4.2"
 
     testJavaagent("com.beyondgrader.resource-agent:agent:$agentVersion")
 
@@ -38,11 +38,11 @@ dependencies {
     implementation("com.beyondgrader.resource-agent:jeedplugin:$agentVersion")
 
     // Libraries for student use
-    implementation("org.cs124:libcs1:2026.2.0")
-    implementation("io.kotest:kotest-runner-junit5:6.1.3")
+    implementation("org.cs124:libcs1:2026.4.0")
+    implementation("io.kotest:kotest-runner-junit5:6.1.10")
     implementation("com.google.truth:truth:1.4.5")
 
-    testImplementation("io.kotest:kotest-runner-junit5:6.1.3")
+    testImplementation("io.kotest:kotest-runner-junit5:6.1.10")
     testImplementation("io.ktor:ktor-server-test-host:$ktorVersion")
 }
 testlogger {

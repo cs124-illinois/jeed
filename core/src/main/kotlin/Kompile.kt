@@ -249,7 +249,7 @@ internal fun kompileToFileManager(
         // Silence scaring warning on Windows
         setIdeaIoUseFallback()
 
-        @Suppress("DEPRECATION")
+        @OptIn(org.jetbrains.kotlin.K1Deprecation::class)
         val environment = KotlinCoreEnvironment.createForProduction(
             rootDisposable,
             configuration,

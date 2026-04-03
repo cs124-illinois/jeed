@@ -30,12 +30,12 @@ configurations.all {
 dependencies {
     antlr("org.antlr:antlr4:4.13.2")
 
-    implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:2.3.10")
-    implementation("org.jetbrains.kotlin:kotlin-reflect:2.3.10")
+    implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:2.3.20")
+    implementation("org.jetbrains.kotlin:kotlin-reflect:2.3.20")
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.10.0")
-    implementation("com.puppycrawl.tools:checkstyle:13.2.0")
+    implementation("com.puppycrawl.tools:checkstyle:13.4.0")
     implementation("org.codehaus.plexus:plexus-container-default:2.1.1")
     implementation("com.pinterest.ktlint:ktlint-rule-engine:1.8.0")
     implementation("com.pinterest.ktlint:ktlint-ruleset-standard:1.8.0")
@@ -46,7 +46,7 @@ dependencies {
 
     implementation("net.java.dev.jna:jna:5.18.1")
     implementation("io.github.java-diff-utils:java-diff-utils:4.16")
-    implementation("com.google.googlejavaformat:google-java-format:1.34.1")
+    implementation("com.google.googlejavaformat:google-java-format:1.35.0")
     implementation("net.sf.extjwnl:extjwnl:2.0.5")
     implementation("net.sf.extjwnl:extjwnl-data-wn31:1.2")
 
@@ -56,7 +56,7 @@ dependencies {
     api("io.github.microutils:kotlin-logging:3.0.5")
     api("io.github.classgraph:classgraph:4.8.184")
 
-    testImplementation("io.kotest:kotest-runner-junit5:6.1.3")
+    testImplementation("io.kotest:kotest-runner-junit5:6.1.10")
     testImplementation("com.beyondgrader.resource-agent:agent:$agentVersion")
     testJavaagent("com.beyondgrader.resource-agent:agent:$agentVersion")
 }

@@ -4,8 +4,8 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jmailen.gradle.kotlinter.tasks.LintTask
 
 plugins {
-    kotlin("jvm") version "2.3.10" apply false
-    kotlin("plugin.serialization") version "2.3.10" apply false
+    kotlin("jvm") version "2.3.20" apply false
+    kotlin("plugin.serialization") version "2.3.20" apply false
     id("org.jmailen.kotlinter") version "5.4.2" apply false
     id("com.github.ben-manes.versions") version "0.53.0"
     id("io.gitlab.arturbosch.detekt") version "1.23.8"
@@ -16,7 +16,7 @@ plugins {
 val agentVersion by extra { "2026.1.2" }
 allprojects {
     group = "org.cs124.jeed"
-    version = "2026.2.0"
+    version = "2026.4.0"
 }
 subprojects {
     tasks.withType<Test> {
