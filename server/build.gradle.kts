@@ -20,6 +20,11 @@ val agentVersion: String by rootProject.extra
 configurations.all {
     resolutionStrategy {
         force("org.slf4j:slf4j-api:2.0.17")
+        // konf reaches gson through toml4j, which is abandoned on gson 2.8.1 and so still carries
+        // CVE-2022-25647, fixed in 2.8.9.
+        force("com.google.code.gson:gson:2.14.0")
+        // See the note in core: inherited through plexus-container-default.
+        force("org.codehaus.plexus:plexus-utils:4.0.3")
     }
 }
 dependencies {
@@ -34,6 +39,10 @@ dependencies {
     implementation("io.ktor:ktor-serialization-kotlinx-json:$ktorVersion")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
+    // konf 2.1.0 is the newest release and pins jackson 2.17.1, which carries advisories fixed in
+    // 2.18.8. The BOM keeps the family consistent; jackson-annotations versions differently from
+    // the rest, so forcing the artifacts individually needs two version lines kept in step.
+    implementation(enforcedPlatform("com.fasterxml.jackson:jackson-bom:2.22.2"))
     implementation("io.github.nhubbard:konf:2.1.0")
     implementation("com.beyondgrader.resource-agent:agent:$agentVersion")
     implementation("com.beyondgrader.resource-agent:jeedplugin:$agentVersion")

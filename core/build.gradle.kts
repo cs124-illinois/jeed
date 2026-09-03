@@ -26,6 +26,9 @@ val agentVersion: String by rootProject.extra
 configurations.all {
     resolutionStrategy {
         force("org.slf4j:slf4j-api:2.0.17")
+        // plexus-container-default 2.1.1 is the newest release and still pulls plexus-utils 3.1.1,
+        // which carries a path traversal advisory (CVE-2025-67030) fixed in 4.0.3.
+        force("org.codehaus.plexus:plexus-utils:4.0.3")
     }
 }
 dependencies {
