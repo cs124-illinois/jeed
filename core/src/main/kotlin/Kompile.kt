@@ -7,21 +7,32 @@ import edu.illinois.cs.cs125.jeed.core.antlr.KotlinParser
 import io.github.classgraph.ClassGraph
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
+import org.jetbrains.kotlin.KtPsiSourceFile
 import org.jetbrains.kotlin.cli.common.CLIConfigurationKeys
+import org.jetbrains.kotlin.cli.common.LegacyK2CliPipeline
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.parseCommandLineArguments
 import org.jetbrains.kotlin.cli.common.environment.setIdeaIoUseFallback
+import org.jetbrains.kotlin.cli.common.fir.FirDiagnosticsCompilerResultsReporter
+import org.jetbrains.kotlin.cli.common.messages.AnalyzerWithCompilerReport
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSourceLocation
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
+import org.jetbrains.kotlin.cli.common.prepareJvmSessions
+import org.jetbrains.kotlin.cli.common.renderDiagnosticInternalName
+import org.jetbrains.kotlin.cli.create
 import org.jetbrains.kotlin.cli.jvm.compiler.EnvironmentConfigFiles
-import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment
-import org.jetbrains.kotlin.cli.jvm.compiler.KotlinToJVMBytecodeCompiler
+import org.jetbrains.kotlin.cli.jvm.compiler.legacy.pipeline.MinimizedFrontendContext
+import org.jetbrains.kotlin.cli.jvm.compiler.legacy.pipeline.ModuleCompilerEnvironment
+import org.jetbrains.kotlin.cli.jvm.compiler.legacy.pipeline.convertAnalyzedFirToIr
+import org.jetbrains.kotlin.cli.jvm.compiler.legacy.pipeline.createProjectEnvironment
+import org.jetbrains.kotlin.cli.jvm.compiler.legacy.pipeline.generateCodeFromIr
 import org.jetbrains.kotlin.cli.jvm.config.VirtualJvmClasspathRoot
 import org.jetbrains.kotlin.cli.jvm.config.configureJdkClasspathRoots
 import org.jetbrains.kotlin.cli.jvm.configureAdvancedJvmOptions
 import org.jetbrains.kotlin.cli.jvm.configureContentRootsFromClassPath
 import org.jetbrains.kotlin.cli.jvm.configureJavaModulesContentRoots
+import org.jetbrains.kotlin.cli.pipeline.jvm.asKtFilesList
 import org.jetbrains.kotlin.codegen.GeneratedClassLoader
 import org.jetbrains.kotlin.com.intellij.openapi.util.Disposer
 import org.jetbrains.kotlin.com.intellij.openapi.vfs.VirtualFile
@@ -31,15 +42,24 @@ import org.jetbrains.kotlin.com.intellij.psi.PsiFileFactory
 import org.jetbrains.kotlin.com.intellij.psi.impl.PsiFileFactoryImpl
 import org.jetbrains.kotlin.com.intellij.testFramework.LightVirtualFile
 import org.jetbrains.kotlin.com.intellij.util.LocalTimeCounter
+import org.jetbrains.kotlin.compiler.plugin.getCompilerExtensions
 import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.JVMConfigurationKeys
 import org.jetbrains.kotlin.config.JvmTarget
+import org.jetbrains.kotlin.diagnostics.impl.DiagnosticsCollectorImpl
+import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrar
+import org.jetbrains.kotlin.fir.pipeline.AllModulesFrontendOutput
+import org.jetbrains.kotlin.fir.pipeline.buildResolveAndCheckFirFromKtFiles
+import org.jetbrains.kotlin.fir.pipeline.runPlatformCheckers
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.konan.file.File
 import org.jetbrains.kotlin.metadata.jvm.deserialization.JvmProtoBufUtil
+import org.jetbrains.kotlin.modules.TargetId
 import org.jetbrains.kotlin.psi.KtFile
 import java.nio.file.FileSystems
+import java.nio.file.Path
+import java.nio.file.Paths
 import java.time.Instant
 import kotlin.math.min
 
@@ -203,6 +223,23 @@ internal class JeedMessageCollector(val source: Source, private val allWarningsA
     }
 }
 
+/**
+ * Drives the K2 (FIR) compiler pipeline directly, keeping sources and output in memory.
+ *
+ * Kotlin 2.4 removed the K1 frontend (KT-80590), which took
+ * `KotlinToJVMBytecodeCompiler.analyzeAndGenerate` with it -- that entry point ran the classic
+ * frontend regardless of the USE_FIR flag, and is itself slated for removal (KT-71729). The
+ * replacement is to compose the three pipeline stages by hand: build and resolve FIR, convert it
+ * to IR, then run codegen. `generateCodeFromIr` only writes class files when the configuration
+ * names an output directory, so leaving that unset keeps everything in the GenerationState and
+ * out of the filesystem, which is what JeedFileManager wants.
+ *
+ * The alternative is the Build Tools API, which is what Kotlin's own playground server uses. It
+ * is a supported API rather than an opt-in internal one, but it only speaks in filesystem paths,
+ * so every compilation would have to round-trip sources and classes through a temporary
+ * directory.
+ */
+@OptIn(LegacyK2CliPipeline::class)
 internal fun kompileToFileManager(
     kompilationArguments: KompilationArguments,
     source: Source,
@@ -222,8 +259,16 @@ internal fun kompileToFileManager(
 
     try {
         val messageCollector = JeedMessageCollector(source, kompilationArguments.arguments.allWarningsAsErrors)
-        val configuration = CompilerConfiguration().apply {
-            put(CommonConfigurationKeys.MESSAGE_COLLECTOR_KEY, messageCollector)
+        val diagnosticsReporter = DiagnosticsCollectorImpl()
+        // CompilerConfiguration.create is 2.4's supported way to build a configuration. It
+        // registers the compiler-plugin extension storage and the diagnostic factories that the
+        // FIR pipeline reads, both of which fail loudly at first use if they are missing. The FIR
+        // pipeline also collects diagnostics into the reporter rather than reporting as it goes,
+        // so they have to be forwarded to the message collector afterwards.
+        val configuration = CompilerConfiguration.create(
+            diagnosticsCollector = diagnosticsReporter,
+            messageCollector = messageCollector,
+        ).apply {
             put(CommonConfigurationKeys.MODULE_NAME, JvmProtoBufUtil.DEFAULT_MODULE_NAME)
             put(CommonConfigurationKeys.USE_FIR, kompilationArguments.useK2)
             put(JVMConfigurationKeys.PARAMETERS_METADATA, kompilationArguments.parameters)
@@ -249,14 +294,18 @@ internal fun kompileToFileManager(
         // Silence scaring warning on Windows
         setIdeaIoUseFallback()
 
-        @OptIn(org.jetbrains.kotlin.K1Deprecation::class)
-        val environment = KotlinCoreEnvironment.createForProduction(
-            rootDisposable,
+        // The legacy-pipeline factory rather than KotlinCoreEnvironment: it returns a project
+        // environment that registers the classpath roots with each package part provider it hands
+        // out, which is what lets a previous compilation's META-INF/*.kotlin_module be read back
+        // and therefore what makes its top-level declarations resolvable here. It also registers
+        // the virtual file and metadata finders the FIR pipeline looks up.
+        val projectEnvironment = createProjectEnvironment(
             configuration,
+            rootDisposable,
             EnvironmentConfigFiles.JVM_CONFIG_FILES,
         )
 
-        val psiFileFactory = PsiFileFactory.getInstance(environment.project) as PsiFileFactoryImpl
+        val psiFileFactory = PsiFileFactory.getInstance(projectEnvironment.project) as PsiFileFactoryImpl
         val psiFiles = kotlinSource.sources.map { (name, contents) ->
             psiFileFactory.trySetupPsiForFile(
                 LightVirtualFile(name, KotlinLanguage.INSTANCE, contents),
@@ -265,18 +314,75 @@ internal fun kompileToFileManager(
                 false,
             ) as KtFile?
                 ?: error("couldn't parse source to psiFile")
-        }.toMutableList()
-
-        environment::class.java.getDeclaredField("sourceFiles").also { field ->
-            field.isAccessible = true
-            field.set(environment, psiFiles)
         }
+
+        // Diagnostics are drained exactly once: the collector holds every diagnostic from every
+        // phase, and JeedMessageCollector doesn't deduplicate warnings, so forwarding twice would
+        // report each one twice.
+        fun drainDiagnosticsIntoMessageCollector() = FirDiagnosticsCompilerResultsReporter
+            .reportToMessageCollector(diagnosticsReporter, messageCollector, configuration.renderDiagnosticInternalName)
+
+        // Parse errors are reported into the collector rather than thrown, so they have to be
+        // gathered before anything tries to resolve the files.
+        psiFiles.forEach { AnalyzerWithCompilerReport.reportSyntaxErrors(it, diagnosticsReporter) }
+
+        // Stop at a parse failure instead of resolving code the compiler could not read: the CLI
+        // does the same, and resolving anyway buries the real syntax error under whatever
+        // follow-on complaints the checkers make about the half-parsed tree.
+        if (diagnosticsReporter.hasErrors) {
+            drainDiagnosticsIntoMessageCollector()
+            throw CompilationFailed(messageCollector.errors)
+        }
+
+        val targetId = TargetId(JvmProtoBufUtil.DEFAULT_MODULE_NAME, "java-production")
+        val moduleEnvironment = ModuleCompilerEnvironment(projectEnvironment, diagnosticsReporter)
 
         val state = try {
-            KotlinToJVMBytecodeCompiler.analyzeAndGenerate(environment)
+            val frontendContext = MinimizedFrontendContext(
+                projectEnvironment,
+                messageCollector,
+                configuration.getCompilerExtensions(FirExtensionRegistrar),
+                configuration,
+            )
+            val sessions = frontendContext.prepareJvmSessions(
+                files = psiFiles.map { KtPsiSourceFile(it) },
+                rootModuleNameAsString = targetId.name,
+                friendPaths = emptyList(),
+                librariesScope = projectEnvironment.getSearchScopeForProjectLibraries(),
+                isCommonSource = { false },
+                isScript = { false },
+                fileBelongsToModule = { _, _ -> true },
+                createProviderAndScopeForIncrementalCompilation = { null },
+            )
+            val frontendOutput = sessions.map { (session, sources) ->
+                buildResolveAndCheckFirFromKtFiles(session, sources.asKtFilesList(), diagnosticsReporter)
+            }.also { outputs ->
+                outputs.runPlatformCheckers(diagnosticsReporter)
+            }
+
+            // Don't hand broken code to the backend; the CLI checks between these phases too.
+            if (diagnosticsReporter.hasErrors) {
+                null
+            } else {
+                val backendInput = convertAnalyzedFirToIr(
+                    configuration,
+                    targetId,
+                    AllModulesFrontendOutput(frontendOutput),
+                    moduleEnvironment,
+                )
+                generateCodeFromIr(backendInput, moduleEnvironment)
+            }
         } catch (e: Throwable) {
-            throw CompilationFailed(listOf(CompilationError(null, "Kotlin internal compiler error: ${e.message}")))
+            drainDiagnosticsIntoMessageCollector()
+            // A diagnostic the student can act on beats "something went wrong inside the compiler".
+            throw CompilationFailed(
+                messageCollector.errors.ifEmpty {
+                    listOf(CompilationError(null, "Kotlin internal compiler error: ${e.message}"))
+                },
+            )
         }
+
+        drainDiagnosticsIntoMessageCollector()
 
         if (messageCollector.errors.isNotEmpty()) {
             throw CompilationFailed(messageCollector.errors)
@@ -348,7 +454,7 @@ fun JeedFileManager.toVirtualFile(): VirtualFile {
         path.split("/").also { parts ->
             parts.dropLast(1).forEach { directory ->
                 workingDirectory = workingDirectory.children.find { it.name == directory }
-                    ?: workingDirectory.addChild(SimpleVirtualFile(directory))
+                    ?: workingDirectory.addChild(SimpleVirtualFile(directory, up = workingDirectory))
             }
             workingDirectory.addChild(
                 SimpleVirtualFile(
@@ -406,6 +512,17 @@ class SimpleVirtualFile(
     override fun getModificationStamp() = created
     override fun getFileSystem() = SimpleVirtualFileSystem
 
+    // createLibraryListForJvm runs every virtual classpath root through toNioPath to key the
+    // library path filter, and that filter accepts a file by testing whether its path starts with
+    // a root's path. These files only exist in memory, so synthesize a path per root and nest the
+    // children underneath it, which is what makes classes in packages resolvable. Nothing reads
+    // bytes through this path; the contents are served by contentsToByteArray.
+    private val syntheticNioPath: Path by lazy {
+        up?.toNioPath()?.resolve(name) ?: Paths.get("jeed-in-memory-${System.identityHashCode(this)}")
+    }
+
+    override fun toNioPath(): Path = syntheticNioPath
+
     override fun toString() = prefixedString("").joinToString(separator = "\n")
     private fun prefixedString(path: String): List<String> = if (!isDirectory) {
         listOf("$path$name")
@@ -417,7 +534,11 @@ class SimpleVirtualFile(
         }
     }
 
-    override fun getPath() = name // FIXME to include directory
+    // Must agree with toNioPath: ModuleDataProvider decides which module a library file belongs
+    // to by prefix-matching this against the roots recorded in the dependency list, so returning
+    // the bare name meant Kotlin metadata -- and therefore top-level declarations from a previous
+    // compilation -- was attributed to no module at all and silently dropped.
+    override fun getPath() = syntheticNioPath.toString()
     override fun getParent() = up
 
     override fun getTimeStamp() = TODO("getTimeStamp")

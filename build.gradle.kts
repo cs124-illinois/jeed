@@ -4,8 +4,8 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jmailen.gradle.kotlinter.tasks.LintTask
 
 plugins {
-    kotlin("jvm") version "2.3.20" apply false
-    kotlin("plugin.serialization") version "2.3.20" apply false
+    kotlin("jvm") version "2.4.10" apply false
+    kotlin("plugin.serialization") version "2.4.10" apply false
     id("org.jmailen.kotlinter") version "5.7.0" apply false
     id("io.github.ben-manes.versions") version "0.61.0"
     id("io.gitlab.arturbosch.detekt") version "1.23.8"
