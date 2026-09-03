@@ -19,6 +19,7 @@ plugins {
     id("com.google.devtools.ksp")
     id("com.ryandens.javaagent-test") version "0.12.2"
     id("com.adarshr.test-logger")
+    jacoco
 }
 
 val agentVersion: String by rootProject.extra
@@ -223,4 +224,16 @@ tasks.withType<Sign>().configureEach {
 }
 tasks.withType<Javadoc> {
     exclude("edu/illinois/cs/cs125/jeed/core/antlr/**")
+}
+
+jacoco {
+    // Match the org.jacoco.core version already used by the coverage analysis feature.
+    toolVersion = "0.8.15"
+}
+tasks.jacocoTestReport {
+    dependsOn(tasks.test)
+    reports {
+        xml.required = true
+        html.required = true
+    }
 }

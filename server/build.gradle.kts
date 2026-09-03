@@ -14,6 +14,7 @@ plugins {
     id("com.google.devtools.ksp")
     id("com.ryandens.javaagent-test") version "0.12.2"
     id("com.adarshr.test-logger")
+    jacoco
 }
 val agentVersion: String by rootProject.extra
 configurations.all {
@@ -156,5 +157,17 @@ signing {
 tasks.withType<Sign>().configureEach {
     onlyIf {
         gradle.taskGraph.allTasks.any { it.name.contains("ToSonatype") }
+    }
+}
+
+jacoco {
+    // Match the org.jacoco.core version already used by the coverage analysis feature.
+    toolVersion = "0.8.15"
+}
+tasks.jacocoTestReport {
+    dependsOn(tasks.test)
+    reports {
+        xml.required = true
+        html.required = true
     }
 }

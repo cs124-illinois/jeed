@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSourceLocation
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.cli.common.prepareJvmSessions
 import org.jetbrains.kotlin.cli.common.renderDiagnosticInternalName
+import org.jetbrains.kotlin.cli.common.setupCommonArguments
 import org.jetbrains.kotlin.cli.create
 import org.jetbrains.kotlin.cli.jvm.compiler.EnvironmentConfigFiles
 import org.jetbrains.kotlin.cli.jvm.compiler.legacy.pipeline.MinimizedFrontendContext
@@ -54,6 +55,7 @@ import org.jetbrains.kotlin.fir.pipeline.buildResolveAndCheckFirFromKtFiles
 import org.jetbrains.kotlin.fir.pipeline.runPlatformCheckers
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.konan.file.File
+import org.jetbrains.kotlin.metadata.deserialization.MetadataVersion
 import org.jetbrains.kotlin.metadata.jvm.deserialization.JvmProtoBufUtil
 import org.jetbrains.kotlin.modules.TargetId
 import org.jetbrains.kotlin.psi.KtFile
@@ -81,6 +83,8 @@ data class KompilationArguments(
     val parameters: Boolean = DEFAULT_PARAMETERS,
     val jvmTarget: String = DEFAULT_JVM_TARGET,
     val isolatedClassLoader: Boolean = false,
+    // Ignored since Kotlin 2.4, which removed K1 (KT-80590); there is no other frontend to
+    // select. Retained so that existing requests carrying it still deserialize.
     val useK2: Boolean = true,
 ) {
     @Transient
@@ -91,7 +95,6 @@ data class KompilationArguments(
         "-opt-in=kotlin.ExperimentalUnsignedTypes",
         "-opt-in=kotlin.contracts.ExperimentalContracts",
         "-opt-in=kotlin.experimental.ExperimentalTypeInference",
-        "-Xcontext-receivers",
         "-XXLanguage:+RangeUntilOperator",
     )
 
@@ -114,7 +117,10 @@ data class KompilationArguments(
         arguments.allWarningsAsErrors = allWarningsAsErrors
         arguments.noStdlib = true
         arguments.javaParameters = parameters
-        arguments.useK2 = useK2
+        // Kotlin 2.4 moved unused-variable reporting (and friends) behind the extra checkers.
+        // K1 reported those by default, and they are worth keeping for students, so ask for them
+        // explicitly rather than quietly dropping a warning class in the upgrade.
+        arguments.extraWarnings = true
     }
 
     companion object {
@@ -269,8 +275,12 @@ internal fun kompileToFileManager(
             diagnosticsCollector = diagnosticsReporter,
             messageCollector = messageCollector,
         ).apply {
+            // Derives languageVersionSettings from the arguments, which is what actually applies
+            // the -opt-in and -XXLanguage flags in additionalCompilerArguments, and what the
+            // checkers consult to decide which diagnostics to report. The CLI does this first.
+            setupCommonArguments(kompilationArguments.arguments) { MetadataVersion(*it) }
+
             put(CommonConfigurationKeys.MODULE_NAME, JvmProtoBufUtil.DEFAULT_MODULE_NAME)
-            put(CommonConfigurationKeys.USE_FIR, kompilationArguments.useK2)
             put(JVMConfigurationKeys.PARAMETERS_METADATA, kompilationArguments.parameters)
             put(JVMConfigurationKeys.JVM_TARGET, kompilationArguments.jvmTarget.toJvmTarget())
             put(JVMConfigurationKeys.JDK_HOME, java.io.File(System.getProperty("java.home")))
