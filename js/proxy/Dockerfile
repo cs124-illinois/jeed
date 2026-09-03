@@ -1,8 +1,25 @@
-FROM node:24.4.1-alpine
+FROM node:24.20.0-alpine3.24
 
-RUN apk add --no-cache tini
-RUN apk add --no-cache entr --repository=http://dl-cdn.alpinelinux.org/alpine/edge/community
+# apk upgrade picks up OS package fixes published since the base image was cut -- the
+# base is always at least a little older than the newest openssl/musl.
+# entr ships in the stable community repository as of Alpine 3.24, so there is no
+# longer any need to pull it from edge.
+RUN apk upgrade --no-cache && apk add --no-cache tini entr
 ENV ENTR_INOTIFY_WORKAROUND=1
+
+# This image only ever runs the pre-bundled server: esbuild inlines every runtime
+# dependency into bundled/index.js, so the npm, npx and yarn CLIs that ship in the
+# base image are dead weight. Dropping them also drops the dependencies vendored
+# inside them, which is where every npm-ecosystem CVE reported against this image
+# came from -- none of them were ever reachable from our own code.
+RUN rm -rf /usr/local/lib/node_modules/npm \
+           /usr/local/lib/node_modules/corepack \
+           /usr/local/bin/npm \
+           /usr/local/bin/npx \
+           /usr/local/bin/corepack \
+           /usr/local/bin/yarn \
+           /usr/local/bin/yarnpkg \
+           /opt/yarn-v*
 
 WORKDIR /server/
 COPY bundled bundled
