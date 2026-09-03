@@ -5,18 +5,18 @@ import java.io.File
 plugins {
     kotlin("jvm")
     application
-    id("com.gradleup.shadow") version "9.4.1"
+    id("com.gradleup.shadow") version "9.6.1"
     id("org.jmailen.kotlinter")
     id("io.gitlab.arturbosch.detekt")
 }
 configurations.all {
     resolutionStrategy {
-        force("org.slf4j:slf4j-api:2.0.16")
+        force("org.slf4j:slf4j-api:2.0.17")
     }
 }
 dependencies {
     implementation(project(":core"))
-    implementation("com.github.ajalt.clikt:clikt:5.0.3")
+    implementation("com.github.ajalt.clikt:clikt:5.1.0")
 }
 application {
     mainClass.set("edu.illinois.cs.cs125.jeed.containerrunner.MainKt")

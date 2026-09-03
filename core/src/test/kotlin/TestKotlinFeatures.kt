@@ -8,7 +8,6 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 
 @Suppress("LargeClass")
-@OptIn(io.kotest.common.KotestInternal::class)
 class TestKotlinFeatures : StringSpec() {
     override suspend fun beforeSpec(spec: Spec) {
         seenKotlinFeatures.clear()
@@ -16,7 +15,7 @@ class TestKotlinFeatures : StringSpec() {
     }
 
     override suspend fun afterSpec(spec: Spec) {
-        val focused = spec.rootTests().any { it.name.focus }
+        val focused = spec.tests().any { it.name.focus }
         if (!focused) {
             seenKotlinFeatures shouldBe KOTLIN_FEATURES
         }

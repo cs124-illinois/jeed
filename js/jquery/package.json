@@ -14,11 +14,11 @@
     "babel-cli": "6.26.0",
     "babel-core": "6.26.3",
     "babel-preset-env": "1.7.0",
-    "concurrently": "9.2.1",
+    "concurrently": "10.0.5",
     "env-cmd": "11.0.0",
-    "npm-check-updates": "19.2.0",
+    "npm-check-updates": "23.1.0",
     "parcel-bundler": "1.12.5",
-    "prettier": "3.7.4",
+    "prettier": "3.9.6",
     "prettier-package-json": "2.8.0"
   }
 }

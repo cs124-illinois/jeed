@@ -6,17 +6,17 @@ import org.jmailen.gradle.kotlinter.tasks.LintTask
 plugins {
     kotlin("jvm") version "2.3.20" apply false
     kotlin("plugin.serialization") version "2.3.20" apply false
-    id("org.jmailen.kotlinter") version "5.4.2" apply false
-    id("com.github.ben-manes.versions") version "0.53.0"
+    id("org.jmailen.kotlinter") version "5.7.0" apply false
+    id("io.github.ben-manes.versions") version "0.61.0"
     id("io.gitlab.arturbosch.detekt") version "1.23.8"
-    id("com.google.devtools.ksp") version "2.3.6" apply false
+    id("com.google.devtools.ksp") version "2.3.11" apply false
     id("io.github.gradle-nexus.publish-plugin") version "2.0.0"
     id("com.adarshr.test-logger") version "4.0.0" apply false
 }
-val agentVersion by extra { "2026.1.2" }
+extra.set("agentVersion", "2026.1.2")
 allprojects {
     group = "org.cs124.jeed"
-    version = "2026.4.0"
+    version = "2026.9.0"
 }
 subprojects {
     tasks.withType<Test> {
