@@ -76,3 +76,15 @@ nexusPublishing {
         }
     }
 }
+val publishToSonatypeTasks = listOf(":core:publishToSonatype", ":server:publishToSonatype")
+
+// The staging repository can only be closed once everything has been uploaded into it.
+tasks.named("closeAndReleaseSonatypeStagingRepository") {
+    mustRunAfter(publishToSonatypeTasks)
+}
+tasks.register("publish") {
+    group = "publishing"
+    description = "Uploads core and server to Maven Central, then closes and releases the staging repository."
+    dependsOn(publishToSonatypeTasks)
+    dependsOn("closeAndReleaseSonatypeStagingRepository")
+}
