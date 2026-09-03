@@ -18,8 +18,6 @@ import edu.illinois.cs.cs125.jeed.core.SnippetTransformationFailed
 import edu.illinois.cs.cs125.jeed.core.Source
 import edu.illinois.cs.cs125.jeed.core.SourceType
 import edu.illinois.cs.cs125.jeed.core.TemplatingFailed
-import edu.illinois.cs.cs125.jeed.core.cexecute
-import edu.illinois.cs.cs125.jeed.core.checkDockerEnabled
 import edu.illinois.cs.cs125.jeed.core.checkstyle
 import edu.illinois.cs.cs125.jeed.core.compile
 import edu.illinois.cs.cs125.jeed.core.complexity
@@ -114,9 +112,6 @@ class Request(
         }
         require(!(tasksToRun.containsAll(setOf(Task.compile, Task.kompile)))) {
             "can't compile code as both Java and Kotlin"
-        }
-        require(!(tasksToRun.containsAll(setOf(Task.execute, Task.cexecute)))) {
-            "can't both run code in the sandbox and in the container"
         }
         if (potentialSnippet != null) {
             tasksToRun.add(Task.snippet)
@@ -222,21 +217,11 @@ class Request(
                 "job is trying to remove forbidden methods"
             }
         }
-        if (Task.cexecute in tasks) {
-            require(arguments.cexecution.timeout <= configuration[Limits.Cexecution.timeout]) {
-                "job timeout of ${arguments.cexecution.timeout} too long " +
-                    "(> ${configuration[Limits.Cexecution.timeout]})"
-            }
-        }
         return this
     }
 
     @Suppress("ComplexMethod", "LongMethod")
     suspend fun run(): Response {
-        if (tasks.contains(Task.cexecute)) {
-            check(checkDockerEnabled()) { "Docker execution disabled" }
-        }
-
         currentStatus.counts.submitted++
 
         val started = Instant.now()
@@ -366,10 +351,6 @@ class Request(
                 val executionResult = compiledSource.execute(executionArguments)
                 response.completed.execution = SourceTaskResults(actualSource, executionResult, executionArguments)
                 response.completedTasks.add(Task.execute)
-            } else if (tasks.contains(Task.cexecute)) {
-                check(compiledSource != null) { "should have compiled source before executing" }
-                response.completed.cexecution = compiledSource.cexecute(arguments.cexecution)
-                response.completedTasks.add(Task.cexecute)
             }
         } catch (templatingFailed: TemplatingFailed) {
             response.failed.template = templatingFailed
@@ -398,9 +379,6 @@ class Request(
             if (tasks.contains(Task.execute)) {
                 response.failed.execution = ExecutionFailedResult(executionFailed)
                 response.failedTasks.add(Task.execute)
-            } else if (tasks.contains(Task.cexecute)) {
-                response.failed.cexecution = ExecutionFailedResult(executionFailed)
-                response.failedTasks.add(Task.cexecute)
             }
         } catch (featuresFailed: FeaturesFailed) {
             response.failed.features = featuresFailed

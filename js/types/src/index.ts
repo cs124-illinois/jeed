@@ -9,7 +9,6 @@ export const Task = Union(
   Literal("ktlint"),
   Literal("complexity"),
   Literal("execute"),
-  Literal("cexecute"),
   Literal("features"),
   Literal("mutations"),
   Literal("disassemble"),
@@ -166,16 +165,6 @@ export const SourceExecutionArguments = Partial({
 })
 export type SourceExecutionArguments = Static<typeof SourceExecutionArguments>
 
-export const ContainerExecutionArguments = Partial({
-  klass: String,
-  method: String,
-  image: String,
-  timeout: Number,
-  maxOutputLines: Number,
-  containerArguments: String,
-})
-export type ContainerExecutionArguments = Static<typeof ContainerExecutionArguments>
-
 export const MutationsArguments = Partial({
   limit: Number,
   suppressWithComments: Boolean,
@@ -189,7 +178,6 @@ export const TaskArguments = Partial({
   checkstyle: CheckstyleArguments,
   ktLint: KtLintArguments,
   execution: SourceExecutionArguments,
-  cexecution: ContainerExecutionArguments,
   mutations: MutationsArguments,
 })
 export type TaskArguments = Static<typeof TaskArguments>
@@ -761,21 +749,6 @@ export const SourceTaskResults = Record({
 )
 export type SourceTaskResults = Static<typeof SourceTaskResults>
 
-export const ContainerExecutionResults = Record({
-  klass: String,
-  method: String,
-  timeout: Boolean,
-  outputLines: Array(OutputLine),
-  interval: Interval,
-  executionInterval: Interval,
-  truncatedLines: Number,
-}).And(
-  Partial({
-    exitCode: Number,
-  }),
-)
-export type ContainerExecutionResults = Static<typeof ContainerExecutionResults>
-
 export const CompletedTasks = Partial({
   snippet: Snippet,
   template: TemplatedSourceResult,
@@ -786,7 +759,6 @@ export const CompletedTasks = Partial({
   complexity: FlatComplexityResults,
   features: FlatFeaturesResults,
   execution: SourceTaskResults,
-  cexecution: ContainerExecutionResults,
   mutations: MutationsResults,
   disassemble: DisassembleResults,
 })
@@ -885,7 +857,6 @@ export const FailedTasks = Partial({
   ktLint: KtLintFailed,
   complexity: ComplexityFailed,
   execution: ExecutionFailedResult,
-  cexecution: ExecutionFailedResult,
   features: FeaturesFailed,
   mutations: MutationsFailed,
   disassemble: DisassembleFailed,

@@ -77,10 +77,6 @@ tasks.test {
     environment["JEED_MAX_THREAD_POOL_SIZE"] = 4
     if (!OperatingSystem.current().isWindows) {
         environment["PATH"] = "${environment["PATH"]}:/usr/local/bin/"
-        environment["JEED_CONTAINER_TMP_DIR"] = "/tmp/"
-    }
-    if (OperatingSystem.current().isWindows) {
-        exclude("**/TestContainer.class")
     }
 }
 tasks.generateGrammarSource {
@@ -114,9 +110,6 @@ afterEvaluate {
     }
     tasks.named("formatKotlinTest") {
         dependsOn(tasks.generateTestGrammarSource)
-    }
-    tasks.named("test") {
-        // dependsOn(":containerrunner:dockerBuild")
     }
     tasks.withType<FormatTask> {
         this.source = this.source.minus(fileTree("build")).asFileTree

@@ -119,8 +119,8 @@ ${originalLine ? originalLine + "\n" + new Array(column).join(" ") + "^" : ""}${
     }
   } else if (response.failed.disassemble) {
     return { output: response.failed.disassemble.message, level: "error" }
-  } else if (response.failed.execution || response.failed.cexecution) {
-    const failed = response.failed.execution || response.failed.cexecution
+  } else if (response.failed.execution) {
+    const failed = response.failed.execution
     if (failed?.classNotFound) {
       return { output: `Error: could not find class ${failed?.classNotFound}`, level: "error" }
     } else if (failed?.methodNotFound) {
@@ -131,9 +131,9 @@ ${originalLine ? originalLine + "\n" + new Array(column).join(" ") + "^" : ""}${
   }
 
   if (Object.keys(response.failed).length === 0) {
-    if (response.completed.execution || response.completed.cexecution) {
+    if (response.completed.execution) {
       let level: "success" | "error" | "warning" = "success"
-      const completed = response.completed.execution || response.completed.cexecution
+      const completed = response.completed.execution
       const output = completed?.outputLines
         ? completed.outputLines.length > 0
           ? completed.outputLines.map(({ line }) => line)

@@ -63,7 +63,6 @@ npm run backend
   - Formatting: Google Java Format, KtLint integration
 - **server/**: Ktor-based HTTP API wrapper
 - **js/**: JavaScript/TypeScript packages (React components, types, demo)
-- **containerrunner/**: Docker container execution support
 
 ### Key Design Patterns
 1. **Security-First**: All code execution happens in a sandboxed JVM with strict resource limits

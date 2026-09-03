@@ -9,7 +9,6 @@ import edu.illinois.cs.cs125.jeed.core.CompilationFailed
 import edu.illinois.cs.cs125.jeed.core.ComplexityFailed
 import edu.illinois.cs.cs125.jeed.core.ComplexityResults
 import edu.illinois.cs.cs125.jeed.core.ComplexityValue
-import edu.illinois.cs.cs125.jeed.core.ContainerExecutionResults
 import edu.illinois.cs.cs125.jeed.core.DisassembleFailedResult
 import edu.illinois.cs.cs125.jeed.core.DisassembleResults
 import edu.illinois.cs.cs125.jeed.core.FeatureValue
@@ -41,7 +40,6 @@ class CompletedTasks(
     @SerialName("ktLint") var ktlint: KtLintResults? = null,
     var complexity: FlatComplexityResults? = null,
     var execution: SourceTaskResults? = null,
-    var cexecution: ContainerExecutionResults? = null,
     var features: FlatFeaturesResults? = null,
     var mutations: MutationsResults? = null,
     var disassemble: DisassembleResults? = null,
@@ -58,7 +56,6 @@ class FailedTasks(
     @SerialName("ktLint") var ktlint: KtLintFailed? = null,
     var complexity: ComplexityFailed? = null,
     var execution: ExecutionFailedResult? = null,
-    var cexecution: ExecutionFailedResult? = null,
     var features: FeaturesFailed? = null,
     var mutations: MutationsFailed? = null,
     var disassemble: DisassembleFailedResult? = null,

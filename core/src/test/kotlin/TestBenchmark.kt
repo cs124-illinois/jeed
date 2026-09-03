@@ -36,8 +36,5 @@ public class Main {
             compiledSource.execute().also { executionResult ->
                 println(executionResult.interval.length)
             }
-            compiledSource.cexecute().also { executionResult ->
-                println(executionResult.interval.length)
-            }
         }
     })

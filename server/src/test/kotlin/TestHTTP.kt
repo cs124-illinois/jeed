@@ -5,7 +5,6 @@ package edu.illinois.cs.cs125.jeed.server
 import com.beyondgrader.resourceagent.jeed.MemoryLimit
 import edu.illinois.cs.cs125.jeed.core.LineTrace
 import edu.illinois.cs.cs125.jeed.core.VERSION
-import edu.illinois.cs.cs125.jeed.core.checkDockerEnabled
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.beEmpty
 import io.kotest.matchers.ints.shouldBeGreaterThan
@@ -183,31 +182,6 @@ public class Main {
                     jeedResponse.completed.execution?.permissionRequests?.find {
                         it.permission.name == "useForbiddenMethod"
                     } shouldNot beNull()
-                }
-            }
-        }
-        "should accept good snippet cexecution request".config(enabled = checkDockerEnabled()) {
-            testApplication {
-                application {
-                    jeed()
-                }
-                client.post("/") {
-                    header("content-type", "application/json")
-                    setBody(
-                        """
-{
-"label": "test",
-"snippet": "System.out.println(\"Here\");",
-"tasks": [ "compile", "cexecute" ]
-}""".trim(),
-                    )
-                }.also { response ->
-                    response.status shouldBe HttpStatusCode.OK
-
-                    val jeedResponse = Response.from(response.bodyAsText())
-                    jeedResponse.completed.cexecution?.klass shouldBe "Main"
-                    jeedResponse.completedTasks.size shouldBe 3
-                    jeedResponse.failedTasks.size shouldBe 0
                 }
             }
         }
@@ -1028,40 +1002,6 @@ public class Main {
                     jeedResponse.completedTasks.size shouldBe 2
                     jeedResponse.failedTasks.size shouldBe 0
                     jeedResponse.completed.execution?.threw shouldNotBe ""
-                }
-            }
-        }
-        "should handle cexecution error".config(enabled = checkDockerEnabled()) {
-            testApplication {
-                application {
-                    jeed()
-                }
-                client.post("/") {
-                    header("content-type", "application/json")
-                    setBody(
-                        """
-{
-"label": "test",
-"sources": [
-  {
-    "path": "Main.java",
-    "contents": "
-public class Main {
-  private static void min() {
-    System.out.println(\"Here\");
-  }
-}"
-  }
-],
-"tasks": [ "compile", "cexecute" ]
-}""".trim(),
-                    )
-                }.also { response ->
-                    response.status shouldBe HttpStatusCode.OK
-
-                    val jeedResponse = Response.from(response.bodyAsText())
-                    jeedResponse.completedTasks.size shouldBe 1
-                    jeedResponse.failedTasks.size shouldBe 1
                 }
             }
         }

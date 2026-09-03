@@ -14,7 +14,6 @@ services:
       # Match production cache settings
       - JEED_USE_CACHE=true
       - JEED_COMPILATION_CACHE_SIZE=32
-      - JEED_DOCKER_DISABLED=1
       - LIMITS_EXECUTION_TIMEOUT=5000
       # CORS disabled by default - set to true to enable
       # - ENABLE_CORS=true

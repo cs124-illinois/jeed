@@ -1,6 +1,5 @@
 package edu.illinois.cs.cs125.jeed.server
 
-import edu.illinois.cs.cs125.jeed.core.ContainerExecutionArguments
 import edu.illinois.cs.cs125.jeed.core.Sandbox
 import edu.illinois.cs.cs125.jeed.core.SourceExecutionArguments
 import edu.illinois.cs.cs125.jeed.core.serializers.PermissionJson
@@ -38,10 +37,6 @@ object Limits : ConfigSpec() {
             val unsafeExceptions by optional(Sandbox.ClassLoaderConfiguration.DEFAULT_UNSAFE_EXCEPTIONS)
             val blacklistedMethods by optional(Sandbox.ClassLoaderConfiguration.DEFAULT_BLACKLISTED_METHODS)
         }
-    }
-
-    object Cexecution : ConfigSpec() {
-        val timeout by optional(ContainerExecutionArguments.DEFAULT_TIMEOUT)
     }
 
     object Disassembly : ConfigSpec() {

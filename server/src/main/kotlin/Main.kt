@@ -5,7 +5,6 @@ package edu.illinois.cs.cs125.jeed.server
 import com.beyondgrader.resourceagent.Agent
 import com.beyondgrader.resourceagent.StaticFailureDetection
 import edu.illinois.cs.cs125.jeed.core.VERSION
-import edu.illinois.cs.cs125.jeed.core.checkDockerEnabled
 import edu.illinois.cs.cs125.jeed.core.getStackTraceAsString
 import edu.illinois.cs.cs125.jeed.core.serializers.JeedJson
 import edu.illinois.cs.cs125.jeed.core.warm
@@ -208,21 +207,6 @@ fun main(@Suppress("unused") unused: Array<String>) {
             exitProcess(-1)
         }
     }
-
-    val dockerEnabled = try {
-        checkDockerEnabled(true)
-    } catch (e: Exception) {
-        logger.warn("Docker check failed: $e")
-        false
-    }
-
-    logger.info(
-        "Docker " + if (dockerEnabled) {
-            "enabled"
-        } else {
-            "disabled"
-        },
-    )
 
     logDetailedStatus("STARTUP-COMPLETE")
     logger.info { "Periodic status logging every ${statusLogIntervalMs / 1000}s (set STATUS_LOG_INTERVAL_MS to change)" }
