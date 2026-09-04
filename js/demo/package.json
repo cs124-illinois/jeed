@@ -1,7 +1,7 @@
 {
   "private": true,
   "name": "demo",
-  "version": "2025.12.4",
+  "version": "2026.9.0",
   "scripts": {
     "build": "next build",
     "check": "bun run eslint && bun run tsc && bun run format && bun run depcheck",
@@ -17,9 +17,9 @@
     "tsc": "tsc --noEmit"
   },
   "dependencies": {
-    "@cs124/jeed-output": "2025.12.4",
-    "@cs124/jeed-react": "2025.12.4",
-    "@cs124/jeed-types": "2025.12.4",
+    "@cs124/jeed-output": "2026.9.0",
+    "@cs124/jeed-react": "2026.9.0",
+    "@cs124/jeed-types": "2026.9.0",
     "next": "15.5.6",
     "react": "19.2.8",
     "react-ace": "15.0.0",

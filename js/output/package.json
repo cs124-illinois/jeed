@@ -1,6 +1,6 @@
 {
   "name": "@cs124/jeed-output",
-  "version": "2025.12.4",
+  "version": "2026.9.0",
   "license": "MIT",
   "main": "dist/index.js",
   "scripts": {
@@ -19,7 +19,7 @@
   },
   "types": "dist/index.d.ts",
   "dependencies": {
-    "@cs124/jeed-types": "2025.12.4"
+    "@cs124/jeed-types": "2026.9.0"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
