@@ -61,8 +61,13 @@ dependencies {
 
     api("org.jacoco:org.jacoco.core:0.8.15")
     api("com.github.ben-manes.caffeine:caffeine:3.2.4")
-    api("ch.qos.logback:logback-classic:1.6.3")
-    api("io.github.microutils:kotlin-logging:3.0.5")
+    // slf4j-jdk14 routes the SLF4J calls our dependencies make into java.util.logging, which is
+    // already in the JDK, so there is no logging implementation to ship or keep patched. See
+    // Logging.kt for the formatter that keeps the output identical to the logback pattern.
+    api("org.slf4j:slf4j-jdk14:2.0.17")
+    // io.github.microutils is the abandoned home of kotlin-logging; io.github.oshai is where it
+    // moved. Pinned to the version ktlint already brings so only one copy is on the classpath.
+    api("io.github.oshai:kotlin-logging:7.0.13")
     api("io.github.classgraph:classgraph:4.8.194")
 
     testImplementation("io.kotest:kotest-runner-junit5:6.2.4")
@@ -81,7 +86,6 @@ tasks.test {
     } else {
         jvmArgs("-ea", "-Xmx4G", "-Xss256k")
     }
-    systemProperties["logback.configurationFile"] = File(projectDir, "src/test/resources/logback-test.xml").absolutePath
     @Suppress("MagicNumber")
     environment["JEED_MAX_THREAD_POOL_SIZE"] = 4
     if (!OperatingSystem.current().isWindows) {

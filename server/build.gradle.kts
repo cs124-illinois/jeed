@@ -93,7 +93,6 @@ tasks.register<Exec>("dockerPush") {
 }
 tasks.test {
     useJUnitPlatform()
-    systemProperties["logback.configurationFile"] = File(projectDir, "src/test/resources/logback-test.xml").absolutePath
     environment["JEED_USE_CACHE"] = "true"
 }
 tasks.shadowJar {

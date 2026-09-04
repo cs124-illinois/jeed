@@ -5,10 +5,12 @@ package edu.illinois.cs.cs125.jeed.server
 import com.beyondgrader.resourceagent.Agent
 import com.beyondgrader.resourceagent.StaticFailureDetection
 import edu.illinois.cs.cs125.jeed.core.VERSION
+import edu.illinois.cs.cs125.jeed.core.configureJeedLogging
 import edu.illinois.cs.cs125.jeed.core.getStackTraceAsString
 import edu.illinois.cs.cs125.jeed.core.serializers.JeedJson
 import edu.illinois.cs.cs125.jeed.core.warm
 import io.github.nhubbard.konf.source.json.toJson
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
@@ -26,11 +28,11 @@ import io.ktor.server.routing.routing
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import mu.KotlinLogging
 import sun.misc.Signal
 import java.lang.management.ManagementFactory
 import java.time.Instant
 import java.util.concurrent.atomic.AtomicLong
+import java.util.logging.Level
 import kotlin.system.exitProcess
 
 @Suppress("UNUSED")
@@ -187,6 +189,10 @@ fun Application.jeed() {
 }
 
 fun main(@Suppress("unused") unused: Array<String>) {
+    // Before anything logs. Mirrors the levels the old logback.xml set: Jeed at info, everything
+    // else at warn.
+    configureJeedLogging(jeedLevel = Level.INFO, rootLevel = Level.WARNING)
+
     logger.info { "Jeed server starting..." }
     logger.info { "JVM: ${System.getProperty("java.version")} (${System.getProperty("java.vendor")})" }
     logger.info { "Max heap: ${Runtime.getRuntime().maxMemory() / 1024 / 1024}MB" }

@@ -1,9 +1,9 @@
 package edu.illinois.cs.cs125.jeed.core
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
-import mu.KotlinLogging
 import org.antlr.v4.runtime.CharStream
 import org.antlr.v4.runtime.Parser
 import org.antlr.v4.runtime.TokenStream
