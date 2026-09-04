@@ -39,7 +39,12 @@ dependencies {
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
-    implementation("com.puppycrawl.tools:checkstyle:14.1.0")
+    implementation("com.puppycrawl.tools:checkstyle:14.1.0") {
+        // checkstyle ships slf4j-simple as its binding, which lands a second SLF4J provider in the
+        // server's shaded jar alongside logback. Which one wins is then down to ordering, and
+        // slf4j-simple ignores logback.xml entirely.
+        exclude(group = "org.slf4j", module = "slf4j-simple")
+    }
     implementation("org.codehaus.plexus:plexus-container-default:2.1.1")
     implementation("com.pinterest.ktlint:ktlint-rule-engine:1.8.0")
     implementation("com.pinterest.ktlint:ktlint-ruleset-standard:1.8.0")

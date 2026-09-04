@@ -98,6 +98,17 @@ tasks.test {
 }
 tasks.shadowJar {
     isZip64 = true
+    // Shadow's transformers only see duplicates that reach them, and the default EXCLUDE drops
+    // them first. Fifteen .kotlin_module names genuinely collide here -- kotlin-reflect overlaps
+    // kotlin-compiler-embeddable, and kotlin-logging appears twice -- so excluding them keeps one
+    // copy and discards the other module's package listing rather than merging the two.
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
+    // With duplicates now reaching the transformers, merge the service files rather than letting
+    // them collide. Five of them ship different providers under the same name -- logback-classic
+    // against slf4j-simple, jackson's JavaTimeModule against its KotlinModule, GraalJS against its
+    // regex engine -- so keeping one entry per name silently dropped a provider, and duplicate
+    // entries inside a single jar are not reliably enumerated by ServiceLoader either.
+    mergeServiceFiles()
     manifest {
         attributes["Launcher-Agent-Class"] = "com.beyondgrader.resourceagent.AgentKt"
         attributes["Can-Redefine-Classes"] = "true"
