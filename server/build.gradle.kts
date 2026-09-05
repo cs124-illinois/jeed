@@ -19,12 +19,12 @@ plugins {
 val agentVersion: String by rootProject.extra
 configurations.all {
     resolutionStrategy {
-        force("org.slf4j:slf4j-api:2.0.17")
+        force("org.slf4j:slf4j-api:2.0.19")
         // konf reaches gson through toml4j, which is abandoned on gson 2.8.1 and so still carries
         // CVE-2022-25647, fixed in 2.8.9.
         force("com.google.code.gson:gson:2.14.0")
         // See the note in core: inherited through plexus-container-default.
-        force("org.codehaus.plexus:plexus-utils:4.0.3")
+        force("org.codehaus.plexus:plexus-utils:4.1.0")
     }
 }
 dependencies {

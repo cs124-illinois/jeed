@@ -21,7 +21,7 @@ const val JEED_DEFAULT_DISK_CACHE_SIZE_MB = 1024L
 val diskCacheSizeMB = try {
     System.getenv("JEED_DISK_CACHE_SIZE")?.toLong() ?: JEED_DEFAULT_DISK_CACHE_SIZE_MB
 } catch (_: Exception) {
-    logger.warn("Bad value for JEED_DISK_CACHE_SIZE")
+    logger.warn { "Bad value for JEED_DISK_CACHE_SIZE" }
     JEED_DEFAULT_DISK_CACHE_SIZE_MB
 }
 
@@ -31,7 +31,7 @@ const val JEED_DEFAULT_USE_DISK_CACHE = false
 var useDiskCache = try {
     System.getenv("JEED_USE_DISK_CACHE")?.toBoolean() ?: JEED_DEFAULT_USE_DISK_CACHE
 } catch (_: Exception) {
-    logger.warn("Bad value for JEED_USE_DISK_CACHE")
+    logger.warn { "Bad value for JEED_USE_DISK_CACHE" }
     JEED_DEFAULT_USE_DISK_CACHE
 }
 
@@ -39,7 +39,7 @@ val diskCacheDir: Path = try {
     System.getenv("JEED_DISK_CACHE_DIR")?.let { Path.of(it) }
         ?: Path.of(System.getProperty("java.io.tmpdir"), "jeed-cache")
 } catch (_: Exception) {
-    logger.warn("Bad value for JEED_DISK_CACHE_DIR")
+    logger.warn { "Bad value for JEED_DISK_CACHE_DIR" }
     Path.of(System.getProperty("java.io.tmpdir"), "jeed-cache")
 }
 
@@ -49,7 +49,7 @@ const val JEED_DEFAULT_DISK_CACHE_LOW_WATER_MARK = 0.75
 val diskCacheLowWaterMark = try {
     System.getenv("JEED_DISK_CACHE_LOW_WATER_MARK")?.toDouble() ?: JEED_DEFAULT_DISK_CACHE_LOW_WATER_MARK
 } catch (_: Exception) {
-    logger.warn("Bad value for JEED_DISK_CACHE_LOW_WATER_MARK")
+    logger.warn { "Bad value for JEED_DISK_CACHE_LOW_WATER_MARK" }
     JEED_DEFAULT_DISK_CACHE_LOW_WATER_MARK
 }
 
@@ -89,7 +89,7 @@ class DiskCompilationCache(
                 .sum()
         }
     } catch (e: Exception) {
-        logger.warn("Failed to compute cache size: ${e.message}")
+        logger.warn { "Failed to compute cache size: ${e.message}" }
         0L
     }
 
@@ -105,7 +105,7 @@ class DiskCompilationCache(
             try {
                 Files.setLastModifiedTime(path, java.nio.file.attribute.FileTime.from(Instant.now()))
             } catch (e: Exception) {
-                logger.warn("Failed to update access time for cache entry: ${e.message}")
+                logger.warn { "Failed to update access time for cache entry: ${e.message}" }
             }
         }
 
@@ -137,7 +137,7 @@ class DiskCompilationCache(
                 }
             }
         } catch (e: Exception) {
-            logger.warn("Failed to write disk cache entry: ${e.message}")
+            logger.warn { "Failed to write disk cache entry: ${e.message}" }
         }
     }
 
@@ -171,7 +171,7 @@ class DiskCompilationCache(
                 }
             }
         } catch (e: Exception) {
-            logger.warn("Failed to evict cache entries: ${e.message}")
+            logger.warn { "Failed to evict cache entries: ${e.message}" }
         }
     }
 
@@ -186,7 +186,7 @@ class DiskCompilationCache(
             }
             currentSizeBytes.set(0)
         } catch (e: Exception) {
-            logger.warn("Failed to clear disk cache: ${e.message}")
+            logger.warn { "Failed to clear disk cache: ${e.message}" }
         }
     }
 
@@ -398,7 +398,7 @@ object DiskCacheSerializer {
                 )
             }
         } catch (e: Exception) {
-            logger.warn("Failed to read disk cache entry: ${e.message}")
+            logger.warn { "Failed to read disk cache entry: ${e.message}" }
             null
         }
     }

@@ -14,7 +14,7 @@ suspend fun warm(indent: Int = 2, failLint: Boolean = true, quiet: Boolean = fal
         it.complexity()
     }.compile().execute().output.also {
         if (!quiet) {
-            logger.info(it)
+            logger.info { it }
         }
     }
     Source.fromSnippet(
@@ -24,7 +24,7 @@ suspend fun warm(indent: Int = 2, failLint: Boolean = true, quiet: Boolean = fal
         it.ktLint(KtLintArguments(failOnError = failLint))
     }.kompile().execute().output.also {
         if (!quiet) {
-            logger.info(it)
+            logger.info { it }
         }
     }
     Source.fromSnippet(
@@ -38,7 +38,7 @@ suspend fun warm(indent: Int = 2, failLint: Boolean = true, quiet: Boolean = fal
     ).kompile()
         .execute(SourceExecutionArguments(waitForShutdown = true, timeout = COROUTINE_INIT_TIMEOUT)).output.also {
             if (!quiet) {
-                logger.info(it)
+                logger.info { it }
             }
         }
 }

@@ -25,10 +25,10 @@ plugins {
 val agentVersion: String by rootProject.extra
 configurations.all {
     resolutionStrategy {
-        force("org.slf4j:slf4j-api:2.0.17")
+        force("org.slf4j:slf4j-api:2.0.19")
         // plexus-container-default 2.1.1 is the newest release and still pulls plexus-utils 3.1.1,
         // which carries a path traversal advisory (CVE-2025-67030) fixed in 4.0.3.
-        force("org.codehaus.plexus:plexus-utils:4.0.3")
+        force("org.codehaus.plexus:plexus-utils:4.1.0")
     }
 }
 dependencies {
@@ -64,10 +64,12 @@ dependencies {
     // slf4j-jdk14 routes the SLF4J calls our dependencies make into java.util.logging, which is
     // already in the JDK, so there is no logging implementation to ship or keep patched. See
     // Logging.kt for the formatter that keeps the output identical to the logback pattern.
-    api("org.slf4j:slf4j-jdk14:2.0.17")
+    api("org.slf4j:slf4j-jdk14:2.0.19")
     // io.github.microutils is the abandoned home of kotlin-logging; io.github.oshai is where it
-    // moved. Pinned to the version ktlint already brings so only one copy is on the classpath.
-    api("io.github.oshai:kotlin-logging:7.0.13")
+    // moved. 8.x dropped the overloads taking a value in favour of the lambda form, which defers
+    // building the message until the level is known to be enabled. ktlint requests 7.0.13 and
+    // resolves up to this; its bytecode only ever calls the lambda overloads, so that is safe.
+    api("io.github.oshai:kotlin-logging:8.0.4")
     api("io.github.classgraph:classgraph:4.8.194")
 
     testImplementation("io.kotest:kotest-runner-junit5:6.2.4")

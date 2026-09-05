@@ -18,7 +18,7 @@ const val JEED_DEFAULT_COMPILATION_CACHE_SIZE_MB = 256L
 val compilationCacheSizeMB = try {
     System.getenv("JEED_COMPILATION_CACHE_SIZE")?.toLong() ?: JEED_DEFAULT_COMPILATION_CACHE_SIZE_MB
 } catch (_: Exception) {
-    logger.warn("Bad value for JEED_COMPILATION_CACHE_SIZE")
+    logger.warn { "Bad value for JEED_COMPILATION_CACHE_SIZE" }
     JEED_DEFAULT_COMPILATION_CACHE_SIZE_MB
 }
 
@@ -28,7 +28,7 @@ const val JEED_DEFAULT_USE_CACHE = false
 val useCompilationCache = try {
     System.getenv("JEED_USE_CACHE")?.toBoolean() ?: JEED_DEFAULT_USE_CACHE
 } catch (_: Exception) {
-    logger.warn("Bad value for JEED_USE_CACHE")
+    logger.warn { "Bad value for JEED_USE_CACHE" }
     JEED_DEFAULT_USE_CACHE
 }
 
@@ -36,7 +36,7 @@ val useCompilationCache = try {
 val logDiskCacheMisses = try {
     System.getenv("JEED_LOG_DISK_CACHE_MISSES")?.toBoolean() ?: false
 } catch (_: Exception) {
-    logger.warn("Bad value for JEED_LOG_DISK_CACHE_MISSES")
+    logger.warn { "Bad value for JEED_LOG_DISK_CACHE_MISSES" }
     false
 }
 
@@ -170,7 +170,7 @@ fun Source.tryCache(
                 "$path:\n$content"
             }
             val stackTrace = Thread.currentThread().stackTrace.drop(1).joinToString("\n") { "  at $it" }
-            logger.warn("Disk cache miss: key=$cacheKey\n$sourceInfo\nStack trace:\n$stackTrace")
+            logger.warn { "Disk cache miss: key=$cacheKey\n$sourceInfo\nStack trace:\n$stackTrace" }
         }
         return null
     }
@@ -319,7 +319,7 @@ fun Source.tryCache(
                 "$path:\n$content"
             }
             val stackTrace = Thread.currentThread().stackTrace.drop(1).joinToString("\n") { "  at $it" }
-            logger.warn("Disk cache miss: key=$cacheKey\n$sourceInfo\nStack trace:\n$stackTrace")
+            logger.warn { "Disk cache miss: key=$cacheKey\n$sourceInfo\nStack trace:\n$stackTrace" }
         }
         return null
     }
