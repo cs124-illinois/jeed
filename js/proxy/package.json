@@ -1,7 +1,7 @@
 {
   "private": true,
   "name": "proxy",
-  "version": "2026.9.0",
+  "version": "2026.9.1",
   "scripts": {
     "build": "rimraf bundled && node esbuild/server.mjs",
     "check": "bun run depcheck && bun run prettier && bun run eslint && bun run tsc && bun run build",
@@ -17,7 +17,7 @@
     "tsc": "tsc --noEmit"
   },
   "dependencies": {
-    "@cs124/jeed-types": "2026.9.0",
+    "@cs124/jeed-types": "2026.9.1",
     "@koa/cors": "5.0.0",
     "@koa/router": "15.7.0",
     "@panva/hkdf": "1.2.1",
