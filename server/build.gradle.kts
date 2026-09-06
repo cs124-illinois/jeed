@@ -42,7 +42,10 @@ dependencies {
     // konf 2.1.0 is the newest release and pins jackson 2.17.1, which carries advisories fixed in
     // 2.18.8. The BOM keeps the family consistent; jackson-annotations versions differently from
     // the rest, so forcing the artifacts individually needs two version lines kept in step.
-    implementation(enforcedPlatform("com.fasterxml.jackson:jackson-bom:2.22.2"))
+    // A plain platform rather than an enforced one: enforced platforms behave like forced
+    // dependencies and leak to consumers, which Gradle refuses to publish. This still wins over
+    // konf's older BOM, since the higher version carries conflict resolution.
+    implementation(platform("com.fasterxml.jackson:jackson-bom:2.22.2"))
     implementation("io.github.nhubbard:konf:2.1.0")
     implementation("com.beyondgrader.resource-agent:agent:$agentVersion")
     implementation("com.beyondgrader.resource-agent:jeedplugin:$agentVersion")
