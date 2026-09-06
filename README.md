@@ -1,6 +1,5 @@
 # Jeed: A Fast Java and Kotlin Compliation, Execution, and Analysis Toolkit
 
-[![Release](https://jitpack.io/v/cs125-illinois/jeed.svg)](https://jitpack.io/#cs125-illinois/jeed)
 [![Docker Image Version (latest by date)](https://img.shields.io/docker/v/cs125/jeed?color=green&label=Docker&sort=date)](https://hub.docker.com/r/cs125/jeed/tags)
 [![npm version](https://badge.fury.io/js/%40cs124%2Fjeed-react.svg)](https://badge.fury.io/js/%40cs124%2Fjeed-react)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
