@@ -77,6 +77,19 @@ nexusPublishing {
     }
 }
 val publishToSonatypeTasks = listOf(":core:publishToSonatype", ":server:publishToSonatype")
+val verificationTasks = listOf(":core:build", ":server:build")
+
+// A release cannot be taken back, so nothing reaches Maven Central that has not been through the
+// tests, lint and detekt first. The publication tasks only depend on the jars, so this has to be
+// ordered explicitly, and there is no point opening a staging repository for a build that fails.
+subprojects {
+    tasks.matching { it.name == "publishToSonatype" }.configureEach {
+        mustRunAfter(verificationTasks)
+    }
+}
+tasks.named("initializeSonatypeStagingRepository") {
+    mustRunAfter(verificationTasks)
+}
 
 // The staging repository can only be closed once everything has been uploaded into it.
 tasks.named("closeAndReleaseSonatypeStagingRepository") {
@@ -84,7 +97,10 @@ tasks.named("closeAndReleaseSonatypeStagingRepository") {
 }
 tasks.register("publish") {
     group = "publishing"
-    description = "Uploads core and server to Maven Central, then closes and releases the staging repository."
+    description =
+        "Builds and tests core and server, uploads them to Maven Central, then closes and releases " +
+        "the staging repository."
+    dependsOn(verificationTasks)
     dependsOn(publishToSonatypeTasks)
     dependsOn("closeAndReleaseSonatypeStagingRepository")
 }
