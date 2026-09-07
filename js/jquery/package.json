@@ -4,7 +4,7 @@
   "version": "2026.9.1",
   "scripts": {
     "build": "babel jeed.js -d build/",
-    "jeed": "docker run -p 8888:8888 -e HOSTS=http://localhost:1234 cs125/jeed:latest",
+    "jeed": "docker run -p 8888:8888 -e HOSTS=http://localhost:1234 cs124/jeed:latest",
     "ncu": "ncu",
     "parcel": "parcel index.html",
     "prettier": "prettier --write * && prettier-package-json --write",
