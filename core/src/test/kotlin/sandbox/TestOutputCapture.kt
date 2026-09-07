@@ -1,7 +1,9 @@
 package edu.illinois.cs.cs125.jeed.core.sandbox
 
+import edu.illinois.cs.cs125.jeed.core.JEED_LOGGER_NAME
 import edu.illinois.cs.cs125.jeed.core.OutputHardLimitExceeded
 import edu.illinois.cs.cs125.jeed.core.Sandbox
+import edu.illinois.cs.cs125.jeed.core.SnippetArguments
 import edu.illinois.cs.cs125.jeed.core.Source
 import edu.illinois.cs.cs125.jeed.core.SourceExecutionArguments
 import edu.illinois.cs.cs125.jeed.core.compile
@@ -13,6 +15,9 @@ import edu.illinois.cs.cs125.jeed.core.haveOutput
 import edu.illinois.cs.cs125.jeed.core.haveStderr
 import edu.illinois.cs.cs125.jeed.core.haveStdout
 import edu.illinois.cs.cs125.jeed.core.haveTimedOut
+import edu.illinois.cs.cs125.jeed.core.kompile
+import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.collections.shouldNotContain
@@ -20,11 +25,20 @@ import io.kotest.matchers.ints.shouldBeGreaterThan
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNot
+import io.kotest.matchers.string.shouldContain
+import io.kotest.matchers.string.shouldNotContain
 import io.kotest.matchers.types.beInstanceOf
 import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
+import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.PrintStream
+import java.util.logging.Handler
+import java.util.logging.Level
+import java.util.logging.LogRecord
+import java.util.logging.Logger
 
 class TestOutputCapture :
     StringSpec({
@@ -77,6 +91,9 @@ System.err.print("There");
             executionResult should haveOutput("Here\nThere")
         }
         "should not intermingle unrelated thread output" {
+            // Install the combined stream underneath the sandbox rather than over it, so that the sandbox adopts it
+            // as the host stream and unrelated output reaches it through the redirect.
+            Sandbox.stop()
             val combinedOutputStream = ByteArrayOutputStream()
             val combinedPrintStream = PrintStream(combinedOutputStream)
             val originalStdout = System.out
@@ -109,6 +126,7 @@ for (int i = 0; i < 32; i++) {
                 executionResult.outputLines.map { it.line } shouldNotContain "Bad"
                 executionResult.stderrLines.map { it.line } shouldNotContain "Bad"
             }
+            Sandbox.stop()
             System.setOut(originalStdout)
             System.setErr(originalStderr)
 
@@ -276,5 +294,180 @@ System.out.println("\nHello\n");
             executionResult should haveCompleted()
             executionResult shouldNot haveTimedOut()
             executionResult.stdout shouldBe "\nHello\n"
+        }
+        "should warn once when System.out is replaced after the sandbox starts" {
+            // Make sure the sandbox is running with the current streams, then wrap System.out the way a host that
+            // captures its own output might. The wrapper forwards to the sandbox's stream, so capture keeps working,
+            // but every sandboxed print now also passes through the wrapper.
+            Source.fromSnippet("""System.out.println("Here");""").compile().execute() should haveStdout("Here")
+            val warnings = mutableListOf<String>()
+            val handler = object : Handler() {
+                override fun publish(record: LogRecord) {
+                    if (record.level.intValue() >= Level.WARNING.intValue()) {
+                        warnings.add(record.message)
+                    }
+                }
+
+                override fun flush() {}
+                override fun close() {}
+            }
+            val jeedLogger = Logger.getLogger(JEED_LOGGER_NAME).also { it.addHandler(handler) }
+            val originalStdout = System.out
+            val originalFailOnReplacedStreams = Sandbox.failOnReplacedStreams
+            Sandbox.failOnReplacedStreams = false
+            System.setOut(PrintStream(originalStdout, true))
+            try {
+                repeat(2) {
+                    Source.fromSnippet("""System.out.println("Here");""").compile().execute() should haveStdout("Here")
+                }
+            } finally {
+                System.setOut(originalStdout)
+                Sandbox.failOnReplacedStreams = originalFailOnReplacedStreams
+                jeedLogger.removeHandler(handler)
+            }
+            warnings.filter { it.contains("System.out is now java.io.PrintStream") } shouldHaveSize 1
+        }
+        "should fail when System.out is replaced by a stream that does not forward to the sandbox" {
+            // What jansi's AnsiConsole.systemInstall does: the new stream writes elsewhere, so nothing sandboxed
+            // code prints can be captured. That fails regardless of failOnReplacedStreams.
+            Source.fromSnippet("""System.out.println("Here");""").compile().execute() should haveStdout("Here")
+            val originalStdout = System.out
+            val originalFailOnReplacedStreams = Sandbox.failOnReplacedStreams
+            Sandbox.failOnReplacedStreams = false
+            val elsewhere = ByteArrayOutputStream()
+            System.setOut(PrintStream(elsewhere, true))
+            try {
+                shouldThrow<Sandbox.SandboxOutputStreamsReplaced> {
+                    Source.fromSnippet("""System.out.println("Here");""").compile().execute()
+                }.message shouldContain "does not forward"
+            } finally {
+                System.setOut(originalStdout)
+                Sandbox.failOnReplacedStreams = originalFailOnReplacedStreams
+            }
+            elsewhere.toString() shouldNotContain "Here"
+            Source.fromSnippet("""System.out.println("Here");""").compile().execute() should haveStdout("Here")
+        }
+        "should fail when System.out is replaced after the sandbox starts and asked to" {
+            Source.fromSnippet("""System.out.println("Here");""").compile().execute() should haveStdout("Here")
+            val originalStdout = System.out
+            val originalFailOnReplacedStreams = Sandbox.failOnReplacedStreams
+            Sandbox.failOnReplacedStreams = true
+            System.setOut(PrintStream(originalStdout, true))
+            try {
+                shouldThrow<Sandbox.SandboxOutputStreamsReplaced> {
+                    Source.fromSnippet("""System.out.println("Here");""").compile().execute()
+                }
+            } finally {
+                System.setOut(originalStdout)
+                Sandbox.failOnReplacedStreams = originalFailOnReplacedStreams
+            }
+            // Restored, so tasks run again
+            Source.fromSnippet("""System.out.println("Here");""").compile().execute() should haveStdout("Here")
+        }
+        "should never leak sandboxed output to the real stdout or stderr" {
+            // Whatever the sandbox fails to capture lands on the streams System.out and System.err held when
+            // the sandbox started. Install capturing streams underneath it and check that nothing printed by
+            // sandboxed code ever reaches them, across the ways code can end up printing.
+            Sandbox.stop()
+            val hostStdout = System.out
+            val hostStderr = System.err
+            val leaked = ByteArrayOutputStream()
+            PrintStream(leaked, true).also {
+                System.setOut(it)
+                System.setErr(it)
+            }
+            try {
+                fun arguments() = SourceExecutionArguments(timeout = 5000L, maxExtraThreads = 16, waitForShutdown = true)
+                fun assertNothingLeaked(scenario: String) = withClue(scenario) {
+                    leaked.toString() shouldNotContain "Hello, world!"
+                }
+
+                mapOf(
+                    "stdout" to """System.out.println("Hello, world!");""",
+                    "stderr" to """System.err.println("Hello, world!");""",
+                    "student thread" to """
+Thread t = new Thread(() -> System.out.println("Hello, world!"));
+t.start();
+t.join();""",
+                    "static initializer" to """
+class Noisy {
+  static { System.out.println("Hello, world!"); }
+  static void touch() { }
+}
+Noisy.touch();""",
+                ).forEach { (scenario, snippet) ->
+                    val result = Source.fromSnippet(snippet.trim()).compile().execute(arguments())
+                    withClue(scenario) { result.output shouldContain "Hello, world!" }
+                    assertNothingLeaked(scenario)
+                }
+
+                // The common pool's workers live outside any confined thread group. Create some here, as a
+                // host process would have, before sandboxed code tries to use them.
+                (0 until 2048).toList().parallelStream().forEach { Thread.sleep(0, 1000) }
+                Source.fromSnippet(
+                    """
+import java.util.stream.IntStream;
+IntStream.range(0, 8).parallel().forEach(i -> System.out.println("Hello, world!"));
+                    """.trim(),
+                ).compile().execute(arguments())
+                assertNothingLeaked("parallel stream")
+
+                mapOf(
+                    "kotlin" to """println("Hello, world!")""",
+                    "kotlin coroutine" to """
+import kotlinx.coroutines.*
+GlobalScope.launch {
+  delay(1)
+  println("Hello, world!")
+}""",
+                ).forEach { (scenario, snippet) ->
+                    val result = Source.fromSnippet(snippet.trim(), SnippetArguments(fileType = Source.FileType.KOTLIN))
+                        .kompile()
+                        .execute(arguments())
+                    withClue(scenario) { result.output shouldContain "Hello, world!" }
+                    assertNothingLeaked(scenario)
+                }
+
+                val echo = Source.fromSnippet(
+                    """
+import java.util.Scanner;
+Scanner scanner = new Scanner(System.in);
+System.out.println(scanner.nextLine());
+                    """.trim(),
+                ).compile()
+                echo.execute(
+                    SourceExecutionArguments(
+                        timeout = 5000L,
+                        systemInStream = ByteArrayInputStream("Hello, world!\n".toByteArray()),
+                    ),
+                ).output shouldContain "Hello, world!"
+                assertNothingLeaked("stdin echo")
+
+                val hello = Source.fromSnippet("""System.out.println("Hello, world!");""").compile()
+                Sandbox.execute(hello.classLoader, arguments()) { (classLoader) ->
+                    Sandbox.redirectOutput(redirectingOutputLimit = 100, squashNormalOutput = true) {
+                        classLoader.findClassMethod().invoke(null)
+                    }.stdout shouldContain "Hello, world!"
+                }
+                assertNothingLeaked("redirected to trusted task")
+
+                coroutineScope {
+                    (0 until 8).map { async { hello.execute(arguments()) } }.awaitAll()
+                }.forEach { it.output shouldContain "Hello, world!" }
+                assertNothingLeaked("concurrent tasks")
+
+                Source.fromSnippet(
+                    """
+while (true) {
+  try { System.out.println("Hello, world!"); } catch (Throwable t) { }
+}
+                    """.trim(),
+                ).compile().execute(SourceExecutionArguments(timeout = 200L)) should haveTimedOut()
+                assertNothingLeaked("killed while printing")
+            } finally {
+                Sandbox.stop()
+                System.setOut(hostStdout)
+                System.setErr(hostStderr)
+            }
         }
     })

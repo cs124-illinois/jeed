@@ -20,6 +20,8 @@ import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
 import sun.management.ManagementFactoryHelper
 import java.io.ByteArrayInputStream
+import java.io.FileDescriptor
+import java.io.FileOutputStream
 import java.io.FilePermission
 import java.io.InputStream
 import java.io.OutputStream
@@ -397,6 +399,7 @@ object Sandbox {
             start()
             require(running) { "Sandbox not running even after being started" }
         }
+        checkOutputStreams()
 
         val executor = Executor(callable, sandboxedClassLoader, executionArguments)
         threadPool.submit(executor)
@@ -405,6 +408,7 @@ object Sandbox {
         val result = executor.result.await()
         activeTasks.decrementAndGet()
         completedTasks.incrementAndGet()
+        checkOutputStreams()
         return result.taskResults ?: throw result.executionException!!
     }
 
@@ -976,6 +980,10 @@ object Sandbox {
 
         confinedClassLoaders.remove(confinedTask.classLoader)
         confinedTask.released = true
+
+        if (debugOutputLeaks != null) {
+            debugPrint(listOf("JEED_DEBUG_OUTPUT_LEAKS: task released on ${Thread.currentThread().name}; ${describeChildProcesses()}"))
+        }
     }
 
     private class SandboxedCallable<T>(
@@ -2176,10 +2184,8 @@ object Sandbox {
     private class RedirectingPrintStream(val console: TaskResults.OutputLine.Console) : PrintStream(nullOutputStream) {
         private val taskPrintStream: PrintStream
             get() {
-                val confinedTask = confinedTaskByThreadGroup() ?: return (
-                    originalPrintStreams[console]
-                        ?: error("original console should exist")
-                    )
+                val confinedTask = confinedTaskByThreadGroup()
+                    ?: return hostPrintStreams[console] ?: error("original console should exist")
                 return confinedTask.printStreams[console] ?: error("confined console should exist")
             }
 
@@ -2194,6 +2200,12 @@ object Sandbox {
         }
 
         override fun flush() {
+            // checkOutputStreams probes whether a stream installed over this one still forwards to it by flushing
+            // System.out; arriving here during that probe is the answer, and nothing needs flushing.
+            if (probingRedirect.get()) {
+                redirectReached.set(true)
+                return
+            }
             taskPrintStream.flush()
         }
 
@@ -2380,6 +2392,9 @@ object Sandbox {
     private lateinit var originalStderr: PrintStream
     private lateinit var originalStdin: InputStream
 
+    private lateinit var redirectingStdout: PrintStream
+    private lateinit var redirectingStderr: PrintStream
+
     private var originalSecurityManager: SecurityManager? = null
     private lateinit var originalProperties: Properties
 
@@ -2394,6 +2409,158 @@ object Sandbox {
 
     @Suppress("MemberVisibilityCanBePrivate")
     var autoStart = true
+
+    /**
+     * Whether a task should fail, rather than log a warning, when System.out or System.err is found to no longer be
+     * the stream the sandbox installed in [start] but the replacement still forwards to it.
+     *
+     * The sandbox captures output by owning those streams, so a host that replaces or wraps them afterwards sends
+     * every sandboxed print through its replacement too. A wrapper that forwards to the stream it replaced still
+     * captures correctly but also copies the output wherever the wrapper goes, which is how sandboxed output can turn
+     * up in a server's own logs. A replacement that does not forward, such as jansi's console streams, which write
+     * to the file descriptor directly, loses the output entirely, so the task always fails in that case: nothing it
+     * printed could have been captured.
+     *
+     * Defaults to the JEED_FAIL_ON_REPLACED_STREAMS environment variable. When false, each distinct forwarding
+     * replacement is reported once.
+     */
+    var failOnReplacedStreams: Boolean = System.getenv("JEED_FAIL_ON_REPLACED_STREAMS")?.toBoolean() == true
+
+    private val probingRedirect: ThreadLocal<Boolean> = ThreadLocal.withInitial { false }
+    private val redirectReached: ThreadLocal<Boolean> = ThreadLocal.withInitial { false }
+
+    // Whether flushing the given stream, presumably a replacement installed over the sandbox's, reaches the
+    // sandbox's stream. A forwarding wrapper passes flush() along; a stream writing somewhere else does not.
+    private fun forwardsToRedirect(stream: PrintStream): Boolean {
+        probingRedirect.set(true)
+        redirectReached.set(false)
+        try {
+            stream.flush()
+            return redirectReached.get()
+        } finally {
+            probingRedirect.set(false)
+        }
+    }
+
+    class SandboxOutputStreamsReplaced(message: String) : RuntimeException(message)
+
+    private val reportedReplacedStreams: MutableSet<String> = ConcurrentHashMap.newKeySet()
+
+    /**
+     * Set JEED_DEBUG_OUTPUT_LEAKS to report writes that reach the host's stdout or stderr through the sandbox's
+     * redirect, which is where writes from threads outside any confined thread group end up. With the value `true`,
+     * every such write while a task is running is reported; with any other value, every write whose text contains
+     * that value is reported, whether or not a task is running. Each distinct call site is reported once, with the
+     * writing thread, its thread group, and its stack, and a banner is printed when the sandbox starts so that the
+     * build in use is unambiguous. Off by default: each reported write pays for a stack walk.
+     */
+    private val debugOutputLeaks: String? =
+        System.getenv("JEED_DEBUG_OUTPUT_LEAKS")?.takeIf { it.isNotBlank() && it != "false" }
+
+    // The streams non-confined writes are routed to: the originals, or reporting wrappers around them when debugging.
+    private lateinit var hostPrintStreams: Map<TaskResults.OutputLine.Console, PrintStream>
+    private val reportedUnconfinedWrites: MutableSet<String> = ConcurrentHashMap.newKeySet()
+    private val reportingUnconfinedWrite: ThreadLocal<Boolean> = ThreadLocal.withInitial { false }
+
+    // The process's real stderr, bypassing whatever System.err has been replaced with.
+    private val realStderr: PrintStream by lazy { PrintStream(FileOutputStream(FileDescriptor.err), true) }
+
+    // Debugging output goes out every way it might reach a console, tagged with the route, so that which tags
+    // show up says how the console is being fed.
+    private fun debugPrint(lines: List<String>) {
+        realStderr.println(lines.joinToString(System.lineSeparator()) { "[fd2] $it" })
+        originalStderr.println(lines.joinToString(System.lineSeparator()) { "[host stderr] $it" })
+        originalStdout.println(lines.joinToString(System.lineSeparator()) { "[host stdout] $it" })
+    }
+
+    private fun describeChildProcesses(): String = ProcessHandle.current().children().toList().let { children ->
+        if (children.isEmpty()) {
+            "no child processes"
+        } else {
+            "${children.size} child process(es): " + children.joinToString("; ") { child ->
+                "${child.pid()} ${child.info().commandLine().orElse(child.info().command().orElse("?")).take(160)}"
+            }
+        }
+    }
+
+    private class LeakReportingStream(
+        val console: TaskResults.OutputLine.Console,
+        val target: PrintStream,
+        val filter: String?,
+    ) : OutputStream() {
+        override fun write(b: Int) = write(byteArrayOf(b.toByte()), 0, 1)
+
+        override fun write(b: ByteArray, off: Int, len: Int) {
+            val text = String(b, off, len)
+            val report = if (filter == null) activeTasks.get() > 0 else text.contains(filter)
+            if (report) {
+                reportUnconfinedWrite(console, text)
+            }
+            target.write(b, off, len)
+        }
+
+        override fun flush() = target.flush()
+    }
+
+    @Suppress("MagicNumber")
+    private fun reportUnconfinedWrite(console: TaskResults.OutputLine.Console, text: String) {
+        if (reportingUnconfinedWrite.get()) {
+            return
+        }
+        reportingUnconfinedWrite.set(true)
+        try {
+            val thread = Thread.currentThread()
+            val frames = StackWalker.getInstance().walk { stream ->
+                stream.map { it.toStackTraceElement() }
+                    .filter { !it.className.startsWith("edu.illinois.cs.cs125.jeed.core.Sandbox") }
+                    .filter { !it.className.startsWith("java.io.") && !it.className.startsWith("sun.nio.cs.") }
+                    .toList()
+            }
+            val signature = "${thread.name}|${frames.take(12).joinToString("|")}"
+            if (!reportedUnconfinedWrites.add(signature)) {
+                return
+            }
+            val group = thread.threadGroup
+            debugPrint(
+                listOf(
+                    "JEED_DEBUG_OUTPUT_LEAKS: ${console.name.lowercase()} write \"${text.trim().take(80)}\" reached " +
+                        "the host from thread \"${thread.name}\" in group \"${group?.name}\" " +
+                        "(${group?.javaClass?.name}) with ${activeTasks.get()} active task(s):",
+                ) + frames.take(40).map { "    at $it" },
+            )
+        } finally {
+            reportingUnconfinedWrite.set(false)
+        }
+    }
+
+    private fun checkOutputStreams() {
+        val replaced = listOfNotNull(
+            System.out.takeIf { it !== redirectingStdout }?.let { "System.out" to it },
+            System.err.takeIf { it !== redirectingStderr }?.let { "System.err" to it },
+        )
+        if (replaced.isEmpty()) {
+            return
+        }
+        val forwarding = replaced.filter { (_, stream) -> forwardsToRedirect(stream) }
+        val description = replaced.joinToString(" and ") { (name, stream) ->
+            "$name is now ${stream::class.java.name}" +
+                if ((name to stream) in forwarding) " (forwards to the sandbox's stream)" else " (does not forward)"
+        }
+        val captureLost = forwarding.size < replaced.size
+        val message = "The sandbox's output streams have been replaced since Sandbox.start(): $description. " +
+            if (captureLost) {
+                "Output from sandboxed code is not captured at all while this is the case."
+            } else {
+                "Output from sandboxed code is still captured, but also reaches the replacement."
+            }
+        if (captureLost || failOnReplacedStreams) {
+            throw SandboxOutputStreamsReplaced(message)
+        }
+        if (reportedReplacedStreams.add(description)) {
+            logger.warn { message }
+        }
+    }
+
     var running = false
         private set
 
@@ -2418,9 +2585,41 @@ object Sandbox {
             TaskResults.OutputLine.Console.STDOUT to originalStdout,
             TaskResults.OutputLine.Console.STDERR to originalStderr,
         )
+        // jansi's console streams write to the file descriptor directly rather than to the stream they replaced.
+        // Output the sandbox routes to the host, from threads outside any task, then bypasses anything that is
+        // capturing System.out, such as a test runner or a log collector.
+        originalPrintStreams.values.map { it.javaClass.name }.distinct()
+            .filter { it.startsWith("org.fusesource.jansi.") }
+            .forEach { name ->
+                logger.warn {
+                    "System.out or System.err was $name when the sandbox started, which writes to the file " +
+                        "descriptor directly; output the sandbox routes to the host will bypass anything capturing " +
+                        "System.out"
+                }
+            }
 
-        System.setOut(RedirectingPrintStream(TaskResults.OutputLine.Console.STDOUT))
-        System.setErr(RedirectingPrintStream(TaskResults.OutputLine.Console.STDERR))
+        hostPrintStreams = originalPrintStreams.mapValues { (console, stream) ->
+            debugOutputLeaks?.let { value ->
+                PrintStream(LeakReportingStream(console, stream, value.takeUnless { it == "true" }), true)
+            } ?: stream
+        }
+        debugOutputLeaks?.let {
+            debugPrint(
+                listOf(
+                    "JEED_DEBUG_OUTPUT_LEAKS=$it: sandbox starting in pid ${ProcessHandle.current().pid()}; " +
+                        "reporting writes that reach the host through the sandbox's redirect",
+                    "Sandbox loaded by ${Sandbox::class.java.classLoader}",
+                    "System.out was ${originalStdout.javaClass.name}@${System.identityHashCode(originalStdout)} " +
+                        "from loader ${originalStdout.javaClass.classLoader}",
+                    "System.err was ${originalStderr.javaClass.name}@${System.identityHashCode(originalStderr)} " +
+                        "from loader ${originalStderr.javaClass.classLoader}",
+                    describeChildProcesses(),
+                ),
+            )
+        }
+
+        redirectingStdout = RedirectingPrintStream(TaskResults.OutputLine.Console.STDOUT).also { System.setOut(it) }
+        redirectingStderr = RedirectingPrintStream(TaskResults.OutputLine.Console.STDERR).also { System.setErr(it) }
         System.setIn(RedirectingInputStream())
 
         threadPool = Executors.newFixedThreadPool(size) { r ->

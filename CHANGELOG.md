@@ -1,5 +1,61 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- The sandbox now checks, before and after every task, that `System.out` and `System.err` are still
+  the streams it installed, and probes any replacement to see whether it still forwards to them. A
+  host that replaces or wraps them after the sandbox has started sends every sandboxed print through
+  its replacement. A wrapper that forwards still captures correctly but also copies the output
+  wherever the wrapper goes, which is how sandboxed output can turn up in a server's own logs; each
+  distinct one is logged once as a warning, or fails the task when `Sandbox.failOnReplacedStreams`
+  or `JEED_FAIL_ON_REPLACED_STREAMS=true` is set. A replacement that does not forward means nothing
+  sandboxed code prints can be captured at all, so the task always fails with
+  `Sandbox.SandboxOutputStreamsReplaced`. jansi's `AnsiConsole.systemInstall()` is the known case:
+  its streams write to the file descriptor directly, and ktor 3.5's `CallLogging` plugin calls it
+  whenever colours are enabled.
+- The sandbox warns at start when `System.out` or `System.err` is already one of jansi's streams,
+  since output it routes to the host will then bypass anything capturing `System.out`.
+
+### Where the capture boundary is
+
+The sandbox captures output by owning the `System.out` and `System.err` streams and routing each
+write by the thread that made it. Anything that writes below those streams is outside its reach:
+native console libraries such as jansi, JNI, or a child process with inherited descriptors. The
+checks above detect the case where the streams themselves are displaced; they cannot see writes that
+never pass through them.
+- `JEED_DEBUG_OUTPUT_LEAKS` reports writes that reach the host's stdout or stderr through the
+  sandbox's redirect, which is where writes from threads outside any confined thread group end up.
+  With the value `true`, every such write while a task is running is reported; with any other
+  value, every write containing that text is reported whether or not a task is running. Each
+  distinct call site is reported once, with the writing thread, its thread group and its stack, and
+  a banner is printed when the sandbox starts naming the class loader that loaded `Sandbox`, the
+  streams it captured, and any child processes. Everything is written through three tagged routes,
+  the captured host stdout, the captured host stderr, and the process's real stderr descriptor,
+  since a test harness such as Gradle's shows only some of these on its console. Off by default,
+  since each reported write pays for a stack walk.
+
+### Fixed
+
+- `jeed-core` no longer prints `kotlin-logging: initializing... active logger factory: ...` to the
+  host process's stdout the first time it creates a logger. kotlin-logging 8 turns that startup
+  line on by default; Jeed now turns it off unless the embedder has set the library's own
+  `kotlin-logging.logStartupMessage` system property or `KOTLIN_LOGGING_STARTUP_MESSAGE`
+  environment variable.
+
+### Tests
+
+- Added a regression test that runs sandboxed code through every printing path (plain output,
+  student threads, static initializers, parallel streams against a warm common pool, Kotlin and
+  coroutines, stdin echo, trusted-task redirection, concurrent tasks, and a task killed
+  mid-print) with the real stdout and stderr captured underneath the sandbox, and checks that
+  nothing sandboxed reaches them.
+- Added server tests that do the same through HTTP, on both the ktor test engine and Netty, after
+  an earlier execution in the same JVM, including a handler shaped the way questioner drives jeed:
+  several executions per request under `redirectOutput`, a reference solution loaded outside the
+  sandbox, and the server's plugins attached.
+
 ## 2026.9.1
 
 Everything since 2026.4.0, the last version published to Maven Central. 2026.9.0 was an
