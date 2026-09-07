@@ -280,4 +280,37 @@ fun main() {
 """,
             ).complexity()
         }
+        "it should parse deeply nested code regardless of the calling thread's stack" {
+            // The parsers run on their own threads with a fixed stack, so the nesting they handle depends neither on
+            // the host's -Xss nor on what the JIT has compiled so far. Call from the smallest stack the JVM allows.
+            val depth = 300
+            val javaSource = "public class Main {\n  public static void main() {\n    int a = 0;\n" +
+                "    if (a >= 0) {\n".repeat(depth) + "      a++;\n" + "    }\n".repeat(depth) + "  }\n}\n"
+            val kotlinSource = "fun main() {\n  var a = 0\n" +
+                "  if (a >= 0) {\n".repeat(depth) + "    a++\n" + "  }\n".repeat(depth) + "}\n"
+            val javaSnippet = "int a = 0;\n" + "if (a >= 0) {\n".repeat(depth) + "a++;\n" + "}\n".repeat(depth)
+            val kotlinSnippet = "var a = 0\n" + "if (a >= 0) {\n".repeat(depth) + "a++\n" + "}\n".repeat(depth)
+
+            var failure: Throwable? = null
+            Thread(
+                null,
+                {
+                    @Suppress("TooGenericExceptionCaught")
+                    try {
+                        Source(mapOf("Main.java" to javaSource)).complexity()
+                        Source.fromKotlin(kotlinSource).complexity()
+                        Source.fromSnippet(javaSnippet).complexity()
+                        Source.fromSnippet(kotlinSnippet, SnippetArguments(fileType = Source.FileType.KOTLIN)).complexity()
+                    } catch (e: Throwable) {
+                        failure = e
+                    }
+                },
+                "tiny stack",
+                64L * 1024,
+            ).apply {
+                start()
+                join()
+            }
+            failure shouldBe null
+        }
     })

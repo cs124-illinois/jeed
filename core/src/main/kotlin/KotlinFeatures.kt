@@ -16,7 +16,7 @@ import edu.illinois.cs.cs125.jeed.core.antlr.KotlinParserBaseListener
 import org.antlr.v4.runtime.ParserRuleContext
 import org.antlr.v4.runtime.RuleContext
 import org.antlr.v4.runtime.Token
-import org.antlr.v4.runtime.tree.ParseTreeWalker
+import org.antlr.v4.runtime.tree.IterativeParseTreeWalker
 import org.antlr.v4.runtime.tree.TerminalNode
 import org.jetbrains.kotlin.backend.common.pop
 
@@ -1113,6 +1113,6 @@ class KotlinFeatureListener(val source: Source, entry: Map.Entry<String, String>
     init {
         parsedSource = source.getParsed(filename)
         // println(parsedSource.tree.format(parsedSource.parser))
-        ParseTreeWalker.DEFAULT.walk(this, parsedSource.tree)
+        IterativeParseTreeWalker().walk(this, parsedSource.tree)
     }
 }

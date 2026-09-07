@@ -15,7 +15,7 @@ import net.sf.extjwnl.dictionary.Dictionary
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.Parser
 import org.antlr.v4.runtime.misc.Interval
-import org.antlr.v4.runtime.tree.ParseTreeWalker
+import org.antlr.v4.runtime.tree.IterativeParseTreeWalker
 import org.antlr.v4.runtime.tree.Tree
 import org.antlr.v4.runtime.tree.Trees
 
@@ -85,7 +85,7 @@ internal fun Source.ParsedSource.strings(type: Source.FileType): Set<String> = w
             }
 
             init {
-                ParseTreeWalker.DEFAULT.walk(this, tree)
+                IterativeParseTreeWalker().walk(this, tree)
             }
         }.strings
     }
@@ -111,7 +111,7 @@ fun Source.ParsedSource.stripAssertionMessages(type: Source.FileType): String {
             }
 
             init {
-                ParseTreeWalker.DEFAULT.walk(this, tree)
+                IterativeParseTreeWalker().walk(this, tree)
                 keep += (currentStart until stream.size()) as Any
             }
         }.keep
@@ -140,7 +140,7 @@ fun Source.ParsedSource.stripAssertionMessages(type: Source.FileType): String {
                 }
 
                 init {
-                    ParseTreeWalker.DEFAULT.walk(this, tree)
+                    IterativeParseTreeWalker().walk(this, tree)
                     keep += (currentStart until stream.size()) as Any
                 }
             }.keep
@@ -291,8 +291,10 @@ data class LineCounts(val source: Int, val comment: Int, val blank: Int) {
     operator fun minus(other: LineCounts) = LineCounts(source - other.source, comment - other.comment, blank - other.blank)
 }
 
+fun String.countLines(type: Source.FileType): LineCounts = onParserStack { countLinesInPlace(type) }
+
 @Suppress("NestedBlockDepth")
-fun String.countLines(type: Source.FileType): LineCounts {
+private fun String.countLinesInPlace(type: Source.FileType): LineCounts {
     val source = mutableSetOf<Int>()
     val comment = mutableSetOf<Int>()
 

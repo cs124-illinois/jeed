@@ -114,7 +114,9 @@ class ComplexityResults(val source: Source, val results: Map<String, Map<String,
 }
 
 @Throws(ComplexityFailed::class)
-fun Source.complexity(names: Set<String> = sources.keys.toSet()): ComplexityResults {
+fun Source.complexity(names: Set<String> = sources.keys.toSet()): ComplexityResults = onParserStack { computeComplexity(names) }
+
+private fun Source.computeComplexity(names: Set<String>): ComplexityResults {
     @Suppress("SwallowedException")
     try {
         return ComplexityResults(

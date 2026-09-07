@@ -1,5 +1,19 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- How deeply nested a program could be before parsing failed with "Code is too complicated to
+  determine complexity" depended on the host's thread stack size and on what the JIT had compiled
+  so far, since interpreted and C1-compiled frames are larger than C2 frames. Under the server's
+  `-Xss256k` a few dozen chained else-ifs were enough when the JVM was busy, which is also why two
+  tests failed only during full runs. Parsing, snippet transformation, complexity, feature and
+  mutation analysis, and line counting now run on threads with a fixed 16MB stack, so the limit is
+  Jeed's own and does not move, and the parse-tree walks those analyses perform no longer recurse.
+  The Java parser also reports an overflow the way the Kotlin one already did, rather than
+  letting the error escape.
+
 ## 2026.9.2
 
 ### Added

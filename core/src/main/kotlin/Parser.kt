@@ -128,16 +128,16 @@ fun Source.parseJavaFile(entry: Map.Entry<String, String>): Source.ParsedSource 
     }.also {
         errorListener.check()
     }
-    val (parseTree, parser) = tokenStream.let {
-        val parser = JavaParser(it).apply { makeThreadSafe() }
+    val (parseTree, parser) = onParserStack {
+        val parser = JavaParser(tokenStream).apply { makeThreadSafe() }
 
         parser.removeErrorListeners()
         parser.addErrorListener(errorListener)
         parser.trimParseTree = true
         try {
             Pair(parser.compilationUnit(), parser)
-        } finally {
-            // parser.interpreter.clearDFA()
+        } catch (e: StackOverflowError) {
+            throw JeedParsingException(listOf(SourceError(null, "Code is too complicated to determine complexity")))
         }
     }.also {
         errorListener.check()
@@ -157,8 +157,8 @@ fun Source.parseKotlinFile(entry: Map.Entry<String, String>): Source.ParsedSourc
     }.also {
         errorListener.check()
     }
-    val (parseTree, parser) = tokenStream.let {
-        val parser = KotlinParser(it).apply { makeThreadSafe() }
+    val (parseTree, parser) = onParserStack {
+        val parser = KotlinParser(tokenStream).apply { makeThreadSafe() }
 
         parser.trimParseTree = true
 
@@ -168,8 +168,6 @@ fun Source.parseKotlinFile(entry: Map.Entry<String, String>): Source.ParsedSourc
             Pair(parser.kotlinFile(), parser)
         } catch (e: StackOverflowError) {
             throw JeedParsingException(listOf(SourceError(null, "Code is too complicated to determine complexity")))
-        } finally {
-            // parser.interpreter.clearDFA()
         }
     }.also {
         errorListener.check()

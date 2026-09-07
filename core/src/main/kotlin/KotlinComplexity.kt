@@ -5,7 +5,7 @@ package edu.illinois.cs.cs125.jeed.core
 
 import edu.illinois.cs.cs125.jeed.core.antlr.KotlinParser
 import edu.illinois.cs.cs125.jeed.core.antlr.KotlinParserBaseListener
-import org.antlr.v4.runtime.tree.ParseTreeWalker
+import org.antlr.v4.runtime.tree.IterativeParseTreeWalker
 
 @Suppress("TooManyFunctions")
 class KotlinComplexityListener(val source: Source, entry: Map.Entry<String, String>) : KotlinParserBaseListener() {
@@ -323,6 +323,6 @@ class KotlinComplexityListener(val source: Source, entry: Map.Entry<String, Stri
     init {
         val parsedSource = source.getParsed(filename)
         // println(parsedSource.tree.format(parsedSource.parser))
-        ParseTreeWalker.DEFAULT.walk(this, parsedSource.tree)
+        IterativeParseTreeWalker().walk(this, parsedSource.tree)
     }
 }

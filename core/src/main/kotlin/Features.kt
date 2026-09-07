@@ -497,7 +497,9 @@ class FeaturesResults(val source: Source, val results: Map<String, Map<String, U
 }
 
 @Throws(FeaturesFailed::class)
-fun Source.features(names: Set<String> = sources.keys.toSet()): FeaturesResults {
+fun Source.features(names: Set<String> = sources.keys.toSet()): FeaturesResults = onParserStack { computeFeatures(names) }
+
+private fun Source.computeFeatures(names: Set<String>): FeaturesResults {
     @Suppress("SwallowedException")
     try {
         return FeaturesResults(

@@ -7,7 +7,7 @@ import edu.illinois.cs.cs125.jeed.core.antlr.JavaParserBaseListener
 import org.antlr.v4.runtime.ParserRuleContext
 import org.antlr.v4.runtime.RuleContext
 import org.antlr.v4.runtime.Token
-import org.antlr.v4.runtime.tree.ParseTreeWalker
+import org.antlr.v4.runtime.tree.IterativeParseTreeWalker
 import org.antlr.v4.runtime.tree.TerminalNode
 import org.jetbrains.kotlin.backend.common.pop
 
@@ -663,7 +663,7 @@ class JavaMutationListener(private val parsedSource: Source.ParsedSource) : Java
 
     init {
         // println(parsedSource.tree.format(parsedSource.parser))
-        ParseTreeWalker.DEFAULT.walk(this, parsedSource.tree)
+        IterativeParseTreeWalker().walk(this, parsedSource.tree)
         check(loopDepth == 0)
         check(loopBlockDepths.isEmpty())
     }

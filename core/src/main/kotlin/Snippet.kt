@@ -19,7 +19,7 @@ import org.antlr.v4.runtime.CommonTokenStream
 import org.antlr.v4.runtime.ParserRuleContext
 import org.antlr.v4.runtime.RecognitionException
 import org.antlr.v4.runtime.Recognizer
-import org.antlr.v4.runtime.tree.ParseTreeWalker
+import org.antlr.v4.runtime.tree.IterativeParseTreeWalker
 import org.jetbrains.kotlin.backend.common.pop
 
 const val SNIPPET_SOURCE = ""
@@ -227,7 +227,9 @@ fun Source.Companion.fromKotlinSnippet(
 }
 
 @Suppress("LongMethod", "ComplexMethod", "ThrowsCount")
-private fun sourceFromKotlinSnippet(originalSource: String, snippetArguments: SnippetArguments): Snippet {
+private fun sourceFromKotlinSnippet(originalSource: String, snippetArguments: SnippetArguments): Snippet = onParserStack { transformKotlinSnippet(originalSource, snippetArguments) }
+
+private fun transformKotlinSnippet(originalSource: String, snippetArguments: SnippetArguments): Snippet {
     val sourceLines = originalSource.lines()
     val errorListener = SnippetErrorListener(sourceLines.map { it.trim().length }, false)
 
@@ -244,7 +246,19 @@ private fun sourceFromKotlinSnippet(originalSource: String, snippetArguments: Sn
     }.let { parser ->
         parser.removeErrorListeners()
         parser.addErrorListener(errorListener)
-        parser.script()
+        try {
+            onParserStack { parser.script() }
+        } catch (e: StackOverflowError) {
+            throw SnippetTransformationFailed(
+                listOf(
+                    SnippetTransformationError(
+                        0,
+                        0,
+                        "Stack overflow caused by overly-complicated code",
+                    ),
+                ),
+            )
+        }
     }.also {
         errorListener.check()
     }
@@ -262,7 +276,7 @@ private fun sourceFromKotlinSnippet(originalSource: String, snippetArguments: Sn
                 multilineLines.add(it)
             }
         }
-    }.also { it.visit(parseTree) }
+    }.also { visitor -> onParserStack { visitor.visit(parseTree) } }
 
     val rewrittenSourceLines: MutableList<String> = mutableListOf()
     var currentOutputLineNumber = 1
@@ -455,7 +469,7 @@ ${" ".repeat(snippetArguments.indent * 2)}@JvmStatic fun main() {""".lines().let
         }
 
         init {
-            ParseTreeWalker.DEFAULT.walk(this, parseTree)
+            IterativeParseTreeWalker().walk(this, parseTree)
         }
     }.anonymousObjectLines
 
@@ -524,7 +538,9 @@ ${" ".repeat(snippetArguments.indent * 2)}@JvmStatic fun main() {""".lines().let
 private val javaVisibilityPattern = """^\s*(public|private|protected)""".toRegex()
 
 @Suppress("LongMethod", "ComplexMethod")
-private fun sourceFromJavaSnippet(originalSource: String, snippetArguments: SnippetArguments): Snippet {
+private fun sourceFromJavaSnippet(originalSource: String, snippetArguments: SnippetArguments): Snippet = onParserStack { transformJavaSnippet(originalSource, snippetArguments) }
+
+private fun transformJavaSnippet(originalSource: String, snippetArguments: SnippetArguments): Snippet {
     val sourceLines = originalSource.lines().map { it.trim().length }
     val errorListener = SnippetErrorListener(sourceLines)
 
@@ -542,7 +558,7 @@ private fun sourceFromJavaSnippet(originalSource: String, snippetArguments: Snip
         parser.removeErrorListeners()
         parser.addErrorListener(errorListener)
         try {
-            parser.snippet()
+            onParserStack { parser.snippet() }
         } catch (e: StackOverflowError) {
             throw SnippetTransformationFailed(
                 listOf(
@@ -747,7 +763,7 @@ private fun sourceFromJavaSnippet(originalSource: String, snippetArguments: Snip
                 super.visit(it)
             }
         }
-    }.also { it.visit(parseTree) }
+    }.also { visitor -> onParserStack { visitor.visit(parseTree) } }
 
     if (visitorResults.errors.isNotEmpty()) {
         throw SnippetTransformationFailed(visitorResults.errors)

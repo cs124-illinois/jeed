@@ -7,7 +7,7 @@ package edu.illinois.cs.cs125.jeed.core
 import edu.illinois.cs.cs125.jeed.core.antlr.JavaLexer
 import edu.illinois.cs.cs125.jeed.core.antlr.JavaParser
 import edu.illinois.cs.cs125.jeed.core.antlr.JavaParserBaseListener
-import org.antlr.v4.runtime.tree.ParseTreeWalker
+import org.antlr.v4.runtime.tree.IterativeParseTreeWalker
 
 private val basicComplexityTokens = listOf(JavaLexer.FOR, JavaLexer.WHILE, JavaLexer.DO, JavaLexer.THROW)
 private val complexityExpressionBOPs = listOf(JavaLexer.AND, JavaLexer.OR, JavaLexer.QUESTION)
@@ -243,6 +243,6 @@ class JavaComplexityListener(val source: Source, entry: Map.Entry<String, String
     }
 
     init {
-        ParseTreeWalker.DEFAULT.walk(this, source.getParsed(filename).tree)
+        IterativeParseTreeWalker().walk(this, source.getParsed(filename).tree)
     }
 }

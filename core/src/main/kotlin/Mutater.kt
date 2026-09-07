@@ -485,7 +485,9 @@ data class MutationsResults(val source: Map<String, String>, val mutatedSources:
 }
 
 @Throws(MutationsFailed::class)
-fun Source.mutations(mutationsArguments: MutationsArguments = MutationsArguments()): MutationsResults {
+fun Source.mutations(mutationsArguments: MutationsArguments = MutationsArguments()): MutationsResults = onParserStack { computeMutations(mutationsArguments) }
+
+private fun Source.computeMutations(mutationsArguments: MutationsArguments): MutationsResults {
     try {
         val mutatedSources = mutationStream(mutationsArguments.suppressWithComments)
             .map {
