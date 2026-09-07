@@ -60,3 +60,4 @@ loadtest/heapdumps/
 
 # Local credentials
 .env
+docker-vulnerabilities.md
