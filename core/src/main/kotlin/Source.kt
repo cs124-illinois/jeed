@@ -1,6 +1,7 @@
 package edu.illinois.cs.cs125.jeed.core
 
 import io.github.oshai.kotlinlogging.KotlinLogging
+import io.github.oshai.kotlinlogging.KotlinLoggingConfiguration
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
@@ -14,6 +15,19 @@ import java.lang.reflect.Method
 import java.security.MessageDigest
 import java.time.Instant
 import java.util.Locale
+
+// kotlin-logging 8 announces itself on stdout ("kotlin-logging: initializing...") the first time a
+// logger is created. Jeed is embedded in other processes, where a bare line on stdout is noise at
+// best and looks like sandbox output escaping at worst. Turn it off before building the first
+// logger below, unless the embedder has asked for it through the library's own switches.
+@Suppress("unused", "UnusedPrivateProperty")
+private val kotlinLoggingStartupMessageSilenced = KotlinLoggingConfiguration.apply {
+    if (System.getProperty("kotlin-logging.logStartupMessage") == null &&
+        System.getenv("KOTLIN_LOGGING_STARTUP_MESSAGE") == null
+    ) {
+        logStartupMessage = false
+    }
+}
 
 @Suppress("UNUSED")
 val logger = KotlinLogging.logger {}
