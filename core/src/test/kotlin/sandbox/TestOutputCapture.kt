@@ -34,6 +34,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
+import org.fusesource.jansi.AnsiPrintStreamStub
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.PrintStream
@@ -514,4 +515,153 @@ for (int i = 0; i < 128; i++) {
             executionResult.output.length shouldBeGreaterThan maxIOBytes
             executionResult.combinedInputOutput.length shouldBeLessThanOrEqual maxIOBytes + 1
         }
+        "should capture every way a task can print to a stream" {
+            // RedirectingPrintStream has to override the whole PrintStream surface: anything it leaves out is
+            // inherited from PrintStream itself and writes to the null stream it was constructed with, silently
+            // losing that output. Exercise every override from sandboxed code and check nothing goes missing.
+            val executionResult = Source.fromSnippet(
+                """
+System.out.print(true);
+System.out.print('c');
+System.out.print(new char[] {'d', 'e'});
+System.out.print(1.5d);
+System.out.print(2.5f);
+System.out.print(3);
+System.out.print(4L);
+System.out.print((Object) "obj");
+System.out.print("str");
+System.out.println();
+System.out.println(true);
+System.out.println('c');
+System.out.println(new char[] {'f', 'g'});
+System.out.println(1.5d);
+System.out.println(2.5f);
+System.out.println(5);
+System.out.println(6L);
+System.out.println((Object) "obj2");
+System.out.println("str2");
+System.out.append('h');
+System.out.append("seq");
+System.out.append("subseq", 0, 3);
+System.out.format("%d", 7);
+System.out.format(java.util.Locale.US, "%d", 8);
+System.out.printf("%d", 9);
+System.out.printf(java.util.Locale.US, "%d", 10);
+System.out.write(65);
+try {
+  System.out.write(new byte[] {66});
+} catch (java.io.IOException e) { }
+System.out.flush();
+System.out.println();
+            """.trim(),
+            ).compile().execute()
+            executionResult should haveCompleted()
+            executionResult.stdout shouldBe listOf(
+                "truecde1.52.534objstr",
+                "true",
+                "c",
+                "fg",
+                "1.5",
+                "2.5",
+                "5",
+                "6",
+                "obj2",
+                "str2",
+                "hseqsub78910AB",
+            ).joinToString("\n")
+        }
+        "should let a task close its own stream" {
+            // close() reaches only the task's own PrintStream, so it cannot affect anything else
+            val executionResult = Source.fromSnippet(
+                """
+System.out.println("Here");
+System.out.close();
+            """.trim(),
+            ).compile().execute()
+            executionResult should haveCompleted()
+            executionResult should haveStdout("Here")
+            Source.fromSnippet("""System.out.println("There");""").compile().execute() should haveStdout("There")
+        }
+        "should warn once when System.err is replaced after the sandbox starts" {
+            Source.fromSnippet("""System.out.println("Here");""").compile().execute() should haveStdout("Here")
+            val warnings = mutableListOf<String>()
+            val handler = warningCollector(warnings)
+            val jeedLogger = Logger.getLogger(JEED_LOGGER_NAME).also { it.addHandler(handler) }
+            val originalStderr = System.err
+            val originalFailOnReplacedStreams = Sandbox.failOnReplacedStreams
+            Sandbox.failOnReplacedStreams = false
+            // A distinct class, so that this replacement is not deduplicated against another test's
+            System.setErr(ForwardingPrintStream(originalStderr))
+            try {
+                repeat(2) {
+                    Source.fromSnippet("""System.out.println("Here");""").compile().execute() should haveStdout("Here")
+                }
+            } finally {
+                System.setErr(originalStderr)
+                Sandbox.failOnReplacedStreams = originalFailOnReplacedStreams
+                jeedLogger.removeHandler(handler)
+            }
+            warnings.filter {
+                it.contains("System.err is now ${ForwardingPrintStream::class.java.name}")
+            } shouldHaveSize 1
+        }
+        "should report both streams when both are replaced after the sandbox starts" {
+            Source.fromSnippet("""System.out.println("Here");""").compile().execute() should haveStdout("Here")
+            val warnings = mutableListOf<String>()
+            val handler = warningCollector(warnings)
+            val jeedLogger = Logger.getLogger(JEED_LOGGER_NAME).also { it.addHandler(handler) }
+            val originalStdout = System.out
+            val originalStderr = System.err
+            val originalFailOnReplacedStreams = Sandbox.failOnReplacedStreams
+            Sandbox.failOnReplacedStreams = false
+            System.setOut(ForwardingPrintStream(originalStdout))
+            System.setErr(ForwardingPrintStream(originalStderr))
+            try {
+                Source.fromSnippet("""System.out.println("Here");""").compile().execute() should haveStdout("Here")
+            } finally {
+                System.setOut(originalStdout)
+                System.setErr(originalStderr)
+                Sandbox.failOnReplacedStreams = originalFailOnReplacedStreams
+                jeedLogger.removeHandler(handler)
+            }
+            warnings.filter {
+                it.contains("System.out is now") && it.contains("and System.err is now")
+            } shouldHaveSize 1
+        }
+        "should warn when it starts with a jansi stream already installed" {
+            // What ktor 3.5's CallLogging plugin leaves behind: jansi's streams write to the file descriptor
+            // rather than to the stream they replaced, so output the sandbox routes to the host bypasses
+            // anything capturing System.out.
+            Sandbox.stop()
+            val warnings = mutableListOf<String>()
+            val handler = warningCollector(warnings)
+            val jeedLogger = Logger.getLogger(JEED_LOGGER_NAME).also { it.addHandler(handler) }
+            val hostStdout = System.out
+            System.setOut(AnsiPrintStreamStub(hostStdout))
+            try {
+                Sandbox.start()
+            } finally {
+                Sandbox.stop()
+                System.setOut(hostStdout)
+                jeedLogger.removeHandler(handler)
+            }
+            warnings.filter {
+                it.contains(AnsiPrintStreamStub::class.java.name) && it.contains("file descriptor")
+            } shouldHaveSize 1
+            Source.fromSnippet("""System.out.println("Here");""").compile().execute() should haveStdout("Here")
+        }
     })
+
+/** A forwarding wrapper of a kind the sandbox has not seen from another test, so its warning is not deduplicated. */
+private class ForwardingPrintStream(target: PrintStream) : PrintStream(target, true)
+
+private fun warningCollector(into: MutableList<String>) = object : Handler() {
+    override fun publish(record: LogRecord) {
+        if (record.level.intValue() >= Level.WARNING.intValue()) {
+            into.add(record.message)
+        }
+    }
+
+    override fun flush() {}
+    override fun close() {}
+}
