@@ -456,6 +456,64 @@ public class Main {
                 executionResult should haveOutput("Notified\nFinished wait")
             }
         }
+        "should allow synchronization with single-thread notification" {
+            val executionResult = Source(
+                mapOf(
+                    "Main.java" to """
+public class Other implements Runnable {
+    public void run() {
+        try {
+            Thread.sleep(50);
+        } catch (InterruptedException e) { }
+        synchronized (Main.monitor) {
+            Main.monitor.notify();
+            System.out.println("Notified");
+        }
+    }
+}
+public class Main {
+    public static Object monitor = new Object();
+    public static void main() {
+        new Thread(new Other()).start();
+        synchronized (monitor) {
+            try {
+                monitor.wait();
+                System.out.println("Finished wait");
+            } catch (InterruptedException e) {
+                System.out.println("Failed to wait");
+            }
+        }
+    }
+}""".trim(),
+                ),
+            ).compile().execute(SourceExecutionArguments(maxExtraThreads = 1, timeout = 1000L))
+            executionResult should haveCompleted()
+            executionResult should haveOutput("Notified\nFinished wait")
+        }
+        "should reject a negative wait timeout" {
+            val executionResult = Source(
+                mapOf(
+                    "Main.java" to """
+public class Main {
+    public static Object monitor = new Object();
+    public static void main() {
+        synchronized (monitor) {
+            try {
+                monitor.wait(-1);
+                System.out.println("Waited");
+            } catch (InterruptedException e) {
+                System.out.println("Interrupted");
+            } catch (IllegalArgumentException e) {
+                System.out.println("Rejected");
+            }
+        }
+    }
+}""".trim(),
+                ),
+            ).compile().execute(SourceExecutionArguments(timeout = 1000L))
+            executionResult should haveCompleted()
+            executionResult should haveOutput("Rejected")
+        }
         "should prevent cross-task monitor interference" {
             val badCompileResult = Source(
                 mapOf(
