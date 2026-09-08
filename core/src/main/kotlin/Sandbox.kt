@@ -109,6 +109,11 @@ object Sandbox {
         warmPlatform()
     }
 
+    // ------------------------------------------------------------------------------------------------------------
+    // Configuration
+    // What an embedder asks for: which classes a task may load, and the limits it runs under.
+    // ------------------------------------------------------------------------------------------------------------
+
     class ClassLoaderConfiguration(
         val whitelistedClasses: Set<String> = DEFAULT_WHITELISTED_CLASSES,
         blacklistedClasses: Set<String> = DEFAULT_BLACKLISTED_CLASSES,
@@ -379,6 +384,11 @@ object Sandbox {
         RuntimePermission("accessClassInPackage.sun.util.locale.provider"),
     )
 
+    // ------------------------------------------------------------------------------------------------------------
+    // Running a task
+    // execute() hands the callable to the pool; Executor times it; ConfinedTask holds everything it produces.
+    // ------------------------------------------------------------------------------------------------------------
+
     suspend fun <T> execute(
         sandboxedClassLoader: SandboxedClassLoader,
         executionArguments: ExecutionArguments,
@@ -486,7 +496,6 @@ object Sandbox {
             cpuTimeStop = Long.MAX_VALUE
         }
 
-        @Suppress("ComplexMethod", "ReturnCount", "LongMethod")
         override fun call() {
             busyTasks.incrementAndGet()
             @Suppress("TooGenericExceptionCaught")
@@ -507,68 +516,13 @@ object Sandbox {
 
                 confinedTask.thread.start()
 
-                var taskResult: TaskResult<T?>? = null
-
-                fun remainingWallTime() = wallTimeStop - System.nanoTime()
-                fun cpuTimeRemaining() = cpuTimeStop == 0L || confinedTask.updateCpuTime() < cpuTimeStop
-
-                var pollCount = 0
-
-                while (taskResult == null && remainingWallTime() > 0 && cpuTimeRemaining()) {
-                    val nextWait = remainingWallTime().coerceAtMost(executionArguments.pollIntervalMS).coerceAtLeast(0)
-                    taskResult = try {
-                        TaskResult(confinedTask.task.get(nextWait, TimeUnit.MILLISECONDS))
-                    } catch (e: TimeoutException) {
-                        pollCount++
-                        null
-                    } catch (e: InterruptedException) {
-                        pollCount++
-                        null
-                    } catch (e: CancellationException) {
-                        TaskResult(null, null)
-                    } catch (e: Throwable) {
-                        TaskResult(null, e.cause ?: e)
-                    }
-                }
-
+                val polled = pollUntilFinished()
+                // Read before ending the task, since ending it is what makes the remaining time meaningless
                 val cpuTimeout = remainingWallTime() > 0 && !cpuTimeRemaining()
+                val taskResult = polled ?: endOutOfTimeTask()
 
-                if (taskResult == null) {
-                    confinedTask.updateCpuTime()
-                    confinedTask.thread.interrupt()
-
-                    val (returnValue, threw) = try {
-                        Pair(
-                            confinedTask.task.get(executionArguments.returnTimeout.toLong(), TimeUnit.MILLISECONDS),
-                            null,
-                        )
-                    } catch (e: TimeoutException) {
-                        confinedTask.task.cancel(true)
-                        Pair(null, null)
-                    } catch (e: CancellationException) {
-                        Pair(null, null)
-                    } catch (e: Throwable) {
-                        Pair(null, e.cause ?: e)
-                    }
-                    taskResult = TaskResult(returnValue, threw, true)
-                }
-
-                val forceEndTime = executionStarted.plusMillis(executionArguments.timeout)
-                fun hasTime(): Boolean = Instant.now().isBefore(forceEndTime)
-                if (executionArguments.waitForShutdown && hasTime()) {
-                    fun workPending(): Boolean {
-                        val threadsHolder = arrayOfNulls<Thread>(confinedTask.maxExtraThreads + 1)
-                        confinedTask.threadGroup.enumerate(threadsHolder)
-                        val threads = threadsHolder.filterNotNull()
-                        val threadGroupActive = threads.any {
-                            it.state !in setOf(Thread.State.WAITING, Thread.State.TIMED_WAITING)
-                        }
-                        return threadGroupActive || coroutinesActive(sandboxedClassLoader, threads)
-                    }
-                    while (hasTime() && workPending()) {
-                        // Give non-main tasks like coroutines a chance to finish
-                        Thread.yield()
-                    }
+                if (executionArguments.waitForShutdown) {
+                    waitForShutdown(executionStarted)
                 }
 
                 val totalSafetime = runtimeMBean?.totalSafepointTime?.let { it - safetimeStarted!! }
@@ -579,26 +533,11 @@ object Sandbox {
                 val executionEndedNanos = System.nanoTime()
                 confinedTask.systemInStream.close()
 
-                val executionResult = TaskResults(
-                    taskResult.returned, taskResult.threw, taskResult.timeout,
-                    confinedTask.outputLines,
-                    confinedTask.inputLines,
-                    confinedTask.ioBytes.toByteArray().decodeToString(),
-                    confinedTask.permissionRequests.values.toSet(),
-                    Interval(confinedTask.started, Instant.now()),
-                    Interval(executionStarted, executionEnded),
-                    sandboxedClassLoader,
-                    confinedTask.truncatedLines,
-                    executionArguments,
-                    confinedTask.killReason,
-                    confinedTask.pluginData.map { (plugin, workingData) ->
-                        plugin.id to plugin.createFinalData(workingData)
-                    }.toMap(),
-                    listOf(),
-                    totalSafetime,
-                    confinedTask.totalCpuTime,
+                val executionResult = assembleResults(
+                    taskResult,
                     cpuTimeout,
-                    System.nanoTime() - confinedTask.startedNanos,
+                    totalSafetime,
+                    Interval(executionStarted, executionEnded),
                     executionEndedNanos - executionStartedNanos,
                 )
                 result.complete(ExecutorResult(executionResult, null))
@@ -608,6 +547,102 @@ object Sandbox {
                 busyTasks.decrementAndGet()
             }
         }
+
+        private fun remainingWallTime() = wallTimeStop - System.nanoTime()
+
+        private fun cpuTimeRemaining() = cpuTimeStop == 0L || confinedTask.updateCpuTime() < cpuTimeStop
+
+        /**
+         * Waits for the task to finish, in steps no longer than the poll interval so that a timeout the task sets
+         * for itself is noticed. Returns null if the task ran out of wall clock or CPU time instead of finishing.
+         */
+        private fun pollUntilFinished(): TaskResult<T?>? {
+            var taskResult: TaskResult<T?>? = null
+            while (taskResult == null && remainingWallTime() > 0 && cpuTimeRemaining()) {
+                val nextWait = remainingWallTime().coerceAtMost(executionArguments.pollIntervalMS).coerceAtLeast(0)
+                taskResult = try {
+                    TaskResult(confinedTask.task.get(nextWait, TimeUnit.MILLISECONDS))
+                } catch (e: TimeoutException) {
+                    null
+                } catch (e: InterruptedException) {
+                    null
+                } catch (e: CancellationException) {
+                    TaskResult(null, null)
+                } catch (e: Throwable) {
+                    TaskResult(null, e.cause ?: e)
+                }
+            }
+            return taskResult
+        }
+
+        /** Interrupts a task that is out of time, giving it the return timeout to stop on its own before cancelling. */
+        private fun endOutOfTimeTask(): TaskResult<T?> {
+            confinedTask.updateCpuTime()
+            confinedTask.thread.interrupt()
+
+            val (returnValue, threw) = try {
+                Pair(
+                    confinedTask.task.get(executionArguments.returnTimeout.toLong(), TimeUnit.MILLISECONDS),
+                    null,
+                )
+            } catch (e: TimeoutException) {
+                confinedTask.task.cancel(true)
+                Pair(null, null)
+            } catch (e: CancellationException) {
+                Pair(null, null)
+            } catch (e: Throwable) {
+                Pair(null, e.cause ?: e)
+            }
+            return TaskResult(returnValue, threw, true)
+        }
+
+        /** Gives work the task left behind, such as coroutines, the rest of the task's time to finish. */
+        private fun waitForShutdown(executionStarted: Instant) {
+            val forceEndTime = executionStarted.plusMillis(executionArguments.timeout)
+            fun hasTime(): Boolean = Instant.now().isBefore(forceEndTime)
+            fun workPending(): Boolean {
+                val threadsHolder = arrayOfNulls<Thread>(confinedTask.maxExtraThreads + 1)
+                confinedTask.threadGroup.enumerate(threadsHolder)
+                val threads = threadsHolder.filterNotNull()
+                val threadGroupActive = threads.any {
+                    it.state !in setOf(Thread.State.WAITING, Thread.State.TIMED_WAITING)
+                }
+                return threadGroupActive || coroutinesActive(sandboxedClassLoader, threads)
+            }
+            while (hasTime() && workPending()) {
+                // Give non-main tasks like coroutines a chance to finish
+                Thread.yield()
+            }
+        }
+
+        private fun assembleResults(
+            taskResult: TaskResult<T?>,
+            cpuTimeout: Boolean,
+            totalSafetime: Long?,
+            executionInterval: Interval,
+            executionNanoTime: Long,
+        ) = TaskResults(
+            taskResult.returned, taskResult.threw, taskResult.timeout,
+            confinedTask.outputLines,
+            confinedTask.inputLines,
+            confinedTask.ioBytes.toByteArray().decodeToString(),
+            confinedTask.permissionRequests.values.toSet(),
+            Interval(confinedTask.started, Instant.now()),
+            executionInterval,
+            sandboxedClassLoader,
+            confinedTask.truncatedLines,
+            executionArguments,
+            confinedTask.killReason,
+            confinedTask.pluginData.map { (plugin, workingData) ->
+                plugin.id to plugin.createFinalData(workingData)
+            }.toMap(),
+            listOf(),
+            totalSafetime,
+            confinedTask.totalCpuTime,
+            cpuTimeout,
+            System.nanoTime() - confinedTask.startedNanos,
+            executionNanoTime,
+        )
     }
 
     private class ConfinedTask<T>(
@@ -724,6 +759,26 @@ object Sandbox {
             override fun toString() = bytes.toByteArray().decodeToString()
         }
 
+        fun CurrentLine.asOutputLine(console: TaskResults.OutputLine.Console) = TaskResults.OutputLine(console, toString(), started, startedThread)
+
+        /** Records a finished line of the task's own output, or counts it against the line limit. */
+        private fun recordOutputLine(console: TaskResults.OutputLine.Console, line: CurrentLine) {
+            if (outputLines.size < maxOutputLines) {
+                outputLines.add(line.asOutputLine(console))
+            } else {
+                truncatedLines += 1
+            }
+        }
+
+        /** Records a finished line of output being redirected to trusted code, or counts it against its limit. */
+        private fun recordRedirectedOutputLine(console: TaskResults.OutputLine.Console, line: CurrentLine) {
+            if (redirectedOutputLines.size < (redirectingOutputLimit ?: Int.MAX_VALUE)) {
+                redirectedOutputLines.add(line.asOutputLine(console))
+            } else {
+                redirectingTruncatedLines += 1
+            }
+        }
+
         fun addPermissionRequest(permission: Permission, granted: Boolean, throwException: Boolean = true) {
             permissionRequests.getOrPut(Pair(permission, granted)) {
                 TaskResults.PermissionRequest(permission, granted, 0)
@@ -755,19 +810,7 @@ object Sandbox {
             check(currentRedirectedLines != null) { "Should have currentRedirectedLines" }
 
             for (console in TaskResults.OutputLine.Console.entries) {
-                val currentRedirectingLine = currentRedirectedLines!![console] ?: continue
-                if (redirectedOutputLines.size < (redirectingOutputLimit ?: Int.MAX_VALUE)) {
-                    redirectedOutputLines.add(
-                        TaskResults.OutputLine(
-                            console,
-                            currentRedirectingLine.toString(),
-                            currentRedirectingLine.started,
-                            currentRedirectingLine.startedThread,
-                        ),
-                    )
-                } else {
-                    redirectingTruncatedLines += 1
-                }
+                recordRedirectedOutputLine(console, currentRedirectedLines!![console] ?: continue)
             }
             if (currentRedirectingInputLine != null) {
                 redirectedInput.append(currentRedirectingInputLine.toString())
@@ -809,35 +852,13 @@ object Sandbox {
             when (int.toChar()) {
                 '\n' -> {
                     if (!squashNormalOutput) {
-                        if (outputLines.size < maxOutputLines) {
-                            outputLines.add(
-                                TaskResults.OutputLine(
-                                    console,
-                                    currentLine.toString(),
-                                    currentLine.started,
-                                    currentLine.startedThread,
-                                ),
-                            )
-                        } else {
-                            truncatedLines += 1
-                        }
+                        recordOutputLine(console, currentLine)
                         currentLines.remove(console)
                     }
 
                     if (redirectingOutput) {
                         check(currentRedirectingLine != null) { "Should have currentRedirectingLine" }
-                        if (redirectedOutputLines.size < (redirectingOutputLimit ?: Int.MAX_VALUE)) {
-                            redirectedOutputLines.add(
-                                TaskResults.OutputLine(
-                                    console,
-                                    currentRedirectingLine.toString(),
-                                    currentRedirectingLine.started,
-                                    currentRedirectingLine.startedThread,
-                                ),
-                            )
-                        } else {
-                            redirectingTruncatedLines += 1
-                        }
+                        recordRedirectedOutputLine(console, currentRedirectingLine)
                         currentRedirectedLines!![console] = CurrentLine()
                     }
                 }
@@ -898,13 +919,31 @@ object Sandbox {
     }
 
     @Synchronized
-    @Suppress("ComplexMethod", "LongMethod")
     private fun <T> release(confinedTask: ConfinedTask<T>) {
-        val threadGroup = confinedTask.threadGroup
         require(!confinedTask.released) { "thread group is already released" }
 
         confinedTask.shuttingDown = true
 
+        shutDownThreadGroup(confinedTask.threadGroup)
+        recordUnfinishedLines(confinedTask)
+
+        confinedTask.pluginData.forEach { (plugin, data) ->
+            plugin.executionFinished(data)
+        }
+
+        confinedClassLoaders.remove(confinedTask.classLoader)
+        confinedTask.released = true
+
+        if (debugOutputLeaks != null) {
+            debugPrint(listOf("JEED_DEBUG_OUTPUT_LEAKS: task released on ${Thread.currentThread().name}; ${describeChildProcesses()}"))
+        }
+    }
+
+    /**
+     * Stops everything still running in [threadGroup] and destroys it, retrying because a thread can be somewhere
+     * that swallows the stop, and because stopping one thread can let another run.
+     */
+    private fun shutDownThreadGroup(threadGroup: ConfinedThreadGroup) {
         if (threadGroup.activeGroupCount() > 0) {
             val threadGroups = Array<ThreadGroup?>(threadGroup.activeGroupCount()) { null }
             threadGroup.enumerate(threadGroups, true)
@@ -948,19 +987,15 @@ object Sandbox {
                 throw SandboxContainmentFailure("failed to destroy thread group ($threadGroup)")
             }
         }
+    }
 
+    /** Keeps whatever the task printed or read without finishing the line, which is otherwise still buffered. */
+    private fun <T> recordUnfinishedLines(confinedTask: ConfinedTask<T>) {
         if (confinedTask.truncatedLines == 0) {
             for (console in TaskResults.OutputLine.Console.entries) {
                 val currentLine = confinedTask.currentLines[console] ?: continue
                 if (currentLine.bytes.isNotEmpty()) {
-                    confinedTask.outputLines.add(
-                        TaskResults.OutputLine(
-                            console,
-                            currentLine.toString(),
-                            currentLine.started,
-                            currentLine.startedThread,
-                        ),
-                    )
+                    with(confinedTask) { outputLines.add(currentLine.asOutputLine(console)) }
                 }
             }
         }
@@ -972,17 +1007,6 @@ object Sandbox {
                     confinedTask.currentInputLine!!.started,
                 ),
             )
-        }
-
-        confinedTask.pluginData.forEach { (plugin, data) ->
-            plugin.executionFinished(data)
-        }
-
-        confinedClassLoaders.remove(confinedTask.classLoader)
-        confinedTask.released = true
-
-        if (debugOutputLeaks != null) {
-            debugPrint(listOf("JEED_DEBUG_OUTPUT_LEAKS: task released on ${Thread.currentThread().name}; ${describeChildProcesses()}"))
         }
     }
 
@@ -998,6 +1022,11 @@ object Sandbox {
             return callable(Triple(sandboxedClassLoader, Sandbox::redirectOutput, sandboxControl))
         }
     }
+
+    // ------------------------------------------------------------------------------------------------------------
+    // Loading a task's classes
+    // The class loader decides what untrusted code can reach, and rewrites everything it defines.
+    // ------------------------------------------------------------------------------------------------------------
 
     interface SandboxableClassLoader {
         val bytecodeForClasses: Map<String, ByteArray>
@@ -1235,6 +1264,11 @@ object Sandbox {
         override val classLoader: ClassLoader = this
         override fun findClass(name: String): Class<*> = throw ClassNotFoundException(name)
     }
+
+    // ------------------------------------------------------------------------------------------------------------
+    // Rewriting bytecode
+    // The transformation that makes untrusted bytecode safe to run, and the methods it calls into.
+    // ------------------------------------------------------------------------------------------------------------
 
     @Suppress("TooManyFunctions")
     object RewriteBytecode {
@@ -1910,6 +1944,11 @@ object Sandbox {
         }
     }
 
+    // ------------------------------------------------------------------------------------------------------------
+    // Enforcement at run time
+    // The security manager and properties a task sees, which route by the thread group it is running in.
+    // ------------------------------------------------------------------------------------------------------------
+
     val systemSecurityManager: SecurityManager? = System.getSecurityManager()
 
     private object SandboxSecurityManager : SecurityManager() {
@@ -2067,6 +2106,11 @@ object Sandbox {
             return super.getProperty(key)
         }
     }
+
+    // ------------------------------------------------------------------------------------------------------------
+    // Capturing output
+    // The streams installed over the host's, which route each write by the thread group that made it.
+    // ------------------------------------------------------------------------------------------------------------
 
     interface OutputListener {
         fun stdout(int: Int)
@@ -2363,6 +2407,12 @@ object Sandbox {
         }
     }
 
+    // ------------------------------------------------------------------------------------------------------------
+    // Thread groups and failures
+    // The group every confined thread belongs to, which is how a write or a permission check is
+    // attributed to a task, and the errors raised when confinement itself goes wrong.
+    // ------------------------------------------------------------------------------------------------------------
+
     private class ConfinedThreadGroup(setMaxPriority: Int) : ThreadGroup("Jeed Confined Threads") {
         init {
             maxPriority = setMaxPriority
@@ -2387,6 +2437,11 @@ object Sandbox {
 
     class SandboxStartFailed(message: String, cause: Throwable? = null) : RuntimeException(message, cause)
     class SandboxContainmentFailure(message: String) : Throwable(message)
+
+    // ------------------------------------------------------------------------------------------------------------
+    // Starting and stopping
+    // What the sandbox takes over from the host process, and the checks that it still holds it.
+    // ------------------------------------------------------------------------------------------------------------
 
     private lateinit var originalStdout: PrintStream
     private lateinit var originalStderr: PrintStream
@@ -2567,8 +2622,6 @@ object Sandbox {
     var running = false
         private set
 
-    private lateinit var originalPrintStreams: Map<TaskResults.OutputLine.Console, PrintStream>
-
     private val performingSafeUnconstrainedInvocation: ThreadLocal<Boolean> = ThreadLocal.withInitial { false }
 
     private val executorThreadGroup = ThreadGroup("Jeed Thread Pool")
@@ -2584,7 +2637,7 @@ object Sandbox {
         originalStderr = System.err
         originalStdin = System.`in`
 
-        originalPrintStreams = mapOf(
+        val originalPrintStreams = mapOf(
             TaskResults.OutputLine.Console.STDOUT to originalStdout,
             TaskResults.OutputLine.Console.STDERR to originalStderr,
         )
