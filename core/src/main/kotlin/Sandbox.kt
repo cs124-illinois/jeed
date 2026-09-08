@@ -2661,6 +2661,7 @@ object Sandbox {
 
         System.setOut(originalStdout)
         System.setErr(originalStderr)
+        System.setIn(originalStdin)
 
         System.setSecurityManager(originalSecurityManager)
         System.setProperties(originalProperties)

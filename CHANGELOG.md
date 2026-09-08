@@ -4,6 +4,10 @@
 
 ### Fixed
 
+- `Sandbox.stop()` now restores the host's `System.in`. `start()` replaces it with the stream that
+  routes reads to the running task and saves the original, but `stop()` only ever put `System.out`
+  and `System.err` back, so once the sandbox had been stopped anything reading `System.in` outside a
+  task failed with "Non-confined tasks should not use System.in".
 - How deeply nested a program could be before parsing failed with "Code is too complicated to
   determine complexity" depended on the host's thread stack size and on what the JIT had compiled
   so far, since interpreted and C1-compiled frames are larger than C2 frames. Under the server's

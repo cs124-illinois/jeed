@@ -10,6 +10,7 @@ import edu.illinois.cs.cs125.jeed.core.haveOutput
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 
 class TestStartStop :
     StringSpec({
@@ -18,6 +19,17 @@ class TestStartStop :
             Sandbox.running shouldBe true
             Sandbox.stop()
             Sandbox.running shouldBe false
+        }
+        "should restore the host's standard input when it stops" {
+            // Capture after a stop, since another spec may have left the sandbox running.
+            Sandbox.stop()
+            val hostStdin = System.`in`
+
+            Sandbox.start()
+            System.`in` shouldNotBe hostStdin
+
+            Sandbox.stop()
+            System.`in` shouldBe hostStdin
         }
         "should autostart properly" {
             val executeMainResult = Source.fromSnippet(
