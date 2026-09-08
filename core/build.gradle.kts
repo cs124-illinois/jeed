@@ -70,7 +70,7 @@ dependencies {
     // building the message until the level is known to be enabled. ktlint requests 7.0.13 and
     // resolves up to this; its bytecode only ever calls the lambda overloads, so that is safe.
     api("io.github.oshai:kotlin-logging:8.0.4")
-    api("io.github.classgraph:classgraph:4.8.194")
+    api("io.github.classgraph:classgraph:4.8.195")
 
     testImplementation("io.kotest:kotest-runner-junit5:6.2.4")
     testImplementation("com.beyondgrader.resource-agent:agent:$agentVersion")

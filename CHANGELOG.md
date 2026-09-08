@@ -1,6 +1,16 @@
 # Changelog
 
-## Unreleased
+## 2026.9.3
+
+### Changed
+
+- Updated classgraph to 4.8.195. Kotlin stays at 2.4.10: 2.4.20 removes the legacy K2 CLI
+  pipeline that `Kompile.kt` compiles through, which needs a port to the phased pipeline that
+  replaced it rather than a version bump.
+- The bytecode rewriter's ASM visitors moved out of `Sandbox.kt` into `SandboxRewriter.kt`, the
+  repeated line handling in the output capture was consolidated, and the two longest methods were
+  split. No API or behaviour change: `Sandbox.RewriteBytecode` in particular keeps its name, since
+  that name is emitted into every class the sandbox rewrites and cached in that form.
 
 ### Fixed
 
@@ -17,6 +27,22 @@
   Jeed's own and does not move, and the parse-tree walks those analyses perform no longer recurse.
   The Java parser also reports an overflow the way the Kotlin one already did, rather than
   letting the error escape.
+
+### Tests
+
+- Sandbox coverage went from 86% of lines and 67% of branches to 94% and 75%. What had no test
+  before: every `require` in `ExecutionArguments` and `ClassLoaderConfiguration`, including the
+  rejection of an error that can never be safe; the guards that fire when an embedder gets the
+  protocol wrong, being `autoStart`, confining one class loader in two tasks at once, and nesting
+  `redirectOutput` or `hardLimitOutput`; the four `SandboxControl` members that clear a timeout or
+  set both at once; `maxIOBytes`; the `System.err` half of the stream-replacement checks and the
+  warning for a jansi stream installed before the sandbox starts; every hook on `SandboxPlugin`,
+  three of which had no implementation in this repository at all; `notify()` in rewritten bytecode;
+  and the `JEED_DEBUG_OUTPUT_LEAKS` reporting, which is now reachable from a test.
+- `RedirectingPrintStream` overrides the whole `PrintStream` API so that nothing falls through to
+  the stream that writes nowhere, and 23 of those overrides had never been called by a test. One
+  now exercises all of them and pins the output. Note that it is not a strong test of any single
+  override, since the inherited implementations funnel back through the ones that remain.
 
 ## 2026.9.2
 

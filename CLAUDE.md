@@ -81,7 +81,7 @@ The project uses date-based versioning: YYYY.M.P (e.g., 2025.6.0)
 
 ### Environment Requirements
 - Java: OpenJDK 21
-- Kotlin: 2.1.21
+- Kotlin: 2.4.10
 - Node.js: 24.4.0 (for JS components)
 - Gradle: 9.x with Kotlin DSL
 
