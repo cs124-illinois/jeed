@@ -1,0 +1,4 @@
+[submodule "externals/kotlin"]
+	path = externals/kotlin
+	url = https://github.com/JetBrains/kotlin.git
+	shallow = true

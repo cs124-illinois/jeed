@@ -11,3 +11,13 @@ Jeed can also perform a wide and growing number of Java and Kotlin source code a
 Jeed is heavily used by [CS 124](https://www.cs124.org), the CS1 course at the
 University of Illinois.
 An [online demo is also available](https://cs124-illinois.github.io/jeed/).
+
+## Reference Sources
+
+`externals/` holds read-only reference checkouts as Git submodules, and `externals/kotlin` is the
+[Kotlin compiler source](https://github.com/JetBrains/kotlin) at the exact tag Jeed embeds (v2.4.20).
+It is never built and sits on no classpath—Jeed's in-memory Kotlin compilation composes non-public
+compiler pipeline APIs, and the source is the only reliable documentation for them.
+Fetch it only when you need to read those internals, with
+`git submodule update --init --depth 1 externals/kotlin`, and keep its tag in step with the
+`kotlin-compiler-embeddable` version in `core/build.gradle.kts` whenever Kotlin is upgraded.
