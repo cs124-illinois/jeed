@@ -1,6 +1,7 @@
 package edu.illinois.cs.cs125.jeed.core.sandbox
 
 import edu.illinois.cs.cs125.jeed.core.JEED_LOGGER_NAME
+import edu.illinois.cs.cs125.jeed.core.JeedOutputCapture
 import edu.illinois.cs.cs125.jeed.core.OutputHardLimitExceeded
 import edu.illinois.cs.cs125.jeed.core.Sandbox
 import edu.illinois.cs.cs125.jeed.core.SnippetArguments
@@ -22,6 +23,7 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.collections.shouldNotContain
 import io.kotest.matchers.ints.shouldBeGreaterThan
+import io.kotest.matchers.ints.shouldBeLessThanOrEqual
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNot
@@ -469,5 +471,47 @@ while (true) {
                 System.setOut(hostStdout)
                 System.setErr(hostStderr)
             }
+        }
+        "should refuse to nest calls to redirectOutput" {
+            val executionResult = Sandbox.execute { (_, redirectOutput) ->
+                redirectOutput {
+                    redirectOutput { }
+                }
+            }
+            // The outer redirect records what the block threw rather than letting it escape the task
+            executionResult should haveCompleted()
+            val capture = executionResult.returned as JeedOutputCapture
+            capture.threw should beInstanceOf<IllegalStateException>()
+            capture.threw?.message shouldContain "can't nest calls to redirectOutput"
+        }
+        "should refuse to nest calls to hardLimitOutput" {
+            val executionResult = Sandbox.execute {
+                Sandbox.hardLimitOutput(1024) {
+                    Sandbox.hardLimitOutput(1024) { }
+                }
+            }
+            executionResult shouldNot haveCompleted()
+            executionResult.threw should beInstanceOf<IllegalStateException>()
+            executionResult.threw?.message shouldContain "can't nest calls to hardLimitOutput"
+        }
+        "should limit the combined input and output it records" {
+            val maxIOBytes = 64
+            val compiledSource = Source.fromSnippet(
+                """
+for (int i = 0; i < 128; i++) {
+  System.out.println("0123456789");
+}
+            """.trim(),
+            ).compile()
+            val executionResult = Sandbox.execute(
+                compiledSource.classLoader,
+                Sandbox.ExecutionArguments(maxIOBytes = maxIOBytes),
+            ) { (classLoader) ->
+                classLoader.findClassMethod().invoke(null)
+            }
+            executionResult should haveCompleted()
+            // The line-based capture is limited separately, by maxOutputLines, so it keeps everything here
+            executionResult.output.length shouldBeGreaterThan maxIOBytes
+            executionResult.combinedInputOutput.length shouldBeLessThanOrEqual maxIOBytes + 1
         }
     })
