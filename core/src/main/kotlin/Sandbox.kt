@@ -2453,8 +2453,11 @@ object Sandbox {
      * that value is reported, whether or not a task is running. Each distinct call site is reported once, with the
      * writing thread, its thread group, and its stack, and a banner is printed when the sandbox starts so that the
      * build in use is unambiguous. Off by default: each reported write pays for a stack walk.
+     *
+     * Read when the sandbox starts, so setting it takes effect at the next [start]. Settable rather than a constant
+     * only so that the reporting itself can be tested.
      */
-    private val debugOutputLeaks: String? =
+    internal var debugOutputLeaks: String? =
         System.getenv("JEED_DEBUG_OUTPUT_LEAKS")?.takeIf { it.isNotBlank() && it != "false" }
 
     // The streams non-confined writes are routed to: the originals, or reporting wrappers around them when debugging.
