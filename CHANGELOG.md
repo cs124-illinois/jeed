@@ -29,8 +29,9 @@
   classpath, so this copy loads and the one in the jar does not. The server's shaded jar needed that
   ordering spelled out, since a jar has no first-wins rule and the JDK hands back the last of two
   entries sharing a name—`shadowJar` now resolves duplicates under ktlint's `core.api` package in
-  favour of the first. All of this is temporary: delete the file, its guard test and the `shadowJar`
-  clause as soon as a ktlint release is built against Kotlin 2.4.20 or later.
+  favour of the first and then checks the jar it produced, since that ordering is not something any
+  test on a classpath can see. All of this is temporary: delete the file, its guard test and the
+  `shadowJar` clause as soon as a ktlint release is built against Kotlin 2.4.20 or later.
 - Top-level declarations in a Kotlin source whose name carries a directory now land in the class
   `kotlinc` puts them in. `com/example/Util.kt` produces `com.example.UtilKt` where Jeed used to
   produce `com.example.Com_example_UtilKt`, because it handed the compiler the whole source name as

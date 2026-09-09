@@ -1,6 +1,7 @@
 import org.jmailen.gradle.kotlinter.tasks.FormatTask
 import org.jmailen.gradle.kotlinter.tasks.LintTask
 import java.io.File
+import java.util.zip.ZipInputStream
 
 plugins {
     kotlin("jvm")
@@ -121,6 +122,33 @@ tasks.shadowJar {
     // else here is duplicated, so it only affects those five.
     filesMatching("com/pinterest/ktlint/rule/engine/core/api/**") {
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    }
+    // That rule is first-wins over the shadow configuration's resolution order, and no test can
+    // see it: the suite runs against a classpath, where the core classes precede the ktlint jar for
+    // free. Inserting a dependency ahead of project(":core") would silently ship ktlint's copy and
+    // break every ktlint call in the packaged server while the whole suite stayed green, so check
+    // the jar itself. MockComponentManager is the type the patched copy registers the PomModel
+    // through, where ktlint's own copy names MockProject.
+    doLast {
+        val facade = "com/pinterest/ktlint/rule/engine/core/api/KtlintKotlinCompilerKt.class"
+        val copies = mutableListOf<ByteArray>()
+        ZipInputStream(archiveFile.get().asFile.inputStream().buffered()).use { entries ->
+            while (true) {
+                val entry = entries.nextEntry ?: break
+                if (entry.name == facade) {
+                    copies.add(entries.readBytes())
+                }
+            }
+        }
+        check(copies.size == 1) {
+            "Expected one $facade in the shaded jar, found ${copies.size}."
+        }
+        check(String(copies.single(), Charsets.ISO_8859_1).contains("MockComponentManager")) {
+            "The shaded jar carries ktlint's $facade rather than the patched copy in " +
+                "core/src/main/kotlin/KtlintKotlinCompiler.kt, so ktlint would fail to initialize " +
+                "at run time. Check that project(\":core\") still resolves ahead of " +
+                "ktlint-rule-engine-core."
+        }
     }
     manifest {
         attributes["Launcher-Agent-Class"] = "com.beyondgrader.resourceagent.AgentKt"
