@@ -111,6 +111,17 @@ tasks.shadowJar {
     // regex engine -- so keeping one entry per name silently dropped a provider, and duplicate
     // entries inside a single jar are not reliably enumerated by ServiceLoader either.
     mergeServiceFiles()
+    // core/src/main/kotlin/KtlintKotlinCompiler.kt is a patched copy of a file that also ships
+    // inside ktlint-rule-engine-core, so five class entries under this package exist twice:
+    // KtlintKotlinCompiler, KtlintKotlinCompilerKt, LoggerFactory, LoggerFactory$getLoggerInstance$1
+    // and FormatPomModel. On a classpath Jeed's copy wins because the core jar precedes ktlint's,
+    // but a jar has no such rule: with the INCLUDE strategy above both entries are written and the
+    // JDK's zip lookup hands back the last one, which is ktlint's, so the packaged server failed
+    // where the tests passed. First-wins for this package restores the classpath ordering. Nothing
+    // else here is duplicated, so it only affects those five.
+    filesMatching("com/pinterest/ktlint/rule/engine/core/api/**") {
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    }
     manifest {
         attributes["Launcher-Agent-Class"] = "com.beyondgrader.resourceagent.AgentKt"
         attributes["Can-Redefine-Classes"] = "true"

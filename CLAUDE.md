@@ -75,13 +75,14 @@ npm run backend
 - Generated parser code: `/core/src/main/gen/`
 - Test resources: `/core/src/test/resources/`
 - Server configuration: `/server/src/main/resources/`
+- Reference sources: `externals/` holds read-only reference checkouts as Git submodules. `externals/kotlin` is the Kotlin compiler source at the exact tag Jeed embeds (v2.4.20). It is never built and sits on no classpath—it exists because `Kompile.kt` composes non-public compiler pipeline APIs and the real source is the only reliable documentation for them. Fetch it only when you need to read compiler internals: `git submodule update --init --depth 1 externals/kotlin` (about 700MB). When bumping Kotlin, keep the tag in step with `kotlin-compiler-embeddable` in `core/build.gradle.kts`: `git -C externals/kotlin fetch --depth 1 origin tag vX.Y.Z && git -C externals/kotlin checkout vX.Y.Z`.
 
 ### Versioning
 The project uses date-based versioning: YYYY.M.P (e.g., 2025.6.0)
 
 ### Environment Requirements
 - Java: OpenJDK 21
-- Kotlin: 2.4.10
+- Kotlin: 2.4.20
 - Node.js: 24.4.0 (for JS components)
 - Gradle: 9.x with Kotlin DSL
 

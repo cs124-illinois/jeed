@@ -2,14 +2,21 @@ package edu.illinois.cs.cs125.jeed.core
 
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.collections.shouldNotContain
 import io.kotest.matchers.ints.shouldBeGreaterThan
 import io.kotest.matchers.longs.shouldBeLessThan
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.string.shouldContain
+import org.objectweb.asm.ClassReader
+import org.objectweb.asm.Opcodes
+import org.objectweb.asm.tree.ClassNode
+import org.objectweb.asm.tree.InvokeDynamicInsnNode
+import java.security.Permission
 
 class TestKompile :
     StringSpec({
@@ -506,4 +513,180 @@ class Person(var name: String) {
         "should compute empty klass size" {
             getEmptyKotlinClassSize() shouldBeGreaterThan 0
         }
+        "should stop at a Kotlin syntax error" {
+            // Nothing stops the light tree from handing a half-parsed file to the resolver, so the
+            // stop between parsing and resolution is Jeed's own and this is what guards it: the
+            // unresolved reference on line 3 must never be reported alongside the syntax error.
+            val failed = shouldThrow<CompilationFailed> {
+                Source(
+                    mapOf("Test.kt" to "fun main() {\n  val x = = 5\n  println(nonexistent)\n}"),
+                ).kompile()
+            }
+
+            failed should haveCompilationErrorAt(source = "Test.kt", line = 2)
+            failed.errors.map { it.location?.line }.distinct() shouldBe listOf(2)
+            failed.errors.none { it.message.lowercase().contains("unresolved") } shouldBe true
+        }
+        "should report the location of a Kotlin warning in a source with Windows line endings" {
+            // The light tree normalizes CR/LF when it maps offsets to lines, and so does the
+            // reporter that turns those offsets back into positions. If the two ever disagree the
+            // column drifts by the number of carriage returns before it.
+            val compiledSource = Source(
+                mapOf(
+                    "Test.kt" to "fun main() {\n  println(\"one\")\n  val unused = 5\n}".replace("\n", "\r\n"),
+                ),
+            ).kompile()
+
+            compiledSource.messages shouldHaveSize 1
+            compiledSource.messages[0].location?.line shouldBe 3
+            compiledSource.messages[0].location?.column shouldBe 7
+        }
+        "should not write to the filesystem while compiling" {
+            // The property the whole in-memory pipeline exists to preserve. Warm up first: the
+            // first tryCache call initializes Cache.kt, and the disk cache creates its directory
+            // under java.io.tmpdir as it is constructed.
+            Source(mapOf("Warm.kt" to "val warm = 1")).kompile(KompilationArguments(useCache = false))
+            Source(
+                mapOf("WarmJava.java" to "public class WarmJava {}", "WarmMixed.kt" to "class WarmMixed"),
+            ).mompile()
+
+            val source = Source(
+                mapOf(
+                    "com/example/Person.kt" to "package com.example\n\ndata class Person(val name: String)",
+                    "com/example/Main.kt" to
+                        "package com.example\n\nfun main() {\n  println(Person(\"test\").name)\n}",
+                ),
+            )
+            recordingFilesystemWrites {
+                source.kompile(KompilationArguments(useCache = false))
+            }.shouldBeEmpty()
+
+            recordingFilesystemWrites {
+                Source(
+                    mapOf(
+                        "Greeter.java" to "public class Greeter { public String greet() { return \"hi\"; } }",
+                        "Main.kt" to "fun main() {\n  println(Greeter().greet())\n}",
+                    ),
+                ).mompile()
+            }.shouldBeEmpty()
+        }
+        "should name file facade classes from the last segment of the source name" {
+            // These are the names kotlinc itself produces for these two files, on 2.4.10 and on
+            // 2.4.20 alike. Jeed used to produce com.example.Com_example_UtilKt for the first,
+            // because it handed the compiler a file name with a directory in it, which a file on
+            // disk never has. Callers that read generated facade names -- byClass coverage keys
+            // among them -- see the corrected ones, so pin them rather than rediscover them.
+            Source(
+                mapOf(
+                    "com/example/Util.kt" to "package com.example\n\nfun helper() = 1",
+                    "Top.kt" to "fun top() = 2",
+                ),
+            ).kompile().fileManager.classFiles.keys shouldContainExactlyInAnyOrder
+                listOf("TopKt.class", "com/example/UtilKt.class")
+
+            // The corollary: two sources sharing a last segment, with no package to separate them,
+            // now collide where the mangled names used to keep them apart.
+            shouldThrow<CompilationFailed> {
+                Source(
+                    mapOf("a/Main.kt" to "fun a() = 1", "b/Main.kt" to "fun b() = 2"),
+                ).kompile()
+            }.errors.first().message shouldContain "Duplicate JVM class name"
+        }
+        "should compile and run a type-checking when expression" {
+            // Kotlin 2.4.20 would generate this as an invokedynamic to
+            // java.lang.runtime.SwitchBootstraps plus a tableswitch, since the JVM target is 21.
+            // Kompile.kt pins the older chain-of-type-checks shape instead, because the
+            // invokedynamic form moves the whole dispatch onto the line of the when subject and
+            // costs a line of student coverage feedback. Assert the shape, not just the output, so
+            // that dropping the pin fails here rather than quietly in a coverage adjustment.
+            // The hierarchy is open rather than sealed on purpose: a sealed class carries a
+            // PermittedSubclasses attribute, which the rewriter's ASM8 visitors reject. That is a
+            // separate, pre-existing limitation and has nothing to do with the type switch.
+            val compiledSource = Source(
+                mapOf(
+                    "Main.kt" to """
+open class Shape
+class Circle(val radius: Int) : Shape()
+class Square(val side: Int) : Shape()
+
+fun describe(shape: Shape) = when (shape) {
+  is Circle -> "circle " + shape.radius
+  is Square -> "square " + shape.side
+  else -> "shape"
+}
+
+fun main() {
+  println(describe(Circle(2)))
+  println(describe(Square(3)))
+  println(describe(Shape()))
+}
+""".trim(),
+                ),
+            ).kompile()
+
+            val bootstraps = compiledSource.fileManager.classFiles.values.flatMap { classFile ->
+                ClassNode(Opcodes.ASM9).also { node ->
+                    ClassReader(classFile.openInputStream().readAllBytes()).accept(node, 0)
+                }.methods.flatMap { method -> method.instructions.toList() }
+                    .filterIsInstance<InvokeDynamicInsnNode>()
+                    .map { it.bsm.owner }
+            }
+            bootstraps shouldNotContain "java/lang/runtime/SwitchBootstraps"
+
+            compiledSource.execute().also {
+                it should haveCompleted()
+                it should haveOutput("circle 2\nsquare 3\nshape")
+            }
+        }
     })
+
+/**
+ * Records every filesystem write and delete made by the calling thread while [block] runs.
+ *
+ * A SecurityManager is the only mechanism on JDK 21 that sees both `java.io` and NIO writes
+ * synchronously, and the test JVM already runs with `-Djava.security.manager=allow`. Kotest runs
+ * specs sequentially, so no sandboxed task is confined while the manager is swapped, and the
+ * sandbox's own manager delegates to the manager it captured at class-initialization time for
+ * threads that are not confined, so installing this one is permitted. Only the calling thread is
+ * recorded, which keeps Caffeine maintenance, coroutine dispatchers and the resource agent out.
+ * Each recorded entry carries a stack trace so a hit is diagnosable.
+ */
+private fun <T> recordingFilesystemWrites(block: () -> T): List<String> {
+    // Force Sandbox's initializer to run first. It captures System.getSecurityManager() once and
+    // delegates to whatever it found forever after, so it must not capture the recorder.
+    check(Sandbox.systemSecurityManager !is RecordingSecurityManager)
+
+    val previous = System.getSecurityManager()
+    val recorder = RecordingSecurityManager(Thread.currentThread())
+    System.setSecurityManager(recorder)
+    try {
+        block()
+    } finally {
+        System.setSecurityManager(previous)
+    }
+    return recorder.writes
+}
+
+private class RecordingSecurityManager(private val watched: Thread) : SecurityManager() {
+    val writes = mutableListOf<String>()
+
+    override fun checkPermission(perm: Permission) {}
+    override fun checkPermission(perm: Permission, context: Any?) {}
+    override fun checkWrite(file: String) = record("write $file")
+    override fun checkDelete(file: String) = record("delete $file")
+
+    private fun record(what: String) {
+        if (Thread.currentThread() !== watched) {
+            return
+        }
+        val trace = Throwable()
+        // Files.isWritable only asks whether a path could be written, and routes through checkWrite
+        // because that is the permission it would need. javac calls it on the ct.sym archive it
+        // opens read-only for --release, so it fires on the mixed-source path. Nothing is created,
+        // modified or removed by it.
+        if (trace.stackTrace.any { it.className == "java.nio.file.Files" && it.methodName == "isWritable" }) {
+            return
+        }
+        writes += "$what\n" + trace.stackTraceToString()
+    }
+}

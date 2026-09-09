@@ -1,5 +1,77 @@
 # Changelog
 
+## 2026.9.4
+
+### Changed
+
+- Kotlin moved to 2.4.20, which deletes the legacy K2 CLI pipeline `Kompile.kt` compiled through, so
+  it now composes the phased CLI pipeline that replaced it. The frontend phase cannot be called as a
+  phase—it collects its sources by walking source roots through the local filesystem—so the project
+  environment, library list and sessions are composed from its public members, and the fir2ir and
+  backend phases are then called directly. Sources go in as in-memory text through the light tree
+  rather than as PSI files, which is the compiler's default and the only mode the backend phase
+  accepts for them. Diagnostics keep their line and column numbers, a parse failure still stops
+  before anything is resolved, and nothing on the path opens a file for writing: the phase that
+  writes class files is never invoked. The one regression is that diagnostics reported during the
+  backend phases—`CONFLICTING_JVM_DECLARATIONS`, `ACCIDENTAL_OVERRIDE`, `INLINE_CALL_CYCLE` and the
+  rest of `JvmBackendErrors`—now arrive without a line or column, because the compiler only computes
+  positions for those against a file that exists on disk. They still count as errors, and frontend
+  diagnostics, which are nearly all of them, are unaffected.
+- ktlint 1.8.0 does not initialize on Kotlin 2.4.20, so Jeed now carries a patched copy of the one
+  ktlint file that breaks. ktlint builds its PSI file factory from a bare `CompilerConfiguration()`,
+  and 2.4.20 changed `KotlinCoreEnvironment.configureProjectEnvironment` to read the compiler
+  extensions off the configuration, which throws `IllegalStateException: Extensions storage is not
+  registered` unless the configuration came from `CompilerConfiguration.create`. Nothing in Jeed can
+  reach the configuration ktlint constructs, so `core/src/main/kotlin/KtlintKotlinCompiler.kt` is a
+  copy of ktlint's file under ktlint's own package that builds the configuration the new way and is
+  otherwise unchanged apart from `MockProject`, whose Kotlin metadata names a supertype 2.4.20 no
+  longer shades into `kotlin-compiler-embeddable`. Jeed's classes precede dependency jars on the
+  classpath, so this copy loads and the one in the jar does not. The server's shaded jar needed that
+  ordering spelled out, since a jar has no first-wins rule and the JDK hands back the last of two
+  entries sharing a name—`shadowJar` now resolves duplicates under ktlint's `core.api` package in
+  favour of the first. All of this is temporary: delete the file, its guard test and the `shadowJar`
+  clause as soon as a ktlint release is built against Kotlin 2.4.20 or later.
+- Top-level declarations in a Kotlin source whose name carries a directory now land in the class
+  `kotlinc` puts them in. `com/example/Util.kt` produces `com.example.UtilKt` where Jeed used to
+  produce `com.example.Com_example_UtilKt`, because it handed the compiler the whole source name as
+  the file's *name*, a field that for a file on disk only ever holds the last segment, and the
+  directory got mangled into the class name. Stock `kotlinc` produces `com.example.UtilKt` on 2.4.10
+  and on 2.4.20 alike, so this is Jeed catching up with the compiler rather than the compiler
+  changing. It has a corollary: two sources sharing a last segment and declaring no
+  package—`a/Main.kt` and `b/Main.kt`—now fail with the same duplicate JVM class name error
+  `kotlinc` gives them, where the mangled names used to hide the clash. Only the file facade moves;
+  a class takes its name from its declaration, not from the file. Anything reading generated facade
+  names sees the new ones, `byClass` coverage keys included.
+- Type-checking `when` expressions keep the bytecode shape they have always had. 2.4.20 generates
+  them as an `invokedynamic` to `java.lang.runtime.SwitchBootstraps.typeSwitch` once the JVM target
+  is 21, which is Jeed's default on JDK 21. That runs correctly in the sandbox, but it moves the
+  whole dispatch onto the line of the `when` subject, so a `when` with no `else` reports its
+  unreachable default as a missed branch on that line and the `LAST_WHEN_ENTRY` coverage adjustment
+  has nothing left to match. Jeed sets the generation scheme back to the chain of type checks rather
+  than hand students a missed line for exhaustive code.
+- Dropped `-XXLanguage:+RangeUntilOperator` from the Kotlin compiler arguments. It has done nothing
+  since Kotlin 1.8 made the feature stable.
+- The Kotlin compiler source is a Git submodule at `externals/kotlin`, pinned to the tag Jeed
+  embeds. It is reference only—never built and on no classpath—and is not fetched unless asked for
+  with `git submodule update --init --depth 1 externals/kotlin`. `Kompile.kt` composes compiler
+  internals that have no documentation beyond their source, so the exact source is kept alongside.
+
+### Tests
+
+- A recording `SecurityManager` now pins the property the in-memory pipeline exists to preserve: a
+  compilation records no filesystem write or delete on the calling thread, for Kotlin and for mixed
+  sources. It has to warm up with a throwaway compilation first, since the first cache lookup
+  initializes the disk cache, which creates its directory under `java.io.tmpdir`.
+- Also new: that a syntax error stops before resolution rather than dragging follow-on unresolved
+  references along with it, that a warning in a source with Windows line endings still reports the
+  right line and column, that a type-checking `when` executes in the sandbox and carries no
+  `SwitchBootstraps` bootstrap, and that a source name carrying a directory produces the file facade
+  class the last segment of that name implies.
+- `TestKtLint` pins where `KtlintKotlinCompiler` is loaded from. The patched copy only takes effect
+  because of classpath ordering, and nothing else would notice if that ordering changed—the jar's
+  copy would simply load and every ktlint call would fail again—so the test reads the class's code
+  source and fails if it points into `ktlint-rule-engine-core`.
+
 ## 2026.9.3
 
 ### Changed

@@ -2,14 +2,25 @@
 
 package edu.illinois.cs.cs125.jeed.core
 
+import com.pinterest.ktlint.rule.engine.core.api.KtlintKotlinCompiler
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
+import io.kotest.matchers.string.shouldNotContain
 
 class TestKtLint :
     StringSpec({
+        // core/src/main/kotlin/KtlintKotlinCompiler.kt is a patched copy of a class that also ships inside
+        // ktlint-rule-engine-core-1.8.0.jar, and it only takes effect because Jeed's own classes precede
+        // dependency jars on the classpath. Nothing else would notice if that ordering changed: the jar's
+        // copy would simply load and every ktlint call would fail on Kotlin 2.4.20. Pin the ordering here
+        // so that the shadow losing is a named failure rather than twelve confusing ones.
+        "it should load Jeed's copy of the ktlint compiler bootstrap" {
+            val location = KtlintKotlinCompiler::class.java.protectionDomain.codeSource.location.toString()
+            location shouldNotContain "ktlint-rule-engine"
+        }
         "it should check simple kotlin sources" {
             Source.fromKotlinSnippet(
                 """println("Hello, world!")""",
