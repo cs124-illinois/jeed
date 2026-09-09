@@ -26,10 +26,18 @@
 // com.pinterest.ktlint.rule.engine.core.api.KtlintKotlinCompiler. Nothing in Jeed can reach the
 // configuration ktlint constructs, so the file it is constructed in is replaced instead.
 //
-// This is temporary. Delete this file as soon as a ktlint release is built against Kotlin 2.4.20 or
-// later—the `kotlin =` line in ktlint's gradle/libs.versions.toml says which version a release
-// used—and let the copy in the jar load again. TestKtLint asserts that this copy is the one being
-// loaded, so it fails as soon as the shadow stops winning.
+// This is temporary, and upstream has already fixed it: ktlint/ktlint#3289, merged June 2026 on the
+// advice of a Kotlin compiler developer. The bootstrap there no longer builds a
+// KotlinCoreEnvironment at all. It uses KotlinCoreProjectEnvironment, which never touches a
+// CompilerConfiguration and so cannot fail this way, and it reaches the PomModel through
+// MockComponentManager for the same reason this copy does. None of that is in a 1.x release; 1.8.0
+// predates it. It ships first in 2.0.0, confirmed present in the 2.0.0-ALPHA-4 binary.
+//
+// ktlint 2.x also left Pinterest, so the coordinates become io.github.ktlint and this package
+// becomes io.github.ktlint.core.rule.engine.core.api. That matters for the deletion: moving jeed to
+// 2.x silently strands this file, shadowing a package nothing loads any more, so delete it then
+// rather than leaving it to rot. A 1.x release carrying the fix would do just as well. TestKtLint
+// asserts that this copy is the one being loaded, so it fails as soon as the shadow stops winning.
 
 package com.pinterest.ktlint.rule.engine.core.api
 
