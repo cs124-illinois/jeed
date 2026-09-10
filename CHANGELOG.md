@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026.9.5
+
+Everything since 2026.9.2, the last version to reach Maven Central and Docker Hub. 2026.9.3 and
+2026.9.4 have their own entries below but were never published, so their changes ship here as well.
+
+### Changed
+
+- Updated KSP to 2.3.12. Nothing else on the Java or Kotlin side had moved: Gradle, Kotlin, ktlint,
+  checkstyle, kotest, ktor, ASM, caffeine, classgraph and the rest are already on their latest
+  releases.
+
 ## 2026.9.4
 
 ### Changed
