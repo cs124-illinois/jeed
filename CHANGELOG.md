@@ -7,6 +7,11 @@ Everything since 2026.9.2, the last version to reach Maven Central and Docker Hu
 
 ### Changed
 
+- The JS packages now take their version from the backend, which is set in one place. They had been
+  bumped by hand to match it and drifted: the backend reached 2026.9.5 with every package still on
+  2026.9.1, and neither the npm packages nor the proxy image were published in between. `./gradlew
+  syncJsVersions` writes the version into each `package.json`, including the exact versions they
+  depend on one another at, and `check`, `publish` and `:server:dockerPush` fail until they agree.
 - Updated KSP to 2.3.12. Nothing else on the Java or Kotlin side had moved: Gradle, Kotlin, ktlint,
   checkstyle, kotest, ktor, ASM, caffeine, classgraph and the rest are already on their latest
   releases.

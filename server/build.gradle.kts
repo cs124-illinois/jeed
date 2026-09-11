@@ -91,7 +91,9 @@ tasks.register<Exec>("dockerBuild") {
     )
 }
 tasks.register<Exec>("dockerPush") {
-    dependsOn("dockerCopyJar", "dockerCopyDockerfile")
+    // The proxy image is pushed from js/proxy with the version its package.json carries, so refuse
+    // to push this one while the two disagree.
+    dependsOn("dockerCopyJar", "dockerCopyDockerfile", ":checkJsVersions")
     workingDir(layout.buildDirectory.dir("docker"))
     // --pull and --no-cache so every release resolves the base image and its OS packages afresh: a
     // cached layer would keep them exactly as old as the last release that built it.

@@ -1,6 +1,6 @@
 {
   "name": "@cs124/jeed-types",
-  "version": "2026.9.1",
+  "version": "2026.9.5",
   "license": "MIT",
   "main": "dist/index.js",
   "scripts": {

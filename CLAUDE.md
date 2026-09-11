@@ -80,6 +80,11 @@ npm run backend
 ### Versioning
 The project uses date-based versioning: YYYY.M.P (e.g., 2025.6.0)
 
+`version` in the root `build.gradle.kts` is the only place a version is set. Every JS package under
+`js/` carries the same version, and so does every dependency one has on another, since npm publish
+needs exact versions there. After bumping it, run `./gradlew syncJsVersions`. `./gradlew check`,
+`./gradlew publish` and `:server:dockerPush` all fail until the JS packages agree.
+
 ### Environment Requirements
 - Java: OpenJDK 21
 - Kotlin: 2.4.20
