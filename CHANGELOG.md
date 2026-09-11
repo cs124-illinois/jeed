@@ -11,6 +11,29 @@ Everything since 2026.9.2, the last version to reach Maven Central and Docker Hu
   checkstyle, kotest, ktor, ASM, caffeine, classgraph and the rest are already on their latest
   releases.
 
+### Security
+
+Rebuilding the published images from this release clears every known critical and high advisory
+against them. Both were scanned with Docker Scout on 2026-09-11: before is the image Docker Hub
+serves, after is this release built locally.
+
+| image | before | after |
+| --- | --- | --- |
+| `cs124/jeed` | 1 critical, 0 high | none |
+| `cs124/jeed-proxy` | 6 critical, 53 high | none |
+
+- netty moves to 4.2.18 through its BOM. ktor 3.5.2, the newest release, pins netty 4.2.16, which
+  carries CVE-2026-75595 (critical) and CVE-2026-75596, both fixed in 4.2.17. Drop the BOM once a
+  ktor release ships a fixed netty.
+- `jeed-core` now publishes plexus-utils 4.1.0 as a dependency. 2026.9.1 pinned it with a forced
+  resolution, which fixes only this build, so anything depending on `jeed-core` still resolved 3.1.1
+  through plexus-container-default and carried CVE-2025-67030.
+- The proxy fix 2026.9.1 describes never reached Docker Hub: nothing was pushed after 2025.12.4,
+  which still carries every advisory counted above. The proxy now builds on node 24.21.0, and both
+  images are pushed with `--pull --no-cache`, so each release resolves the base image and its OS
+  packages afresh instead of reusing an `apk upgrade` layer cached by an earlier one. The proxy's
+  build context also ignores `.env` files.
+
 ## 2026.9.4
 
 ### Changed

@@ -1,0 +1,4 @@
+# Keep credentials out of the build context. The image only copies bundled/, but a .env sent to the
+# daemon is one careless COPY away from a published layer, and an anchored .env would only match the
+# context root.
+**/.env*

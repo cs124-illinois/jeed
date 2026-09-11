@@ -46,6 +46,11 @@ dependencies {
         exclude(group = "org.slf4j", module = "slf4j-simple")
     }
     implementation("org.codehaus.plexus:plexus-container-default:2.1.1")
+    // The force above fixes plexus-utils for this build only: a resolutionStrategy is not published,
+    // so anything depending on jeed-core still resolved 3.1.1 through plexus-container-default and
+    // carried CVE-2025-67030. Declaring the fixed version puts it in the published POM and module
+    // metadata, where it wins for consumers under both Gradle's and Maven's conflict resolution.
+    implementation("org.codehaus.plexus:plexus-utils:4.1.0")
     implementation("com.pinterest.ktlint:ktlint-rule-engine:1.8.0")
     implementation("com.pinterest.ktlint:ktlint-ruleset-standard:1.8.0")
     implementation("com.github.jknack:handlebars:4.5.4")

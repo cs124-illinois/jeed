@@ -1,7 +1,10 @@
-FROM node:24.20.0-alpine3.24
+# Pinned deliberately, so bump the patch with each release: a pinned tag never picks up a fixed
+# node on rebuild. The apk upgrade below covers the OS packages either way.
+FROM node:24.21.0-alpine3.24
 
 # apk upgrade picks up OS package fixes published since the base image was cut -- the
-# base is always at least a little older than the newest openssl/musl.
+# base is always at least a little older than the newest openssl/musl. docker:push builds
+# with --pull --no-cache, so this layer is never reused from an earlier release.
 # entr ships in the stable community repository as of Alpine 3.24, so there is no
 # longer any need to pull it from edge.
 RUN apk upgrade --no-cache && apk add --no-cache tini entr

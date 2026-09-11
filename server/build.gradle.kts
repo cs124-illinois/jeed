@@ -38,6 +38,10 @@ dependencies {
     implementation("io.ktor:ktor-server-netty:$ktorVersion")
     implementation("io.ktor:ktor-server-content-negotiation:$ktorVersion")
     implementation("io.ktor:ktor-serialization-kotlinx-json:$ktorVersion")
+    // ktor 3.5.2 is the newest release and pins netty 4.2.16.Final, which carries CVE-2026-75595
+    // (critical) and CVE-2026-75596, fixed in 4.2.17.Final. The BOM moves every netty module
+    // together, and as with jackson's below, a plain platform wins by conflict resolution.
+    implementation(platform("io.netty:netty-bom:4.2.18.Final"))
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
     // konf 2.1.0 is the newest release and pins jackson 2.17.1, which carries advisories fixed in
@@ -89,8 +93,10 @@ tasks.register<Exec>("dockerBuild") {
 tasks.register<Exec>("dockerPush") {
     dependsOn("dockerCopyJar", "dockerCopyDockerfile")
     workingDir(layout.buildDirectory.dir("docker"))
+    // --pull and --no-cache so every release resolves the base image and its OS packages afresh: a
+    // cached layer would keep them exactly as old as the last release that built it.
     commandLine(
-        ("/usr/local/bin/docker buildx build . --platform=linux/amd64,linux/arm64/v8 " +
+        ("/usr/local/bin/docker buildx build . --platform=linux/amd64,linux/arm64/v8 --pull --no-cache " +
             "--tag ${dockerName}:latest " +
             "--tag ${dockerName}:${project.version} --push").split(" ")
     )

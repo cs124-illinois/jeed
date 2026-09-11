@@ -8,7 +8,7 @@
     "clean": "rimraf bundled",
     "depcheck": "depcheck --ignores=prettier-plugin-*,eslint-plugin-*,env-cmd,rimraf --ignore-dirs=bundled",
     "docker:build": "bun run build && docker build . -t cs124/jeed-proxy:latest && bun run docker:tag",
-    "docker:push": "bun run build && docker buildx build . --platform=linux/amd64,linux/arm64/v8 --tag cs124/jeed-proxy:latest --tag cs124/jeed-proxy:$npm_package_version --push",
+    "docker:push": "bun run build && docker buildx build . --platform=linux/amd64,linux/arm64/v8 --pull --no-cache --tag cs124/jeed-proxy:latest --tag cs124/jeed-proxy:$npm_package_version --push",
     "docker:tag": "docker tag cs124/jeed-proxy:latest cs124/jeed-proxy:$npm_package_version",
     "eslint": "eslint server/**",
     "ncu": "ncu",
