@@ -1,9 +1,9 @@
 # Changelog
 
-## 2026.9.5
+## 2026.9.6
 
-Everything since 2026.9.2, the last version to reach Maven Central and Docker Hub. 2026.9.3 and
-2026.9.4 have their own entries below but were never published, so their changes ship here as well.
+Everything since 2026.9.2, the last version to reach Maven Central and Docker Hub. 2026.9.3 through
+2026.9.5 have their own entries below but were never published, so their changes ship here as well.
 
 ### Added
 
@@ -17,6 +17,11 @@ Everything since 2026.9.2, the last version to reach Maven Central and Docker Hu
   and `JEED_ROOT_LOG_LEVEL` does the same for every other library's logger; both take an SLF4J
   level name (`TRACE`, `DEBUG`, `INFO`, `WARN`, `ERROR`) or a `java.util.logging` one, and a value
   that is neither is reported and ignored rather than silently dropping the level to warn.
+
+## 2026.9.5
+
+### Changed
+
 - The JS packages now take their version from the backend, which is set in one place. They had been
   bumped by hand to match it and drifted: the backend reached 2026.9.5 with every package still on
   2026.9.1, and neither the npm packages nor the proxy image were published in between. `./gradlew

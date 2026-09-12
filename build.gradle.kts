@@ -18,7 +18,7 @@ plugins {
 extra.set("agentVersion", "2026.1.2")
 allprojects {
     group = "org.cs124.jeed"
-    version = "2026.9.5"
+    version = "2026.9.6"
 }
 subprojects {
     tasks.withType<Test> {
