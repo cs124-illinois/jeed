@@ -113,6 +113,34 @@ private class JeedStdoutHandler : StreamHandler(System.out, JeedLogFormatter()) 
     }
 }
 
+/**
+ * Parses a level by its SLF4J name -- `TRACE`, `DEBUG`, `INFO`, `WARN` or `ERROR`, the names that
+ * actually appear in the logs -- or by its java.util.logging one, `ALL` and `OFF` included. Case
+ * and surrounding whitespace don't matter.
+ *
+ * Returns null for anything else, so that a caller reading a level out of a configuration setting
+ * can complain about a typo rather than silently falling back to a default.
+ */
+fun parseLogLevel(name: String): Level? {
+    val cleaned = name.trim().uppercase()
+    return when (cleaned) {
+        "ERROR" -> Level.SEVERE
+
+        "WARN" -> Level.WARNING
+
+        "DEBUG" -> Level.FINE
+
+        "TRACE" -> Level.FINEST
+
+        // INFO, the JUL names, and the integer values Level.parse also accepts.
+        else -> try {
+            Level.parse(cleaned)
+        } catch (e: IllegalArgumentException) {
+            null
+        }
+    }
+}
+
 // java.util.logging holds loggers weakly, so a logger whose level was set and then dropped can be
 // collected and come back at its default. Hold on to the ones configured here.
 private val configuredLoggers = mutableListOf<Logger>()

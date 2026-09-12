@@ -1,6 +1,8 @@
 package edu.illinois.cs.cs125.jeed.core
 
 import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.nulls.shouldBeNull
+import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldEndWith
 import io.kotest.matchers.string.shouldMatch
@@ -64,6 +66,31 @@ class TestLogging :
                     .substringBefore(" - ")
             abbreviated shouldEndWith "VeryLongClassNameIndeed"
             abbreviated shouldBe "c.e.d.n.p.n.VeryLongClassNameIndeed"
+        }
+        "should parse levels by their SLF4J names" {
+            // Whatever parseLogLevel returns for a name has to format back to that same name, or a
+            // level set by environment variable wouldn't match what shows up in the logs.
+            listOf("ERROR", "WARN", "INFO", "DEBUG", "TRACE").forEach { name ->
+                val level = parseLogLevel(name).shouldNotBeNull()
+                format(level, "Test", "m").substringAfter("] ").substringBefore(" Test") shouldBe name.padEnd(5)
+            }
+        }
+        "should parse levels by their java.util.logging names" {
+            parseLogLevel("SEVERE") shouldBe Level.SEVERE
+            parseLogLevel("WARNING") shouldBe Level.WARNING
+            parseLogLevel("CONFIG") shouldBe Level.CONFIG
+            parseLogLevel("FINER") shouldBe Level.FINER
+            parseLogLevel("ALL") shouldBe Level.ALL
+            parseLogLevel("OFF") shouldBe Level.OFF
+        }
+        "should ignore case and surrounding whitespace when parsing levels" {
+            parseLogLevel("warn") shouldBe Level.WARNING
+            parseLogLevel(" Info ") shouldBe Level.INFO
+        }
+        "should refuse to parse anything that is not a level" {
+            parseLogLevel("quiet").shouldBeNull()
+            parseLogLevel("").shouldBeNull()
+            parseLogLevel("WARNN").shouldBeNull()
         }
         "should include a stack trace when the record carries one" {
             val record = LogRecord(Level.SEVERE, "it broke").also {

@@ -7,6 +7,7 @@ import com.beyondgrader.resourceagent.StaticFailureDetection
 import edu.illinois.cs.cs125.jeed.core.VERSION
 import edu.illinois.cs.cs125.jeed.core.configureJeedLogging
 import edu.illinois.cs.cs125.jeed.core.getStackTraceAsString
+import edu.illinois.cs.cs125.jeed.core.parseLogLevel
 import edu.illinois.cs.cs125.jeed.core.serializers.JeedJson
 import edu.illinois.cs.cs125.jeed.core.warm
 import io.github.nhubbard.konf.source.json.toJson
@@ -39,6 +40,26 @@ import kotlin.system.exitProcess
 val logger = KotlinLogging.logger {}
 
 private val statusLogIntervalMs = System.getenv("STATUS_LOG_INTERVAL_MS")?.toLongOrNull() ?: 300000L // 5 minutes
+
+// Jeed's own logger used to sit at info, which logs a line on every request and a status dump every
+// five minutes. Both it and everything else default to warn now, and either can be moved by
+// environment variable, using an SLF4J level name (TRACE, DEBUG, INFO, WARN, ERROR) or a
+// java.util.logging one.
+private const val JEED_LOG_LEVEL_VARIABLE = "JEED_LOG_LEVEL"
+private const val ROOT_LOG_LEVEL_VARIABLE = "JEED_ROOT_LOG_LEVEL"
+private val DEFAULT_LOG_LEVEL: Level = Level.WARNING
+
+private fun logLevel(variable: String) = System.getenv(variable)?.let { parseLogLevel(it) } ?: DEFAULT_LOG_LEVEL
+
+// Separate from logLevel above, since a complaint about a bad setting only shows up once logging is
+// configured, which needs the levels first.
+private fun warnAboutUnusableLogLevels() = listOf(JEED_LOG_LEVEL_VARIABLE, ROOT_LOG_LEVEL_VARIABLE).forEach { variable ->
+    val setting = System.getenv(variable) ?: return@forEach
+    if (parseLogLevel(setting) == null) {
+        logger.warn { """Ignoring $variable="$setting": not a log level, so using WARN""" }
+    }
+}
+
 private val requestCounter = AtomicLong(0)
 private val startTime = Instant.now()
 
@@ -189,9 +210,12 @@ fun Application.jeed() {
 }
 
 fun main(@Suppress("unused") unused: Array<String>) {
-    // Before anything logs. Mirrors the levels the old logback.xml set: Jeed at info, everything
-    // else at warn.
-    configureJeedLogging(jeedLevel = Level.INFO, rootLevel = Level.WARNING)
+    // Before anything logs.
+    configureJeedLogging(
+        jeedLevel = logLevel(JEED_LOG_LEVEL_VARIABLE),
+        rootLevel = logLevel(ROOT_LOG_LEVEL_VARIABLE),
+    )
+    warnAboutUnusableLogLevels()
 
     logger.info { "Jeed server starting..." }
     logger.info { "JVM: ${System.getProperty("java.version")} (${System.getProperty("java.vendor")})" }
