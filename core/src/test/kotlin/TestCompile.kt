@@ -8,6 +8,7 @@ import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.ints.shouldBeGreaterThan
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 
 class TestCompile :
     StringSpec({
@@ -538,6 +539,19 @@ public class Test {
 }""".trim(),
                 ),
             ).compile(CompilationArguments(enablePreview = true))
+        }
+        "should report errors naming an unnamed class".config(enabled = systemCompilerVersion == 21) {
+            val failedCompilation = shouldThrow<CompilationFailed> {
+                Source(
+                    mapOf(
+                        "Main.java" to """
+int f() { return this; }
+void main() {}""".trim(),
+                    ),
+                ).compile(CompilationArguments(enablePreview = true))
+            }
+            failedCompilation should haveCompilationErrorAt(source = "Main.java", line = 1, column = 18)
+            failedCompilation.errors.first().message shouldContain "incompatible types"
         }
         "should load classes from a separate classloader" {
             val first = Source(

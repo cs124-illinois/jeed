@@ -182,9 +182,8 @@ internal fun compileToFileManager(
 
     systemCompiler.getTask(null, fileManager, results, options.toList(), null, units).call()
 
-    fun getMappedLocation(diagnostic: Diagnostic<out JavaFileObject>): SourceLocation? = diagnostic
-        .let { if (it.source == null) null else it }
-        ?.let { msg -> SourceLocation(msg.source.name, msg.lineNumber.toInt(), msg.columnNumber.toInt()) }
+    fun getMappedLocation(diagnostic: ReportedDiagnostic): SourceLocation? = diagnostic.sourceName
+        ?.let { name -> SourceLocation(name, diagnostic.lineNumber.toInt(), diagnostic.columnNumber.toInt()) }
         ?.let { loc -> source.mapLocation(loc) }
 
     val errors = results.diagnostics.filter {
@@ -196,7 +195,7 @@ internal fun compileToFileManager(
         } catch (_: SourceMappingException) {
             null
         }
-        CompilationError(location, it.getMessage(Locale.US))
+        CompilationError(location, it.message)
     }.distinctBy {
         if (it.location != null) {
             "${it.location}: ${it.message}"
@@ -221,7 +220,7 @@ internal fun compileToFileManager(
         } catch (_: SourceMappingException) {
             null
         }
-        CompilationMessage(it.kind.toString(), location, it.getMessage(Locale.US))
+        CompilationMessage(it.kind.toString(), location, it.message)
     }.filter(compilationArguments.messageFilter)
 
     return Pair(fileManager, messages)
@@ -299,10 +298,29 @@ private class Unit(val entry: Map.Entry<String, String>) : SimpleJavaFileObject(
     override fun toString(): String = entry.key
 }
 
+data class ReportedDiagnostic(
+    val kind: Diagnostic.Kind,
+    val message: String,
+    val sourceName: String?,
+    val lineNumber: Long,
+    val columnNumber: Long,
+)
+
 class Results : DiagnosticListener<JavaFileObject> {
-    val diagnostics = mutableListOf<Diagnostic<out JavaFileObject>>()
+    val diagnostics = mutableListOf<ReportedDiagnostic>()
+
+    // Everything is read here, while javac is still running. Once call() returns javac has disposed its unshared name
+    // table, and formatting some messages then throws: an unnamed class's name is created on demand from that table.
     override fun report(diagnostic: Diagnostic<out JavaFileObject>) {
-        diagnostics.add(diagnostic)
+        diagnostics.add(
+            ReportedDiagnostic(
+                diagnostic.kind,
+                diagnostic.getMessage(Locale.US),
+                diagnostic.source?.name,
+                diagnostic.lineNumber,
+                diagnostic.columnNumber,
+            ),
+        )
     }
 }
 

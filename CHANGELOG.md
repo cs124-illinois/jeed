@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026.10.0
+
+### Fixed
+
+- Compiling Java that javac treats as an unnamed class (top-level methods or fields, accepted as a
+  preview feature on Java 21) no longer throws a `NullPointerException` when an error message names
+  that class, such as `int f() { return this; }`. Jeed formatted diagnostics after javac had
+  finished and disposed its name table, and printing an unnamed class's name needs that table. It
+  now formats each one as javac reports it, so these submissions fail with a normal
+  `CompilationFailed`. `Results.diagnostics` holds the new `ReportedDiagnostic` rather than javac's
+  `Diagnostic`.
+
 ## 2026.9.6
 
 Everything since 2026.9.2, the last version to reach Maven Central and Docker Hub. 2026.9.3 through
