@@ -17,10 +17,10 @@ plugins {
     id("com.adarshr.test-logger")
     jacoco
 }
-val agentVersion: String by rootProject.extra
+val agentVersion = rootProject.extra["agentVersion"] as String
 configurations.all {
     resolutionStrategy {
-        force("org.slf4j:slf4j-api:2.0.19")
+        force("org.slf4j:slf4j-api:2.0.20")
         // konf reaches gson through toml4j, which is abandoned on gson 2.8.1 and so still carries
         // CVE-2022-25647, fixed in 2.8.9.
         force("com.google.code.gson:gson:2.14.0")
@@ -29,7 +29,7 @@ configurations.all {
     }
 }
 dependencies {
-    val ktorVersion = "3.5.2"
+    val ktorVersion = "3.6.0"
 
     testJavaagent("com.beyondgrader.resource-agent:agent:$agentVersion")
 
@@ -38,10 +38,11 @@ dependencies {
     implementation("io.ktor:ktor-server-netty:$ktorVersion")
     implementation("io.ktor:ktor-server-content-negotiation:$ktorVersion")
     implementation("io.ktor:ktor-serialization-kotlinx-json:$ktorVersion")
-    // ktor 3.5.2 is the newest release and pins netty 4.2.16.Final, which carries CVE-2026-75595
-    // (critical) and CVE-2026-75596, fixed in 4.2.17.Final. The BOM moves every netty module
-    // together, and as with jackson's below, a plain platform wins by conflict resolution.
-    implementation(platform("io.netty:netty-bom:4.2.18.Final"))
+    // ktor 3.6.0 pins netty 4.2.17.Final. Earlier ktor releases pinned versions carrying
+    // CVE-2026-75595 (critical) and CVE-2026-75596, so keep netty on its newest release rather than
+    // trailing ktor. The BOM moves every netty module together, and as with jackson's below, a
+    // plain platform wins by conflict resolution.
+    implementation(platform("io.netty:netty-bom:4.2.19.Final"))
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
     // konf 2.1.0 is the newest release and pins jackson 2.17.1, which carries advisories fixed in
@@ -50,17 +51,17 @@ dependencies {
     // A plain platform rather than an enforced one: enforced platforms behave like forced
     // dependencies and leak to consumers, which Gradle refuses to publish. This still wins over
     // konf's older BOM, since the higher version carries conflict resolution.
-    implementation(platform("com.fasterxml.jackson:jackson-bom:2.22.2"))
+    implementation(platform("com.fasterxml.jackson:jackson-bom:2.22.3"))
     implementation("io.github.nhubbard:konf:2.1.0")
     implementation("com.beyondgrader.resource-agent:agent:$agentVersion")
     implementation("com.beyondgrader.resource-agent:jeedplugin:$agentVersion")
 
     // Libraries for student use
     implementation("org.cs124:libcs1:2026.9.0")
-    implementation("io.kotest:kotest-runner-junit5:6.2.4")
+    implementation("io.kotest:kotest-runner-junit5:6.2.5")
     implementation("com.google.truth:truth:1.4.5")
 
-    testImplementation("io.kotest:kotest-runner-junit5:6.2.4")
+    testImplementation("io.kotest:kotest-runner-junit5:6.2.5")
     testImplementation("io.ktor:ktor-server-test-host:$ktorVersion")
 }
 testlogger {

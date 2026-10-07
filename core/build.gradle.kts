@@ -22,10 +22,10 @@ plugins {
     jacoco
 }
 
-val agentVersion: String by rootProject.extra
+val agentVersion = rootProject.extra["agentVersion"] as String
 configurations.all {
     resolutionStrategy {
-        force("org.slf4j:slf4j-api:2.0.19")
+        force("org.slf4j:slf4j-api:2.0.20")
         // plexus-container-default 2.1.1 is the newest release and still pulls plexus-utils 3.1.1,
         // which carries a path traversal advisory (CVE-2025-67030) fixed in 4.0.3.
         force("org.codehaus.plexus:plexus-utils:4.1.0")
@@ -39,7 +39,7 @@ dependencies {
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
-    implementation("com.puppycrawl.tools:checkstyle:14.1.0") {
+    implementation("com.puppycrawl.tools:checkstyle:14.3.0") {
         // checkstyle ships slf4j-simple as its binding, which lands a second SLF4J provider in the
         // server's shaded jar alongside logback. Which one wins is then down to ordering, and
         // slf4j-simple ignores logback.xml entirely.
@@ -53,31 +53,31 @@ dependencies {
     implementation("org.codehaus.plexus:plexus-utils:4.1.0")
     implementation("com.pinterest.ktlint:ktlint-rule-engine:1.8.0")
     implementation("com.pinterest.ktlint:ktlint-ruleset-standard:1.8.0")
-    implementation("com.github.jknack:handlebars:4.5.4")
+    implementation("com.github.jknack:handlebars:4.5.5")
     implementation("org.ow2.asm:asm:9.10.1")
     implementation("org.ow2.asm:asm-tree:9.10.1")
     implementation("org.ow2.asm:asm-util:9.10.1")
 
     implementation("net.java.dev.jna:jna:5.19.1")
     implementation("io.github.java-diff-utils:java-diff-utils:4.17")
-    implementation("com.google.googlejavaformat:google-java-format:1.36.1")
+    implementation("com.google.googlejavaformat:google-java-format:1.37.0")
     implementation("net.sf.extjwnl:extjwnl:2.0.5")
     implementation("net.sf.extjwnl:extjwnl-data-wn31:1.2")
 
     api("org.jacoco:org.jacoco.core:0.8.15")
-    api("com.github.ben-manes.caffeine:caffeine:3.2.4")
+    api("com.github.ben-manes.caffeine:caffeine:3.3.0")
     // slf4j-jdk14 routes the SLF4J calls our dependencies make into java.util.logging, which is
     // already in the JDK, so there is no logging implementation to ship or keep patched. See
     // Logging.kt for the formatter that keeps the output identical to the logback pattern.
-    api("org.slf4j:slf4j-jdk14:2.0.19")
+    api("org.slf4j:slf4j-jdk14:2.0.20")
     // io.github.microutils is the abandoned home of kotlin-logging; io.github.oshai is where it
     // moved. 8.x dropped the overloads taking a value in favour of the lambda form, which defers
     // building the message until the level is known to be enabled. ktlint requests 7.0.13 and
     // resolves up to this; its bytecode only ever calls the lambda overloads, so that is safe.
     api("io.github.oshai:kotlin-logging:8.0.4")
-    api("io.github.classgraph:classgraph:4.8.195")
+    api("io.github.classgraph:classgraph:4.8.196")
 
-    testImplementation("io.kotest:kotest-runner-junit5:6.2.4")
+    testImplementation("io.kotest:kotest-runner-junit5:6.2.5")
     testImplementation("com.beyondgrader.resource-agent:agent:$agentVersion")
     testJavaagent("com.beyondgrader.resource-agent:agent:$agentVersion")
 }
@@ -170,7 +170,7 @@ tasks.register<Copy>("copyJavaGrammar") {
     }
 }
 tasks {
-    val sourcesJar by registering(Jar::class) {
+    val sourcesJar = register<Jar>("sourcesJar") {
         archiveClassifier.set("sources")
         from(sourceSets["main"].allSource)
         duplicatesStrategy = DuplicatesStrategy.INCLUDE
