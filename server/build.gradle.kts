@@ -1,3 +1,4 @@
+import com.github.jengelman.gradle.plugins.shadow.transformers.MergeLicenseResourceTransformer
 import org.jmailen.gradle.kotlinter.tasks.FormatTask
 import org.jmailen.gradle.kotlinter.tasks.LintTask
 import java.io.File
@@ -132,6 +133,42 @@ tasks.shadowJar {
     filesMatching("com/pinterest/ktlint/rule/engine/core/api/**") {
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     }
+    // kotlin-stdlib and kotlin-compiler-embeddable each ship the same eight .kotlin_builtins files,
+    // byte for byte, so one copy loses nothing and keeps Shadow from warning about the pair.
+    filesMatching("kotlin/**/*.kotlin_builtins") {
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    }
+    // The remaining duplicates are metadata. Where every copy matches -- netty's per-component
+    // licenses, which each of its native transports repeats, plus the AL2.0, LGPL2.1 and
+    // native-image files -- one copy loses nothing. The quic POMs differ only in their build
+    // timestamps, all at the same version.
+    filesMatching(
+        listOf(
+            "META-INF/license/**",
+            "META-INF/AL2.0",
+            "META-INF/LGPL2.1",
+            "META-INF/LICENSE-notice.md",
+            "META-INF/maven/**",
+            "META-INF/native-image/**",
+        ),
+    ) {
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    }
+    // The generic license files carry eight different texts, so first-wins would drop most of them.
+    // Merge them under Jeed's own license, each distinct text once.
+    transform(MergeLicenseResourceTransformer::class.java) {
+        artifactLicense.set(rootProject.file("LICENSE"))
+        artifactLicenseSpdxId.set("MIT")
+    }
+    // These differ too and are read whole or not at all, so keep every copy. Netty's version files
+    // each list different modules, and about.html carries the EPL and EDL notices.
+    listOf(
+        "META-INF/NOTICE",
+        "META-INF/NOTICE.txt",
+        "META-INF/io.netty.versions.properties",
+        "META-INF/proguard/coroutines.pro",
+        "about.html",
+    ).forEach { append(it) }
     // That rule is first-wins over the shadow configuration's resolution order, and no test can
     // see it: the suite runs against a classpath, where the core classes precede the ktlint jar for
     // free. Inserting a dependency ahead of project(":core") would silently ship ktlint's copy and
