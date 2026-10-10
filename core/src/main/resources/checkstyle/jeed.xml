@@ -154,7 +154,7 @@
         <!-- CS124: improved message for beginners -->
         <module name="AvoidNestedBlocks">
             <message key="block.nested"
-                value="Avoid unnecessary braces ({}) that aren't part of an if, for, while, or other statement."/>
+                value="Avoid unnecessary braces ('{}') that aren''t part of an if, for, while, or other statement."/>
         </module>
         <module name="EmptyBlock"/>
         <module name="LeftCurly"/>
@@ -196,7 +196,7 @@
         <!-- CS124: improved message for beginners -->
         <module name="SimplifyBooleanReturn">
             <message key="simplify.boolReturn"
-                value="Instead of 'if (condition) { return true; } else { return false; }', simplify to 'return condition;'"/>
+                value="Instead of ''if (condition) '{' return true; '}' else '{' return false; '}''', simplify to ''return condition;''"/>
         </module>
 
         <!-- Checks for class design                         -->
@@ -218,7 +218,7 @@
         <!-- CS124: improved message for beginners -->
         <module name="ArrayTypeStyle">
             <message key="array.type.style"
-                value="Place array brackets after the type, not the variable name: use 'int[] array' instead of 'int array[]'."/>
+                value="Place array brackets after the type, not the variable name: use ''int[] array'' instead of ''int array[]''."/>
         </module>
         <!-- CS124: Disabling by default, since throwing final everywhere is fairly annoying.
         <module name="FinalParameters"/>
@@ -227,7 +227,7 @@
         <!-- CS124: improved message for beginners -->
         <module name="UpperEll">
             <message key="upperEll"
-                value="Use uppercase 'L' for long literals (e.g., 100L not 100l) since lowercase 'l' looks like '1'."/>
+                value="Use uppercase ''L'' for long literals (e.g., 100L not 100l) since lowercase ''l'' looks like ''1''."/>
         </module>
 
         <module name="Indentation">

@@ -4,6 +4,8 @@ import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.Matcher
 import io.kotest.matchers.MatcherResult
+import io.kotest.matchers.collections.shouldContain
+import io.kotest.matchers.collections.shouldContainAll
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
@@ -315,6 +317,55 @@ for (int i = 0; i < 10; i++);
             ).also {
                 it shouldNot haveCheckstyleErrors()
             }
+        }
+        "should report nested blocks without crashing" {
+            val errors = Source(
+                mapOf(
+                    "Calculator.java" to """
+public class Calculator {
+  public String toString(Object obj) {
+    if (obj instanceof Calculator) {
+      Calculator calculator = (Calculator) obj;  {
+        return "hmm";
+      }
+    }
+    return "uh oh";
+  }
+}""".trim(),
+                ),
+            ).checkstyle().errors
+            errors.filter { it.key == null } shouldHaveSize 0
+            errors.map { it.message } shouldContain
+                "Avoid unnecessary braces ({}) that aren't part of an if, for, while, or other statement."
+        }
+        "should render custom messages correctly" {
+            val messages = Source(
+                mapOf(
+                    "Example.java" to """
+public class Example {
+  static public int value = 0;
+
+  public boolean check(boolean condition) {
+    if (condition) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  public long get() {
+    int array[] = new int[1];
+    return array[0] + 100l;
+  }
+}""".trim(),
+                ),
+            ).checkstyle().errors.map { it.message }
+            messages shouldContainAll listOf(
+                "'public' modifier is out of order. Use: public/protected/private, static, final, abstract.",
+                "Instead of 'if (condition) { return true; } else { return false; }', simplify to 'return condition;'",
+                "Place array brackets after the type, not the variable name: use 'int[] array' instead of 'int array[]'.",
+                "Use uppercase 'L' for long literals (e.g., 100L not 100l) since lowercase 'l' looks like '1'.",
+            )
         }
     })
 
