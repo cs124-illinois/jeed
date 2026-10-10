@@ -15,7 +15,7 @@ An [online demo is also available](https://cs124-illinois.github.io/jeed/).
 ## Reference Sources
 
 `externals/` holds read-only reference checkouts as Git submodules, and `externals/kotlin` is the
-[Kotlin compiler source](https://github.com/JetBrains/kotlin) at the exact tag Jeed embeds (v2.4.20).
+[Kotlin compiler source](https://github.com/JetBrains/kotlin) at the exact tag Jeed embeds (v2.4.21).
 It is never built and sits on no classpath—Jeed's in-memory Kotlin compilation composes non-public
 compiler pipeline APIs, and the source is the only reliable documentation for them.
 Fetch it only when you need to read those internals, with

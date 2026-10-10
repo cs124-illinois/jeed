@@ -6,10 +6,10 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jmailen.gradle.kotlinter.tasks.LintTask
 
 plugins {
-    kotlin("jvm") version "2.4.20" apply false
-    kotlin("plugin.serialization") version "2.4.20" apply false
+    kotlin("jvm") version "2.4.21" apply false
+    kotlin("plugin.serialization") version "2.4.21" apply false
     id("org.jmailen.kotlinter") version "5.7.0" apply false
-    id("io.github.ben-manes.versions") version "0.64.0"
+    id("io.github.ben-manes.versions") version "0.65.0"
     id("io.gitlab.arturbosch.detekt") version "1.23.8"
     id("com.google.devtools.ksp") version "2.3.12" apply false
     id("io.github.gradle-nexus.publish-plugin") version "2.0.0"
@@ -18,7 +18,7 @@ plugins {
 extra.set("agentVersion", "2026.1.2")
 allprojects {
     group = "org.cs124.jeed"
-    version = "2026.10.0"
+    version = "2026.10.1"
 }
 subprojects {
     tasks.withType<Test> {

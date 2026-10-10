@@ -1,5 +1,21 @@
 # Changelog
 
+## 2026.10.1
+
+### Fixed
+
+- Checkstyle no longer crashes on nested blocks, such as a stray `{ ... }` after a statement. The
+  beginner-friendly `AvoidNestedBlocks` message added in 2026.1 contained a literal `{}`, which
+  checkstyle's `MessageFormat` rejects, so the check threw and Jeed reported the whole stack trace
+  as a single error on line 1. The custom messages for `SimplifyBooleanReturn`, `ArrayTypeStyle` and
+  `UpperEll` also lost their single quotes to `MessageFormat`; all four are now escaped and render
+  as written.
+
+### Changed
+
+- Updated Kotlin to 2.4.21 (with `externals/kotlin` at the matching tag), ASM to 9.11, classgraph to
+  4.8.197, the Gradle versions plugin to 0.65.0 and Gradle to 9.8.1.
+
 ## 2026.10.0
 
 ### Fixed

@@ -34,8 +34,8 @@ configurations.all {
 dependencies {
     antlr("org.antlr:antlr4:4.13.2")
 
-    implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:2.4.20")
-    implementation("org.jetbrains.kotlin:kotlin-reflect:2.4.20")
+    implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:2.4.21")
+    implementation("org.jetbrains.kotlin:kotlin-reflect:2.4.21")
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
@@ -54,9 +54,9 @@ dependencies {
     implementation("com.pinterest.ktlint:ktlint-rule-engine:1.8.0")
     implementation("com.pinterest.ktlint:ktlint-ruleset-standard:1.8.0")
     implementation("com.github.jknack:handlebars:4.5.5")
-    implementation("org.ow2.asm:asm:9.10.1")
-    implementation("org.ow2.asm:asm-tree:9.10.1")
-    implementation("org.ow2.asm:asm-util:9.10.1")
+    implementation("org.ow2.asm:asm:9.11")
+    implementation("org.ow2.asm:asm-tree:9.11")
+    implementation("org.ow2.asm:asm-util:9.11")
 
     implementation("net.java.dev.jna:jna:5.19.1")
     implementation("io.github.java-diff-utils:java-diff-utils:4.17")
@@ -75,7 +75,7 @@ dependencies {
     // building the message until the level is known to be enabled. ktlint requests 7.0.13 and
     // resolves up to this; its bytecode only ever calls the lambda overloads, so that is safe.
     api("io.github.oshai:kotlin-logging:8.0.4")
-    api("io.github.classgraph:classgraph:4.8.196")
+    api("io.github.classgraph:classgraph:4.8.197")
 
     testImplementation("io.kotest:kotest-runner-junit5:6.2.5")
     testImplementation("com.beyondgrader.resource-agent:agent:$agentVersion")
