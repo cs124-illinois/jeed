@@ -17,6 +17,7 @@ CMD java -ea --enable-preview -Dfile.encoding=UTF-8 \
     -Djava.security.manager=allow -XX:-OmitStackTraceInFastThrow \
     -XX:+UnlockExperimentalVMOptions -XX:-VMContinuations \
     -XX:NativeMemoryTracking=summary \
+    -XX:-UseBASE64Intrinsics \
     -Xss256k -XX:+UseZGC -XX:+ZGenerational \
     --add-opens java.base/java.lang=ALL-UNNAMED \
     --add-opens java.base/java.util=ALL-UNNAMED \
