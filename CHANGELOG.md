@@ -1,5 +1,23 @@
 # Changelog
 
+## 2026.11.0
+
+### Security
+
+- The server image now starts the JVM with `-XX:-UseBASE64Intrinsics`, as a guard against
+  CVE-2026-114938 ("Java4Shell"), a reported heap overflow in HotSpot's AVX-512 Base64 decode
+  routine on x86. Code submitted to the sandbox can call `java.util.Base64` directly, and the
+  overflow happens in native code below the sandbox. The flag is on the `java` command line, not in
+  `JAVA_OPTS`, so a deployment that sets `JAVA_OPTS` keeps it.
+
+### Changed
+
+- Updated google-java-format to 2.0.0, classgraph to 4.8.200, kotlinx-serialization to 1.13.0,
+  checkstyle to 14.4.0, Ktor to 3.6.1, Netty to 4.2.21, Jackson to 2.23.0, Kotest to 6.2.7, KSP to
+  2.3.14, JaCoCo to 0.8.16, ASM to 9.11.1, kotlin-logging to 8.0.7, Caffeine to 3.3.1, handlebars to
+  4.5.8, java-diff-utils to 4.18, the javaagent-test plugin to 0.13.0, the Gradle versions plugin to
+  0.67.0 and Gradle to 9.9.1.
+
 ## 2026.10.1
 
 ### Fixed

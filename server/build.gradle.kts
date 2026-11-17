@@ -14,7 +14,7 @@ plugins {
     id("org.jmailen.kotlinter")
     id("io.gitlab.arturbosch.detekt")
     id("com.google.devtools.ksp")
-    id("com.ryandens.javaagent-test") version "0.12.2"
+    id("com.ryandens.javaagent-test") version "0.13.0"
     id("com.adarshr.test-logger")
     jacoco
 }
@@ -30,7 +30,7 @@ configurations.all {
     }
 }
 dependencies {
-    val ktorVersion = "3.6.0"
+    val ktorVersion = "3.6.1"
 
     testJavaagent("com.beyondgrader.resource-agent:agent:$agentVersion")
 
@@ -43,26 +43,26 @@ dependencies {
     // CVE-2026-75595 (critical) and CVE-2026-75596, so keep netty on its newest release rather than
     // trailing ktor. The BOM moves every netty module together, and as with jackson's below, a
     // plain platform wins by conflict resolution.
-    implementation(platform("io.netty:netty-bom:4.2.19.Final"))
+    implementation(platform("io.netty:netty-bom:4.2.21.Final"))
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.13.0")
     // konf 2.1.0 is the newest release and pins jackson 2.17.1, which carries advisories fixed in
     // 2.18.8. The BOM keeps the family consistent; jackson-annotations versions differently from
     // the rest, so forcing the artifacts individually needs two version lines kept in step.
     // A plain platform rather than an enforced one: enforced platforms behave like forced
     // dependencies and leak to consumers, which Gradle refuses to publish. This still wins over
     // konf's older BOM, since the higher version carries conflict resolution.
-    implementation(platform("com.fasterxml.jackson:jackson-bom:2.22.3"))
+    implementation(platform("com.fasterxml.jackson:jackson-bom:2.23.0"))
     implementation("io.github.nhubbard:konf:2.1.0")
     implementation("com.beyondgrader.resource-agent:agent:$agentVersion")
     implementation("com.beyondgrader.resource-agent:jeedplugin:$agentVersion")
 
     // Libraries for student use
     implementation("org.cs124:libcs1:2026.9.0")
-    implementation("io.kotest:kotest-runner-junit5:6.2.5")
+    implementation("io.kotest:kotest-runner-junit5:6.2.7")
     implementation("com.google.truth:truth:1.4.5")
 
-    testImplementation("io.kotest:kotest-runner-junit5:6.2.5")
+    testImplementation("io.kotest:kotest-runner-junit5:6.2.7")
     testImplementation("io.ktor:ktor-server-test-host:$ktorVersion")
 }
 testlogger {
@@ -269,7 +269,7 @@ tasks.withType<Sign>().configureEach {
 
 jacoco {
     // Match the org.jacoco.core version already used by the coverage analysis feature.
-    toolVersion = "0.8.15"
+    toolVersion = "0.8.16"
 }
 tasks.jacocoTestReport {
     dependsOn(tasks.test)

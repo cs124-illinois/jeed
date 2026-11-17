@@ -17,7 +17,7 @@ plugins {
     id("org.jmailen.kotlinter")
     id("io.gitlab.arturbosch.detekt")
     id("com.google.devtools.ksp")
-    id("com.ryandens.javaagent-test") version "0.12.2"
+    id("com.ryandens.javaagent-test") version "0.13.0"
     id("com.adarshr.test-logger")
     jacoco
 }
@@ -38,8 +38,8 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-reflect:2.4.21")
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
-    implementation("com.puppycrawl.tools:checkstyle:14.3.0") {
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.13.0")
+    implementation("com.puppycrawl.tools:checkstyle:14.4.0") {
         // checkstyle ships slf4j-simple as its binding, which lands a second SLF4J provider in the
         // server's shaded jar alongside logback. Which one wins is then down to ordering, and
         // slf4j-simple ignores logback.xml entirely.
@@ -53,19 +53,19 @@ dependencies {
     implementation("org.codehaus.plexus:plexus-utils:4.1.0")
     implementation("com.pinterest.ktlint:ktlint-rule-engine:1.8.0")
     implementation("com.pinterest.ktlint:ktlint-ruleset-standard:1.8.0")
-    implementation("com.github.jknack:handlebars:4.5.5")
-    implementation("org.ow2.asm:asm:9.11")
-    implementation("org.ow2.asm:asm-tree:9.11")
-    implementation("org.ow2.asm:asm-util:9.11")
+    implementation("com.github.jknack:handlebars:4.5.8")
+    implementation("org.ow2.asm:asm:9.11.1")
+    implementation("org.ow2.asm:asm-tree:9.11.1")
+    implementation("org.ow2.asm:asm-util:9.11.1")
 
     implementation("net.java.dev.jna:jna:5.19.1")
-    implementation("io.github.java-diff-utils:java-diff-utils:4.17")
-    implementation("com.google.googlejavaformat:google-java-format:1.37.0")
+    implementation("io.github.java-diff-utils:java-diff-utils:4.18")
+    implementation("com.google.googlejavaformat:google-java-format:2.0.0")
     implementation("net.sf.extjwnl:extjwnl:2.0.5")
     implementation("net.sf.extjwnl:extjwnl-data-wn31:1.2")
 
-    api("org.jacoco:org.jacoco.core:0.8.15")
-    api("com.github.ben-manes.caffeine:caffeine:3.3.0")
+    api("org.jacoco:org.jacoco.core:0.8.16")
+    api("com.github.ben-manes.caffeine:caffeine:3.3.1")
     // slf4j-jdk14 routes the SLF4J calls our dependencies make into java.util.logging, which is
     // already in the JDK, so there is no logging implementation to ship or keep patched. See
     // Logging.kt for the formatter that keeps the output identical to the logback pattern.
@@ -74,10 +74,11 @@ dependencies {
     // moved. 8.x dropped the overloads taking a value in favour of the lambda form, which defers
     // building the message until the level is known to be enabled. ktlint requests 7.0.13 and
     // resolves up to this; its bytecode only ever calls the lambda overloads, so that is safe.
-    api("io.github.oshai:kotlin-logging:8.0.4")
-    api("io.github.classgraph:classgraph:4.8.197")
+    api("io.github.oshai:kotlin-logging:8.0.7")
+    // classgraph 6.x is compiled for Java 25 and fails to load on the Java 21 runtime Jeed targets.
+    api("io.github.classgraph:classgraph:4.8.200")
 
-    testImplementation("io.kotest:kotest-runner-junit5:6.2.5")
+    testImplementation("io.kotest:kotest-runner-junit5:6.2.7")
     testImplementation("com.beyondgrader.resource-agent:agent:$agentVersion")
     testJavaagent("com.beyondgrader.resource-agent:agent:$agentVersion")
 }
@@ -247,7 +248,7 @@ tasks.withType<Javadoc> {
 
 jacoco {
     // Match the org.jacoco.core version already used by the coverage analysis feature.
-    toolVersion = "0.8.15"
+    toolVersion = "0.8.16"
 }
 tasks.jacocoTestReport {
     dependsOn(tasks.test)
