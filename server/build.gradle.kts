@@ -1,4 +1,5 @@
 import com.github.jengelman.gradle.plugins.shadow.transformers.MergeLicenseResourceTransformer
+import org.gradle.api.component.AdhocComponentWithVariants
 import org.jmailen.gradle.kotlinter.tasks.FormatTask
 import org.jmailen.gradle.kotlinter.tasks.LintTask
 import java.io.File
@@ -223,6 +224,14 @@ afterEvaluate {
     tasks.withType<LintTask> {
         this.source = this.source.minus(fileTree("build")).asFileTree
     }
+}
+// The shadow jar is about 190 MB and only feeds the Docker image, which dockerCopyJar builds from the
+// local task output. Shadow adds it to the java component, which would publish it to Maven Central on
+// every release and exhaust the organization's monthly Sonatype size quota, so leave it out.
+(components["java"] as AdhocComponentWithVariants).withVariantsFromConfiguration(
+    configurations["shadowRuntimeElements"],
+) {
+    skip()
 }
 publishing {
     publications {
