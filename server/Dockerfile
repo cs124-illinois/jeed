@@ -12,6 +12,12 @@ ENV LD_PRELOAD=/usr/lib/libjemalloc.so.2
 
 WORKDIR /
 COPY *.jar jeed.jar
+
+# Student code runs inside this JVM. If it ever gets out of the sandbox, it should be nobody
+# in particular, not root with root's capabilities. Numeric, so Kubernetes can verify
+# runAsNonRoot. Jeed writes nothing to disk; the JVM's hsperfdata goes to /tmp.
+RUN groupadd --gid 10001 jeed && useradd --uid 10001 --gid 10001 --no-create-home --shell /usr/sbin/nologin jeed
+USER 10001:10001
 SHELL ["/bin/sh", "-c"]
 CMD java -ea --enable-preview -Dfile.encoding=UTF-8 \
     -Djava.security.manager=allow -XX:-OmitStackTraceInFastThrow \

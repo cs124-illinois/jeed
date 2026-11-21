@@ -27,6 +27,9 @@ RUN rm -rf /usr/local/lib/node_modules/npm \
 WORKDIR /server/
 COPY bundled bundled
 
+# The node user (uid 1000) ships with the base image. The server only reads /server/bundled.
+USER node
+
 ENTRYPOINT ["/sbin/tini", "--"]
 CMD [ "sh", "-c", "echo /server/bundled/index.js | entr -rn node --enable-source-maps /_"]
 

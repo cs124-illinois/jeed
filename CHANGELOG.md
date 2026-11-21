@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026.11.1
+
+### Security
+
+- The server image now runs as an unprivileged user, uid and gid 10001, instead of root. Student
+  code runs on threads inside the server's JVM, so before this a sandbox escape landed as root with
+  root's capabilities. Jeed writes nothing to disk, and the image runs unchanged with a read-only
+  root filesystem, all capabilities dropped and `no-new-privileges`, given a writable `/tmp` (the
+  JVM keeps its hsperfdata there, and Jeed creates an empty `/tmp/jeed-cache` even with the disk
+  cache off). Deployments can set `runAsNonRoot: true` and `readOnlyRootFilesystem: true`.
+- The proxy image now runs as the base image's `node` user, uid 1000, instead of root.
+
 ## 2026.11.0
 
 ### Security
