@@ -355,7 +355,10 @@ class JeedFileManager(
             }.toMutableMap(),
         )
 
-    constructor(copy: JeedFileManager) : this(copy.parentFileManager, copy.allFiles)
+    // A copy gets its own map. Cache hits hand out the cached file manager itself, so a copy that
+    // shared the map would rewrite the cached entry on replaceClass or addClass. The values are only
+    // ever replaced, never changed in place, so a shallow copy is enough.
+    constructor(copy: JeedFileManager) : this(copy.parentFileManager, copy.allFiles.toMutableMap())
 
     val classFiles
         get() = allFiles.filter { it.value.kind == JavaFileObject.Kind.CLASS }

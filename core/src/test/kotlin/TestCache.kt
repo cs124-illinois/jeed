@@ -32,6 +32,20 @@ class TestCache :
             JeedCacheStats.l2Hits shouldBe 0
             JeedCacheStats.misses shouldBe 1
         }
+        "copying a cached file manager should not change the cached entry" {
+            val source = Source(mapOf("CopyCheck.java" to "public class CopyCheck { int value() { return 1; } }"))
+            val arguments = CompilationArguments(useCache = true, waitForCache = true)
+            val first = source.compile(arguments)
+            val original = first.fileManager.bytecodeForPaths["CopyCheck.class"]!!
+
+            val hit = source.compile(arguments)
+            hit.cached shouldBe true
+            JeedFileManager(hit.fileManager).replaceClass("CopyCheck", byteArrayOf(0, 1, 2, 3))
+
+            val again = source.compile(arguments)
+            again.cached shouldBe true
+            again.fileManager.bytecodeForPaths["CopyCheck.class"] shouldBe original
+        }
         "should calculate size for file managers" {
             val snippet = Source.fromSnippet(
                 "int weirdName = 8;",

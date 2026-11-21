@@ -12,6 +12,18 @@
   cache off). Deployments can set `runAsNonRoot: true` and `readOnlyRootFilesystem: true`.
 - The proxy image now runs as the base image's `node` user, uid 1000, instead of root.
 
+### Fixed
+
+- `JeedFileManager`'s copy constructor now copies the file map instead of sharing it. A cache hit
+  hands out the cached file manager itself, so calling `replaceClass` or `addClass` on a copy of one
+  rewrote the cached entry, and later compilations of the same source got the rewritten classes.
+  Questioner hit this in production: mutant classes rewritten for testing were served back to
+  student submissions that matched a mutant, which then failed with "missing a method".
+
+### Changed
+
+- Updated Gradle to 9.9.2.
+
 ## 2026.11.0
 
 ### Security
